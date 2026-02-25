@@ -13,6 +13,11 @@ use App\Models\Reservation;
 use App\Models\Category;
 use App\Models\AuditLog;
 use App\Services\CacheService;
+use App\Services\NotificationService;
+use App\Services\AdminAnalyticsService;
+use App\Services\AdminNotificationService;
+use App\Services\AdminReportService;
+use App\Services\AdminBackupService;
 
 /**
  * @OA\Tag(
@@ -23,12 +28,27 @@ use App\Services\CacheService;
 class AdminController extends Controller
 {
     protected CacheService $cacheService;
+    protected NotificationService $notificationService;
+    protected AdminAnalyticsService $analyticsService;
+    protected AdminNotificationService $adminNotificationService;
+    protected AdminReportService $reportService;
+    protected AdminBackupService $backupService;
 
-    public function __construct()
-    {
+    public function __construct(
+        NotificationService $notificationService,
+        AdminAnalyticsService $analyticsService,
+        AdminNotificationService $adminNotificationService,
+        AdminReportService $reportService,
+        AdminBackupService $backupService
+    ) {
         // Rate limiting for admin operations will be handled in routes
         
         // Cache service temporarily disabled for deployment
+        $this->notificationService = $notificationService;
+        $this->analyticsService = $analyticsService;
+        $this->adminNotificationService = $adminNotificationService;
+        $this->reportService = $reportService;
+        $this->backupService = $backupService;
     }
 
     /**
@@ -52,66 +72,14 @@ class AdminController extends Controller
     {
         try {
             // Admin yetkisi zaten middleware tarafından kontrol ediliyor
-
-            $stats = [
-                'total_users' => User::count(),
-                'total_teachers' => User::where('role', 'teacher')->count(),
-                'total_students' => User::where('role', 'student')->count(),
-                'total_reservations' => Reservation::count(),
-                'pending_teachers' => User::where('role', 'teacher')
-                    ->where('teacher_status', 'pending')
-                    ->count(),
-                'active_reservations' => Reservation::whereIn('status', ['confirmed', 'in_progress'])
-                    ->count(),
-                'completed_lessons' => Reservation::where('status', 'completed')->count(),
-                'total_revenue' => Reservation::where('status', 'completed')->sum('price') ?? 0,
-                'average_rating' => \DB::table('ratings')->avg('rating') ?? 0,
-                'monthly_new_users' => User::where('created_at', '>=', now()->subMonth())->count(),
-                'monthly_revenue' => Reservation::where('status', 'completed')
-                    ->where('created_at', '>=', now()->subMonth())
-                    ->sum('price') ?? 0,
-                'total_categories' => Category::count(),
-                'active_categories' => Category::where('is_active', true)->count(),
-            ];
-
-            // Son 7 günlük aktivite grafiği
-            $weeklyStats = [];
-            for ($i = 6; $i >= 0; $i--) {
-                $date = now()->subDays($i)->format('Y-m-d');
-                $weeklyStats[] = [
-                    'date' => $date,
-                    'users' => User::whereDate('created_at', $date)->count(),
-                    'reservations' => Reservation::whereDate('created_at', $date)->count(),
-                    'revenue' => Reservation::where('status', 'completed')
-                        ->whereDate('created_at', $date)
-                        ->sum('price') ?? 0,
-                ];
-            }
-
-            $recentActivities = AuditLog::with('user')
-                ->orderBy('created_at', 'desc')
-                ->limit(10)
-                ->get();
-
-            // Kategori dağılımı
-            $categoryStats = \DB::table('categories')
-                ->leftJoin('reservations', 'categories.id', '=', 'reservations.category_id')
-                ->select('categories.name', \DB::raw('COUNT(reservations.id) as reservation_count'))
-                ->groupBy('categories.id', 'categories.name')
-                ->orderBy('reservation_count', 'desc')
-                ->limit(5)
-                ->get();
+            $dashboardData = $this->analyticsService->getDashboardStats();
+            $realTimeStats = $this->analyticsService->getRealTimeStats();
 
             return response()->json([
                 'success' => true,
-                'stats' => $stats,
-                'recent_activities' => $recentActivities,
-                'analytics' => [
-                    'weekly_stats' => $weeklyStats,
-                    'category_distribution' => $categoryStats,
-                    'top_teachers' => $this->getTopTeachers(),
-                    'user_growth' => $this->getUserGrowthStats(),
-                ],
+                'stats' => $dashboardData,
+                'real_time' => $realTimeStats,
+                'timestamp' => now()->toISOString(),
             ]);
         } catch (\Exception $e) {
             \Log::error('Dashboard error: ' . $e->getMessage());
@@ -936,6 +904,18 @@ class AdminController extends Controller
 
         $user->approveTeacher($adminId, $notes);
 
+        // ✅ Send approval notification
+        try {
+            $admin = Auth::user();
+            $this->notificationService->sendTeacherApprovedNotification($user, $admin);
+            Log::info('✅ Teacher approval notification sent', [
+                'teacher_id' => $user->id,
+                'admin_id' => $adminId
+            ]);
+        } catch (\Exception $e) {
+            Log::warning('Failed to send teacher approval notification: ' . $e->getMessage());
+        }
+
         // Audit log
         AuditLog::create([
             'user_id' => $adminId,
@@ -1022,6 +1002,18 @@ class AdminController extends Controller
             'rejected_at' => now(),
             'rejection_reason' => $reason,
         ]);
+
+        // ✅ Send rejection notification
+        try {
+            $this->notificationService->sendTeacherRejectedNotification($user, $reason);
+            Log::info('✅ Teacher rejection notification sent', [
+                'teacher_id' => $user->id,
+                'admin_id' => $adminId,
+                'reason' => $reason
+            ]);
+        } catch (\Exception $e) {
+            Log::warning('Failed to send teacher rejection notification: ' . $e->getMessage());
+        }
 
         // Audit log
         AuditLog::create([
@@ -1172,5 +1164,392 @@ class AdminController extends Controller
             'message' => 'Bildirim başarıyla gönderildi',
             'sent_count' => count($users),
         ]);
+    }
+
+    /**
+     * Get real-time analytics
+     */
+    public function getRealTimeAnalytics(): JsonResponse
+    {
+        try {
+            $realTimeStats = $this->analyticsService->getRealTimeStats();
+            
+            return response()->json([
+                'success' => true,
+                'analytics' => $realTimeStats,
+                'timestamp' => now()->toISOString(),
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Real-time analytics error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'error' => 'Real-time analytics yüklenirken hata oluştu',
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Clear analytics cache
+     */
+    public function clearAnalyticsCache(): JsonResponse
+    {
+        try {
+            $this->analyticsService->clearCache();
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Analytics cache temizlendi',
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Clear analytics cache error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'error' => 'Cache temizlenirken hata oluştu',
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Send bulk notification
+     */
+    public function sendBulkNotification(Request $request): JsonResponse
+    {
+        try {
+            $result = $this->adminNotificationService->sendBulkNotification($request->all());
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Toplu bildirim başarıyla gönderildi',
+                'result' => $result,
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Bulk notification error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'error' => 'Toplu bildirim gönderilirken hata oluştu',
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Get notification statistics
+     */
+    public function getNotificationStats(): JsonResponse
+    {
+        try {
+            $stats = $this->adminNotificationService->getNotificationStats();
+            
+            return response()->json([
+                'success' => true,
+                'stats' => $stats,
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Notification stats error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'error' => 'Bildirim istatistikleri yüklenirken hata oluştu',
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Get notification analytics
+     */
+    public function getNotificationAnalytics(): JsonResponse
+    {
+        try {
+            $analytics = $this->adminNotificationService->getNotificationAnalytics();
+            
+            return response()->json([
+                'success' => true,
+                'analytics' => $analytics,
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Notification analytics error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'error' => 'Bildirim analitikleri yüklenirken hata oluştu',
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Mark notifications as read
+     */
+    public function markNotificationsAsRead(Request $request): JsonResponse
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'notification_ids' => 'required|array',
+                'notification_ids.*' => 'integer|exists:notifications,id',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'error' => [
+                        'code' => 'VALIDATION_ERROR',
+                        'message' => $validator->errors()
+                    ]
+                ], 400);
+            }
+
+            $result = $this->adminNotificationService->markNotificationsAsRead($request->notification_ids);
+            
+            return response()->json([
+                'success' => $result,
+                'message' => $result ? 'Bildirimler okundu olarak işaretlendi' : 'Bildirimler işaretlenirken hata oluştu',
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Mark notifications as read error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'error' => 'Bildirimler işaretlenirken hata oluştu',
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Cleanup old notifications
+     */
+    public function cleanupOldNotifications(Request $request): JsonResponse
+    {
+        try {
+            $daysOld = $request->get('days_old', 90);
+            $deletedCount = $this->adminNotificationService->cleanupOldNotifications($daysOld);
+            
+            return response()->json([
+                'success' => true,
+                'message' => "{$deletedCount} eski bildirim temizlendi",
+                'deleted_count' => $deletedCount,
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Cleanup old notifications error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'error' => 'Eski bildirimler temizlenirken hata oluştu',
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Generate system report
+     */
+    public function generateSystemReport(Request $request): JsonResponse
+    {
+        try {
+            $filters = $request->only(['date_from', 'date_to', 'type']);
+            $report = $this->reportService->generateSystemReport($filters);
+            
+            return response()->json([
+                'success' => true,
+                'report' => $report,
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Generate system report error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'error' => 'Sistem raporu oluşturulurken hata oluştu',
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Export report to CSV
+     */
+    public function exportReportToCsv(Request $request): JsonResponse
+    {
+        try {
+            $filters = $request->only(['date_from', 'date_to', 'type']);
+            $report = $this->reportService->generateSystemReport($filters);
+            $filename = $request->get('filename');
+            $filepath = $this->reportService->exportToCsv($report, $filename);
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Rapor CSV olarak dışa aktarıldı',
+                'filepath' => $filepath,
+                'filename' => basename($filepath),
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Export report to CSV error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'error' => 'Rapor dışa aktarılırken hata oluştu',
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Create database backup
+     */
+    public function createDatabaseBackup(): JsonResponse
+    {
+        try {
+            $result = $this->backupService->createDatabaseBackup();
+            
+            return response()->json($result);
+        } catch (\Exception $e) {
+            \Log::error('Create database backup error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'error' => 'Veritabanı yedeği oluşturulurken hata oluştu',
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Create filesystem backup
+     */
+    public function createFilesystemBackup(): JsonResponse
+    {
+        try {
+            $result = $this->backupService->createFileSystemBackup();
+            
+            return response()->json($result);
+        } catch (\Exception $e) {
+            \Log::error('Create filesystem backup error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'error' => 'Dosya sistemi yedeği oluşturulurken hata oluştu',
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Create full backup
+     */
+    public function createFullBackup(): JsonResponse
+    {
+        try {
+            $result = $this->backupService->createFullBackup();
+            
+            return response()->json($result);
+        } catch (\Exception $e) {
+            \Log::error('Create full backup error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'error' => 'Tam yedek oluşturulurken hata oluştu',
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * List backups
+     */
+    public function listBackups(): JsonResponse
+    {
+        try {
+            $backups = $this->backupService->listBackups();
+            
+            return response()->json([
+                'success' => true,
+                'backups' => $backups,
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('List backups error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'error' => 'Yedekler listelenirken hata oluştu',
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Get backup statistics
+     */
+    public function getBackupStats(): JsonResponse
+    {
+        try {
+            $stats = $this->backupService->getBackupStats();
+            
+            return response()->json([
+                'success' => true,
+                'stats' => $stats,
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Get backup stats error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'error' => 'Yedek istatistikleri yüklenirken hata oluştu',
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Restore from backup
+     */
+    public function restoreFromBackup(Request $request): JsonResponse
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'filename' => 'required|string',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'error' => [
+                        'code' => 'VALIDATION_ERROR',
+                        'message' => $validator->errors()
+                    ]
+                ], 400);
+            }
+
+            $result = $this->backupService->restoreFromBackup($request->filename);
+            
+            return response()->json($result);
+        } catch (\Exception $e) {
+            \Log::error('Restore from backup error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'error' => 'Yedekten geri yüklenirken hata oluştu',
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Delete backup
+     */
+    public function deleteBackup(Request $request): JsonResponse
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'filename' => 'required|string',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'error' => [
+                        'code' => 'VALIDATION_ERROR',
+                        'message' => $validator->errors()
+                    ]
+                ], 400);
+            }
+
+            $result = $this->backupService->deleteBackup($request->filename);
+            
+            return response()->json($result);
+        } catch (\Exception $e) {
+            \Log::error('Delete backup error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'error' => 'Yedek silinirken hata oluştu',
+                'message' => $e->getMessage(),
+            ], 500);
+        }
     }
 }

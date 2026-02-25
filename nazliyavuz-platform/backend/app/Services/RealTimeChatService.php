@@ -147,15 +147,15 @@ class RealTimeChatService
         $user = User::find($userId);
         if (!$user) return;
 
-        // Get all conversations for this user
-        $conversations = \App\Models\Conversation::where('user1_id', $userId)
+        // Get all chats for this user
+        $chats = \App\Models\Chat::where('user1_id', $userId)
             ->orWhere('user2_id', $userId)
             ->get();
 
-        foreach ($conversations as $conversation) {
-            $otherUserId = $conversation->user1_id === $userId 
-                ? $conversation->user2_id 
-                : $conversation->user1_id;
+        foreach ($chats as $chat) {
+            $otherUserId = $chat->user1_id === $userId 
+                ? $chat->user2_id 
+                : $chat->user1_id;
 
             $channel = $this->getConversationChannel($userId, $otherUserId);
             
@@ -200,6 +200,11 @@ class RealTimeChatService
      */
     public function sendVideoCallInvitation(int $callerId, int $receiverId, string $callType = 'video'): void
     {
+        if (!$this->pusher) {
+            Log::info('Pusher not available, skipping video call invitation');
+            return;
+        }
+        
         $channel = $this->getConversationChannel($callerId, $receiverId);
         
         $this->pusher->trigger($channel, 'video-call', [
@@ -208,6 +213,20 @@ class RealTimeChatService
             'call_type' => $callType, // 'video' or 'audio'
             'call_id' => uniqid('call_'),
             'timestamp' => now()->toISOString(),
+        ]);
+        
+        // Also send to user-specific channel for notifications
+        $userChannel = "user-{$receiverId}";
+        $this->pusher->trigger($userChannel, 'video-call-notification', [
+            'caller_id' => $callerId,
+            'call_type' => $callType,
+            'timestamp' => now()->toISOString(),
+        ]);
+        
+        Log::info('Video call invitation sent', [
+            'caller_id' => $callerId,
+            'receiver_id' => $receiverId,
+            'call_type' => $callType
         ]);
     }
 

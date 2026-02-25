@@ -1,0 +1,152 @@
+@import "tailwindcss";
+
+:root {
+  --primary: #0d9488;
+  --primary-dark: #0f766e;
+  --primary-light: #14b8a6;
+  --primary-50: #f0fdfa;
+  --primary-100: #ccfbf1;
+  --accent: #f59e0b;
+  --accent-light: #fbbf24;
+  --dark: #0f172a;
+  --dark-soft: #1e293b;
+  --gray: #64748b;
+  --gray-light: #94a3b8;
+  --bg: #f8fafc;
+  --bg-elevated: #ffffff;
+  --bg-subtle: #f1f5f9;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --border: #e2e8f0;
+  --border-strong: #cbd5e1;
+
+  /* Profesyonel gölgeler - daha derin */
+  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.05), 0 1px 2px -1px rgb(0 0 0 / 0.05);
+  --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.08), 0 2px 4px -2px rgb(0 0 0 / 0.06);
+  --shadow-md: 0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.06);
+  --shadow-lg: 0 20px 25px -5px rgb(0 0 0 / 0.08), 0 8px 10px -6px rgb(0 0 0 / 0.05);
+  --shadow-xl: 0 25px 50px -12px rgb(0 0 0 / 0.15);
+  --shadow-2xl: 0 35px 60px -15px rgb(0 0 0 / 0.18);
+  --shadow-primary: 0 12px 40px -8px rgb(13 148 136 / 0.4);
+  --shadow-inner: inset 0 2px 4px 0 rgb(0 0 0 / 0.04);
+
+  --radius-sm: 0.5rem;
+  --radius: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.25rem;
+  --radius-2xl: 1.5rem;
+  --radius-3xl: 1.75rem;
+
+  --transition-fast: 150ms ease;
+  --transition: 200ms ease;
+  --transition-slow: 300ms ease;
+}
+
+@theme inline {
+  --color-primary: var(--primary);
+  --color-primary-dark: var(--primary-dark);
+  --color-accent: var(--accent);
+  --color-dark: var(--dark);
+}
+
+* {
+  scroll-behavior: smooth;
+}
+
+html {
+  font-family: var(--font-display, system-ui, sans-serif);
+}
+
+body {
+  background: var(--bg);
+  color: var(--dark);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Premium gradient backgrounds */
+.gradient-hero {
+  background: linear-gradient(135deg, #0f766e 0%, #0d9488 40%, #0f99a8 100%);
+}
+
+.gradient-hero-mesh {
+  background:
+    radial-gradient(ellipse 100% 60% at 50% -10%, rgba(13, 148, 136, 0.12), transparent 60%),
+    radial-gradient(ellipse 80% 40% at 80% 50%, rgba(13, 148, 136, 0.06), transparent 50%),
+    radial-gradient(ellipse 60% 30% at 20% 80%, rgba(245, 158, 11, 0.04), transparent 50%),
+    linear-gradient(180deg, #ffffff 0%, #f8fafc 30%, #f1f5f9 100%);
+}
+
+.gradient-card {
+  background: linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(255,255,255,0.95) 100%);
+}
+
+.pattern-dots {
+  background-image: radial-gradient(var(--border) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.pattern-grid {
+  background-image:
+    linear-gradient(var(--border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+.glass {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.glass-dark {
+  background: rgba(15, 23, 42, 0.9);
+  backdrop-filter: blur(12px);
+}
+
+*:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.hover-lift {
+  transition: transform var(--transition-slow), box-shadow var(--transition-slow), border-color var(--transition-slow);
+}
+.hover-lift:hover {
+  transform: translateY(-6px);
+  box-shadow: var(--shadow-xl), 0 0 0 1px rgb(13 148 136 / 0.1);
+}
+
+/* Kart derinlik efekti */
+.card-elevated {
+  box-shadow: var(--shadow), var(--shadow-inner);
+}
+.card-elevated:hover {
+  box-shadow: var(--shadow-lg), var(--shadow-inner);
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+.animate-float {
+  animation: float 5s ease-in-out infinite;
+}
+
+/* Stagger animation delays */
+.delay-100 { animation-delay: 100ms; }
+.delay-200 { animation-delay: 200ms; }
+.delay-300 { animation-delay: 300ms; }
+.delay-400 { animation-delay: 400ms; }

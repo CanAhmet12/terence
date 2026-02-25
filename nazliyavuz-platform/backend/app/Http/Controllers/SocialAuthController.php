@@ -56,16 +56,33 @@ class SocialAuthController extends Controller
         ]);
 
         try {
+            Log::info('Google authentication started', [
+                'access_token_length' => strlen($request->access_token),
+                'has_id_token' => !empty($request->id_token),
+                'ip' => $request->ip()
+            ]);
+
             $googleUser = $this->getGoogleUserInfo($request->access_token);
             
             if (!$googleUser) {
+                Log::error('Google user info retrieval failed', [
+                    'access_token_length' => strlen($request->access_token),
+                    'ip' => $request->ip()
+                ]);
+                
                 return response()->json([
                     'error' => [
                         'code' => 'INVALID_TOKEN',
-                        'message' => 'Geçersiz Google token'
+                        'message' => 'Google token geçersiz veya süresi dolmuş. Lütfen tekrar deneyin.'
                     ]
                 ], 400);
             }
+
+            Log::info('Google user info retrieved successfully', [
+                'user_id' => $googleUser['id'],
+                'email' => $googleUser['email'],
+                'name' => $googleUser['name']
+            ]);
 
             $user = $this->findOrCreateUser($googleUser, 'google');
             $token = JWTAuth::fromUser($user);
@@ -87,6 +104,7 @@ class SocialAuthController extends Controller
         } catch (\Exception $e) {
             Log::error('Google login failed', [
                 'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
                 'ip' => $request->ip()
             ]);
 
@@ -255,24 +273,92 @@ class SocialAuthController extends Controller
     private function getGoogleUserInfo(string $accessToken): ?array
     {
         try {
+            Log::info('Google API request started', [
+                'token_length' => strlen($accessToken),
+                'token_prefix' => substr($accessToken, 0, 20) . '...'
+            ]);
+
+            // Try the new Google API endpoint first
             $response = Http::withHeaders([
                 'Authorization' => 'Bearer ' . $accessToken
             ])->get('https://www.googleapis.com/oauth2/v2/userinfo');
 
+            Log::info('Google API response', [
+                'status' => $response->status(),
+                'successful' => $response->successful(),
+                'body' => $response->body()
+            ]);
+
             if ($response->successful()) {
                 $data = $response->json();
-                return [
+                
+                // Validate required fields
+                if (!isset($data['id']) || !isset($data['email'])) {
+                    Log::error('Google API response missing required fields', ['data' => $data]);
+                    return null;
+                }
+
+                $userInfo = [
                     'id' => $data['id'],
-                    'name' => $data['name'],
+                    'name' => $data['name'] ?? 'Google User',
                     'email' => $data['email'],
                     'avatar' => $data['picture'] ?? null,
                     'verified' => $data['verified_email'] ?? false,
                 ];
+
+                Log::info('Google user info extracted', [
+                    'id' => $userInfo['id'],
+                    'email' => $userInfo['email'],
+                    'name' => $userInfo['name']
+                ]);
+
+                return $userInfo;
+            } else {
+                // If v2 fails, try v1 endpoint
+                Log::info('Trying Google API v1 endpoint');
+                $response = Http::withHeaders([
+                    'Authorization' => 'Bearer ' . $accessToken
+                ])->get('https://www.googleapis.com/oauth2/v1/userinfo');
+
+                Log::info('Google API v1 response', [
+                    'status' => $response->status(),
+                    'successful' => $response->successful(),
+                    'body' => $response->body()
+                ]);
+
+                if ($response->successful()) {
+                    $data = $response->json();
+                    
+                    if (!isset($data['id']) || !isset($data['email'])) {
+                        Log::error('Google API v1 response missing required fields', ['data' => $data]);
+                        return null;
+                    }
+
+                    $userInfo = [
+                        'id' => $data['id'],
+                        'name' => $data['name'] ?? 'Google User',
+                        'email' => $data['email'],
+                        'avatar' => $data['picture'] ?? null,
+                        'verified' => $data['verified_email'] ?? false,
+                    ];
+
+                    Log::info('Google user info extracted from v1', [
+                        'id' => $userInfo['id'],
+                        'email' => $userInfo['email'],
+                        'name' => $userInfo['name']
+                    ]);
+
+                    return $userInfo;
+                }
             }
         } catch (\Exception $e) {
-            Log::error('Google API error', ['error' => $e->getMessage()]);
+            Log::error('Google API error', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
         }
 
+        Log::error('Google API failed to get user info');
         return null;
     }
 

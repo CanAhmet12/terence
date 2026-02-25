@@ -2,11 +2,16 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:flutter_sound/flutter_sound.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:path_provider/path_provider.dart';
 import '../../models/user.dart';
 import '../../models/message.dart';
 import '../../services/api_service.dart';
 import '../../services/real_time_chat_service.dart';
 import '../../theme/app_theme.dart';
+import '../../theme/design_system.dart';
 import '../video_call/video_call_screen.dart';
 import '../files/file_sharing_screen.dart';
 import '../assignments/create_assignment_screen.dart';
@@ -23,11 +28,14 @@ class TeacherChatScreen extends StatefulWidget {
   State<TeacherChatScreen> createState() => _TeacherChatScreenState();
 }
 
-class _TeacherChatScreenState extends State<TeacherChatScreen> {
+class _TeacherChatScreenState extends State<TeacherChatScreen> with RouteAware {
   final _messageController = TextEditingController();
   final _scrollController = ScrollController();
   final _apiService = ApiService();
   final _realTimeService = RealTimeChatService();
+  
+  // Global image cache to persist images across page refreshes
+  static final Map<String, ImageProvider> _imageCache = {};
   
   List<Message> _messages = [];
   int? _chatId;
@@ -38,6 +46,13 @@ class _TeacherChatScreenState extends State<TeacherChatScreen> {
   bool _otherUserTyping = false;
   StreamSubscription? _newMessageSubscription;
   StreamSubscription? _typingSubscription;
+  
+  // Voice recording variables
+  FlutterSoundRecorder? _recorder;
+  bool _isRecording = false;
+  String? _recordingPath;
+  Timer? _recordingTimer;
+  int _recordingDuration = 0;
 
   @override
   void initState() {
@@ -47,6 +62,26 @@ class _TeacherChatScreenState extends State<TeacherChatScreen> {
     
     // Add listener for typing indicator
     _messageController.addListener(_onTextChanged);
+    _initializeRecorder();
+  }
+  
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Subscribe to route changes
+    final route = ModalRoute.of(context);
+    if (route is PageRoute) {
+      // This helps detect when we return from another screen
+    }
+  }
+  
+  @override
+  void didPopNext() {
+    // Called when returning from another route (like video call)
+    // Reload messages to show latest data
+    if (mounted) {
+      _loadChat();
+    }
   }
 
   void _onTextChanged() {
@@ -109,7 +144,192 @@ class _TeacherChatScreenState extends State<TeacherChatScreen> {
     _newMessageSubscription?.cancel();
     _typingSubscription?.cancel();
     _realTimeService.disconnect();
+    _recorder?.closeRecorder();
+    _recordingTimer?.cancel();
     super.dispose();
+  }
+
+  // Initialize voice recorder
+  Future<void> _initializeRecorder() async {
+    _recorder = FlutterSoundRecorder();
+    await _recorder!.openRecorder();
+  }
+
+  // Select and send image
+  Future<void> _selectImage() async {
+    try {
+      final ImagePicker picker = ImagePicker();
+      final XFile? image = await picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 1920,
+        maxHeight: 1080,
+        imageQuality: 85,
+      );
+      
+      if (image != null && _chatId != null) {
+        setState(() {
+          _isSending = true;
+        });
+        
+        final message = await _apiService.uploadMessageFile(
+          _chatId!,
+          image,
+          'image',
+        );
+        
+        setState(() {
+          _messages.add(message);
+          _isSending = false;
+        });
+        
+        _scrollToBottom();
+      }
+    } catch (e) {
+      setState(() {
+        _isSending = false;
+      });
+      _showErrorSnackBar('Fotoğraf yüklenemedi: ${e.toString()}');
+    }
+  }
+
+  // Select and send video
+  Future<void> _selectVideo() async {
+    try {
+      final ImagePicker picker = ImagePicker();
+      final XFile? video = await picker.pickVideo(
+        source: ImageSource.gallery,
+        maxDuration: const Duration(minutes: 5),
+      );
+      
+      if (video != null && _chatId != null) {
+        setState(() {
+          _isSending = true;
+        });
+        
+        final message = await _apiService.uploadMessageFile(
+          _chatId!,
+          video,
+          'video',
+        );
+        
+        setState(() {
+          _messages.add(message);
+          _isSending = false;
+        });
+        
+        _scrollToBottom();
+      }
+    } catch (e) {
+      setState(() {
+        _isSending = false;
+      });
+      _showErrorSnackBar('Video yüklenemedi: ${e.toString()}');
+    }
+  }
+
+  // Start voice recording
+  Future<void> _startVoiceRecording() async {
+    try {
+      // Request microphone permission
+      final status = await Permission.microphone.request();
+      if (status != PermissionStatus.granted) {
+        _showErrorSnackBar('Mikrofon izni gerekli');
+        return;
+      }
+
+      // Get directory for recording
+      final directory = await getTemporaryDirectory();
+      _recordingPath = '${directory.path}/voice_${DateTime.now().millisecondsSinceEpoch}.aac';
+      
+      await _recorder!.startRecorder(
+        toFile: _recordingPath,
+        codec: Codec.aacADTS,
+      );
+      
+      setState(() {
+        _isRecording = true;
+        _recordingDuration = 0;
+      });
+      
+      // Start timer for recording duration
+      _recordingTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+        setState(() {
+          _recordingDuration++;
+        });
+      });
+      
+      HapticFeedback.mediumImpact();
+    } catch (e) {
+      _showErrorSnackBar('Ses kaydı başlatılamadı: ${e.toString()}');
+    }
+  }
+
+  // Stop voice recording and send
+  Future<void> _stopVoiceRecording() async {
+    try {
+      await _recorder!.stopRecorder();
+      _recordingTimer?.cancel();
+      
+      setState(() {
+        _isRecording = false;
+      });
+      
+      if (_recordingPath != null && _chatId != null && _recordingDuration > 0) {
+        setState(() {
+          _isSending = true;
+        });
+        
+        final audioFile = XFile(_recordingPath!);
+        final message = await _apiService.sendVoiceMessage(
+          _chatId!,
+          audioFile,
+          _recordingDuration,
+        );
+        
+        setState(() {
+          _messages.add(message);
+          _isSending = false;
+        });
+        
+        _scrollToBottom();
+      }
+      
+      _recordingPath = null;
+      _recordingDuration = 0;
+    } catch (e) {
+      setState(() {
+        _isRecording = false;
+        _isSending = false;
+      });
+      _showErrorSnackBar('Ses kaydı gönderilemedi: ${e.toString()}');
+    }
+  }
+
+  // Cancel voice recording
+  void _cancelVoiceRecording() {
+    _recorder?.stopRecorder();
+    _recordingTimer?.cancel();
+    setState(() {
+      _isRecording = false;
+      _recordingDuration = 0;
+    });
+    _recordingPath = null;
+  }
+
+  String _formatDuration(int seconds) {
+    final minutes = seconds ~/ 60;
+    final remainingSeconds = seconds % 60;
+    return '${minutes.toString().padLeft(2, '0')}:${remainingSeconds.toString().padLeft(2, '0')}';
+  }
+
+  void _showErrorSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+        duration: const Duration(seconds: 3),
+      ),
+    );
   }
 
   Future<void> _loadChat() async {
@@ -135,6 +355,9 @@ class _TeacherChatScreenState extends State<TeacherChatScreen> {
         _isLoading = false;
       });
 
+      // Preload images for better performance
+      _preloadImages();
+
       // Mark messages as read
       if (_chatId != null) {
         await _apiService.markMessagesAsRead(_chatId!);
@@ -149,6 +372,86 @@ class _TeacherChatScreenState extends State<TeacherChatScreen> {
         _error = e.toString();
         _isLoading = false;
       });
+    }
+  }
+
+  Widget _buildCachedImage(String imageUrl) {
+    // Check if image is already cached
+    if (_imageCache.containsKey(imageUrl)) {
+      return Image(
+        image: _imageCache[imageUrl]!,
+        width: 200,
+        height: 200,
+        fit: BoxFit.cover,
+      );
+    }
+    
+    // If not cached, load and cache it
+    final imageProvider = NetworkImage(imageUrl);
+    _imageCache[imageUrl] = imageProvider;
+    
+    return Image(
+      image: imageProvider,
+      width: 200,
+      height: 200,
+      fit: BoxFit.cover,
+      loadingBuilder: (context, child, loadingProgress) {
+        if (loadingProgress == null) return child;
+        return Container(
+          width: 200,
+          height: 200,
+          color: Colors.white.withOpacity(0.1),
+          child: const Center(
+            child: CircularProgressIndicator(
+              color: Colors.white,
+            ),
+          ),
+        );
+      },
+      errorBuilder: (context, error, stackTrace) {
+        print('Image load error: $error');
+        print('Image URL: $imageUrl');
+        // Remove from cache if failed
+        _imageCache.remove(imageUrl);
+        return Container(
+          width: 200,
+          height: 200,
+          color: Colors.white.withOpacity(0.1),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.image_not_supported,
+                color: Colors.white,
+                size: 50,
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Resim yüklenemedi',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _preloadImages() {
+    for (final message in _messages) {
+      if (message.messageType == 'image' && message.fileUrl != null) {
+        // Preload image to cache with error handling
+        try {
+          precacheImage(NetworkImage(message.fileUrl!), context).catchError((error) {
+            print('Failed to preload image: $error');
+          });
+        } catch (e) {
+          print('Error preloading image: $e');
+        }
+      }
     }
   }
 
@@ -200,12 +503,17 @@ class _TeacherChatScreenState extends State<TeacherChatScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
-      appBar: _buildTeacherChatAppBar(),
+      backgroundColor: const Color(0xFFF5F7FA), // Anasayfa ile uyumlu arka plan
+      appBar: _buildModernTeacherChatAppBar(),
       body: Column(
         children: [
           Expanded(
-            child: _buildTeacherMessagesList(),
+            child: Container(
+              decoration: const BoxDecoration(
+                color: Color(0xFFF5F7FA), // Anasayfa ile uyumlu arka plan
+              ),
+              child: _buildTeacherMessagesList(),
+            ),
           ),
           if (_otherUserTyping)
             _buildTeacherTypingIndicator(),
@@ -215,21 +523,23 @@ class _TeacherChatScreenState extends State<TeacherChatScreen> {
     );
   }
 
-  PreferredSizeWidget _buildTeacherChatAppBar() {
+  PreferredSizeWidget _buildModernTeacherChatAppBar() {
     return AppBar(
       elevation: 0,
-      backgroundColor: AppTheme.accentGreen,
-      foregroundColor: Colors.white,
+      backgroundColor: const Color(0xFFF5F7FA), // Anasayfa ile uyumlu arka plan
+      foregroundColor: Colors.black87,
+      surfaceTintColor: Colors.transparent,
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back_ios, color: Colors.black87, size: 20), // Anasayfa ile uyumlu icon boyutu
+        onPressed: () => Navigator.pop(context),
+      ),
       title: Row(
         children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(color: Colors.white, width: 2),
-            ),
-            child: ClipOval(
+          ClipOval(
+            child: Container(
+              width: 40,
+              height: 40,
+              color: Colors.grey[200],
               child: widget.student.profilePhotoUrl != null
                   ? Image.network(
                       widget.student.profilePhotoUrl!,
@@ -249,16 +559,17 @@ class _TeacherChatScreenState extends State<TeacherChatScreen> {
                 Text(
                   widget.student.name,
                   style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
+                    fontSize: 16, // Anasayfa ile uyumlu font boyutu
+                    fontWeight: FontWeight.w700, // Anasayfa ile uyumlu font weight
+                    color: Colors.black87,
                   ),
                 ),
                 const Text(
-                  'Öğrenci',
+                  'Online',
                   style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.white70,
+                    fontSize: 11, // Anasayfa ile uyumlu font boyutu
+                    color: Colors.green,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
               ],
@@ -268,14 +579,14 @@ class _TeacherChatScreenState extends State<TeacherChatScreen> {
       ),
       actions: [
         IconButton(
-          icon: const Icon(Icons.videocam_rounded),
+          icon: const Icon(Icons.videocam_rounded, color: Colors.black87, size: 20), // Anasayfa ile uyumlu icon boyutu
           onPressed: () {
             HapticFeedback.mediumImpact();
             _showTeacherVideoCallOptions();
           },
         ),
         IconButton(
-          icon: const Icon(Icons.more_vert_rounded),
+          icon: const Icon(Icons.more_vert_rounded, color: Colors.black87, size: 20), // Anasayfa ile uyumlu icon boyutu
           onPressed: () {
             HapticFeedback.lightImpact();
             _showTeacherChatOptions();
@@ -287,12 +598,12 @@ class _TeacherChatScreenState extends State<TeacherChatScreen> {
 
   Widget _buildDefaultStudentAvatar() {
     return Container(
-      color: AppTheme.primaryBlue.withOpacity(0.1),
+      color: const Color(0xFFE8E0D5),
       child: Center(
         child: Icon(
           Icons.person_rounded,
-          color: AppTheme.primaryBlue,
-          size: 20,
+          color: Colors.grey[700],
+          size: DesignSystem.iconLarge,
         ),
       ),
     );
@@ -407,97 +718,178 @@ class _TeacherChatScreenState extends State<TeacherChatScreen> {
     final isFromStudent = message.senderId == widget.student.id;
     
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 8),
       child: Row(
         mainAxisAlignment: isFromStudent ? MainAxisAlignment.start : MainAxisAlignment.end,
         children: [
-          if (isFromStudent) ...[
-            Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppTheme.primaryBlue.withOpacity(0.1),
-                border: Border.all(
-                  color: AppTheme.primaryBlue.withOpacity(0.3),
-                  width: 1,
-                ),
-              ),
-              child: Icon(
-                Icons.person_rounded,
-                color: AppTheme.primaryBlue,
-                size: 16,
-              ),
-            ),
-            const SizedBox(width: 8),
-          ],
           Flexible(
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
                 color: isFromStudent 
-                    ? Colors.white 
-                    : AppTheme.accentGreen,
-                borderRadius: BorderRadius.only(
-                  topLeft: const Radius.circular(20),
-                  topRight: const Radius.circular(20),
-                  bottomLeft: Radius.circular(isFromStudent ? 4 : 20),
-                  bottomRight: Radius.circular(isFromStudent ? 20 : 4),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
+                    ? Colors.grey[300] // Gri renk öğrenci mesajları için
+                    : const Color(0xFF8B5CF6), // Mor renk öğretmen mesajları için
+                borderRadius: BorderRadius.circular(8), // Daha az yuvarlak
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    message.content,
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: isFromStudent 
-                          ? AppTheme.grey800 
-                          : Colors.white,
+                  // Show image if message type is image
+                  if (message.messageType == 'image' && message.fileUrl != null) ...[
+                    Container(
+                      width: 200,
+                      height: 200,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.3),
+                          width: 1,
+                        ),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: _buildCachedImage(message.fileUrl!),
+                      ),
                     ),
-                  ),
+                    const SizedBox(height: 8),
+                  ],
+                  // Show video if message type is video
+                  if (message.messageType == 'video' && message.fileUrl != null) ...[
+                    Container(
+                      width: 200,
+                      height: 150,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[300],
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Stack(
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: Image.network(
+                              message.fileUrl!,
+                              width: 200,
+                              height: 150,
+                              fit: BoxFit.cover,
+                              loadingBuilder: (context, child, loadingProgress) {
+                                if (loadingProgress == null) return child;
+                                return Container(
+                                  width: 200,
+                                  height: 150,
+                                  color: Colors.grey[300],
+                                  child: const Center(
+                                    child: CircularProgressIndicator(),
+                                  ),
+                                );
+                              },
+                              errorBuilder: (context, error, stackTrace) {
+                                return Container(
+                                  width: 200,
+                                  height: 150,
+                                  color: Colors.grey[300],
+                                  child: const Icon(
+                                    Icons.video_library,
+                                    color: Colors.grey,
+                                    size: 50,
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                          const Center(
+                            child: Icon(
+                              Icons.play_circle_filled,
+                              color: Colors.white,
+                              size: 50,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                  ],
+                  // Show voice message if message type is voice
+                  if (message.messageType == 'voice' && message.fileUrl != null) ...[
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: isFromStudent ? Colors.grey[400] : Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.play_circle_filled,
+                            color: isFromStudent ? Colors.black87 : Colors.white,
+                            size: 24,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            message.voiceDuration != null 
+                                ? '${message.voiceDuration}s'
+                                : 'Sesli mesaj',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: isFromStudent ? Colors.black87 : Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                  ],
+                  // Show file if message type is file
+                  if (message.messageType == 'file' && message.fileUrl != null) ...[
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: isFromStudent ? Colors.grey[400] : Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.attach_file,
+                            color: isFromStudent ? Colors.black87 : Colors.white,
+                            size: 24,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            message.fileName ?? 'Dosya',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: isFromStudent ? Colors.black87 : Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                  ],
+                  // Show text content
+                  if (message.content.isNotEmpty)
+                    Text(
+                      message.content,
+                      style: TextStyle(
+                        fontSize: 14, // Anasayfa ile uyumlu font boyutu
+                        color: isFromStudent ? Colors.black87 : Colors.white,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
                   const SizedBox(height: 4),
                   Text(
                     DateFormat('HH:mm').format(message.createdAt),
                     style: TextStyle(
-                      fontSize: 12,
-                      color: isFromStudent 
-                          ? AppTheme.grey500 
-                          : Colors.white70,
+                      fontSize: 11, // Anasayfa ile uyumlu font boyutu
+                      color: isFromStudent ? Colors.grey[600] : Colors.white70,
                     ),
                   ),
                 ],
               ),
             ),
           ),
-          if (!isFromStudent) ...[
-            const SizedBox(width: 8),
-            Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppTheme.accentGreen.withOpacity(0.1),
-                border: Border.all(
-                  color: AppTheme.accentGreen.withOpacity(0.3),
-                  width: 1,
-                ),
-              ),
-              child: Icon(
-                Icons.school_rounded,
-                color: AppTheme.accentGreen,
-                size: 16,
-              ),
-            ),
-          ],
         ],
       ),
     );
@@ -505,81 +897,153 @@ class _TeacherChatScreenState extends State<TeacherChatScreen> {
 
   Widget _buildTeacherMessageInput() {
     return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 8,
-            offset: const Offset(0, -2),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: const BoxDecoration(
+        color: Color(0xFFF5F7FA), // Anasayfa ile uyumlu arka plan
+        border: Border(
+          top: BorderSide(
+            color: Colors.grey,
+            width: 0.5,
           ),
-        ],
+        ),
       ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Container(
-              decoration: BoxDecoration(
-                color: AppTheme.grey100,
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(
-                  color: AppTheme.accentGreen.withOpacity(0.2),
-                  width: 1,
-                ),
-              ),
-              child: TextField(
-                controller: _messageController,
-                decoration: const InputDecoration(
-                  hintText: 'Öğrencinize mesaj yazın...',
-                  border: InputBorder.none,
-                  contentPadding: EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
-                  ),
-                ),
-                maxLines: null,
-                textInputAction: TextInputAction.send,
-                onSubmitted: (_) => _sendMessage(),
-              ),
-            ),
+      child: SafeArea(
+        child: _isRecording ? _buildVoiceRecordingUI() : _buildNormalMessageInput(),
+      ),
+    );
+  }
+
+  Widget _buildVoiceRecordingUI() {
+    return Row(
+      children: [
+        // Cancel button
+        IconButton(
+          icon: const Icon(
+            Icons.close,
+            color: Colors.red,
+            size: 20,
           ),
-          const SizedBox(width: 8),
-          Container(
-            width: 48,
-            height: 48,
+          onPressed: _cancelVoiceRecording,
+        ),
+        
+        // Recording indicator and duration
+        Expanded(
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
-              color: AppTheme.accentGreen,
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: AppTheme.accentGreen.withOpacity(0.3),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
+              color: Colors.red.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(25),
+              border: Border.all(color: Colors.red.withOpacity(0.3)),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.mic,
+                  color: Colors.red,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Kayıt yapılıyor... ${_formatDuration(_recordingDuration)}',
+                  style: const TextStyle(
+                    color: Colors.red,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ],
             ),
-            child: IconButton(
-              padding: EdgeInsets.zero,
-              onPressed: _isSending ? null : _sendMessage,
-              icon: _isSending
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                      ),
-                    )
-                  : const Icon(
-                      Icons.send_rounded,
-                      color: Colors.white,
-                      size: 20,
-                    ),
+          ),
+        ),
+        
+        // Send button
+        IconButton(
+          icon: const Icon(
+            Icons.send,
+            color: Colors.green,
+            size: 20,
+          ),
+          onPressed: _stopVoiceRecording,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildNormalMessageInput() {
+    return Row(
+      children: [
+        // Attachment button with menu
+        IconButton(
+          icon: const Icon(
+            Icons.attach_file_rounded,
+            color: Colors.black87,
+            size: 20, // Anasayfa ile uyumlu icon boyutu
+          ),
+          onPressed: () {
+            _showAttachmentOptions();
+          },
+        ),
+        
+        Expanded(
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(25),
+              border: Border.all(color: Colors.grey[300]!),
+            ),
+            child: TextField(
+              controller: _messageController,
+              style: const TextStyle(
+                fontSize: 14, // Anasayfa ile uyumlu font boyutu
+                color: Colors.black87,
+              ),
+              decoration: InputDecoration(
+                hintText: 'Mesajını yaz',
+                hintStyle: TextStyle(
+                  fontSize: 14, // Anasayfa ile uyumlu font boyutu
+                  color: Colors.grey[500],
+                ),
+                border: InputBorder.none,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 16,
+                ),
+                prefixIcon: Icon(
+                  Icons.emoji_emotions_outlined,
+                  color: Colors.grey[500],
+                  size: 20, // Anasayfa ile uyumlu icon boyutu
+                ),
+              ),
+              maxLines: null,
+              textInputAction: TextInputAction.send,
+              onSubmitted: (_) => _sendMessage(),
             ),
           ),
-        ],
-      ),
+        ),
+        const SizedBox(width: 8),
+        
+        // Send button
+        Container(
+          width: 50,
+          height: 50,
+          decoration: BoxDecoration(
+            color: _messageController.text.isNotEmpty 
+                ? const Color(0xFF8B5CF6) // Mor renk
+                : Colors.grey[400],
+            shape: BoxShape.circle,
+          ),
+          child: IconButton(
+            icon: const Icon(
+              Icons.send_rounded,
+              color: Colors.white,
+              size: 20, // Anasayfa ile uyumlu icon boyutu
+            ),
+            onPressed: _isSending || _messageController.text.isEmpty 
+                ? null 
+                : _sendMessage,
+          ),
+        ),
+      ],
     );
   }
 
@@ -650,13 +1114,109 @@ class _TeacherChatScreenState extends State<TeacherChatScreen> {
     );
   }
 
+  void _showAttachmentOptions() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: const BoxDecoration(
+          color: Color(0xFFF5F7FA), // Anasayfa ile uyumlu arka plan
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.only(top: 12),
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Text(
+                'Eklenti Seç',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.black87,
+                ),
+              ),
+            ),
+            ListTile(
+              leading: Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryBlue.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Icon(
+                  Icons.photo_library_rounded,
+                  color: AppTheme.primaryBlue,
+                ),
+              ),
+              title: const Text('Fotoğraf'),
+              onTap: () {
+                Navigator.pop(context);
+                _selectImage();
+              },
+            ),
+            ListTile(
+              leading: Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: AppTheme.accentOrange.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Icon(
+                  Icons.video_library_rounded,
+                  color: AppTheme.accentOrange,
+                ),
+              ),
+              title: const Text('Video'),
+              onTap: () {
+                Navigator.pop(context);
+                _selectVideo();
+              },
+            ),
+            ListTile(
+              leading: Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: AppTheme.accentGreen.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Icon(
+                  Icons.mic_rounded,
+                  color: AppTheme.accentGreen,
+                ),
+              ),
+              title: const Text('Ses Kaydı'),
+              onTap: () {
+                Navigator.pop(context);
+                _startVoiceRecording();
+              },
+            ),
+            const SizedBox(height: 20),
+          ],
+        ),
+      ),
+    );
+  }
+
   void _showTeacherChatOptions() {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
         decoration: const BoxDecoration(
-          color: Colors.white,
+          color: Color(0xFFF5F7FA), // Anasayfa ile uyumlu arka plan
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: Column(
@@ -796,6 +1356,17 @@ class _TeacherChatScreenState extends State<TeacherChatScreen> {
     );
   }
 
+  Widget _buildSmallStudentAvatar() {
+    return Container(
+      color: AppTheme.accentGreen.withOpacity(0.1),
+      child: Icon(
+        Icons.person_rounded,
+        color: AppTheme.accentGreen,
+        size: 16,
+      ),
+    );
+  }
+
   Widget _buildTeacherTypingIndicator() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -806,16 +1377,21 @@ class _TeacherChatScreenState extends State<TeacherChatScreen> {
             height: 32,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: AppTheme.primaryBlue.withOpacity(0.1),
               border: Border.all(
-                color: AppTheme.primaryBlue.withOpacity(0.3),
+                color: AppTheme.accentGreen.withOpacity(0.3),
                 width: 1,
               ),
             ),
-            child: Icon(
-              Icons.person_rounded,
-              color: AppTheme.primaryBlue,
-              size: 16,
+            child: ClipOval(
+              child: widget.student.profilePhotoUrl != null
+                  ? Image.network(
+                      widget.student.profilePhotoUrl!,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return _buildSmallStudentAvatar();
+                      },
+                    )
+                  : _buildSmallStudentAvatar(),
             ),
           ),
           const SizedBox(width: 8),
@@ -848,7 +1424,7 @@ class _TeacherChatScreenState extends State<TeacherChatScreen> {
                   height: 16,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryBlue),
+                    valueColor: AlwaysStoppedAnimation<Color>(AppTheme.accentGreen),
                   ),
                 ),
               ],
@@ -859,3 +1435,4 @@ class _TeacherChatScreenState extends State<TeacherChatScreen> {
     );
   }
 }
+

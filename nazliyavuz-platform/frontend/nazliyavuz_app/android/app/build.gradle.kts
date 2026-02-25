@@ -7,7 +7,7 @@ plugins {
 }
 
 android {
-    namespace = "com.nazliyavuz.platform"
+    namespace = "com.nazliyavuz.terenceeducation"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = "27.0.12077973"
 
@@ -22,8 +22,8 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.nazliyavuz.platform"
-        minSdk = 21
+        applicationId = "com.nazliyavuz.terenceeducation"
+        minSdk = 24
         targetSdk = 34
         versionCode = 1
         versionName = "1.0.0"

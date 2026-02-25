@@ -20,17 +20,38 @@ class Notification extends Equatable {
   });
 
   factory Notification.fromJson(Map<String, dynamic> json) {
-    return Notification(
-      id: json['id'],
-      userId: json['user_id'],
-      type: json['type'],
-      payload: Map<String, dynamic>.from(json['payload']),
-      readAt: json['read_at'] != null 
-          ? DateTime.parse(json['read_at']) 
-          : null,
-      createdAt: DateTime.parse(json['created_at']),
-      updatedAt: DateTime.parse(json['updated_at']),
-    );
+    try {
+      return Notification(
+        id: json['id'] ?? 0,
+        userId: json['user_id'] ?? 0,
+        type: json['type'] ?? 'unknown',
+        payload: json['payload'] != null 
+            ? Map<String, dynamic>.from(json['payload'])
+            : <String, dynamic>{},
+        readAt: json['read_at'] != null 
+            ? DateTime.parse(json['read_at']) 
+            : null,
+        createdAt: json['created_at'] != null 
+            ? DateTime.parse(json['created_at'])
+            : DateTime.now(),
+        updatedAt: json['updated_at'] != null 
+            ? DateTime.parse(json['updated_at'])
+            : DateTime.now(),
+      );
+    } catch (e) {
+      print('Error parsing notification JSON: $e');
+      print('JSON: $json');
+      // Return a default notification
+      return Notification(
+        id: 0,
+        userId: 0,
+        type: 'error',
+        payload: {'title': 'Hata', 'message': 'Bildirim yüklenemedi'},
+        readAt: null,
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      );
+    }
   }
 
   Map<String, dynamic> toJson() {

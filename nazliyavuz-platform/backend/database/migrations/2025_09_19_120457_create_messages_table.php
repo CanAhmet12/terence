@@ -21,12 +21,35 @@ return new class extends Migration
             $table->enum('message_type', ['text', 'image', 'file', 'audio', 'video'])->default('text');
             $table->string('file_url')->nullable();
             $table->string('file_name')->nullable();
-            $table->string('file_size')->nullable();
+            $table->integer('file_size')->nullable();
             $table->string('file_type')->nullable();
             $table->boolean('is_read')->default(false);
             $table->timestamp('read_at')->nullable();
             $table->boolean('is_deleted')->default(false);
             $table->timestamp('deleted_at')->nullable();
+            
+            // Advanced features
+            $table->foreignId('parent_message_id')->nullable()->constrained('messages')->onDelete('cascade');
+            $table->foreignId('thread_id')->nullable()->constrained('message_threads')->onDelete('cascade');
+            $table->json('mentions')->nullable();
+            $table->foreignId('reply_to_message_id')->nullable()->constrained('messages')->onDelete('cascade');
+            $table->foreignId('forwarded_from_message_id')->nullable()->constrained('messages')->onDelete('cascade');
+            $table->foreignId('forwarded_from_user_id')->nullable()->constrained('users')->onDelete('cascade');
+            $table->timestamp('forwarded_at')->nullable();
+            $table->boolean('is_pinned')->default(false);
+            $table->timestamp('pinned_at')->nullable();
+            $table->foreignId('pinned_by')->nullable()->constrained('users')->onDelete('cascade');
+            $table->text('original_content')->nullable();
+            $table->timestamp('edited_at')->nullable();
+            $table->integer('edit_count')->default(0);
+            $table->json('translations')->nullable();
+            $table->string('original_language')->nullable();
+            $table->boolean('is_encrypted')->default(false);
+            $table->string('encryption_key_id')->nullable();
+            $table->string('message_status')->default('sent'); // sent, delivered, read
+            $table->timestamp('delivered_at')->nullable();
+            $table->json('metadata')->nullable();
+            
             $table->timestamps();
             
             // Indexes for performance

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart';
+import 'package:dio/dio.dart';
 import '../../main.dart';
 import '../home/home_screen.dart';
 import '../auth/forgot_password_screen.dart';
@@ -584,15 +585,15 @@ class _LoginScreenState extends State<LoginScreen>
               ),
             ),
             
-            const SizedBox(width: 16),
+            const SizedBox(width: 12),
             
             Expanded(
               child: _buildSocialButton(
-                icon: Icons.facebook,
-                label: 'Facebook',
+                icon: Icons.apple,
+                label: 'Apple',
                 onPressed: () async {
                   HapticFeedback.lightImpact();
-                  await _handleFacebookLogin();
+                  await _handleAppleLogin();
                 },
               ),
             ),
@@ -639,6 +640,10 @@ class _LoginScreenState extends State<LoginScreen>
 
   Future<void> _handleGoogleLogin() async {
     try {
+      if (kDebugMode) {
+        print('🔐 [LOGIN_SCREEN] Starting Google login...');
+      }
+      
       final result = await SocialAuthService.signInWithGoogle();
       
       if (result != null && mounted) {
@@ -668,56 +673,105 @@ class _LoginScreenState extends State<LoginScreen>
     } catch (e) {
       if (kDebugMode) {
         print('❌ [LOGIN_SCREEN] Google login error: $e');
+        if (e is DioException) {
+          print('❌ [LOGIN_SCREEN] DioException details:');
+          print('❌ [LOGIN_SCREEN] Status code: ${e.response?.statusCode}');
+          print('❌ [LOGIN_SCREEN] Response data: ${e.response?.data}');
+        }
+      }
+      
+      String errorMessage = 'Google girişi başarısız';
+      
+      if (e is DioException && e.response?.data != null) {
+        final errorData = e.response!.data;
+        if (errorData is Map<String, dynamic>) {
+          if (errorData['error'] != null) {
+            final error = errorData['error'];
+            if (error is Map<String, dynamic>) {
+              errorMessage = error['message'] ?? errorMessage;
+            }
+          }
+        }
       }
       
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              const Icon(Icons.error_outline, color: Colors.white),
-              const SizedBox(width: 8),
-              Expanded(child: Text('Google girişi başarısız: ${e.toString()}')),
-            ],
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.error_outline, color: Colors.white),
+                const SizedBox(width: 8),
+                Expanded(child: Text(errorMessage)),
+              ],
+            ),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            margin: const EdgeInsets.all(16),
+            duration: const Duration(seconds: 5),
           ),
-          backgroundColor: Colors.red,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          margin: const EdgeInsets.all(16),
-        ),
-      );
+        );
       }
     }
   }
 
-  Future<void> _handleFacebookLogin() async {
+  Future<void> _handleAppleLogin() async {
     try {
-      // Facebook login implementation
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              const Icon(Icons.info_outline, color: Colors.white),
-              const SizedBox(width: 8),
-              Expanded(child: Text('Facebook girişi yakında aktif olacak!')),
-            ],
-          ),
-          backgroundColor: Colors.orange,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          margin: const EdgeInsets.all(16),
-        ),
-      );
+      final result = await SocialAuthService.signInWithApple();
+      
+      if (result != null && mounted) {
+        final user = result['user'];
+        if (user != null) {
+          context.read<AuthBloc>().add(AuthUserChanged(User.fromJson(user)));
+          
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  const Icon(Icons.check_circle, color: Colors.white),
+                  const SizedBox(width: 8),
+                  Expanded(child: Text('Apple ile giriş başarılı!')),
+                ],
+              ),
+              backgroundColor: Colors.green,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              margin: const EdgeInsets.all(16),
+            ),
+          );
+        }
+      }
     } catch (e) {
       if (kDebugMode) {
-        print('❌ [LOGIN_SCREEN] Facebook login error: $e');
+        print('❌ [LOGIN_SCREEN] Apple login error: $e');
+      }
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.error_outline, color: Colors.white),
+                const SizedBox(width: 8),
+                Expanded(child: Text('Apple girişi başarısız: ${e.toString()}')),
+              ],
+            ),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            margin: const EdgeInsets.all(16),
+          ),
+        );
       }
     }
   }
+
 
   Widget _buildRegisterLink() {
     return Row(

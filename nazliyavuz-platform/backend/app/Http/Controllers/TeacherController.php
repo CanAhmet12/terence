@@ -345,11 +345,11 @@ class TeacherController extends Controller
                 ], 403);
             }
 
-            // Get students who have reservations with this teacher
+            // Get students who have reservations with this teacher (accepted or completed)
             $students = User::where('role', 'student')
                 ->whereHas('studentReservations', function ($q) use ($user) {
                     $q->where('teacher_id', $user->id)
-                      ->where('status', 'accepted');
+                      ->whereIn('status', ['accepted', 'completed']);
                 })
                 ->select('id', 'name', 'email', 'profile_photo_url')
                 ->get();
@@ -413,7 +413,7 @@ class TeacherController extends Controller
     /**
      * Get teacher statistics
      */
-    public function statistics(): JsonResponse
+public function getStatistics(): JsonResponse
     {
         try {
             $user = Auth::user();
@@ -444,11 +444,17 @@ class TeacherController extends Controller
             $totalStudents = User::where('role', 'student')
                 ->whereHas('studentReservations', function ($q) use ($user) {
                     $q->where('teacher_id', $user->id)
-                      ->where('status', 'accepted');
+                      ->whereIn('status', ['accepted', 'completed']);
                 })->count();
             $totalReservations = Reservation::where('teacher_id', $user->id)->count();
             $pendingReservations = Reservation::where('teacher_id', $user->id)
                 ->where('status', 'pending')->count();
+            
+            // Calculate total hours from completed lessons
+            $totalHours = \App\Models\Lesson::where('teacher_id', $user->id)
+                ->where('status', 'completed')
+                ->sum('duration_minutes');
+            $totalHours = round($totalHours / 60, 1); // Convert minutes to hours
 
             $statistics = [
                 'total_lessons' => $totalLessons,
@@ -456,6 +462,7 @@ class TeacherController extends Controller
                 'total_students' => $totalStudents,
                 'total_reservations' => $totalReservations,
                 'pending_reservations' => $pendingReservations,
+                'total_hours' => $totalHours,
                 'rating_avg' => $teacher->rating_avg,
                 'rating_count' => $teacher->rating_count,
                 'completion_rate' => $totalLessons > 0 ? round(($completedLessons / $totalLessons) * 100, 2) : 0,

@@ -38,6 +38,32 @@ class Kernel extends ConsoleKernel
         $schedule->command('db:monitor')
                  ->everyTenMinutes()
                  ->withoutOverlapping();
+
+        // ✅ Assignment Management
+        // Update overdue assignments every 5 minutes
+        $schedule->command('assignments:update-overdue')
+                 ->everyFiveMinutes()
+                 ->withoutOverlapping()
+                 ->runInBackground();
+
+        // Send assignment reminders daily at 9:00 AM
+        $schedule->command('assignments:send-reminders')
+                 ->dailyAt('09:00')
+                 ->withoutOverlapping()
+                 ->runInBackground();
+
+        // ✅ Reservation Management
+        // Auto-complete finished reservations every 5 minutes
+        $schedule->command('reservations:auto-complete')
+                 ->everyFiveMinutes()
+                 ->withoutOverlapping()
+                 ->runInBackground();
+
+        // Send lesson reminders every 10 minutes
+        $schedule->command('reservations:send-reminders')
+                 ->everyTenMinutes()
+                 ->withoutOverlapping()
+                 ->runInBackground();
     }
 
     /**
