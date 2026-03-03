@@ -61,10 +61,7 @@ const nextConfig: NextConfig = {
     ];
   },
   async redirects() {
-    return [
-      // Eski path'leri yönlendir (SEO)
-      { source: "/giris", destination: "/giris", permanent: false },
-    ];
+    return [];
   },
 };
 
