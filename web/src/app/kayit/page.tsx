@@ -43,7 +43,8 @@ export default function RegisterPage() {
         ...(phone && { phone }),
         ...(role === "parent" && childEmail && { child_email: childEmail }),
       });
-      router.push("/giris");
+      // Kayıt başarılı → e-posta doğrulama sayfasına yönlendir
+      router.push(`/dogrulama?email=${encodeURIComponent(email)}`);
     } catch {
       // error shown
     }

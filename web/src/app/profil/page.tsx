@@ -1,30 +1,46 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { useAuth } from "@/lib/auth-context";
-import { User, Mail, Lock, Save, Briefcase, Bell, ChevronRight } from "lucide-react";
+import { api } from "@/lib/api";
+import {
+  User,
+  Mail,
+  Lock,
+  Save,
+  Briefcase,
+  Bell,
+  ChevronRight,
+  Camera,
+  CheckCircle,
+  AlertCircle,
+  Phone,
+} from "lucide-react";
 
 const SINIFLAR = Array.from({ length: 12 }, (_, i) => i + 1);
 const ALANLAR = [
-  { value: "lgs", label: "LGS" },
-  { value: "tyt", label: "TYT" },
-  { value: "ayt", label: "AYT" },
-  { value: "tyt-ayt", label: "TYT-AYT" },
-  { value: "kpss", label: "KPSS" },
+  { value: "LGS", label: "LGS" },
+  { value: "TYT", label: "TYT" },
+  { value: "AYT", label: "AYT" },
+  { value: "TYT-AYT", label: "TYT-AYT" },
+  { value: "KPSS", label: "KPSS" },
 ];
 
+type SaveState = "idle" | "saving" | "success" | "error";
+
 export default function ProfilPage() {
-  const { user } = useAuth();
+  const { user, token, updateUser } = useAuth();
   const router = useRouter();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [saving, setSaving] = useState(false);
+  const [phone, setPhone] = useState("");
   const [sinif, setSinif] = useState("");
-  const [alan, setAlan] = useState("");
+  const [alan, setAlan] = useState("TYT-AYT");
   const [hedefOkul, setHedefOkul] = useState("");
   const [hedefBolum, setHedefBolum] = useState("");
   const [brans, setBrans] = useState("");
@@ -32,6 +48,12 @@ export default function ProfilPage() {
   const [bildirimCalisma, setBildirimCalisma] = useState(true);
   const [bildirimDeneme, setBildirimDeneme] = useState(true);
   const [bildirimHedef, setBildirimHedef] = useState(true);
+  const [photoUploading, setPhotoUploading] = useState(false);
+  const [saveState, setSaveState] = useState<SaveState>("idle");
+  const [saveError, setSaveError] = useState("");
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+
+  const isDemo = token?.startsWith("demo-token-");
 
   useEffect(() => {
     if (!user) {
@@ -39,57 +61,165 @@ export default function ProfilPage() {
       return;
     }
     setName(user.name);
-    setEmail(user.email);
-    if (user.role === "student") {
-      setSinif("10");
-      setAlan("tyt-ayt");
-      setHedefOkul("İstanbul Üniversitesi");
-      setHedefBolum("Hukuk");
-    }
-    if (user.role === "teacher") {
-      setBrans("Matematik");
-      setOzgecmis("10 yıllık deneyim, LGS-TYT-AYT uzmanı");
+    setPhone(user.phone || "");
+    setPhotoPreview(user.profile_photo_url || null);
+
+    if (user.role === "student" && user.goal) {
+      setSinif(user.goal.exam_type || "");
+      setAlan(user.goal.exam_type || "TYT-AYT");
+      setHedefOkul(user.goal.target_school || "");
+      setHedefBolum(user.goal.target_department || "");
     }
   }, [user, router]);
 
+  const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !token || isDemo) return;
+
+    const preview = URL.createObjectURL(file);
+    setPhotoPreview(preview);
+    setPhotoUploading(true);
+
+    try {
+      const res = await api.uploadProfilePhoto(token, file);
+      const updated = await api.updateProfile(token, { profile_photo_url: res.url });
+      updateUser(updated);
+    } catch {
+      setPhotoPreview(user?.profile_photo_url || null);
+    } finally {
+      setPhotoUploading(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSaving(true);
-    await new Promise((r) => setTimeout(r, 800));
-    setSaving(false);
+    if (isDemo) {
+      setSaveState("error");
+      setSaveError("Demo modda değişiklik kaydedilemez.");
+      setTimeout(() => setSaveState("idle"), 3000);
+      return;
+    }
+    if (!token) return;
+
+    setSaveState("saving");
+    setSaveError("");
+    try {
+      const updated = await api.updateProfile(token, { name, phone: phone || undefined });
+      updateUser(updated);
+
+      if (user?.role === "student") {
+        await api.updateGoal(token, {
+          exam_type: alan as "TYT" | "AYT" | "LGS" | "KPSS",
+          target_school: hedefOkul || undefined,
+          target_department: hedefBolum || undefined,
+        });
+      }
+
+      await api.updateNotificationPreferences(token, {
+        daily_reminders: bildirimCalisma,
+        risk_alerts: bildirimHedef,
+        email_notifications: bildirimDeneme,
+      });
+
+      setSaveState("success");
+      setTimeout(() => setSaveState("idle"), 3000);
+    } catch (err: unknown) {
+      setSaveError(err instanceof Error ? err.message : "Kayıt başarısız");
+      setSaveState("error");
+      setTimeout(() => setSaveState("idle"), 5000);
+    }
   };
 
   if (!user) return null;
 
   const isStudent = user.role === "student";
   const isTeacher = user.role === "teacher";
+  const initials = user.name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
 
   return (
     <>
       <Header />
       <main className="pt-24 pb-20 min-h-screen bg-slate-50/80">
         <div className="max-w-2xl mx-auto px-4 sm:px-6">
-          {/* Hero */}
           <div className="mb-10">
             <h1 className="text-3xl font-extrabold text-slate-900">Profil Düzenle</h1>
             <p className="text-slate-600 mt-1">Hesap bilgilerinizi ve tercihlerinizi güncelleyin</p>
+            {isDemo && (
+              <span className="inline-flex items-center gap-1.5 mt-2 px-3 py-1 bg-amber-100 text-amber-700 text-xs font-semibold rounded-full">
+                Demo Modu — Değişiklikler kaydedilmez
+              </span>
+            )}
           </div>
 
           <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
-            {/* Avatar alanı */}
+            {/* Avatar */}
             <div className="p-8 border-b border-slate-100 bg-gradient-to-br from-slate-50 to-white">
               <div className="flex flex-col sm:flex-row items-center gap-6">
-                <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center shadow-lg shadow-teal-500/25">
-                  <User className="w-12 h-12 text-white" strokeWidth={2} />
+                <div className="relative group">
+                  <div className="w-24 h-24 rounded-2xl overflow-hidden bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center shadow-lg shadow-teal-500/25">
+                    {photoPreview ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={photoPreview} alt="Profil" className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-white font-bold text-2xl">{initials}</span>
+                    )}
+                    {photoUploading && (
+                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center rounded-2xl">
+                        <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      </div>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={photoUploading || isDemo}
+                    className="absolute -bottom-2 -right-2 w-8 h-8 bg-teal-600 hover:bg-teal-700 text-white rounded-xl flex items-center justify-center shadow-md transition-colors disabled:opacity-50"
+                  >
+                    <Camera className="w-4 h-4" />
+                  </button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handlePhotoChange}
+                  />
                 </div>
                 <div className="text-center sm:text-left">
                   <p className="font-bold text-slate-900 text-lg">{user.name}</p>
-                  <p className="text-slate-500 capitalize">{user.role === "student" ? "Öğrenci" : user.role === "teacher" ? "Öğretmen" : user.role === "parent" ? "Veli" : "Admin"}</p>
+                  <p className="text-slate-500">
+                    {user.role === "student" ? "Öğrenci" : user.role === "teacher" ? "Öğretmen" : user.role === "parent" ? "Veli" : "Admin"}
+                  </p>
+                  {user.subscription_plan && (
+                    <span className="inline-flex items-center mt-1 px-2.5 py-1 bg-teal-50 text-teal-700 text-xs font-semibold rounded-full capitalize">
+                      {user.subscription_plan} paketi
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
 
             <form onSubmit={handleSubmit} className="p-8 space-y-6">
+              {/* Geri bildirim */}
+              {saveState === "success" && (
+                <div className="flex items-center gap-3 p-4 bg-teal-50 border border-teal-100 rounded-xl text-teal-700 text-sm font-medium">
+                  <CheckCircle className="w-5 h-5 shrink-0" />
+                  Profil bilgileriniz başarıyla güncellendi.
+                </div>
+              )}
+              {saveState === "error" && saveError && (
+                <div className="flex items-center gap-3 p-4 bg-red-50 border border-red-100 rounded-xl text-red-700 text-sm font-medium">
+                  <AlertCircle className="w-5 h-5 shrink-0" />
+                  {saveError}
+                </div>
+              )}
+
+              {/* Temel Bilgiler */}
               <div className="space-y-4">
                 <h3 className="font-bold text-slate-900 flex items-center gap-2">
                   <User className="w-5 h-5 text-teal-600" />
@@ -103,6 +233,7 @@ export default function ProfilPage() {
                       type="text"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
+                      required
                       className="w-full pl-12 pr-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none transition-all"
                     />
                   </div>
@@ -113,15 +244,31 @@ export default function ProfilPage() {
                     <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                     <input
                       type="email"
-                      value={email}
-                      className="w-full pl-12 pr-4 py-3 border border-slate-200 rounded-xl bg-slate-50"
+                      value={user.email}
+                      className="w-full pl-12 pr-4 py-3 border border-slate-200 rounded-xl bg-slate-50 text-slate-500"
                       readOnly
                     />
                   </div>
                   <p className="text-xs text-slate-500 mt-1">E-posta değişikliği için destek ile iletişime geçin.</p>
                 </div>
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">
+                    Telefon <span className="text-slate-400 font-normal">(opsiyonel)</span>
+                  </label>
+                  <div className="relative">
+                    <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                    <input
+                      type="tel"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      placeholder="05XX XXX XX XX"
+                      className="w-full pl-12 pr-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none transition-all"
+                    />
+                  </div>
+                </div>
               </div>
 
+              {/* Öğrenci alanları */}
               {isStudent && (
                 <div className="space-y-4 pt-6 border-t border-slate-100">
                   <h3 className="font-bold text-slate-900">Hedef Bilgileri</h3>
@@ -140,7 +287,7 @@ export default function ProfilPage() {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-sm font-semibold text-slate-700 mb-2">Hedef Sınav / Alan</label>
+                      <label className="block text-sm font-semibold text-slate-700 mb-2">Hedef Sınav</label>
                       <select
                         value={alan}
                         onChange={(e) => setAlan(e.target.value)}
@@ -175,6 +322,7 @@ export default function ProfilPage() {
                 </div>
               )}
 
+              {/* Öğretmen alanları */}
               {isTeacher && (
                 <div className="space-y-4 pt-6 border-t border-slate-100">
                   <h3 className="font-bold text-slate-900 flex items-center gap-2">
@@ -207,6 +355,7 @@ export default function ProfilPage() {
                 </div>
               )}
 
+              {/* Bildirimler */}
               <div className="pt-6 border-t border-slate-100">
                 <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
                   <Bell className="w-5 h-5 text-teal-600" />
@@ -214,7 +363,7 @@ export default function ProfilPage() {
                 </h3>
                 <div className="space-y-3">
                   <label className="flex items-center justify-between py-3 px-4 rounded-xl bg-slate-50 hover:bg-slate-100/80 cursor-pointer transition-colors">
-                    <span className="text-slate-700 font-medium">{isTeacher ? "Ödev & çalışma hatırlatmaları" : "Çalışma hatırlatmaları"}</span>
+                    <span className="text-slate-700 font-medium">Çalışma hatırlatmaları</span>
                     <input type="checkbox" checked={bildirimCalisma} onChange={(e) => setBildirimCalisma(e.target.checked)} className="w-5 h-5 rounded border-slate-300 text-teal-600 focus:ring-teal-500" />
                   </label>
                   <label className="flex items-center justify-between py-3 px-4 rounded-xl bg-slate-50 hover:bg-slate-100/80 cursor-pointer transition-colors">
@@ -232,11 +381,20 @@ export default function ProfilPage() {
 
               <button
                 type="submit"
-                disabled={saving}
+                disabled={saveState === "saving"}
                 className="w-full flex items-center justify-center gap-2 py-4 bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-700 hover:to-teal-600 disabled:opacity-70 text-white font-semibold rounded-xl transition-all shadow-lg shadow-teal-500/25"
               >
-                <Save className="w-5 h-5" />
-                {saving ? "Kaydediliyor..." : "Kaydet"}
+                {saveState === "saving" ? (
+                  <>
+                    <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Kaydediliyor...
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-5 h-5" />
+                    Değişiklikleri Kaydet
+                  </>
+                )}
               </button>
             </form>
           </div>

@@ -1,11 +1,11 @@
 import Link from "next/link";
-import { Check, Zap, Video, FileText, Users } from "lucide-react";
+import { Check, Zap, Video, FileText, Crown } from "lucide-react";
 
 const packages = [
   {
     name: "Free",
     subtitle: "Tanışma Paketi",
-    price: "0",
+    price: "Ücretsiz",
     period: "",
     popular: false,
     features: [
@@ -22,7 +22,7 @@ const packages = [
   {
     name: "Bronze",
     subtitle: "Tüm Videolar",
-    price: "₺",
+    price: "99₺",
     period: "/ay",
     popular: false,
     features: [
@@ -32,30 +32,30 @@ const packages = [
       "Sınırsız video erişimi",
     ],
     cta: "Bronze'a Geç",
-    href: "/kayit",
+    href: "/paketler",
     icon: Video,
   },
   {
     name: "Plus",
     subtitle: "Deneme + Soru Bankası",
-    price: "₺",
+    price: "199₺",
     period: "/ay",
     popular: true,
     features: [
       "Bronze paket dahil",
-      "Online deneme sınavları",
+      "Sınırsız online deneme",
       "1M+ soru bankası",
       "Türkiye geneli sıralama",
       "Kazanım analiz raporu",
     ],
     cta: "Plus'a Geç",
-    href: "/kayit",
+    href: "/paketler",
     icon: FileText,
   },
   {
     name: "Pro",
     subtitle: "Canlı Ders + Koçluk",
-    price: "₺",
+    price: "349₺",
     period: "/ay",
     popular: false,
     features: [
@@ -64,11 +64,11 @@ const packages = [
       "Kişiye özel koçluk",
       "Öncelikli destek",
       "Haftalık rapor PDF",
-      "Bu hedef için Pro pakete geçersen net artış ihtimalin %43 artar",
+      "Veli SMS bildirimleri",
     ],
     cta: "Pro'ya Geç",
-    href: "/kayit",
-    icon: Users,
+    href: "/paketler",
+    icon: Crown,
   },
 ];
 
@@ -129,7 +129,6 @@ export function PackagesSection() {
                   <span className="text-slate-500 font-medium">{pkg.period}</span>
                 )}
               </div>
-
               <ul className="space-y-4 mb-8">
                 {pkg.features.map((f) => (
                   <li key={f} className="flex items-start gap-3">

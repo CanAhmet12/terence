@@ -1,16 +1,151 @@
 "use client";
 
-import { Target, Building2, TrendingUp } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { Target, Building2, TrendingUp, AlertTriangle, CheckCircle, Save } from "lucide-react";
+import { useAuth } from "@/lib/auth-context";
+import { api, GoalAnalysis, GoalInput } from "@/lib/api";
+
+const SINAV_TYPES = [
+  { value: "LGS", label: "LGS (8. Sınıf)" },
+  { value: "TYT", label: "TYT (Temel Yeterlilik)" },
+  { value: "AYT", label: "AYT (Alan Yeterlilik)" },
+  { value: "KPSS", label: "KPSS" },
+];
+
+type SaveState = "idle" | "saving" | "success" | "error";
+
+function Skeleton({ className }: { className?: string }) {
+  return <div className={`bg-slate-100 rounded-xl animate-pulse ${className ?? ""}`} />;
+}
 
 export default function HedefPage() {
+  const { user, token, updateUser } = useAuth();
+  const isDemo = token?.startsWith("demo-token-");
+
+  const [analysis, setAnalysis] = useState<GoalAnalysis | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saveState, setSaveState] = useState<SaveState>("idle");
+  const [saveError, setSaveError] = useState("");
+
+  // Form state
+  const [examType, setExamType] = useState<GoalInput["exam_type"]>("TYT");
+  const [targetSchool, setTargetSchool] = useState("");
+  const [targetDept, setTargetDept] = useState("");
+  const [targetNet, setTargetNet] = useState("");
+  const [currentNet, setCurrentNet] = useState("");
+
+  const loadAnalysis = useCallback(async () => {
+    if (!token || isDemo) {
+      // Demo verisi
+      setAnalysis({
+        target_net: 75,
+        current_net: 42,
+        days_remaining: 165,
+        weekly_net_needed: 1,
+        risk_level: "yellow",
+        predicted_net: 61,
+      });
+      setExamType("TYT");
+      setTargetSchool("İstanbul Üniversitesi");
+      setTargetDept("Hukuk");
+      setTargetNet("75");
+      setCurrentNet("42");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const res = await api.getGoalAnalysis(token);
+      setAnalysis(res);
+      // Formu mevcut hedefle doldur
+      if (user?.goal) {
+        setExamType(user.goal.exam_type ?? "TYT");
+        setTargetSchool(user.goal.target_school ?? "");
+        setTargetDept(user.goal.target_department ?? "");
+        setTargetNet(String(user.goal.target_net ?? ""));
+        setCurrentNet(String(user.goal.current_net ?? ""));
+      }
+    } catch {}
+    setLoading(false);
+  }, [token, isDemo, user]);
+
+  useEffect(() => { loadAnalysis(); }, [loadAnalysis]);
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (isDemo) {
+      setSaveState("error");
+      setSaveError("Demo modda hedef kaydedilemez.");
+      setTimeout(() => setSaveState("idle"), 3000);
+      return;
+    }
+    if (!token) return;
+
+    setSaveState("saving");
+    setSaveError("");
+    try {
+      const updated = await api.updateGoal(token, {
+        exam_type: examType,
+        target_school: targetSchool || undefined,
+        target_department: targetDept || undefined,
+        target_net: targetNet ? parseInt(targetNet) : undefined,
+        current_net: currentNet ? parseInt(currentNet) : undefined,
+      });
+      updateUser(updated);
+
+      // Analizi yenile
+      const newAnalysis = await api.getGoalAnalysis(token);
+      setAnalysis(newAnalysis);
+
+      setSaveState("success");
+      setTimeout(() => setSaveState("idle"), 3000);
+    } catch (err: unknown) {
+      setSaveError(err instanceof Error ? err.message : "Kayıt başarısız");
+      setSaveState("error");
+      setTimeout(() => setSaveState("idle"), 5000);
+    }
+  };
+
+  const riskConfig = {
+    green: { bg: "bg-emerald-50", border: "border-emerald-100", text: "text-emerald-700", icon: CheckCircle, label: "Hedefte İlerliyorsun" },
+    yellow: { bg: "bg-amber-50", border: "border-amber-100", text: "text-amber-700", icon: AlertTriangle, label: "Sınır Durumda — Dikkat" },
+    red: { bg: "bg-red-50", border: "border-red-100", text: "text-red-700", icon: AlertTriangle, label: "Yüksek Risk — Acil Müdahale" },
+  };
+  const riskLevel = analysis?.risk_level ?? "green";
+  const risk = riskConfig[riskLevel];
+  const RiskIcon = risk.icon;
+
+  const gapNet = analysis ? analysis.target_net - analysis.current_net : 0;
+  const progressPct = analysis && analysis.target_net > 0
+    ? Math.min((analysis.current_net / analysis.target_net) * 100, 100)
+    : 0;
+
   return (
     <div className="p-6 lg:p-10">
       <div className="mb-10">
         <h1 className="text-3xl font-extrabold text-slate-900">Hedef & Net Motoru</h1>
         <p className="text-slate-600 mt-1 text-lg">
-          Hedef okulunu ve bölümünü seç. Sistem gerekli neti hesaplasın.
+          Hedef okulunu ve bölümünü seç. Sistem gerekli neti hesaplasın, planı oluştursun.
         </p>
+        {isDemo && (
+          <span className="inline-flex items-center gap-1.5 mt-2 px-3 py-1 bg-amber-100 text-amber-700 text-xs font-semibold rounded-full">
+            Demo Modu — Değişiklikler kaydedilmez
+          </span>
+        )}
       </div>
+
+      {/* Risk bandı */}
+      {!loading && analysis && (
+        <div className={`mb-8 p-4 rounded-2xl border flex items-center gap-3 ${risk.bg} ${risk.border}`}>
+          <RiskIcon className={`w-5 h-5 shrink-0 ${risk.text}`} />
+          <div>
+            <span className={`font-bold text-sm ${risk.text}`}>{risk.label}</span>
+            <p className="text-xs text-slate-600 mt-0.5">
+              Tahmin edilen net: <strong>{analysis.predicted_net}</strong> · Hedef: <strong>{analysis.target_net}</strong>
+            </p>
+          </div>
+        </div>
+      )}
 
       <div className="grid lg:grid-cols-2 gap-8">
         {/* Mevcut hedef özeti */}
@@ -19,29 +154,39 @@ export default function HedefPage() {
             <div className="w-10 h-10 rounded-xl bg-teal-50 flex items-center justify-center">
               <Target className="w-5 h-5 text-teal-600" />
             </div>
-            Mevcut Hedefim
+            Mevcut Durumum
           </h2>
-          <div className="space-y-4">
-            {[
-              { label: "Hedef Sınav", value: "TYT-AYT" },
-              { label: "Hedef Okul", value: "İstanbul Üniversitesi" },
-              { label: "Hedef Bölüm", value: "Hukuk" },
-              { label: "Taban Puan", value: "425" },
-              { label: "Sınava Kalan Gün", value: "165", highlight: true },
-            ].map((row) => (
-              <div key={row.label} className="flex justify-between py-4 px-4 rounded-xl bg-slate-50 border border-slate-100">
-                <span className="text-slate-600 font-medium">{row.label}</span>
-                <span className={`font-bold ${row.highlight ? "text-teal-600" : "text-slate-900"}`}>{row.value}</span>
-              </div>
-            ))}
-          </div>
-          <button className="mt-6 w-full py-3.5 bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-700 hover:to-teal-600 text-white font-semibold rounded-xl transition-all shadow-lg shadow-teal-500/25">
-            Hedefi Güncelle
-          </button>
+
+          {loading ? (
+            <div className="space-y-3">
+              {[1, 2, 3, 4, 5].map((i) => <Skeleton key={i} className="h-14" />)}
+            </div>
+          ) : analysis ? (
+            <div className="space-y-4">
+              {[
+                { label: "Hedef Sınav", value: examType || "—" },
+                { label: "Hedef Okul", value: targetSchool || "—" },
+                { label: "Hedef Bölüm", value: targetDept || "—" },
+                { label: "Sınava Kalan Gün", value: `${analysis.days_remaining} gün`, highlight: true },
+                { label: "Haftalık Gerekli Net", value: `+${analysis.weekly_net_needed}`, highlight: true },
+              ].map((row) => (
+                <div key={row.label} className="flex justify-between py-4 px-4 rounded-xl bg-slate-50 border border-slate-100">
+                  <span className="text-slate-600 font-medium">{row.label}</span>
+                  <span className={`font-bold ${row.highlight ? "text-teal-600" : "text-slate-900"}`}>{row.value}</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-slate-500">
+              <Target className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+              <p className="text-sm">Henüz hedef belirlenmedi. Aşağıdan bir hedef belirle.</p>
+            </div>
+          )}
         </div>
 
-        {/* Net karşılaştırma */}
+        {/* Net karşılaştırma + Form */}
         <div className="space-y-6">
+          {/* Net karşılaştırma */}
           <div className="bg-white rounded-2xl border border-slate-200/80 p-8 shadow-sm hover:shadow-lg transition-shadow">
             <h2 className="font-bold text-slate-900 mb-6 flex items-center gap-3 text-lg">
               <div className="w-10 h-10 rounded-xl bg-teal-50 flex items-center justify-center">
@@ -49,44 +194,89 @@ export default function HedefPage() {
               </div>
               Net Karşılaştırma
             </h2>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="p-5 rounded-2xl bg-teal-50 border border-teal-100">
-                <p className="text-sm text-slate-600 font-medium">TYT Gerekli Net</p>
-                <p className="text-2xl font-bold text-teal-600 mt-0.5">75</p>
+
+            {loading ? (
+              <div className="grid grid-cols-2 gap-4">
+                {[1, 2, 3].map((i) => <Skeleton key={i} className={`h-20 ${i === 3 ? "col-span-2" : ""}`} />)}
               </div>
-              <div className="p-5 rounded-2xl bg-slate-50 border border-slate-100">
-                <p className="text-sm text-slate-600 font-medium">Mevcut Net</p>
-                <p className="text-2xl font-bold text-slate-700 mt-0.5">42</p>
-              </div>
-              <div className="col-span-2 p-5 rounded-2xl bg-amber-50 border border-amber-100">
-                <p className="text-sm text-slate-600 font-medium">Artması Gereken Net</p>
-                <p className="text-2xl font-bold text-amber-700 mt-0.5">+33</p>
-                <p className="text-sm text-slate-600 mt-2">
-                  Her 5 günde +1 net hedefi ile çalışma planı oluşturuluyor.
-                </p>
-              </div>
-            </div>
+            ) : analysis ? (
+              <>
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div className="p-5 rounded-2xl bg-teal-50 border border-teal-100">
+                    <p className="text-xs text-slate-600 font-medium">Hedef Net</p>
+                    <p className="text-2xl font-bold text-teal-600 mt-0.5">{analysis.target_net}</p>
+                  </div>
+                  <div className="p-5 rounded-2xl bg-slate-50 border border-slate-100">
+                    <p className="text-xs text-slate-600 font-medium">Mevcut Net</p>
+                    <p className="text-2xl font-bold text-slate-700 mt-0.5">{analysis.current_net}</p>
+                  </div>
+                  <div className="col-span-2 p-5 rounded-2xl bg-amber-50 border border-amber-100">
+                    <p className="text-xs text-slate-600 font-medium">Artması Gereken Net</p>
+                    <p className="text-2xl font-bold text-amber-700 mt-0.5">+{gapNet}</p>
+                    <p className="text-xs text-slate-600 mt-2">
+                      Her {Math.ceil(analysis.days_remaining / Math.max(gapNet, 1))} günde +1 net hedefi gerekiyor.
+                    </p>
+                  </div>
+                </div>
+                {/* İlerleme çubuğu */}
+                <div>
+                  <div className="flex justify-between text-xs text-slate-500 mb-1.5">
+                    <span>İlerleme</span>
+                    <span>{Math.round(progressPct)}%</span>
+                  </div>
+                  <div className="h-3 bg-slate-200 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all ${
+                        riskLevel === "red" ? "bg-red-400" : riskLevel === "yellow" ? "bg-amber-400" : "bg-teal-500"
+                      }`}
+                      style={{ width: `${progressPct}%` }}
+                    />
+                  </div>
+                </div>
+              </>
+            ) : null}
           </div>
 
+          {/* Hedef belirleme formu */}
           <div className="bg-white rounded-2xl border border-slate-200/80 p-8 shadow-sm hover:shadow-lg transition-shadow">
-            <h3 className="font-bold text-slate-900 mb-5 flex items-center gap-2">
+            <h3 className="font-bold text-slate-900 mb-5 flex items-center gap-2 text-lg">
               <Building2 className="w-5 h-5 text-teal-600" />
-              Hedef Belirle
+              Hedefi Güncelle
             </h3>
-            <div className="space-y-4">
+
+            {saveState === "success" && (
+              <div className="flex items-center gap-3 mb-4 p-4 bg-teal-50 border border-teal-100 rounded-xl text-teal-700 text-sm font-medium">
+                <CheckCircle className="w-5 h-5 shrink-0" />
+                Hedef başarıyla güncellendi. Plan yeniden hesaplandı.
+              </div>
+            )}
+            {saveState === "error" && saveError && (
+              <div className="flex items-center gap-3 mb-4 p-4 bg-red-50 border border-red-100 rounded-xl text-red-700 text-sm font-medium">
+                <AlertTriangle className="w-5 h-5 shrink-0" />
+                {saveError}
+              </div>
+            )}
+
+            <form onSubmit={handleSave} className="space-y-4">
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-2">Hedef Sınav</label>
-                <select defaultValue="tyt-ayt" className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none transition-all">
-                  <option value="lgs">LGS</option>
-                  <option value="tyt-ayt">TYT-AYT</option>
-                  <option value="kpss">KPSS</option>
+                <select
+                  value={examType}
+                  onChange={(e) => setExamType(e.target.value as GoalInput["exam_type"])}
+                  className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none transition-all"
+                >
+                  {SINAV_TYPES.map((s) => (
+                    <option key={s.value} value={s.value}>{s.label}</option>
+                  ))}
                 </select>
               </div>
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-2">Hedef Okul</label>
                 <input
                   type="text"
-                  placeholder="İstanbul Üniversitesi"
+                  value={targetSchool}
+                  onChange={(e) => setTargetSchool(e.target.value)}
+                  placeholder="Örn: Hacettepe Üniversitesi"
                   className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none transition-all"
                 />
               </div>
@@ -94,11 +284,56 @@ export default function HedefPage() {
                 <label className="block text-sm font-semibold text-slate-700 mb-2">Hedef Bölüm</label>
                 <input
                   type="text"
-                  placeholder="Hukuk"
+                  value={targetDept}
+                  onChange={(e) => setTargetDept(e.target.value)}
+                  placeholder="Örn: Tıp"
                   className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none transition-all"
                 />
               </div>
-            </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">Hedef Net</label>
+                  <input
+                    type="number"
+                    value={targetNet}
+                    onChange={(e) => setTargetNet(e.target.value)}
+                    placeholder="75"
+                    min={0}
+                    max={160}
+                    className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none transition-all"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">Mevcut Net</label>
+                  <input
+                    type="number"
+                    value={currentNet}
+                    onChange={(e) => setCurrentNet(e.target.value)}
+                    placeholder="42"
+                    min={0}
+                    max={160}
+                    className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none transition-all"
+                  />
+                </div>
+              </div>
+              <button
+                type="submit"
+                disabled={saveState === "saving"}
+                className="w-full flex items-center justify-center gap-2 py-3.5 bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-700 hover:to-teal-600 disabled:opacity-70 text-white font-semibold rounded-xl transition-all shadow-lg shadow-teal-500/25"
+              >
+                {saveState === "saving" ? (
+                  <>
+                    <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Kaydediliyor...
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-5 h-5" />
+                    Hedefi Kaydet & Planı Güncelle
+                  </>
+                )}
+              </button>
+            </form>
           </div>
         </div>
       </div>
