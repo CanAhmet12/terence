@@ -66,13 +66,13 @@ export default function AnalizPage() {
     }
 
     try {
-      const res = await api.getTeacherStudents(token);
-      const rows: StudentRow[] = (res as User[]).map((s, i) => ({
+      const res = await api.getRiskStudents(token);
+      const rows: StudentRow[] = res.map((s) => ({
         id: s.id,
         name: s.name,
-        net: 35 + (i * 5),
-        hedef: 50,
-        risk: (["green", "green", "yellow", "red"] as const)[i % 4],
+        net: s.current_net ?? 0,
+        hedef: s.target_net ?? 50,
+        risk: s.risk_level ?? "green",
       }));
       setStudents(rows);
     } catch {}
@@ -165,28 +165,29 @@ export default function AnalizPage() {
             Kazanım Bazlı Hata
           </h2>
           <p className="text-sm text-slate-600 mb-5">En çok hata yapılan kazanımlar — tekrar anlatım önerisi</p>
-          <div className="space-y-3">
-            {DEMO_KAZANIM.map((k) => (
-              <div key={k.kod} className="py-3 px-4 rounded-xl bg-slate-50 border border-slate-100">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <span className="font-mono text-xs font-bold text-teal-600 bg-teal-50 px-2 py-0.5 rounded">{k.kod}</span>
-                    <span className="font-medium text-slate-900 ml-2">{k.konu}</span>
+          {isDemo ? (
+            <div className="space-y-3">
+              {DEMO_KAZANIM.map((k) => (
+                <div key={k.kod} className="py-3 px-4 rounded-xl bg-slate-50 border border-slate-100">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <span className="font-mono text-xs font-bold text-teal-600 bg-teal-50 px-2 py-0.5 rounded">{k.kod}</span>
+                      <span className="font-medium text-slate-900 ml-2">{k.konu}</span>
+                    </div>
+                    <div className="text-right shrink-0 ml-2">
+                      <span className="text-red-600 font-bold">{k.hataSayisi}</span>
+                      <span className="text-slate-500 text-xs ml-1">hata</span>
+                    </div>
                   </div>
-                  <div className="text-right shrink-0 ml-2">
-                    <span className="text-red-600 font-bold">{k.hataSayisi}</span>
-                    <span className="text-slate-500 text-xs ml-1">hata</span>
+                  <div className="mt-2 h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                    <div className="h-full bg-red-400 rounded-full" style={{ width: `${Math.min((k.hataSayisi / 30) * 100, 100)}%` }} />
                   </div>
                 </div>
-                <div className="mt-2 h-1.5 bg-slate-200 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-red-400 rounded-full"
-                    style={{ width: `${Math.min((k.hataSayisi / 30) * 100, 100)}%` }}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-slate-400 text-sm text-center py-6">Kazanım analizi verisi için öğrencilerinizin deneme çözmesi gerekmektedir.</p>
+          )}
         </div>
 
         {/* En zor konular */}
@@ -196,24 +197,25 @@ export default function AnalizPage() {
             En Zor Konular
           </h2>
           <p className="text-sm text-slate-600 mb-5">%65+ yanlış oranı = Türkiye geneli zor kazanım</p>
-          <div className="space-y-4">
-            {DEMO_ZOR.map((z) => (
-              <div key={z.konu}>
-                <div className="flex justify-between mb-1.5">
-                  <span className="text-sm font-medium text-slate-800">{z.konu}</span>
-                  <span className={`text-sm font-bold ${z.yanlisOran >= 65 ? "text-red-600" : "text-amber-600"}`}>
-                    %{z.yanlisOran} yanlış
-                  </span>
+          {isDemo ? (
+            <div className="space-y-4">
+              {DEMO_ZOR.map((z) => (
+                <div key={z.konu}>
+                  <div className="flex justify-between mb-1.5">
+                    <span className="text-sm font-medium text-slate-800">{z.konu}</span>
+                    <span className={`text-sm font-bold ${z.yanlisOran >= 65 ? "text-red-600" : "text-amber-600"}`}>
+                      %{z.yanlisOran} yanlış
+                    </span>
+                  </div>
+                  <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                    <div className={`h-full rounded-full ${z.yanlisOran >= 65 ? "bg-red-400" : "bg-amber-400"}`} style={{ width: `${z.yanlisOran}%` }} />
+                  </div>
                 </div>
-                <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-                  <div
-                    className={`h-full rounded-full ${z.yanlisOran >= 65 ? "bg-red-400" : "bg-amber-400"}`}
-                    style={{ width: `${z.yanlisOran}%` }}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-slate-400 text-sm text-center py-6">Yeterli soru çözüm verisi biriktiğinde konular burada görünecektir.</p>
+          )}
         </div>
 
         {/* Zaman analizi */}
@@ -223,22 +225,23 @@ export default function AnalizPage() {
             Çözüm Süresi Analizi
           </h2>
           <p className="text-sm text-slate-600 mb-5">Ortalama çözüm süresi (dk/soru) — yüksek süre = zorluk işareti</p>
-          <div className="space-y-4">
-            {DEMO_ZAMAN.map((z) => (
-              <div key={z.konu}>
-                <div className="flex justify-between mb-1.5">
-                  <span className="text-sm font-medium text-slate-800">{z.konu}</span>
-                  <span className="text-sm font-bold text-teal-600">{z.ortalamaSure} dk/soru</span>
+          {isDemo ? (
+            <div className="space-y-4">
+              {DEMO_ZAMAN.map((z) => (
+                <div key={z.konu}>
+                  <div className="flex justify-between mb-1.5">
+                    <span className="text-sm font-medium text-slate-800">{z.konu}</span>
+                    <span className="text-sm font-bold text-teal-600">{z.ortalamaSure} dk/soru</span>
+                  </div>
+                  <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                    <div className="h-full bg-teal-400 rounded-full" style={{ width: `${(z.ortalamaSure / 5) * 100}%` }} />
+                  </div>
                 </div>
-                <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-teal-400 rounded-full"
-                    style={{ width: `${(z.ortalamaSure / 5) * 100}%` }}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-slate-400 text-sm text-center py-6">Çözüm süresi verisi birikmesi için daha fazla soru çözümü gereklidir.</p>
+          )}
         </div>
 
         {/* Sınıf genel özeti */}

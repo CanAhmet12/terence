@@ -15,27 +15,27 @@ const DEMO_COURSES: Course[] = [
 const DEMO_UNITS: Record<string, Unit[]> = {
   matematik: [
     {
-      id: 1, course_id: 1, title: "Sayılar ve Cebir", order: 1,
+      id: 1, course_id: 1, title: "Sayılar ve Cebir", sort_order: 1,
       topics: [
-        { id: 1, unit_id: 1, title: "Üslü İfadeler", kazanim_code: "M.10.1.1", kazanim_desc: "Üslü ifadeleri tanır ve hesaplar", order: 1, progress: "completed" },
-        { id: 2, unit_id: 1, title: "Köklü İfadeler", kazanim_code: "M.10.1.2", kazanim_desc: "Köklü sayıları hesaplar", order: 2, progress: "in_progress" },
-        { id: 3, unit_id: 1, title: "Denklemler", kazanim_code: "M.10.1.3", kazanim_desc: "Birinci dereceden denklemleri çözer", order: 3, progress: "not_started" },
+        { id: 1, unit_id: 1, title: "Üslü İfadeler", kazanim_code: "M.10.1.1", kazanim_desc: "Üslü ifadeleri tanır ve hesaplar", sort_order: 1, progress: "completed" },
+        { id: 2, unit_id: 1, title: "Köklü İfadeler", kazanim_code: "M.10.1.2", kazanim_desc: "Köklü sayıları hesaplar", sort_order: 2, progress: "in_progress" },
+        { id: 3, unit_id: 1, title: "Denklemler", kazanim_code: "M.10.1.3", kazanim_desc: "Birinci dereceden denklemleri çözer", sort_order: 3, progress: "not_started" },
       ],
     },
     {
-      id: 2, course_id: 1, title: "Fonksiyonlar", order: 2,
+      id: 2, course_id: 1, title: "Fonksiyonlar", sort_order: 2,
       topics: [
-        { id: 4, unit_id: 2, title: "Fonksiyon Tanımı", kazanim_code: "M.10.2.1", kazanim_desc: "Fonksiyon kavramını açıklar", order: 1, progress: "in_progress" },
-        { id: 5, unit_id: 2, title: "Bileşke Fonksiyon", kazanim_code: "M.10.2.2", kazanim_desc: "Bileşke fonksiyon hesaplar", order: 2, progress: "not_started" },
+        { id: 4, unit_id: 2, title: "Fonksiyon Tanımı", kazanim_code: "M.10.2.1", kazanim_desc: "Fonksiyon kavramını açıklar", sort_order: 1, progress: "in_progress" },
+        { id: 5, unit_id: 2, title: "Bileşke Fonksiyon", kazanim_code: "M.10.2.2", kazanim_desc: "Bileşke fonksiyon hesaplar", sort_order: 2, progress: "not_started" },
       ],
     },
   ],
   fizik: [
     {
-      id: 3, course_id: 2, title: "Kuvvet ve Hareket", order: 1,
+      id: 3, course_id: 2, title: "Kuvvet ve Hareket", sort_order: 1,
       topics: [
-        { id: 6, unit_id: 3, title: "Newton Yasaları", kazanim_code: "F.11.1.1", kazanim_desc: "Newton'un hareket yasalarını uygular", order: 1, progress: "completed" },
-        { id: 7, unit_id: 3, title: "Sürtünme Kuvveti", kazanim_code: "F.11.1.2", kazanim_desc: "Sürtünme kuvvetini hesaplar", order: 2, progress: "in_progress" },
+        { id: 6, unit_id: 3, title: "Newton Yasaları", kazanim_code: "F.11.1.1", kazanim_desc: "Newton'un hareket yasalarını uygular", sort_order: 1, progress: "completed" },
+        { id: 7, unit_id: 3, title: "Sürtünme Kuvveti", kazanim_code: "F.11.1.2", kazanim_desc: "Sürtünme kuvvetini hesaplar", sort_order: 2, progress: "in_progress" },
       ],
     },
   ],
@@ -70,9 +70,9 @@ export default function OgretmenDerslerPage() {
       return;
     }
     try {
-      const res = await api.getCourses();
-      setCourses(res.data);
-      if (res.data.length > 0) setSelectedCourseSlug(res.data[0].slug);
+      const res = await api.getCourses(token);
+      setCourses(res);
+      if (res.length > 0) setSelectedCourseSlug(res[0].slug);
     } catch {
       setCourses(DEMO_COURSES);
       setSelectedCourseSlug("matematik");

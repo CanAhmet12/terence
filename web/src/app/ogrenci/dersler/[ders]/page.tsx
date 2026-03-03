@@ -12,23 +12,23 @@ import {
 
 const DEMO_UNITS: Unit[] = [
   {
-    id: 1, course_id: 1, title: "Üslü Sayılar", order: 1,
+    id: 1, course_id: 1, title: "Üslü Sayılar", sort_order: 1,
     topics: [
-      { id: 1, unit_id: 1, title: "Üslü İfadeler", kazanim_code: "M.8.1.1", kazanim_desc: "Üslü ifadeleri tanır ve hesaplar", order: 1, progress: "completed" },
-      { id: 2, unit_id: 1, title: "Üslü İfadelerde İşlemler", kazanim_code: "M.8.1.2", kazanim_desc: "Üslü ifadelerle toplama ve çarpma yapar", order: 2, progress: "in_progress" },
+      { id: 1, unit_id: 1, title: "Üslü İfadeler", kazanim_code: "M.8.1.1", kazanim_desc: "Üslü ifadeleri tanır ve hesaplar", sort_order: 1, progress: "completed" },
+      { id: 2, unit_id: 1, title: "Üslü İfadelerde İşlemler", kazanim_code: "M.8.1.2", kazanim_desc: "Üslü ifadelerle toplama ve çarpma yapar", sort_order: 2, progress: "in_progress" },
     ],
   },
   {
-    id: 2, course_id: 1, title: "Köklü Sayılar", order: 2,
+    id: 2, course_id: 1, title: "Köklü Sayılar", sort_order: 2,
     topics: [
-      { id: 3, unit_id: 2, title: "Köklü İfadeler", kazanim_code: "M.8.2.1", kazanim_desc: "Kareköklü ifadeleri hesaplar", order: 1, progress: "not_started" },
+      { id: 3, unit_id: 2, title: "Köklü İfadeler", kazanim_code: "M.8.2.1", kazanim_desc: "Kareköklü ifadeleri hesaplar", sort_order: 1, progress: "not_started" },
     ],
   },
   {
-    id: 3, course_id: 1, title: "Cebirsel İfadeler", order: 3,
+    id: 3, course_id: 1, title: "Cebirsel İfadeler", sort_order: 3,
     topics: [
-      { id: 4, unit_id: 3, title: "Cebirsel Denklemler", kazanim_code: "M.8.3.1", kazanim_desc: "Birinci dereceden denklemleri çözer", order: 1, progress: "not_started" },
-      { id: 5, unit_id: 3, title: "Eşitsizlikler", kazanim_code: "M.8.3.2", kazanim_desc: "Birinci dereceden eşitsizlikleri çözer", order: 2, progress: "not_started" },
+      { id: 4, unit_id: 3, title: "Cebirsel Denklemler", kazanim_code: "M.8.3.1", kazanim_desc: "Birinci dereceden denklemleri çözer", sort_order: 1, progress: "not_started" },
+      { id: 5, unit_id: 3, title: "Eşitsizlikler", kazanim_code: "M.8.3.2", kazanim_desc: "Birinci dereceden eşitsizlikleri çözer", sort_order: 2, progress: "not_started" },
     ],
   },
 ];
@@ -64,17 +64,21 @@ export default function DersDetayPage() {
       setUnits(DEMO_UNITS);
       // Demo ilerleme durumu
       const pm: Record<number, ProgressType> = {};
-      DEMO_UNITS.forEach((u) => u.topics.forEach((t) => { pm[t.id] = t.progress ?? "not_started"; }));
+      DEMO_UNITS.forEach((u) => (u.topics ?? []).forEach((t) => { pm[t.id] = (t.progress as ProgressType) ?? "not_started"; }));
       setProgressMap(pm);
       setOpenUnitId(DEMO_UNITS[0]?.id ?? null);
       setLoading(false);
       return;
     }
     try {
-      const res = await api.getCourseUnits(slug, token ?? undefined);
+      // Önce slug'dan kurs id'sini bul, sonra üniteleri al
+      const courses = await api.getCourses(token);
+      const course = courses.find((c) => c.slug === slug) ?? courses[0];
+      const courseId = course?.id ?? slug;
+      const res = await api.getCourseUnits(courseId, token ?? undefined);
       setUnits(res);
       const pm: Record<number, ProgressType> = {};
-      res.forEach((u) => u.topics.forEach((t) => { pm[t.id] = t.progress ?? "not_started"; }));
+      res.forEach((u) => (u.topics ?? []).forEach((t) => { pm[t.id] = (t.progress as ProgressType) ?? "not_started"; }));
       setProgressMap(pm);
       if (res.length > 0) setOpenUnitId(res[0].id);
     } catch {
@@ -106,7 +110,7 @@ export default function DersDetayPage() {
     }
   };
 
-  const updateProgress = async (topicId: number, status: ProgressType) => {
+  const updateProgress = async (topicId: number, status: "in_progress" | "completed") => {
     setProgressMap((prev) => ({ ...prev, [topicId]: status }));
     if (token && !isDemo) {
       try {
@@ -118,7 +122,7 @@ export default function DersDetayPage() {
   };
 
   // Toplam ilerleme hesapla
-  const allTopics = units.flatMap((u) => u.topics);
+  const allTopics = units.flatMap((u) => u.topics ?? []);
   const completedCount = allTopics.filter((t) => progressMap[t.id] === "completed").length;
   const totalCount = allTopics.length;
   const overallPct = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;

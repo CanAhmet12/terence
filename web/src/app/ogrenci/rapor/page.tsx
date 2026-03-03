@@ -29,14 +29,15 @@ export default function RaporPage() {
   const loadData = useCallback(async () => {
     if (!token || isDemo) {
       setStats({
-        total_questions_answered: 1240,
-        correct_count: 980,
-        wrong_count: 260,
-        net_score: 52,
+        tasks_done_today: 5,
+        tasks_total_today: 8,
         study_time_today_seconds: 9240,
-        study_time_week_seconds: 45900,
+        study_time_weekly_seconds: 45900,
+        xp_points: 1240,
+        level: 5,
+        current_net: 52,
+        target_net: 75,
         weekly_nets: [42, 45, 43, 48, 47, 49, 52],
-        streak_days: 7,
       });
       setGoal({
         target_net: 75,
@@ -50,7 +51,7 @@ export default function RaporPage() {
       return;
     }
     const [statsRes, goalRes] = await Promise.allSettled([
-      api.getStatistics(token),
+      api.getPlanStats(token),
       api.getGoalAnalysis(token),
     ]);
     if (statsRes.status === "fulfilled") setStats(statsRes.value);
@@ -63,7 +64,7 @@ export default function RaporPage() {
   const weeklyNets = stats?.weekly_nets ?? [];
   const maxNet = weeklyNets.length > 0 ? Math.max(...weeklyNets, 1) : 1;
   const netArtis = weeklyNets.length >= 2 ? weeklyNets[weeklyNets.length - 1] - weeklyNets[0] : 0;
-  const successRate = stats ? Math.round((stats.correct_count / Math.max(stats.total_questions_answered, 1)) * 100) : 0;
+  const tasksDoneRatio = stats ? Math.round((stats.tasks_done_today / Math.max(stats.tasks_total_today, 1)) * 100) : 0;
 
   const summaryCards = [
     {
@@ -71,22 +72,22 @@ export default function RaporPage() {
       color: "text-teal-600",
       bg: "bg-teal-50",
       label: "Çalışma (Bu Hafta)",
-      value: loading ? null : secondsToHuman(stats?.study_time_week_seconds ?? 0),
+      value: loading ? null : secondsToHuman(stats?.study_time_weekly_seconds ?? 0),
       sub: loading ? null : `Bugün: ${secondsToHuman(stats?.study_time_today_seconds ?? 0)}`,
     },
     {
       icon: FileQuestion,
       color: "text-indigo-600",
       bg: "bg-indigo-50",
-      label: "Çözülen Soru",
-      value: loading ? null : stats?.total_questions_answered.toLocaleString("tr") ?? "0",
-      sub: loading ? null : `Doğru: ${stats?.correct_count ?? 0} · Yanlış: ${stats?.wrong_count ?? 0}`,
+      label: "Bugünkü Görevler",
+      value: loading ? null : `${stats?.tasks_done_today ?? 0}/${stats?.tasks_total_today ?? 0}`,
+      sub: loading ? null : `%${tasksDoneRatio} tamamlandı`,
     },
     {
       icon: TrendingUp,
       color: "text-teal-600",
       bg: "bg-teal-50",
-      label: "Net Artışı (7 Gün)",
+      label: "Net Artışı (Hafta)",
       value: loading ? null : (netArtis >= 0 ? `+${netArtis}` : `${netArtis}`),
       sub: loading ? null : `Hedef: +${goal?.weekly_net_needed ?? "—"}`,
       valueColor: netArtis >= 0 ? "text-teal-600" : "text-red-600",
@@ -95,9 +96,9 @@ export default function RaporPage() {
       icon: AlertTriangle,
       color: "text-amber-600",
       bg: "bg-amber-50",
-      label: "Doğruluk Oranı",
-      value: loading ? null : `%${successRate}`,
-      sub: loading ? null : `${stats?.streak_days ?? 0} günlük seri`,
+      label: "XP Puanı",
+      value: loading ? null : `${(stats?.xp_points ?? 0).toLocaleString("tr")}`,
+      sub: loading ? null : `Seviye ${stats?.level ?? 1}`,
     },
   ];
 
@@ -151,7 +152,7 @@ export default function RaporPage() {
           ) : weeklyNets.length > 0 ? (
             <>
               <div className="flex items-end gap-2 h-48">
-                {weeklyNets.map((val, i) => (
+                {weeklyNets.map((val: number, i: number) => (
                   <div key={i} className="flex-1 flex flex-col items-center gap-2">
                     <div
                       className="w-full rounded-t-lg bg-teal-500 min-h-[4px] transition-all hover:bg-teal-600 relative group"
@@ -223,14 +224,14 @@ export default function RaporPage() {
       </div>
 
       {/* Çalışma serisi */}
-      {!loading && stats && stats.streak_days > 0 && (
+      {!loading && stats && (stats.streak_days ?? 0) > 0 && (
         <div className="bg-gradient-to-r from-teal-600 to-teal-500 rounded-2xl p-6 text-white">
           <div className="flex items-center gap-4">
             <div className="w-14 h-14 rounded-2xl bg-white/20 flex items-center justify-center">
               <Zap className="w-8 h-8 text-white" />
             </div>
             <div>
-              <h3 className="font-bold text-xl">{stats.streak_days} Günlük Seri!</h3>
+              <h3 className="font-bold text-xl">{stats.streak_days ?? 0} Günlük Seri!</h3>
               <p className="text-teal-100 text-sm mt-0.5">
                 Kesintisiz çalışıyorsun. Devam et, seriyi kırma!
               </p>

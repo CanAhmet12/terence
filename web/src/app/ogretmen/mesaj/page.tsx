@@ -88,11 +88,12 @@ export default function MesajPage() {
     try {
       const res = await api.sendMessage(token, {
         recipient_type: tip === "sinif" ? "class" : "student",
-        recipient_id: recipientId,
+        recipient_id: typeof recipientId === "string" ? undefined : recipientId,
+        recipient_name: typeof recipientId === "string" ? recipientId : undefined,
         content: mesaj,
         send_sms: sendSms,
       });
-      setMessages((prev) => [res, ...prev]);
+      setMessages((prev) => [res.message, ...prev]);
       setSent(true);
       setTimeout(() => setSent(false), 3000);
       setMesaj("");

@@ -70,7 +70,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // Gerçek token için sunucudan profil doğrula
     api
-      .getProfile(token)
+      .getMe(token)
       .then((user) => {
         localStorage.setItem(USER_KEY, JSON.stringify(user));
         setState({ user, token, loading: false, error: null });
@@ -130,8 +130,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }) => {
       setState((s) => ({ ...s, loading: true, error: null }));
       try {
-        await api.register(data);
-        setState((s) => ({ ...s, loading: false, error: null }));
+        const res = await api.register(data);
+        // Backend kayıt sonrası token dönüyor — direkt giriş yap
+        if (res.token && res.user) {
+          if (typeof window !== "undefined") {
+            localStorage.setItem(TOKEN_KEY, res.token);
+            localStorage.setItem(USER_KEY, JSON.stringify(res.user));
+          }
+          setState({ user: res.user, token: res.token, loading: false, error: null });
+        } else {
+          setState((s) => ({ ...s, loading: false, error: null }));
+        }
       } catch (e: unknown) {
         const raw = e instanceof Error ? e.message : "Kayıt başarısız";
         const msg = translateError(raw);

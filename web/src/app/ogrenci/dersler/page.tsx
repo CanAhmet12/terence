@@ -42,8 +42,8 @@ export default function OgrenciDerslerPage() {
       return;
     }
     try {
-      const res = await api.getCourses();
-      setCourses(res.data);
+      const res = await api.getCourses(token);
+      setCourses(res);
     } catch {
       setCourses(DEMO_COURSES);
     }

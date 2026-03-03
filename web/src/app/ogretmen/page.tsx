@@ -3,78 +3,56 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
-import { api, TeacherStatistics, User } from "@/lib/api";
+import { api, RiskStudent } from "@/lib/api";
 import {
-  AlertTriangle,
-  Users,
-  TrendingDown,
-  Bell,
-  CheckCircle,
-  BookOpen,
-  BarChart2,
-  Clock,
+  AlertTriangle, Users, TrendingDown, CheckCircle,
+  BookOpen, BarChart2, Clock, Plus, Video, Bell
 } from "lucide-react";
-
-type RiskStudent = {
-  id: number;
-  name: string;
-  risk: "green" | "yellow" | "red";
-  predicted_net: number;
-  weekly_change: number;
-};
 
 function Skeleton({ className }: { className?: string }) {
   return <div className={`bg-slate-100 rounded-xl animate-pulse ${className ?? ""}`} />;
 }
 
+const DEMO_RISK: RiskStudent[] = [
+  { id: 1, name: "Elif K.", risk_level: "green", current_net: 78, target_net: 80, days_inactive: 0 },
+  { id: 2, name: "Can D.", risk_level: "green", current_net: 72, target_net: 75, days_inactive: 1 },
+  { id: 3, name: "Zeynep K.", risk_level: "yellow", current_net: 52, target_net: 70, days_inactive: 4 },
+  { id: 4, name: "Ahmet Y.", risk_level: "red", current_net: 28, target_net: 60, days_inactive: 9 },
+];
+
 export default function TeacherDashboardPage() {
   const { user, token } = useAuth();
-  const isDemo = token?.startsWith("demo-token-");
+  const isDemo = !token || token.startsWith("demo-token-");
 
-  const [stats, setStats] = useState<TeacherStatistics | null>(null);
-  const [students, setStudents] = useState<User[]>([]);
+  const [stats, setStats] = useState<{ total_students: number; active_today: number; average_net: number; assignment_count: number } | null>(null);
+  const [riskStudents, setRiskStudents] = useState<RiskStudent[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Demo verisi
-  const demoStudents: RiskStudent[] = [
-    { id: 1, name: "Elif K.", risk: "green", predicted_net: 78, weekly_change: 8 },
-    { id: 2, name: "Can D.", risk: "green", predicted_net: 72, weekly_change: 5 },
-    { id: 3, name: "Zeynep K.", risk: "yellow", predicted_net: 52, weekly_change: -2 },
-    { id: 4, name: "Ahmet Y.", risk: "red", predicted_net: 38, weekly_change: -5 },
-  ];
-
   const loadData = useCallback(async () => {
-    if (!token || isDemo) {
+    if (isDemo) {
+      setRiskStudents(DEMO_RISK);
+      setStats({ total_students: 28, active_today: 14, average_net: 48.5, assignment_count: 6 });
       setLoading(false);
       return;
     }
     try {
-      const [statsRes, studentsRes] = await Promise.allSettled([
-        api.getTeacherStatistics(token),
-        api.getTeacherStudents(token),
+      const [statsRes, riskRes] = await Promise.allSettled([
+        api.getTeacherStats(token!),
+        api.getRiskStudents(token!),
       ]);
       if (statsRes.status === "fulfilled") setStats(statsRes.value);
-      if (studentsRes.status === "fulfilled") setStudents(studentsRes.value);
+      if (riskRes.status === "fulfilled") setRiskStudents(riskRes.value);
     } catch {}
     setLoading(false);
   }, [token, isDemo]);
 
   useEffect(() => { loadData(); }, [loadData]);
 
-  const riskStudents: RiskStudent[] = isDemo
-    ? demoStudents
-    : students.slice(0, 8).map((s, i) => ({
-        id: s.id,
-        name: s.name,
-        risk: (["green", "green", "yellow", "red"] as const)[i % 4],
-        predicted_net: 40 + Math.floor(Math.random() * 40),
-        weekly_change: Math.floor(Math.random() * 10) - 4,
-      }));
-
-  const riskCount = riskStudents.filter((s) => s.risk === "red").length;
-  const totalStudents = stats?.total_students ?? (isDemo ? 28 : students.length);
-  const activeLesson = stats?.active_lessons ?? (isDemo ? 6 : 0);
-  const avgSuccess = stats?.average_success_rate ?? (isDemo ? 48.5 : 0);
+  const riskCount = riskStudents.filter((s) => s.risk_level === "red").length;
+  const totalStudents = stats?.total_students ?? 0;
+  const activeToday = stats?.active_today ?? 0;
+  const avgNet = stats?.average_net ?? 0;
+  const assignmentCount = stats?.assignment_count ?? 0;
 
   return (
     <div className="p-6 lg:p-10">
@@ -96,9 +74,9 @@ export default function TeacherDashboardPage() {
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
         {[
           { icon: Users, bg: "bg-teal-50", color: "text-teal-600", label: "Toplam Öğrenci", value: loading ? null : `${totalStudents}` },
-          { icon: BookOpen, bg: "bg-indigo-50", color: "text-indigo-600", label: "Aktif Ders", value: loading ? null : `${activeLesson}` },
-          { icon: TrendingDown, bg: "bg-red-50", color: "text-red-600", label: "Riskteki Öğrenci", value: loading ? null : `${riskCount}` },
-          { icon: BarChart2, bg: "bg-amber-50", color: "text-amber-600", label: "Ortalama Net", value: loading ? null : `${avgSuccess}` },
+          { icon: CheckCircle, bg: "bg-indigo-50", color: "text-indigo-600", label: "Bugün Aktif", value: loading ? null : `${activeToday}` },
+          { icon: AlertTriangle, bg: "bg-red-50", color: "text-red-600", label: "Riskteki Öğrenci", value: loading ? null : `${riskCount}` },
+          { icon: BarChart2, bg: "bg-amber-50", color: "text-amber-600", label: "Ortalama Net", value: loading ? null : `${avgNet}` },
         ].map(({ icon: Icon, bg, color, label, value }) => (
           <div key={label} className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm hover:shadow-md transition-shadow">
             <div className="flex items-center gap-3 mb-3">
@@ -143,9 +121,9 @@ export default function TeacherDashboardPage() {
               <div
                 key={o.id}
                 className={`p-5 rounded-2xl border transition-all hover:shadow-md ${
-                  o.risk === "green"
+                  o.risk_level === "green"
                     ? "bg-emerald-50 border-emerald-200"
-                    : o.risk === "yellow"
+                    : o.risk_level === "yellow"
                     ? "bg-amber-50 border-amber-200"
                     : "bg-red-50 border-red-200"
                 }`}
@@ -153,13 +131,16 @@ export default function TeacherDashboardPage() {
                 <div className="flex items-center justify-between mb-2">
                   <span className="font-semibold text-slate-900 truncate pr-2">{o.name}</span>
                   <span className={`w-3 h-3 rounded-full shrink-0 ${
-                    o.risk === "green" ? "bg-emerald-500" : o.risk === "yellow" ? "bg-amber-500" : "bg-red-500"
+                    o.risk_level === "green" ? "bg-emerald-500" : o.risk_level === "yellow" ? "bg-amber-500" : "bg-red-500"
                   }`} />
                 </div>
-                <p className="text-2xl font-bold text-slate-900">{o.predicted_net} net</p>
-                <p className={`text-sm font-medium mt-0.5 ${o.weekly_change >= 0 ? "text-emerald-600" : "text-red-600"}`}>
-                  {o.weekly_change >= 0 ? "+" : ""}{o.weekly_change} haftalık
-                </p>
+                <p className="text-2xl font-bold text-slate-900">{o.current_net} net</p>
+                {o.target_net && (
+                  <p className="text-xs text-slate-500 mt-0.5">Hedef: {o.target_net}</p>
+                )}
+                {o.days_inactive !== undefined && o.days_inactive > 2 && (
+                  <p className="text-xs text-amber-600 mt-1">{o.days_inactive} gün pasif</p>
+                )}
               </div>
             ))}
           </div>
@@ -176,11 +157,11 @@ export default function TeacherDashboardPage() {
           </h2>
           {loading ? (
             <div className="space-y-3">{[1, 2, 3].map((i) => <Skeleton key={i} className="h-12" />)}</div>
-          ) : students.length === 0 && !isDemo ? (
+          ) : riskStudents.length === 0 && !isDemo ? (
             <p className="text-sm text-slate-500 py-4">Henüz öğrenci aktivitesi yok.</p>
           ) : (
             <ul className="space-y-3">
-              {(isDemo ? ["Elif K.", "Can D.", "Zeynep K."] : students.slice(0, 3).map((s) => s.name)).map((name) => (
+              {(isDemo ? ["Elif K.", "Can D.", "Zeynep K."] : riskStudents.slice(0, 3).map((s) => s.name)).map((name) => (
                 <li key={name} className="flex items-center justify-between py-3 px-4 rounded-xl bg-slate-50/80 border border-slate-100">
                   <span className="font-medium text-slate-900">{name}</span>
                   <span className="text-xs text-teal-600 font-semibold bg-teal-50 px-2.5 py-1 rounded-lg">Bugün çalıştı</span>
@@ -203,19 +184,19 @@ export default function TeacherDashboardPage() {
             <li className="flex items-center justify-between py-3 px-4 rounded-xl bg-slate-50/80">
               <span className="text-slate-700 font-medium">3 gün çalışmayan</span>
               <span className={`text-sm font-bold ${riskCount > 0 ? "text-red-600" : "text-slate-400"}`}>
-                {riskCount} öğrenci
+                {riskStudents.filter((s) => s.days_inactive !== undefined && s.days_inactive >= 3).length} öğrenci
               </span>
             </li>
             <li className="flex items-center justify-between py-3 px-4 rounded-xl bg-slate-50/80">
               <span className="text-slate-700 font-medium">Net düşüşü yaşayan</span>
-              <span className={`text-sm font-bold ${riskStudents.filter((s) => s.weekly_change < 0).length > 0 ? "text-amber-600" : "text-slate-400"}`}>
-                {riskStudents.filter((s) => s.weekly_change < 0).length} öğrenci
+              <span className={`text-sm font-bold ${riskCount > 0 ? "text-amber-600" : "text-slate-400"}`}>
+                {riskStudents.filter((s) => s.risk_level === "red" || s.risk_level === "yellow").length} öğrenci
               </span>
             </li>
             <li className="flex items-center justify-between py-3 px-4 rounded-xl bg-slate-50/80">
               <span className="text-slate-700 font-medium">Hedef sınırında</span>
               <span className="text-sm font-bold text-amber-600">
-                {riskStudents.filter((s) => s.risk === "yellow").length} öğrenci
+                {riskStudents.filter((s) => s.risk_level === "yellow").length} öğrenci
               </span>
             </li>
           </ul>

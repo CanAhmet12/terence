@@ -217,13 +217,16 @@ export default function PaketlerPage() {
     setLoadingPlan(plan.key);
     setSelectedPlan(plan);
     try {
-      const res = await api.createPayment(token, {
-        plan: plan.key,
-        billing_period: billing,
-        success_url: `${window.location.origin}/odeme-basarili`,
-        fail_url: `${window.location.origin}/odeme-hatali`,
+      // Plan ID'leri: bronze=1, plus=2, pro=3
+      const planIdMap: Record<string, number> = { bronze: 1, plus: 2, pro: 3 };
+      const planId = planIdMap[plan.key];
+      if (!planId) throw new Error("Geçersiz paket");
+
+      const res = await api.initiatePayment(token, {
+        plan_id: planId,
+        billing_cycle: billing,
       });
-      setIframeToken(res.iframe_token);
+      setIframeToken(res.token);
     } catch {
       // Gerçek token gelmezse modal yine de açılır, iframe "yükleniyor" gösterir
       setIframeToken(null);

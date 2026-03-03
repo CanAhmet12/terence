@@ -16,7 +16,7 @@ function OdemeBasariliContent() {
   // Ödeme başarılıysa kullanıcı profilini güncelle
   useEffect(() => {
     if (!token) return;
-    api.getProfile(token)
+    api.getMe(token)
       .then((updatedUser) => { updateUser(updatedUser); setVerified(true); })
       .catch(() => setVerified(true));
   }, [token, updateUser]);

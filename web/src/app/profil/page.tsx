@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { useAuth } from "@/lib/auth-context";
@@ -65,7 +66,7 @@ export default function ProfilPage() {
     setPhotoPreview(user.profile_photo_url || null);
 
     if (user.role === "student" && user.goal) {
-      setSinif(user.goal.exam_type || "");
+      setSinif(String(user.goal.grade ?? ""));
       setAlan(user.goal.exam_type || "TYT-AYT");
       setHedefOkul(user.goal.target_school || "");
       setHedefBolum(user.goal.target_department || "");
@@ -110,6 +111,7 @@ export default function ProfilPage() {
       if (user?.role === "student") {
         await api.updateGoal(token, {
           exam_type: alan as "TYT" | "AYT" | "LGS" | "KPSS",
+          grade: sinif ? Number(sinif) : undefined,
           target_school: hedefOkul || undefined,
           target_department: hedefBolum || undefined,
         });
@@ -163,8 +165,12 @@ export default function ProfilPage() {
                 <div className="relative group">
                   <div className="w-24 h-24 rounded-2xl overflow-hidden bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center shadow-lg shadow-teal-500/25">
                     {photoPreview ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={photoPreview} alt="Profil" className="w-full h-full object-cover" />
+                      photoPreview.startsWith("blob:") ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={photoPreview} alt="Profil önizleme" className="w-full h-full object-cover" />
+                      ) : (
+                        <Image src={photoPreview} alt="Profil fotoğrafı" width={96} height={96} className="w-full h-full object-cover" />
+                      )
                     ) : (
                       <span className="text-white font-bold text-2xl">{initials}</span>
                     )}

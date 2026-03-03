@@ -57,18 +57,15 @@ export default function AdminDashboardPage() {
     }
 
     try {
-      // Admin stats endpoint'i yoksa kategori + öğretmen sayısından yaklaşık hesapla
-      const [teachersRes] = await Promise.allSettled([
-        api.getTeachers(),
-      ]);
+      const statsRes = await Promise.allSettled([api.getAdminStats(token!)]);
+      const adminStats = statsRes[0].status === "fulfilled" ? statsRes[0].value : null;
 
-      const teacherCount = teachersRes.status === "fulfilled" ? teachersRes.value.data.length : 0;
       setStats({
-        total_students: 0,
-        total_teachers: teacherCount,
-        monthly_revenue: 0,
-        new_users_this_week: 0,
-        active_users_today: 0,
+        total_students: adminStats?.total_students ?? 0,
+        total_teachers: adminStats?.total_teachers ?? 0,
+        monthly_revenue: adminStats?.monthly_revenue ?? 0,
+        new_users_this_week: adminStats?.active_users_today ?? 0,
+        active_users_today: adminStats?.active_users_today ?? 0,
         top_content: [],
       });
     } catch {}

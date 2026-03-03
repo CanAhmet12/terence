@@ -65,7 +65,7 @@ export default function RozetPage() {
 
   useEffect(() => { loadData(); }, [loadData]);
 
-  const xpPct = badgeData ? Math.round((badgeData.xp / badgeData.xp_next_level) * 100) : 0;
+  const xpPct = badgeData ? Math.round(((badgeData.xp ?? 0) / (badgeData.xp_next_level ?? 100)) * 100) : 0;
   const earnedCount = badgeData?.badges.filter((b) => b.earned).length ?? 0;
 
   return (
@@ -106,7 +106,7 @@ export default function RozetPage() {
                 <div className="h-full bg-white rounded-full transition-all duration-700" style={{ width: `${xpPct}%` }} />
               </div>
               <p className="text-teal-100 text-xs mt-2">
-                Bir sonraki seviyeye {badgeData.xp_next_level - badgeData.xp} XP · {earnedCount} rozet kazanıldı
+                Bir sonraki seviyeye {(badgeData.xp_next_level ?? 0) - (badgeData.xp ?? 0)} XP · {earnedCount} rozet kazanıldı
               </p>
             </div>
           </div>
@@ -127,7 +127,7 @@ export default function RozetPage() {
             <div>
               <p className="font-bold text-slate-900 text-lg">{badgeData.weekly_champion.name}</p>
               <p className="text-sm text-slate-600">
-                {Math.floor(badgeData.weekly_champion.study_minutes / 60)}s {badgeData.weekly_champion.study_minutes % 60}dk çalışma
+                {Math.floor((badgeData.weekly_champion.study_minutes ?? 0) / 60)}s {(badgeData.weekly_champion.study_minutes ?? 0) % 60}dk çalışma
                 · +{badgeData.weekly_champion.net_increase} net artış
               </p>
             </div>
@@ -190,7 +190,7 @@ export default function RozetPage() {
                     {entry.is_current_user && <span className="ml-2 text-xs text-teal-500">(Sen)</span>}
                   </p>
                   <p className="text-xs text-slate-400">
-                    {Math.floor(entry.study_minutes / 60)}s {entry.study_minutes % 60}dk çalışma
+                    {Math.floor((entry.study_minutes ?? 0) / 60)}s {(entry.study_minutes ?? 0) % 60}dk çalışma
                   </p>
                 </div>
 

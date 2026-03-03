@@ -12,16 +12,16 @@ import {
 // ─── Demo verisi ──────────────────────────────────────────────────────────────
 const DEMO_LESSONS: TeacherLesson[] = [
   {
-    id: 1, title: "Matematik — Limit ve Türev", class_name: "10-A Matematik",
+    id: 1, title: "Matematik — Limit ve Türev",
     scheduled_at: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
-    duration_minutes: 45, is_recurring: true,
-    meeting_url: "https://terence.daily.co/demo-room", status: "upcoming",
+    duration_minutes: 45, daily_room_url: "https://terence.daily.co/demo-room", status: "scheduled",
+    class_room: { id: 1, name: "10-A Matematik" },
   },
   {
-    id: 2, title: "Fizik — Hareket", class_name: "11-A Fizik",
+    id: 2, title: "Fizik — Hareket",
     scheduled_at: new Date(Date.now() + 25 * 60 * 60 * 1000).toISOString(),
-    duration_minutes: 40, is_recurring: false,
-    meeting_url: "", status: "upcoming",
+    duration_minutes: 40, status: "scheduled",
+    class_room: { id: 2, name: "11-A Fizik" },
   },
 ];
 
@@ -62,7 +62,7 @@ function LiveClassRoom({
 }: { lesson: TeacherLesson; room: VideoRoom | null; onClose: () => void }) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [fullscreen, setFullscreen] = useState(false);
-  const roomUrl = room?.room_url || lesson.meeting_url;
+  const roomUrl = room?.room_url || lesson.daily_room_url;
 
   const handleFullscreen = () => {
     if (!fullscreen) {
@@ -81,7 +81,7 @@ function LiveClassRoom({
       <div className="flex items-center justify-between px-6 py-3 bg-slate-900 border-b border-slate-700">
         <div className="flex items-center gap-3">
           <div className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse" />
-          <span className="text-white font-semibold text-sm">{lesson.title || lesson.class_name}</span>
+          <span className="text-white font-semibold text-sm">{lesson.title || lesson.class_room?.name}</span>
           <span className="text-slate-400 text-xs">{lesson.duration_minutes} dk</span>
         </div>
         <div className="flex items-center gap-2">
@@ -164,7 +164,7 @@ export default function OgrenciCanliDersPage() {
         const room = await api.getVideoRoom(token, lesson.id);
         setActiveRoom(room);
       } else {
-        setActiveRoom({ room_id: "demo", room_url: lesson.meeting_url || "https://terence.daily.co/demo", lesson_id: lesson.id });
+        setActiveRoom({ room_url: lesson.daily_room_url || "https://terence.daily.co/demo" });
       }
       setActiveLesson(lesson);
     } catch (e) {
@@ -177,8 +177,8 @@ export default function OgrenciCanliDersPage() {
     return <LiveClassRoom lesson={activeLesson} room={activeRoom} onClose={() => { setActiveLesson(null); setActiveRoom(null); }} />;
   }
 
-  const upcoming = lessons.filter((l) => l.status !== "finished");
-  const past = lessons.filter((l) => l.status === "finished");
+  const upcoming = lessons.filter((l) => l.status !== "ended");
+  const past = lessons.filter((l) => l.status === "ended");
 
   return (
     <div className="p-8 lg:p-12">
@@ -224,8 +224,8 @@ export default function OgrenciCanliDersPage() {
         ) : (
           <div className="space-y-4">
             {upcoming.map((lesson) => {
-              const live = isLive(lesson.scheduled_at, lesson.duration_minutes);
-              const soon = isWithin15Min(lesson.scheduled_at);
+              const live = isLive(lesson.scheduled_at ?? "", lesson.duration_minutes ?? 60);
+              const soon = isWithin15Min(lesson.scheduled_at ?? "");
               const joining = joiningId === lesson.id;
 
               return (
@@ -249,7 +249,7 @@ export default function OgrenciCanliDersPage() {
                       </div>
                       <div>
                         <div className="flex items-center gap-2 mb-1">
-                          <h3 className="font-bold text-slate-900">{lesson.title || lesson.class_name}</h3>
+                          <h3 className="font-bold text-slate-900">{lesson.title || lesson.class_room?.name}</h3>
                           {live && (
                             <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-green-100 text-green-700 text-xs font-bold animate-pulse">
                               <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
@@ -265,7 +265,7 @@ export default function OgrenciCanliDersPage() {
                         <p className="text-sm text-slate-600 flex items-center gap-3">
                           <span className="flex items-center gap-1">
                             <Calendar className="w-3.5 h-3.5" />
-                            {fmtDate(lesson.scheduled_at)}
+                            {fmtDate(lesson.scheduled_at ?? "")}
                           </span>
                           <span className="flex items-center gap-1">
                             <Clock className="w-3.5 h-3.5" />
@@ -275,14 +275,14 @@ export default function OgrenciCanliDersPage() {
                         {!live && (
                           <p className="text-xs text-slate-400 mt-1 flex items-center gap-1">
                             <Clock className="w-3 h-3" />
-                            {timeUntil(lesson.scheduled_at)}
+                            {timeUntil(lesson.scheduled_at ?? "")}
                           </p>
                         )}
                       </div>
                     </div>
 
                     {/* Katıl butonu */}
-                    {(live || soon || isDemo) && lesson.meeting_url ? (
+                    {(live || soon || isDemo) && lesson.daily_room_url ? (
                       <button
                         onClick={() => handleJoin(lesson)}
                         disabled={joining}
@@ -298,9 +298,9 @@ export default function OgrenciCanliDersPage() {
                           <><Play className="w-4 h-4" /> Derse Katıl</>
                         )}
                       </button>
-                    ) : lesson.meeting_url ? (
+                    ) : lesson.daily_room_url ? (
                       <a
-                        href={lesson.meeting_url}
+                        href={lesson.daily_room_url}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 border-slate-200 text-slate-600 font-semibold text-sm hover:border-teal-300 hover:text-teal-600 transition-all"
@@ -353,8 +353,8 @@ export default function OgrenciCanliDersPage() {
             {past.slice(0, 5).map((l) => (
               <div key={l.id} className="flex items-center justify-between p-4">
                 <div>
-                  <p className="font-medium text-slate-700 text-sm">{l.title || l.class_name}</p>
-                  <p className="text-xs text-slate-400 mt-0.5">{fmtDate(l.scheduled_at)}</p>
+                  <p className="font-medium text-slate-700 text-sm">{l.title || l.class_room?.name}</p>
+                  <p className="text-xs text-slate-400 mt-0.5">{fmtDate(l.scheduled_at ?? "")}</p>
                 </div>
                 <span className="text-xs px-2.5 py-1 rounded-full bg-slate-100 text-slate-500 font-medium">
                   Tamamlandı

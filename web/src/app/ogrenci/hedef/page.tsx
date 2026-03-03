@@ -59,7 +59,7 @@ export default function HedefPage() {
       setAnalysis(res);
       // Formu mevcut hedefle doldur
       if (user?.goal) {
-        setExamType(user.goal.exam_type ?? "TYT");
+        setExamType((user.goal.exam_type as GoalInput["exam_type"]) ?? "TYT");
         setTargetSchool(user.goal.target_school ?? "");
         setTargetDept(user.goal.target_department ?? "");
         setTargetNet(String(user.goal.target_net ?? ""));
@@ -84,14 +84,17 @@ export default function HedefPage() {
     setSaveState("saving");
     setSaveError("");
     try {
-      const updated = await api.updateGoal(token, {
+      const updatedGoal = await api.updateGoal(token, {
         exam_type: examType,
         target_school: targetSchool || undefined,
         target_department: targetDept || undefined,
         target_net: targetNet ? parseInt(targetNet) : undefined,
         current_net: currentNet ? parseInt(currentNet) : undefined,
       });
-      updateUser(updated);
+      // Mevcut kullanıcıyı goal ile güncelle
+      if (user) {
+        updateUser({ ...user, goal: updatedGoal });
+      }
 
       // Analizi yenile
       const newAnalysis = await api.getGoalAnalysis(token);
@@ -111,7 +114,7 @@ export default function HedefPage() {
     yellow: { bg: "bg-amber-50", border: "border-amber-100", text: "text-amber-700", icon: AlertTriangle, label: "Sınır Durumda — Dikkat" },
     red: { bg: "bg-red-50", border: "border-red-100", text: "text-red-700", icon: AlertTriangle, label: "Yüksek Risk — Acil Müdahale" },
   };
-  const riskLevel = analysis?.risk_level ?? "green";
+  const riskLevel = (analysis?.risk_level ?? "green") as "green" | "yellow" | "red";
   const risk = riskConfig[riskLevel];
   const RiskIcon = risk.icon;
 

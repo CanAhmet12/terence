@@ -33,7 +33,7 @@ export default function VeliDashboardPage() {
     }
     try {
       const res = await api.getChildSummary(token);
-      setSummary(res);
+      if (res) setSummary(res);
     } catch {}
     setLoading(false);
   }, [token, isDemo]);
@@ -61,7 +61,7 @@ export default function VeliDashboardPage() {
   };
   const risk = riskColors[riskLevel];
 
-  const nets = demoNets;
+  const nets = isDemo ? demoNets : (summary?.weekly_nets ?? demoNets);
   const maxNet = Math.max(...nets, 1);
 
   return (
@@ -162,29 +162,50 @@ export default function VeliDashboardPage() {
           </p>
           {loading ? (
             <div className="space-y-3">{[1, 2, 3].map((i) => <Skeleton key={i} className="h-12" />)}</div>
-          ) : (
+          ) : summary?.weak_subjects?.length ? (
             <ul className="space-y-3">
-              {[
-                { ders: "Matematik", yuzde: 65 },
-                { ders: "Fizik", yuzde: 72 },
-                { ders: "Kimya", yuzde: 80 },
-              ].map(({ ders, yuzde }) => (
-                <li key={ders} className="py-3 px-4 rounded-xl bg-slate-50 border border-slate-100">
+              {summary.weak_subjects.map(({ subject, accuracy }) => (
+                <li key={subject} className="py-3 px-4 rounded-xl bg-slate-50 border border-slate-100">
                   <div className="flex justify-between items-center mb-2">
-                    <span className="font-medium text-slate-900">{ders}</span>
-                    <span className={`text-sm font-semibold ${yuzde < 70 ? "text-red-600" : "text-amber-600"}`}>
-                      %{yuzde} doğru
+                    <span className="font-medium text-slate-900">{subject}</span>
+                    <span className={`text-sm font-semibold ${accuracy < 70 ? "text-red-600" : "text-amber-600"}`}>
+                      %{accuracy} doğru
                     </span>
                   </div>
                   <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
                     <div
-                      className={`h-full rounded-full ${yuzde < 70 ? "bg-red-400" : "bg-amber-400"}`}
-                      style={{ width: `${yuzde}%` }}
+                      className={`h-full rounded-full ${accuracy < 70 ? "bg-red-400" : "bg-amber-400"}`}
+                      style={{ width: `${accuracy}%` }}
                     />
                   </div>
                 </li>
               ))}
             </ul>
+          ) : isDemo ? (
+            <ul className="space-y-3">
+              {[
+                { subject: "Matematik", accuracy: 65 },
+                { subject: "Fizik", accuracy: 72 },
+                { subject: "Kimya", accuracy: 80 },
+              ].map(({ subject, accuracy }) => (
+                <li key={subject} className="py-3 px-4 rounded-xl bg-slate-50 border border-slate-100">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="font-medium text-slate-900">{subject}</span>
+                    <span className={`text-sm font-semibold ${accuracy < 70 ? "text-red-600" : "text-amber-600"}`}>
+                      %{accuracy} doğru
+                    </span>
+                  </div>
+                  <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full ${accuracy < 70 ? "bg-red-400" : "bg-amber-400"}`}
+                      style={{ width: `${accuracy}%` }}
+                    />
+                  </div>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-slate-500 text-sm text-center py-4">Henüz yeterli veri yok.</p>
           )}
         </div>
       </div>

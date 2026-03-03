@@ -9,10 +9,10 @@ import { Play, FileDown, Clock, Search, BookOpen, Lock, ChevronRight } from "luc
 type VideoItem = ContentItem & { course_title?: string; topic_title?: string };
 
 const DEMO_VIDEOS: VideoItem[] = [
-  { id: 1, topic_id: 1, type: "video", title: "Üslü İfadeler — Konu Anlatımı", course_title: "Matematik", topic_title: "Üslü İfadeler", duration_seconds: 754, order: 1, is_free: true, url: "#" },
-  { id: 2, topic_id: 1, type: "pdf", title: "Üslü İfadeler — PDF Notlar", course_title: "Matematik", topic_title: "Üslü İfadeler", order: 2, is_free: true, url: "#" },
-  { id: 3, topic_id: 2, type: "video", title: "Hareket Denklemleri — Konu Anlatımı", course_title: "Fizik", topic_title: "Hareket", duration_seconds: 1090, order: 1, is_free: true, url: "#" },
-  { id: 4, topic_id: 3, type: "video", title: "Paragraf Yorumu — Teknik ve Örnekler", course_title: "Türkçe", topic_title: "Paragraf", duration_seconds: 920, order: 1, is_free: false },
+  { id: 1, topic_id: 1, type: "video", title: "Üslü İfadeler — Konu Anlatımı", course_title: "Matematik", topic_title: "Üslü İfadeler", duration_seconds: 754, is_free: true, url: "#" },
+  { id: 2, topic_id: 1, type: "pdf", title: "Üslü İfadeler — PDF Notlar", course_title: "Matematik", topic_title: "Üslü İfadeler", is_free: true, url: "#" },
+  { id: 3, topic_id: 2, type: "video", title: "Hareket Denklemleri — Konu Anlatımı", course_title: "Fizik", topic_title: "Hareket", duration_seconds: 1090, is_free: true, url: "#" },
+  { id: 4, topic_id: 3, type: "video", title: "Paragraf Yorumu — Teknik ve Örnekler", course_title: "Türkçe", topic_title: "Paragraf", duration_seconds: 920, is_free: false },
 ];
 
 const DEMO_COURSES: Course[] = [
@@ -51,14 +51,13 @@ export default function VideoPage() {
       return;
     }
     try {
-      const coursesRes = await api.getCourses();
-      setCourses(coursesRes.data);
-      // Tüm kursların içeriklerini yükle (ilk 3 kurs)
+      const coursesRes = await api.getCourses(token);
+      setCourses(coursesRes);
       const allContent: VideoItem[] = [];
       await Promise.allSettled(
-        coursesRes.data.slice(0, 6).map(async (course) => {
-          const unitsRes = await api.getCourseUnits(course.slug, token ?? undefined);
-          for (const unit of unitsRes.slice(0, 3)) {
+        coursesRes.slice(0, 6).map(async (course) => {
+          const units = await api.getCourseUnits(course.id, token ?? undefined);
+          for (const unit of units.slice(0, 3)) {
             for (const topic of (unit.topics ?? []).slice(0, 3)) {
               const content = await api.getTopicContent(topic.id, token ?? undefined);
               content.forEach((item) =>

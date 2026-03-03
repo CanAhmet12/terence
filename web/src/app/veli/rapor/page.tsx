@@ -137,7 +137,7 @@ export default function VeliRaporPage() {
             </div>
           ) : (
             <div className="flex items-end gap-2 h-40">
-              {nets.map((net, i) => (
+              {nets.map((net: number, i: number) => (
                 <div key={i} className="flex-1 flex flex-col items-center gap-1">
                   <span className="text-xs font-bold text-teal-700">{net}</span>
                   <div
@@ -161,7 +161,7 @@ export default function VeliRaporPage() {
           ) : (
             <>
               <div className="space-y-4">
-                {subjects.map((d) => {
+                {subjects.map((d: { subject: string; correct: number; wrong: number; net: number }) => {
                   const pct = d.correct;
                   const status = pct >= 80 ? "good" : pct >= 60 ? "warning" : "risk";
                   return (

@@ -85,7 +85,7 @@ function DogrulamaContent() {
     setLoading(true);
     setError("");
     try {
-      await api.verifyEmail({ email, code: codeStr });
+      await api.verifyEmail({ email, verification_code: codeStr });
       setSuccess(true);
       setTimeout(() => router.push("/giris?verified=1"), 2500);
     } catch (e: unknown) {

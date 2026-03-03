@@ -127,7 +127,7 @@ export default function SiniflarPage() {
           {/* Sınıf listesi */}
           <div className="space-y-2">
             {classes.map((c) => {
-              const rConf = RISK_CONFIG[c.risk_level ?? "green"];
+              const rConf = RISK_CONFIG[(c.risk_level ?? "green") as keyof typeof RISK_CONFIG] ?? RISK_CONFIG.green;
               return (
                 <button
                   key={c.id}
@@ -215,13 +215,13 @@ export default function SiniflarPage() {
                           </tr>
                         ) : (
                           filteredStudents.map((s) => {
-                            const rc = RISK_CONFIG[s.risk_level ?? "green"];
+                            const rc = RISK_CONFIG[(s.risk_level ?? "green") as keyof typeof RISK_CONFIG] ?? RISK_CONFIG.green;
                             return (
                               <tr key={s.id} className="hover:bg-slate-50/80 transition-colors">
                                 <td className="px-5 py-3.5">
                                   <div className="flex items-center gap-2.5">
                                     <div className="w-8 h-8 rounded-full bg-teal-100 flex items-center justify-center text-xs font-bold text-teal-700 shrink-0">
-                                      {s.name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
+                                      {s.name.split(" ").map((n: string) => n[0]).join("").slice(0, 2)}
                                     </div>
                                     <div>
                                       <p className="font-semibold text-slate-900">{s.name}</p>

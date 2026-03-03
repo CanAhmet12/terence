@@ -4,335 +4,263 @@ import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { api, DailyPlan, PlanTask } from "@/lib/api";
 import {
-  Calendar, Check, Plus, Loader2, BookOpen,
-  Video as VideoIcon, FileText, Dumbbell, RefreshCw,
-  TrendingUp, Clock, Target, AlertTriangle, ChevronRight
+  Check, Plus, Loader2, BookOpen, Video as VideoIcon,
+  FileText, Dumbbell, RefreshCw, Clock, Target, Trash2, X
 } from "lucide-react";
-import Link from "next/link";
 
-function Skeleton({ className }: { className?: string }) {
-  return <div className={`bg-slate-100 rounded-xl animate-pulse ${className ?? ""}`} />;
+function Skeleton({ cls }: { cls?: string }) {
+  return <div className={`bg-slate-100 rounded-xl animate-pulse ${cls ?? ""}`} />;
 }
 
 const DEMO_PLAN: DailyPlan = {
-  date: new Date().toISOString().slice(0, 10),
+  id: 1, plan_date: new Date().toISOString(), status: "active",
+  total_tasks: 4, completed_tasks: 2,
   tasks: [
-    { id: 1, text: "M.8.1.1 Üslü İfadeler — 10 soru", type: "question", subject: "Matematik", kazanim_code: "M.8.1.1", is_done: true, xp: 20 },
-    { id: 2, text: "Fizik: Hareket — Video izle", type: "video", subject: "Fizik", is_done: true, xp: 15 },
-    { id: 3, text: "TYT Deneme — 40 soru", type: "exam", is_done: false, xp: 50 },
-    { id: 4, text: "Kimya: Bağlar — 15 soru", type: "question", subject: "Kimya", is_done: false, xp: 25 },
+    { id: 1, title: "M.8.1.1 Üslü İfadeler — 10 soru", type: "question", subject: "Matematik", is_completed: true },
+    { id: 2, title: "Fizik: Hareket — Video izle", type: "video", subject: "Fizik", is_completed: true },
+    { id: 3, title: "TYT Deneme — 40 soru", type: "exam", is_completed: false },
+    { id: 4, title: "Kimya: Bağlar — 15 soru", type: "question", subject: "Kimya", is_completed: false },
   ],
-  completed_count: 2,
-  total_count: 4,
-  weekly_summary: { completed: 18, total: 25, study_minutes: 765, questions_solved: 156 },
-  risk_message: "Bu hızla devam edersen hedef bölüm risk altında. Pro pakete geçiş önerilir.",
 };
 
-const TASK_ICONS: Record<PlanTask["type"], React.ElementType> = {
-  question: Dumbbell,
-  video: VideoIcon,
-  exam: FileText,
-  custom: BookOpen,
+const TASK_ICONS: Record<string, React.ElementType> = {
+  question: Dumbbell, video: VideoIcon, exam: FileText,
+  read: BookOpen, repeat: RefreshCw, custom: BookOpen,
 };
 
-const TASK_COLORS: Record<PlanTask["type"], string> = {
+const TASK_COLORS: Record<string, string> = {
   question: "bg-blue-50 text-blue-600",
   video: "bg-purple-50 text-purple-600",
   exam: "bg-amber-50 text-amber-600",
+  read: "bg-teal-50 text-teal-600",
   custom: "bg-slate-100 text-slate-600",
 };
 
-function minutesToHuman(min: number) {
-  const h = Math.floor(min / 60);
-  const m = min % 60;
-  if (h > 0) return `${h}s ${m}dk`;
-  return `${m}dk`;
-}
-
-export default function PlanPage() {
+export default function GunlukPlanPage() {
   const { token } = useAuth();
-  const isDemo = token?.startsWith("demo-token-");
+  const isDemo = !token || token.startsWith("demo-token-");
 
   const [plan, setPlan] = useState<DailyPlan | null>(null);
   const [loading, setLoading] = useState(true);
-  const [completing, setCompleting] = useState<number | null>(null);
-  const [adding, setAdding] = useState(false);
   const [newTask, setNewTask] = useState("");
+  const [adding, setAdding] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
-
-  const today = new Date().toLocaleDateString("tr-TR", { day: "numeric", month: "long", weekday: "long" });
+  const [completingId, setCompletingId] = useState<number | null>(null);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
 
   const loadPlan = useCallback(async () => {
-    if (isDemo || !token) {
-      setPlan(DEMO_PLAN);
-      setLoading(false);
-      return;
-    }
+    if (isDemo) { setPlan(DEMO_PLAN); setLoading(false); return; }
     try {
-      const res = await api.getDailyPlan(token);
-      setPlan(res);
+      const p = await api.getTodayPlan(token!);
+      setPlan(p);
     } catch {
-      setPlan(DEMO_PLAN);
+      setPlan({ id: 0, plan_date: new Date().toISOString(), status: "active", total_tasks: 0, completed_tasks: 0, tasks: [] });
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }, [token, isDemo]);
 
   useEffect(() => { loadPlan(); }, [loadPlan]);
 
   const handleComplete = async (task: PlanTask) => {
-    if (task.is_done) return;
-    setCompleting(task.id);
-    if (plan) {
-      const updated: DailyPlan = {
-        ...plan,
-        tasks: plan.tasks.map((t) => t.id === task.id ? { ...t, is_done: true } : t),
-        completed_count: plan.completed_count + 1,
-      };
-      setPlan(updated);
-    }
+    if (task.is_completed) return;
+    setCompletingId(task.id);
+    // Optimistik
+    setPlan((p) => p ? { ...p, completed_tasks: p.completed_tasks + 1, tasks: p.tasks?.map((t) => t.id === task.id ? { ...t, is_completed: true } : t) } : p);
     if (!isDemo && token) {
       try {
         await api.completeTask(token, task.id);
-      } catch {}
+      } catch {
+        setPlan((p) => p ? { ...p, completed_tasks: p.completed_tasks - 1, tasks: p.tasks?.map((t) => t.id === task.id ? { ...t, is_completed: false } : t) } : p);
+      }
     }
-    setCompleting(null);
+    setCompletingId(null);
+  };
+
+  const handleDelete = async (task: PlanTask) => {
+    setDeletingId(task.id);
+    setPlan((p) => p ? {
+      ...p,
+      total_tasks: p.total_tasks - 1,
+      completed_tasks: task.is_completed ? p.completed_tasks - 1 : p.completed_tasks,
+      tasks: p.tasks?.filter((t) => t.id !== task.id),
+    } : p);
+    if (!isDemo && token) {
+      try { await api.deleteTask(token, task.id); } catch {}
+    }
+    setDeletingId(null);
   };
 
   const handleAddTask = async () => {
     if (!newTask.trim()) return;
     setAdding(true);
-    const tempTask: PlanTask = { id: Date.now(), text: newTask, type: "custom", is_done: false, xp: 5 };
-    setPlan((prev) => prev ? { ...prev, tasks: [...prev.tasks, tempTask], total_count: prev.total_count + 1 } : prev);
+    const tmpId = Date.now();
+    const tmpTask: PlanTask = { id: tmpId, title: newTask.trim(), type: "custom", is_completed: false };
+    setPlan((p) => p ? { ...p, total_tasks: p.total_tasks + 1, tasks: [...(p.tasks ?? []), tmpTask] } : p);
+
     if (!isDemo && token) {
       try {
-        const created = await api.addCustomTask(token, newTask);
-        setPlan((prev) => prev ? {
-          ...prev,
-          tasks: prev.tasks.map((t) => t.id === tempTask.id ? created : t),
-        } : prev);
-      } catch {}
+        const res = await api.addPlanTask(token, { title: newTask.trim(), type: "custom" });
+        setPlan((p) => p ? { ...p, tasks: p.tasks?.map((t) => t.id === tmpId ? res.task : t) } : p);
+      } catch {
+        setPlan((p) => p ? { ...p, total_tasks: p.total_tasks - 1, tasks: p.tasks?.filter((t) => t.id !== tmpId) } : p);
+      }
     }
     setNewTask("");
     setShowAddForm(false);
     setAdding(false);
   };
 
-  const completionPct = plan ? Math.round((plan.completed_count / Math.max(plan.total_count, 1)) * 100) : 0;
+  const tasks = plan?.tasks ?? [];
+  const doneCount = plan?.completed_tasks ?? 0;
+  const totalCount = plan?.total_tasks ?? 0;
+  const progress = totalCount > 0 ? (doneCount / totalCount) * 100 : 0;
+  const today = new Date().toLocaleDateString("tr-TR", { weekday: "long", day: "numeric", month: "long" });
 
   return (
-    <div className="p-8 lg:p-12">
-      <div className="mb-8 flex items-start justify-between gap-4">
+    <div className="p-6 lg:p-10 max-w-3xl mx-auto">
+      {/* Başlık */}
+      <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Günlük Çalışma Planı</h1>
-          <p className="text-slate-600 mt-1">
-            {today} — Görevleri tamamla, XP kazan, seviye atla.
-          </p>
+          <h1 className="text-2xl font-extrabold text-slate-900">Günlük Plan</h1>
+          <p className="text-slate-500 mt-0.5 capitalize">{today}</p>
           {isDemo && (
-            <span className="inline-flex items-center gap-1.5 mt-2 px-3 py-1 bg-amber-100 text-amber-700 text-xs font-semibold rounded-full">
-              Demo Modu
+            <span className="inline-flex mt-1 px-2.5 py-0.5 bg-amber-100 text-amber-700 text-xs font-semibold rounded-full">
+              Demo
             </span>
           )}
         </div>
-        <button onClick={loadPlan} className="p-2 rounded-xl hover:bg-slate-100 text-slate-400 transition-colors mt-1">
-          <RefreshCw className="w-4 h-4" />
+        <button
+          onClick={loadPlan}
+          className="p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 transition-colors"
+          title="Yenile"
+        >
+          <RefreshCw className="w-4 h-4 text-slate-600" />
         </button>
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-8">
-        {/* Ana görev listesi */}
-        <div className="lg:col-span-2 space-y-5">
-          {/* İlerleme barı */}
-          {!loading && plan && (
-            <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <Calendar className="w-5 h-5 text-teal-600" />
-                  <h2 className="font-bold text-slate-900">Bugünkü Görevler</h2>
-                </div>
-                <span className="text-teal-600 font-bold">{plan.completed_count}/{plan.total_count}</span>
-              </div>
-              <div className="h-3 bg-slate-100 rounded-full overflow-hidden mb-1">
-                <div
-                  className="h-full bg-gradient-to-r from-teal-600 to-teal-400 rounded-full transition-all duration-500"
-                  style={{ width: `${completionPct}%` }}
-                />
-              </div>
-              <p className="text-xs text-slate-500">%{completionPct} tamamlandı</p>
+      {/* İlerleme */}
+      <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm mb-6">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-teal-50 flex items-center justify-center">
+              <Target className="w-5 h-5 text-teal-600" />
+            </div>
+            <div>
+              <p className="font-bold text-slate-900">{doneCount}/{totalCount} tamamlandı</p>
+              <p className="text-xs text-slate-500">{Math.round(progress)}% ilerleme</p>
+            </div>
+          </div>
+          {plan?.study_minutes_actual !== undefined && (
+            <div className="flex items-center gap-1.5 text-sm text-slate-500">
+              <Clock className="w-4 h-4" />
+              <span>{plan.study_minutes_actual}dk çalışma</span>
             </div>
           )}
-
-          {/* Görevler */}
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-            {loading ? (
-              <div className="p-5 space-y-3">
-                {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-16" />)}
-              </div>
-            ) : (
-              <>
-                <ul className="divide-y divide-slate-100">
-                  {(plan?.tasks ?? []).map((task) => {
-                    const Icon = TASK_ICONS[task.type];
-                    const colorCls = TASK_COLORS[task.type];
-                    return (
-                      <li
-                        key={task.id}
-                        className={`flex items-center gap-4 p-4 hover:bg-slate-50/50 transition-colors ${task.is_done ? "opacity-70" : ""}`}
-                      >
-                        {/* Tamamla butonu */}
-                        <button
-                          onClick={() => handleComplete(task)}
-                          disabled={task.is_done || completing === task.id}
-                          className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-all ${
-                            task.is_done
-                              ? "bg-teal-500 text-white"
-                              : "bg-slate-100 hover:bg-teal-100 hover:text-teal-600 border-2 border-slate-200 hover:border-teal-300"
-                          }`}
-                        >
-                          {completing === task.id ? (
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                          ) : task.is_done ? (
-                            <Check className="w-4 h-4" />
-                          ) : null}
-                        </button>
-
-                        {/* İkon */}
-                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${colorCls}`}>
-                          <Icon className="w-4 h-4" />
-                        </div>
-
-                        {/* İçerik */}
-                        <div className="flex-1 min-w-0">
-                          <p className={`font-medium text-sm ${task.is_done ? "line-through text-slate-400" : "text-slate-900"}`}>
-                            {task.text}
-                          </p>
-                          {task.subject && (
-                            <p className="text-xs text-slate-400 mt-0.5">{task.subject}{task.kazanim_code ? ` · ${task.kazanim_code}` : ""}</p>
-                          )}
-                        </div>
-
-                        {/* XP */}
-                        <span className={`shrink-0 text-xs font-bold px-2 py-0.5 rounded-full ${
-                          task.is_done ? "bg-teal-50 text-teal-600" : "bg-slate-100 text-slate-500"
-                        }`}>
-                          +{task.xp} XP
-                        </span>
-                      </li>
-                    );
-                  })}
-                </ul>
-
-                {/* Görev ekle */}
-                <div className="p-4 border-t border-slate-100">
-                  {showAddForm ? (
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        value={newTask}
-                        onChange={(e) => setNewTask(e.target.value)}
-                        placeholder="Görev metni yaz..."
-                        className="flex-1 px-3 py-2 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none"
-                        onKeyDown={(e) => e.key === "Enter" && handleAddTask()}
-                        autoFocus
-                      />
-                      <button
-                        onClick={handleAddTask}
-                        disabled={adding || !newTask.trim()}
-                        className="px-4 py-2 bg-teal-600 hover:bg-teal-700 disabled:opacity-60 text-white text-sm font-semibold rounded-xl transition-colors"
-                      >
-                        {adding ? <Loader2 className="w-4 h-4 animate-spin" /> : "Ekle"}
-                      </button>
-                      <button onClick={() => setShowAddForm(false)} className="px-3 py-2 text-slate-500 hover:text-slate-700 text-sm">
-                        İptal
-                      </button>
-                    </div>
-                  ) : (
-                    <button
-                      onClick={() => setShowAddForm(true)}
-                      className="flex items-center gap-2 text-teal-600 font-medium hover:text-teal-700 text-sm transition-colors"
-                    >
-                      <Plus className="w-4 h-4" />
-                      Özel görev ekle
-                    </button>
-                  )}
-                </div>
-              </>
-            )}
-          </div>
         </div>
-
-        {/* Sağ panel */}
-        <div className="space-y-5">
-          {/* Haftalık özet */}
-          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-            <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 text-teal-600" />
-              Haftalık Özet
-            </h3>
-            {loading ? (
-              <div className="space-y-3">{[1, 2, 3].map((i) => <Skeleton key={i} className="h-8" />)}</div>
-            ) : plan ? (
-              <div className="space-y-3">
-                {[
-                  { label: "Tamamlanan görev", value: `${plan.weekly_summary.completed}/${plan.weekly_summary.total}`, icon: Check },
-                  { label: "Çalışma süresi", value: minutesToHuman(plan.weekly_summary.study_minutes), icon: Clock },
-                  { label: "Çözülen soru", value: String(plan.weekly_summary.questions_solved), icon: Target },
-                ].map(({ label, value, icon: Icon }) => (
-                  <div key={label} className="flex items-center justify-between py-2 border-b border-slate-100 last:border-0">
-                    <span className="text-sm text-slate-600 flex items-center gap-2">
-                      <Icon className="w-3.5 h-3.5 text-teal-500" />
-                      {label}
-                    </span>
-                    <span className="font-bold text-slate-900 text-sm">{value}</span>
-                  </div>
-                ))}
-              </div>
-            ) : null}
-          </div>
-
-          {/* Risk uyarısı */}
-          {plan?.risk_message && (
-            <div className="bg-amber-50 rounded-2xl border border-amber-200 p-5">
-              <div className="flex items-start gap-3">
-                <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-sm font-semibold text-amber-800 mb-1">Dikkat</p>
-                  <p className="text-sm text-amber-700">{plan.risk_message}</p>
-                  <Link
-                    href="/paketler"
-                    className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-amber-700 hover:underline"
-                  >
-                    Paketleri İncele <ChevronRight className="w-3 h-3" />
-                  </Link>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Hızlı linkler */}
-          <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
-            <h3 className="font-semibold text-slate-900 mb-3 text-sm">Hızlı Erişim</h3>
-            <div className="space-y-2">
-              {[
-                { href: "/ogrenci/soru-bankasi", label: "Soru Bankası", icon: Dumbbell },
-                { href: "/ogrenci/video", label: "Video Dersler", icon: VideoIcon },
-                { href: "/ogrenci/deneme", label: "Denemeler", icon: FileText },
-              ].map(({ href, label, icon: Icon }) => (
-                <Link
-                  key={href}
-                  href={href}
-                  className="flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 border border-transparent hover:border-slate-200 transition-all"
-                >
-                  <span className="flex items-center gap-2 text-sm font-medium text-slate-700">
-                    <Icon className="w-4 h-4 text-teal-500" />
-                    {label}
-                  </span>
-                  <ChevronRight className="w-4 h-4 text-slate-400" />
-                </Link>
-              ))}
-            </div>
-          </div>
+        <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden">
+          <div
+            className="h-full bg-gradient-to-r from-teal-500 to-emerald-500 rounded-full transition-all duration-500"
+            style={{ width: `${progress}%` }}
+          />
         </div>
       </div>
+
+      {/* Görevler */}
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm mb-4">
+        {loading ? (
+          <div className="p-6 space-y-3">
+            {[1, 2, 3, 4].map((i) => <Skeleton key={i} cls="h-14" />)}
+          </div>
+        ) : tasks.length === 0 ? (
+          <div className="p-10 text-center">
+            <Check className="w-10 h-10 text-teal-400 mx-auto mb-3" />
+            <p className="font-semibold text-slate-700">Plan boş</p>
+            <p className="text-sm text-slate-500 mt-1">Aşağıdan yeni görev ekle.</p>
+          </div>
+        ) : (
+          <ul className="divide-y divide-slate-100">
+            {tasks.map((task) => {
+              const Icon = TASK_ICONS[task.type] ?? BookOpen;
+              const colorCls = TASK_COLORS[task.type] ?? TASK_COLORS.custom;
+              return (
+                <li key={task.id} className="flex items-center gap-4 px-6 py-4 hover:bg-slate-50/50 group">
+                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${colorCls}`}>
+                    <Icon className="w-4 h-4" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <span className={`text-sm font-medium ${task.is_completed ? "line-through text-slate-400" : "text-slate-900"}`}>
+                      {task.title}
+                    </span>
+                    {task.subject && <span className="ml-2 text-xs text-slate-400">{task.subject}</span>}
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    {!task.is_completed && (
+                      <button
+                        onClick={() => handleComplete(task)}
+                        disabled={completingId === task.id}
+                        className="w-8 h-8 rounded-xl bg-teal-50 hover:bg-teal-100 text-teal-600 flex items-center justify-center transition-colors"
+                        title="Tamamla"
+                      >
+                        {completingId === task.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                      </button>
+                    )}
+                    {task.is_completed && (
+                      <span className="w-8 h-8 rounded-xl bg-teal-500 flex items-center justify-center">
+                        <Check className="w-4 h-4 text-white" />
+                      </span>
+                    )}
+                    <button
+                      onClick={() => handleDelete(task)}
+                      disabled={deletingId === task.id}
+                      className="w-8 h-8 rounded-xl bg-slate-50 hover:bg-red-50 text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all"
+                      title="Sil"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
+
+      {/* Görev Ekle */}
+      {showAddForm ? (
+        <div className="bg-white rounded-2xl border border-teal-200 p-4 shadow-sm flex gap-3">
+          <input
+            autoFocus
+            type="text"
+            value={newTask}
+            onChange={(e) => setNewTask(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleAddTask()}
+            placeholder="Görev başlığı..."
+            className="flex-1 px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-teal-500 outline-none"
+          />
+          <button
+            onClick={handleAddTask}
+            disabled={adding || !newTask.trim()}
+            className="px-4 py-2.5 bg-teal-600 text-white rounded-xl font-semibold text-sm hover:bg-teal-700 transition-colors disabled:opacity-50 flex items-center gap-1.5"
+          >
+            {adding ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+            Ekle
+          </button>
+          <button
+            onClick={() => { setShowAddForm(false); setNewTask(""); }}
+            className="p-2.5 rounded-xl hover:bg-slate-100 transition-colors"
+          >
+            <X className="w-4 h-4 text-slate-500" />
+          </button>
+        </div>
+      ) : (
+        <button
+          onClick={() => setShowAddForm(true)}
+          className="w-full py-3.5 rounded-2xl border-2 border-dashed border-slate-300 hover:border-teal-400 hover:bg-teal-50/30 text-slate-500 hover:text-teal-600 font-semibold text-sm transition-all flex items-center justify-center gap-2"
+        >
+          <Plus className="w-4 h-4" /> Görev Ekle
+        </button>
+      )}
     </div>
   );
 }
