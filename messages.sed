@@ -1,0 +1,1 @@
+s/\$table->foreignId('thread_id')->nullable()->constrained('message_threads')->onDelete('cascade')/\$table->unsignedBigInteger('thread_id')->nullable()/
