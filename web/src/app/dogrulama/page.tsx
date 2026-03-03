@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { Suspense, useState, useEffect, useRef, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { GraduationCap, Mail, CheckCircle, RefreshCw, ArrowLeft } from "lucide-react";
 import Link from "next/link";
@@ -9,7 +9,7 @@ import { api } from "@/lib/api";
 const CODE_LENGTH = 6;
 const RESEND_TIMEOUT = 60;
 
-export default function DogrulamaPage() {
+function DogrulamaContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const email = searchParams.get("email") || "";
@@ -239,5 +239,13 @@ export default function DogrulamaPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function DogrulamaPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="w-8 h-8 border-2 border-teal-500 border-t-transparent rounded-full animate-spin" /></div>}>
+      <DogrulamaContent />
+    </Suspense>
   );
 }
