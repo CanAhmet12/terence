@@ -1,57 +1,15 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
-import { useAuth } from "@/lib/auth-context";
-import { api, Question, AnswerResult } from "@/lib/api";
-import { Search, RefreshCw, CheckCircle, XCircle, ChevronRight, BookOpen, Loader2 } from "lucide-react";
-
-const DEMO_QUESTIONS: Question[] = [
-  {
-    id: 1,
-    question_text: "2³ · 2⁴ işleminin sonucu kaçtır?",
-    kazanim_code: "M.8.1.1",
-    difficulty: "easy",
-    type: "classic",
-    options: [
-      { id: 1, option_letter: "A", option_text: "16" },
-      { id: 2, option_letter: "B", option_text: "32" },
-      { id: 3, option_letter: "C", option_text: "64" },
-      { id: 4, option_letter: "D", option_text: "128" },
-    ],
-  },
-  {
-    id: 2,
-    question_text: "Hareket denklemlerinde ivme–zaman grafiğinin altındaki alan neyi verir?",
-    kazanim_code: "F.9.1.1",
-    difficulty: "medium",
-    type: "classic",
-    options: [
-      { id: 5, option_letter: "A", option_text: "Yer değiştirme" },
-      { id: 6, option_letter: "B", option_text: "Hız değişimi" },
-      { id: 7, option_letter: "C", option_text: "Konum" },
-      { id: 8, option_letter: "D", option_text: "Yol" },
-    ],
-  },
-  {
-    id: 3,
-    question_text: "Aşağıdaki paragrafta ana düşünce nedir? \"Teknoloji insan hayatını kolaylaştırmaktadır...\"",
-    kazanim_code: "T.9.2.1",
-    difficulty: "hard",
-    type: "paragraph",
-    options: [
-      { id: 9, option_letter: "A", option_text: "Teknoloji zararlıdır" },
-      { id: 10, option_letter: "B", option_text: "Teknoloji hayatı kolaylaştırır" },
-      { id: 11, option_letter: "C", option_text: "İnsanlar teknoloji üretemez" },
-      { id: 12, option_letter: "D", option_text: "Teknoloji pahalıdır" },
-    ],
-  },
-];
 
 const DIFFICULTY_CONFIG = {
   easy: { label: "Kolay", cls: "bg-emerald-100 text-emerald-700" },
   medium: { label: "Orta", cls: "bg-amber-100 text-amber-700" },
   hard: { label: "Zor", cls: "bg-red-100 text-red-700" },
 };
+import { useState, useEffect, useCallback, useRef } from "react";
+import { useAuth } from "@/lib/auth-context";
+import { api, Question, AnswerResult } from "@/lib/api";
+import { Search, RefreshCw, CheckCircle, XCircle, ChevronRight, BookOpen, Loader2 } from "lucide-react";
 
 function Skeleton({ className }: { className?: string }) {
   return <div className={`bg-slate-100 rounded-xl animate-pulse ${className ?? ""}`} />;
@@ -59,7 +17,6 @@ function Skeleton({ className }: { className?: string }) {
 
 export default function SoruBankasiPage() {
   const { token } = useAuth();
-  const isDemo = token?.startsWith("demo-token-");
 
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(true);
@@ -73,31 +30,21 @@ export default function SoruBankasiPage() {
   const questionStartTimes = useRef<Record<number, number>>({});
 
   const loadQuestions = useCallback(async (kazanim?: string, diff?: string) => {
-    setLoading(true);
-    if (isDemo) {
-      let filtered = DEMO_QUESTIONS;
-      if (kazanim) filtered = filtered.filter((q) => q.kazanim_code?.toLowerCase().includes(kazanim.toLowerCase()));
-      if (diff) filtered = filtered.filter((q) => q.difficulty === diff);
-      setQuestions(filtered);
-      const now = Date.now();
-      filtered.forEach((q) => { questionStartTimes.current[q.id] = now; });
-      setLoading(false);
-      return;
-    }
     if (!token) { setLoading(false); return; }
+    setLoading(true);
     try {
       const params: Record<string, string | number> = { per_page: 20 };
       if (kazanim) params.kazanim_code = kazanim;
       if (diff) params.difficulty = diff;
-      const res = await api.getQuestions(token, params as Parameters<typeof api.getQuestions>[1]);
+      const res = await api.getQuestions(token!, params as Parameters<typeof api.getQuestions>[1]);
       setQuestions(res.data);
-      const now2 = Date.now();
-      res.data.forEach((q: Question) => { questionStartTimes.current[q.id] = now2; });
+      const now = Date.now();
+      res.data.forEach((q: Question) => { questionStartTimes.current[q.id] = now; });
     } catch {
-      setQuestions(DEMO_QUESTIONS);
+      setQuestions([]);
     }
     setLoading(false);
-  }, [token, isDemo]);
+  }, [token]);
 
   // Debounced arama
   useEffect(() => {
@@ -109,6 +56,7 @@ export default function SoruBankasiPage() {
   }, [search, difficulty, loadQuestions]);
 
   const handleAnswer = async (question: Question, optionLetter: string) => {
+    if (!token) return;
     if (answerResults[question.id] || answeringId === question.id) return;
     setSelectedAnswers((prev) => ({ ...prev, [question.id]: optionLetter }));
     setAnsweringId(question.id);
@@ -116,21 +64,9 @@ export default function SoruBankasiPage() {
     const startTime = questionStartTimes.current[question.id] ?? Date.now();
     const timeSpentSeconds = Math.round((Date.now() - startTime) / 1000);
 
-    if (isDemo || !token) {
-      // Demo: İlk şık doğru kabul et
-      const isCorrect = optionLetter === question.options[0]?.option_letter;
-      setTimeout(() => {
-        setAnswerResults((prev) => ({
-          ...prev,
-          [question.id]: { is_correct: isCorrect, correct_option: question.options[0]?.option_letter ?? "A", selected: optionLetter },
-        }));
-        setAnsweringId(null);
-      }, 300);
-      return;
-    }
 
     try {
-      const result = await api.answerQuestion(token, {
+      const result = await api.answerQuestion(token!, {
         question_id: question.id,
         selected_option: optionLetter,
         time_spent_seconds: timeSpentSeconds > 0 ? timeSpentSeconds : 1,
@@ -149,7 +85,7 @@ export default function SoruBankasiPage() {
   };
 
   const handleSimilar = async (questionId: number) => {
-    if (!token || isDemo) return;
+    if (!token) return;
     setLoadingSimilar(questionId);
     try {
       const res = await api.getSimilarQuestions(token, questionId);
@@ -173,11 +109,6 @@ export default function SoruBankasiPage() {
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-slate-900">Soru Bankası</h1>
         <p className="text-slate-600 mt-1">Zorluk & kazanım filtresi · Anında doğrulama · Benzer soru getir</p>
-        {isDemo && (
-          <span className="inline-flex items-center gap-1.5 mt-2 px-3 py-1 bg-amber-100 text-amber-700 text-xs font-semibold rounded-full">
-            Demo Modu
-          </span>
-        )}
       </div>
 
       {/* İstatistik bandı */}
@@ -275,7 +206,7 @@ export default function SoruBankasiPage() {
                     </div>
                     <button
                       onClick={() => handleSimilar(soru.id)}
-                      disabled={!!loadingSimilar || isDemo}
+                      disabled={!!loadingSimilar}
                       className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-teal-200 bg-teal-50 text-teal-700 hover:bg-teal-100 text-xs font-semibold shrink-0 disabled:opacity-50 transition-colors"
                       title="Benzer soru getir"
                     >
@@ -368,3 +299,9 @@ export default function SoruBankasiPage() {
     </div>
   );
 }
+
+
+
+
+
+

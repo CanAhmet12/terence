@@ -20,7 +20,7 @@ function Skeleton({ className }: { className?: string }) {
 
 export default function HedefPage() {
   const { user, token, updateUser } = useAuth();
-  const isDemo = token?.startsWith("demo-token-");
+
 
   const [analysis, setAnalysis] = useState<GoalAnalysis | null>(null);
   const [loading, setLoading] = useState(true);
@@ -35,7 +35,7 @@ export default function HedefPage() {
   const [currentNet, setCurrentNet] = useState("");
 
   const loadAnalysis = useCallback(async () => {
-    if (!token || isDemo) {
+    if (!token) {
       // Demo verisi
       setAnalysis({
         target_net: 75,
@@ -67,18 +67,12 @@ export default function HedefPage() {
       }
     } catch {}
     setLoading(false);
-  }, [token, isDemo, user]);
+  }, [token, user]);
 
   useEffect(() => { loadAnalysis(); }, [loadAnalysis]);
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isDemo) {
-      setSaveState("error");
-      setSaveError("Demo modda hedef kaydedilemez.");
-      setTimeout(() => setSaveState("idle"), 3000);
-      return;
-    }
     if (!token) return;
 
     setSaveState("saving");
@@ -130,11 +124,6 @@ export default function HedefPage() {
         <p className="text-slate-600 mt-1 text-lg">
           Hedef okulunu ve bölümünü seç. Sistem gerekli neti hesaplasın, planı oluştursun.
         </p>
-        {isDemo && (
-          <span className="inline-flex items-center gap-1.5 mt-2 px-3 py-1 bg-amber-100 text-amber-700 text-xs font-semibold rounded-full">
-            Demo Modu — Değişiklikler kaydedilmez
-          </span>
-        )}
       </div>
 
       {/* Risk bandı */}
@@ -343,3 +332,7 @@ export default function HedefPage() {
     </div>
   );
 }
+
+
+
+

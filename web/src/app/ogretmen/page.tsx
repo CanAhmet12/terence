@@ -5,54 +5,68 @@ import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import { api, RiskStudent } from "@/lib/api";
 import {
-  AlertTriangle, Users, TrendingDown, CheckCircle,
-  BookOpen, BarChart2, Clock, Plus, Video, Bell
+  AlertTriangle, Users, CheckCircle,
+  BarChart2, Clock, Bell
 } from "lucide-react";
 
 function Skeleton({ className }: { className?: string }) {
   return <div className={`bg-slate-100 rounded-xl animate-pulse ${className ?? ""}`} />;
 }
 
-const DEMO_RISK: RiskStudent[] = [
-  { id: 1, name: "Elif K.", risk_level: "green", current_net: 78, target_net: 80, days_inactive: 0 },
-  { id: 2, name: "Can D.", risk_level: "green", current_net: 72, target_net: 75, days_inactive: 1 },
-  { id: 3, name: "Zeynep K.", risk_level: "yellow", current_net: 52, target_net: 70, days_inactive: 4 },
-  { id: 4, name: "Ahmet Y.", risk_level: "red", current_net: 28, target_net: 60, days_inactive: 9 },
-];
+function timeAgo(dateStr?: string) {
+  if (!dateStr) return "—";
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const days = Math.floor(diff / 86400000);
+  const hours = Math.floor(diff / 3600000);
+  if (hours < 1) return "Az önce";
+  if (hours < 24) return `${hours} saat önce`;
+  if (days === 1) return "Dün";
+  return `${days} gün önce`;
+}
 
 export default function TeacherDashboardPage() {
   const { user, token } = useAuth();
-  const isDemo = !token || token.startsWith("demo-token-");
 
   const [stats, setStats] = useState<{ total_students: number; active_today: number; average_net: number; assignment_count: number } | null>(null);
   const [riskStudents, setRiskStudents] = useState<RiskStudent[]>([]);
   const [loading, setLoading] = useState(true);
+  const [notifSending, setNotifSending] = useState(false);
+  const [notifSent, setNotifSent] = useState(false);
+  const [notifDialog, setNotifDialog] = useState(false);
+  const [notifContent, setNotifContent] = useState("");
 
   const loadData = useCallback(async () => {
-    if (isDemo) {
-      setRiskStudents(DEMO_RISK);
-      setStats({ total_students: 28, active_today: 14, average_net: 48.5, assignment_count: 6 });
-      setLoading(false);
-      return;
-    }
+    if (!token) return;
     try {
       const [statsRes, riskRes] = await Promise.allSettled([
-        api.getTeacherStats(token!),
-        api.getRiskStudents(token!),
+        api.getTeacherStats(token),
+        api.getRiskStudents(token),
       ]);
       if (statsRes.status === "fulfilled") setStats(statsRes.value);
       if (riskRes.status === "fulfilled") setRiskStudents(riskRes.value);
     } catch {}
     setLoading(false);
-  }, [token, isDemo]);
+  }, [token]);
 
   useEffect(() => { loadData(); }, [loadData]);
+
+  const handleBulkNotif = async () => {
+    if (!token || !notifContent.trim()) return;
+    setNotifSending(true);
+    try {
+      await api.sendMessage(token, { recipient_type: "all", content: notifContent });
+      setNotifSent(true);
+      setNotifDialog(false);
+      setNotifContent("");
+      setTimeout(() => setNotifSent(false), 4000);
+    } catch {}
+    setNotifSending(false);
+  };
 
   const riskCount = riskStudents.filter((s) => s.risk_level === "red").length;
   const totalStudents = stats?.total_students ?? 0;
   const activeToday = stats?.active_today ?? 0;
   const avgNet = stats?.average_net ?? 0;
-  const assignmentCount = stats?.assignment_count ?? 0;
 
   return (
     <div className="p-6 lg:p-10">
@@ -63,11 +77,6 @@ export default function TeacherDashboardPage() {
         <p className="text-slate-600 mt-1 text-lg">
           Sınıf performansı, riskteki öğrenciler, başarı tahmini
         </p>
-        {isDemo && (
-          <span className="inline-flex items-center gap-1.5 mt-2 px-3 py-1 bg-amber-100 text-amber-700 text-xs font-semibold rounded-full">
-            Demo Modu — Veriler gerçek değil
-          </span>
-        )}
       </div>
 
       {/* İstatistik kartları */}
@@ -157,14 +166,14 @@ export default function TeacherDashboardPage() {
           </h2>
           {loading ? (
             <div className="space-y-3">{[1, 2, 3].map((i) => <Skeleton key={i} className="h-12" />)}</div>
-          ) : riskStudents.length === 0 && !isDemo ? (
+          ) : riskStudents.length === 0 ? (
             <p className="text-sm text-slate-500 py-4">Henüz öğrenci aktivitesi yok.</p>
           ) : (
             <ul className="space-y-3">
-              {(isDemo ? ["Elif K.", "Can D.", "Zeynep K."] : riskStudents.slice(0, 3).map((s) => s.name)).map((name) => (
-                <li key={name} className="flex items-center justify-between py-3 px-4 rounded-xl bg-slate-50/80 border border-slate-100">
-                  <span className="font-medium text-slate-900">{name}</span>
-                  <span className="text-xs text-teal-600 font-semibold bg-teal-50 px-2.5 py-1 rounded-lg">Bugün çalıştı</span>
+              {riskStudents.slice(0, 5).map((s) => (
+                <li key={s.id} className="flex items-center justify-between py-3 px-4 rounded-xl bg-slate-50/80 border border-slate-100">
+                  <span className="font-medium text-slate-900">{s.name}</span>
+                  <span className="text-xs text-slate-500">{timeAgo(s.last_active_at)}</span>
                 </li>
               ))}
             </ul>
@@ -204,6 +213,42 @@ export default function TeacherDashboardPage() {
       </div>
 
       {/* Veli Bildirimi */}
+      {notifSent && (
+        <div className="mb-4 p-4 bg-teal-50 border border-teal-200 rounded-2xl text-sm text-teal-700 font-semibold flex items-center gap-2">
+          <CheckCircle className="w-4 h-4" /> Toplu bildirim gönderildi!
+        </div>
+      )}
+
+      {notifDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-2xl p-8 shadow-xl w-full max-w-md mx-4">
+            <h3 className="font-bold text-slate-900 text-lg mb-4">Toplu Veli Bildirimi</h3>
+            <textarea
+              value={notifContent}
+              onChange={(e) => setNotifContent(e.target.value)}
+              placeholder="Tüm velilere gönderilecek mesaj..."
+              rows={4}
+              className="w-full px-4 py-3 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-teal-500 resize-none mb-4"
+            />
+            <div className="flex gap-3">
+              <button
+                onClick={() => setNotifDialog(false)}
+                className="flex-1 py-2.5 border border-slate-200 rounded-xl font-semibold text-slate-700 hover:bg-slate-50"
+              >
+                İptal
+              </button>
+              <button
+                onClick={handleBulkNotif}
+                disabled={notifSending || !notifContent.trim()}
+                className="flex-1 py-2.5 bg-teal-600 text-white rounded-xl font-semibold hover:bg-teal-700 disabled:opacity-60"
+              >
+                {notifSending ? "Gönderiliyor..." : "Gönder"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="bg-white rounded-2xl border border-slate-200/80 p-8 shadow-sm hover:shadow-md transition-shadow">
         <h2 className="font-bold text-slate-900 mb-2 text-lg flex items-center gap-2">
           <Bell className="w-5 h-5 text-teal-600" />
@@ -214,6 +259,7 @@ export default function TeacherDashboardPage() {
         </p>
         <div className="flex flex-wrap gap-3">
           <button
+            onClick={() => setNotifDialog(true)}
             disabled={riskCount === 0}
             className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-teal-600 to-teal-500 text-white font-semibold hover:from-teal-700 hover:to-teal-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-teal-500/25"
           >
@@ -231,3 +277,4 @@ export default function TeacherDashboardPage() {
     </div>
   );
 }
+

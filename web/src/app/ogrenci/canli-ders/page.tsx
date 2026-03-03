@@ -130,7 +130,7 @@ function LiveClassRoom({
 // ─── Ana sayfa ────────────────────────────────────────────────────────────────
 export default function OgrenciCanliDersPage() {
   const { token } = useAuth();
-  const isDemo = token?.startsWith("demo-token-");
+
 
   const [lessons, setLessons] = useState<TeacherLesson[]>([]);
   const [loading, setLoading] = useState(true);
@@ -140,7 +140,7 @@ export default function OgrenciCanliDersPage() {
   const [err, setErr] = useState("");
 
   const loadLessons = useCallback(async () => {
-    if (isDemo || !token) {
+    if (!token) {
       setLessons(DEMO_LESSONS);
       setLoading(false);
       return;
@@ -152,7 +152,7 @@ export default function OgrenciCanliDersPage() {
       setLessons(DEMO_LESSONS);
     }
     setLoading(false);
-  }, [token, isDemo]);
+  }, [token]);
 
   useEffect(() => { loadLessons(); }, [loadLessons]);
 
@@ -160,7 +160,7 @@ export default function OgrenciCanliDersPage() {
     setJoiningId(lesson.id);
     setErr("");
     try {
-      if (!isDemo && token) {
+      if (token) {
         const room = await api.getVideoRoom(token, lesson.id);
         setActiveRoom(room);
       } else {
@@ -185,11 +185,6 @@ export default function OgrenciCanliDersPage() {
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-slate-900">Canlı Dersler</h1>
         <p className="text-slate-600 mt-1">Öğretmenin oluşturduğu canlı derslere buradan katıl.</p>
-        {isDemo && (
-          <span className="inline-flex items-center gap-1.5 mt-2 px-3 py-1 bg-amber-100 text-amber-700 text-xs font-semibold rounded-full">
-            Demo Modu
-          </span>
-        )}
       </div>
 
       {err && (
@@ -282,7 +277,7 @@ export default function OgrenciCanliDersPage() {
                     </div>
 
                     {/* Katıl butonu */}
-                    {(live || soon || isDemo) && lesson.daily_room_url ? (
+                    {(live || soon) && lesson.daily_room_url ? (
                       <button
                         onClick={() => handleJoin(lesson)}
                         disabled={joining}
@@ -367,3 +362,6 @@ export default function OgrenciCanliDersPage() {
     </div>
   );
 }
+
+
+

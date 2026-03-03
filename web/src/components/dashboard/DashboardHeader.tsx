@@ -14,23 +14,16 @@ export function DashboardHeader() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
 
-  const isDemo = token?.startsWith("demo-token-");
-
   const fetchUnread = useCallback(async () => {
-    if (!token || isDemo) {
-      setUnreadCount(isDemo ? 2 : 0);
-      return;
-    }
+    if (!token) return;
     try {
-      const res = await api.getNotifications(token, { per_page: 1 });
-      // Okunmamış sayısını hesapla
       const notifications = await api.getNotifications(token, { per_page: 50 });
       const count = notifications.data.filter((n) => !n.is_read).length;
-      setUnreadCount(count < res.total ? count : count);
+      setUnreadCount(count);
     } catch {
-      // Sessizce geç
+      // API hatası — sessizce geç
     }
-  }, [token, isDemo]);
+  }, [token]);
 
   useEffect(() => {
     if (!user) return;
@@ -162,3 +155,4 @@ export function DashboardHeader() {
     </header>
   );
 }
+

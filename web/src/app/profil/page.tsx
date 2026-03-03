@@ -54,7 +54,7 @@ export default function ProfilPage() {
   const [saveError, setSaveError] = useState("");
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
 
-  const isDemo = token?.startsWith("demo-token-");
+
 
   useEffect(() => {
     if (!user) {
@@ -75,7 +75,7 @@ export default function ProfilPage() {
 
   const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !token || isDemo) return;
+    if (!file || !token) return;
 
     const preview = URL.createObjectURL(file);
     setPhotoPreview(preview);
@@ -94,12 +94,6 @@ export default function ProfilPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isDemo) {
-      setSaveState("error");
-      setSaveError("Demo modda değişiklik kaydedilemez.");
-      setTimeout(() => setSaveState("idle"), 3000);
-      return;
-    }
     if (!token) return;
 
     setSaveState("saving");
@@ -151,11 +145,6 @@ export default function ProfilPage() {
           <div className="mb-10">
             <h1 className="text-3xl font-extrabold text-slate-900">Profil Düzenle</h1>
             <p className="text-slate-600 mt-1">Hesap bilgilerinizi ve tercihlerinizi güncelleyin</p>
-            {isDemo && (
-              <span className="inline-flex items-center gap-1.5 mt-2 px-3 py-1 bg-amber-100 text-amber-700 text-xs font-semibold rounded-full">
-                Demo Modu — Değişiklikler kaydedilmez
-              </span>
-            )}
           </div>
 
           <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
@@ -183,7 +172,7 @@ export default function ProfilPage() {
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    disabled={photoUploading || isDemo}
+                    disabled={photoUploading}
                     className="absolute -bottom-2 -right-2 w-8 h-8 bg-teal-600 hover:bg-teal-700 text-white rounded-xl flex items-center justify-center shadow-md transition-colors disabled:opacity-50"
                   >
                     <Camera className="w-4 h-4" />
@@ -433,3 +422,7 @@ export default function ProfilPage() {
     </>
   );
 }
+
+
+
+

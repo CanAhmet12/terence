@@ -3,52 +3,26 @@
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { api, BadgeData, LeaderboardEntry } from "@/lib/api";
-import { Trophy, Award, TrendingUp, Star, Loader2, RefreshCw, Crown } from "lucide-react";
+import { Trophy, Award, TrendingUp, Star, RefreshCw, Crown, AlertCircle } from "lucide-react";
 
 function Skeleton({ className }: { className?: string }) {
   return <div className={`bg-slate-100 rounded-xl animate-pulse ${className ?? ""}`} />;
 }
 
-const DEMO_BADGES: BadgeData = {
-  level: 3,
-  xp: 240,
-  xp_next_level: 400,
-  weekly_champion: { name: "Elif K.", study_minutes: 420, net_increase: 8 },
-  badges: [
-    { id: 1, name: "İlk Adım", description: "İlk görevi tamamla", emoji: "🎯", earned: true, earned_at: "2025-01-10", xp_reward: 10 },
-    { id: 2, name: "5 Gün Üst Üste", description: "5 gün arka arkaya çalış", emoji: "🔥", earned: true, earned_at: "2025-01-15", xp_reward: 25 },
-    { id: 3, name: "Net Artırıcı", description: "Haftada +5 net artış", emoji: "📈", earned: false, xp_reward: 50 },
-    { id: 4, name: "Soru Makinesi", description: "100 soru çöz", emoji: "💪", earned: false, xp_reward: 30 },
-    { id: 5, name: "Video Uzmanı", description: "10 video izle", emoji: "📺", earned: false, xp_reward: 20 },
-    { id: 6, name: "Haftanın Çalışkanı", description: "Haftanın birincisi ol", emoji: "🏆", earned: false, xp_reward: 100 },
-  ],
-};
-
-const DEMO_LEADERBOARD: LeaderboardEntry[] = [
-  { rank: 1, name: "Elif K.", study_minutes: 420, net_increase: 8, is_current_user: false },
-  { rank: 2, name: "Ahmet Y.", study_minutes: 380, net_increase: 6, is_current_user: false },
-  { rank: 3, name: "Sen (Örnek)", study_minutes: 320, net_increase: 5, is_current_user: true },
-  { rank: 4, name: "Zeynep M.", study_minutes: 290, net_increase: 4, is_current_user: false },
-  { rank: 5, name: "Can D.", study_minutes: 250, net_increase: 3, is_current_user: false },
-];
-
 export default function RozetPage() {
   const { token } = useAuth();
-  const isDemo = token?.startsWith("demo-token-");
 
   const [badgeData, setBadgeData] = useState<BadgeData | null>(null);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [leaderboardLoading, setLeaderboardLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [period, setPeriod] = useState<"weekly" | "monthly">("weekly");
 
   const loadData = useCallback(async () => {
+    if (!token) return;
     setLoading(true);
-    if (isDemo || !token) {
-      setBadgeData(DEMO_BADGES);
-      setLeaderboard(DEMO_LEADERBOARD);
-      setLoading(false);
-      return;
-    }
+    setError(null);
     try {
       const [badges, board] = await Promise.all([
         api.getBadges(token),
@@ -56,14 +30,35 @@ export default function RozetPage() {
       ]);
       setBadgeData(badges);
       setLeaderboard(board);
-    } catch {
-      setBadgeData(DEMO_BADGES);
-      setLeaderboard(DEMO_LEADERBOARD);
+    } catch (e) {
+      setError((e as Error).message || "Veriler yüklenemedi");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
-  }, [token, isDemo, period]);
+  }, [token, period]);
+
+  const loadLeaderboard = useCallback(async () => {
+    if (!token) return;
+    setLeaderboardLoading(true);
+    try {
+      const board = await api.getLeaderboard(token, period);
+      setLeaderboard(board);
+    } catch (e) {
+      setError((e as Error).message || "Sıralama yüklenemedi");
+    } finally {
+      setLeaderboardLoading(false);
+    }
+  }, [token, period]);
 
   useEffect(() => { loadData(); }, [loadData]);
+
+  // period değiştiğinde sadece leaderboard'u yeniden yükle
+  useEffect(() => {
+    if (!loading && token) {
+      loadLeaderboard();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [period]);
 
   const xpPct = badgeData ? Math.round(((badgeData.xp ?? 0) / (badgeData.xp_next_level ?? 100)) * 100) : 0;
   const earnedCount = badgeData?.badges.filter((b) => b.earned).length ?? 0;
@@ -74,16 +69,25 @@ export default function RozetPage() {
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Motivasyon & Başarılar</h1>
           <p className="text-slate-600 mt-1">Rozetler, haftalık sıralama ve seviye sistemi</p>
-          {isDemo && (
-            <span className="inline-flex items-center gap-1.5 mt-2 px-3 py-1 bg-amber-100 text-amber-700 text-xs font-semibold rounded-full">
-              Demo Modu
-            </span>
-          )}
         </div>
-        <button onClick={loadData} className="p-2 rounded-xl hover:bg-slate-100 text-slate-400 transition-colors mt-1">
-          <RefreshCw className="w-4 h-4" />
+        <button
+          onClick={loadData}
+          disabled={loading}
+          className="p-2 rounded-xl hover:bg-slate-100 text-slate-400 transition-colors mt-1 disabled:opacity-50"
+        >
+          <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
         </button>
       </div>
+
+      {error && (
+        <div className="flex items-center gap-3 p-4 bg-red-50 border border-red-200 rounded-2xl text-sm text-red-700">
+          <AlertCircle className="w-5 h-5 shrink-0" />
+          <span>{error}</span>
+          <button onClick={loadData} className="ml-auto text-red-600 font-semibold hover:underline text-xs">
+            Yenile
+          </button>
+        </div>
+      )}
 
       {/* Seviye + XP */}
       <div className="bg-gradient-to-br from-teal-600 to-teal-500 rounded-3xl p-7 text-white shadow-xl shadow-teal-500/20">
@@ -95,7 +99,7 @@ export default function RozetPage() {
         ) : badgeData ? (
           <div className="flex items-center gap-6">
             <div className="w-20 h-20 rounded-2xl bg-white/20 flex items-center justify-center text-3xl shrink-0">
-              ⭐
+              <Star className="w-10 h-10 text-white" />
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between mb-2">
@@ -110,7 +114,9 @@ export default function RozetPage() {
               </p>
             </div>
           </div>
-        ) : null}
+        ) : (
+          <p className="text-teal-100 text-sm">XP verisi yüklenemedi.</p>
+        )}
       </div>
 
       {/* Haftanın Çalışkanı */}
@@ -158,8 +164,10 @@ export default function RozetPage() {
           </div>
         </div>
 
-        {loading ? (
+        {loading || leaderboardLoading ? (
           <div className="p-4 space-y-3">{[1, 2, 3, 4, 5].map((i) => <Skeleton key={i} className="h-14" />)}</div>
+        ) : leaderboard.length === 0 ? (
+          <div className="p-8 text-center text-slate-400 text-sm">Sıralama verisi bulunamadı.</div>
         ) : (
           <div className="divide-y divide-slate-100">
             {leaderboard.map((entry) => (
@@ -169,7 +177,6 @@ export default function RozetPage() {
                   entry.is_current_user ? "bg-teal-50 border-l-4 border-l-teal-500" : "hover:bg-slate-50/50"
                 }`}
               >
-                {/* Sıra */}
                 <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-sm font-bold shrink-0 ${
                   entry.rank === 1 ? "bg-amber-100 text-amber-600" :
                   entry.rank === 2 ? "bg-slate-200 text-slate-600" :
@@ -177,13 +184,9 @@ export default function RozetPage() {
                 }`}>
                   {entry.rank <= 3 ? ["🥇", "🥈", "🥉"][entry.rank - 1] : entry.rank}
                 </div>
-
-                {/* Avatar */}
                 <div className="w-9 h-9 rounded-xl bg-teal-100 flex items-center justify-center text-teal-700 font-bold text-sm shrink-0">
                   {entry.name.charAt(0)}
                 </div>
-
-                {/* İsim */}
                 <div className="flex-1 min-w-0">
                   <p className={`font-semibold text-sm ${entry.is_current_user ? "text-teal-700" : "text-slate-900"}`}>
                     {entry.name}
@@ -193,8 +196,6 @@ export default function RozetPage() {
                     {Math.floor((entry.study_minutes ?? 0) / 60)}s {(entry.study_minutes ?? 0) % 60}dk çalışma
                   </p>
                 </div>
-
-                {/* Net */}
                 <span className="text-sm font-bold text-teal-600">+{entry.net_increase} net</span>
               </div>
             ))}
@@ -218,6 +219,10 @@ export default function RozetPage() {
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {[1, 2, 3, 4, 5, 6].map((i) => <Skeleton key={i} className="h-32" />)}
           </div>
+        ) : (badgeData?.badges ?? []).length === 0 ? (
+          <div className="text-center py-12 bg-white rounded-2xl border border-slate-200 text-slate-400 text-sm">
+            Henüz rozet verisi yok.
+          </div>
         ) : (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {(badgeData?.badges ?? []).map((badge) => (
@@ -230,7 +235,7 @@ export default function RozetPage() {
                 }`}
               >
                 <div className="w-14 h-14 rounded-2xl bg-white flex items-center justify-center text-2xl mb-3 shadow-sm border border-amber-100">
-                  {badge.earned ? badge.emoji : "🔒"}
+                  {badge.earned ? (badge.emoji ?? "✅") : "🔒"}
                 </div>
                 <h3 className="font-bold text-slate-900 text-sm">{badge.name}</h3>
                 <p className="text-xs text-slate-500 mt-1">{badge.description}</p>

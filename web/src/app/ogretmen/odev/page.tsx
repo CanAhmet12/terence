@@ -2,13 +2,8 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/lib/auth-context";
-import { api, Assignment } from "@/lib/api";
+import { api, Assignment, ClassRoom } from "@/lib/api";
 import { Calendar, CheckCircle, Loader2, Users, BookOpen, RefreshCw } from "lucide-react";
-
-const DEMO_ASSIGNMENTS: Assignment[] = [
-  { id: 1, title: "Üslü Sayılar - 10 Soru", subject: "Matematik", type: "question", target_count: 10, due_date: "2026-03-07", is_active: true, completions_count: 18, class_room: { id: 1, name: "10-A Matematik" } },
-  { id: 2, title: "Newton Yasaları - 5 Soru", subject: "Fizik", type: "question", target_count: 5, due_date: "2026-03-05", is_active: true, completions_count: 12, class_room: { id: 2, name: "11-A Fizik" } },
-];
 
 function Skeleton({ className }: { className?: string }) {
   return <div className={`bg-slate-100 rounded-xl animate-pulse ${className ?? ""}`} />;
@@ -25,9 +20,9 @@ function daysUntil(dateStr?: string) {
 
 export default function OdevPage() {
   const { token } = useAuth();
-  const isDemo = !token || token.startsWith("demo-token-");
 
   const [assignments, setAssignments] = useState<Assignment[]>([]);
+  const [classes, setClasses] = useState<ClassRoom[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -40,27 +35,36 @@ export default function OdevPage() {
     target_count: "10",
     due_date: "",
     description: "",
+    class_room_id: "" as string | number,
   });
 
   const loadAssignments = useCallback(async () => {
-    if (isDemo) {
-      setAssignments(DEMO_ASSIGNMENTS);
-      setLoading(false);
-      return;
-    }
+    if (!token) return;
     try {
-      const res = await api.getTeacherAssignments(token!);
+      const res = await api.getTeacherAssignments(token);
       setAssignments(res);
-    } catch {
-      setAssignments(DEMO_ASSIGNMENTS);
+    } catch (e) {
+      setError((e as Error).message);
     } finally {
       setLoading(false);
     }
-  }, [token, isDemo]);
+  }, [token]);
 
-  useEffect(() => { loadAssignments(); }, [loadAssignments]);
+  const loadClasses = useCallback(async () => {
+    if (!token) return;
+    try {
+      const res = await api.getTeacherClasses(token);
+      setClasses(res);
+    } catch {}
+  }, [token]);
+
+  useEffect(() => {
+    loadAssignments();
+    loadClasses();
+  }, [loadAssignments, loadClasses]);
 
   const handleSubmit = async () => {
+    if (!token) return;
     if (!form.title || !form.subject) {
       setError("Başlık ve ders alanları zorunludur.");
       return;
@@ -68,32 +72,20 @@ export default function OdevPage() {
     setSaving(true);
     setError("");
 
-    if (isDemo) {
-      await new Promise((r) => setTimeout(r, 700));
-      const newA: Assignment = {
-        id: Date.now(), title: form.title, subject: form.subject,
-        type: form.type, target_count: Number(form.target_count),
-        due_date: form.due_date || undefined, is_active: true, completions_count: 0,
-      };
-      setAssignments((prev) => [newA, ...prev]);
-      setSuccess(true);
-      setSaving(false);
-      setTimeout(() => setSuccess(false), 3000);
-      setForm({ title: "", subject: "", type: "question", target_count: "10", due_date: "", description: "" });
-      return;
-    }
-
     try {
-      const res = await api.createAssignment(token!, {
-        title: form.title, subject: form.subject, type: form.type,
+      const res = await api.createAssignment(token, {
+        title: form.title,
+        subject: form.subject,
+        type: form.type,
         target_count: Number(form.target_count),
         due_date: form.due_date || undefined,
         description: form.description || undefined,
+        class_room_id: form.class_room_id ? Number(form.class_room_id) : undefined,
       });
       setAssignments((prev) => [res.assignment, ...prev]);
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
-      setForm({ title: "", subject: "", type: "question", target_count: "10", due_date: "", description: "" });
+      setForm({ title: "", subject: "", type: "question", target_count: "10", due_date: "", description: "", class_room_id: "" });
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -109,9 +101,6 @@ export default function OdevPage() {
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-slate-900">Ödev & Test Atama</h1>
         <p className="text-slate-600 mt-1">Ödev oluştur · Teslim tarihi belirle · Tamamlanma takibi</p>
-        {isDemo && (
-          <span className="inline-flex items-center gap-1.5 mt-2 px-3 py-1 bg-amber-100 text-amber-700 text-xs font-semibold rounded-full">Demo Modu</span>
-        )}
       </div>
 
       <div className="grid lg:grid-cols-2 gap-8">
@@ -149,6 +138,17 @@ export default function OdevPage() {
                 </select>
               </div>
             </div>
+
+            <div>
+              <label className={labelCls}>Sınıf</label>
+              <select value={form.class_room_id} onChange={(e) => setForm({ ...form, class_room_id: e.target.value })} className={inputCls}>
+                <option value="">Tüm Sınıflar</option>
+                {classes.map((c) => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </select>
+            </div>
+
             <div className="grid sm:grid-cols-2 gap-4">
               <div>
                 <label className={labelCls}>Hedef Sayısı</label>
@@ -195,8 +195,9 @@ export default function OdevPage() {
           ) : (
             <div className="space-y-3">
               {assignments.map((a) => {
+                const studentCount = a.class_room?.student_count ?? 1;
                 const completePct = a.completions_count !== undefined
-                  ? Math.round((a.completions_count / 24) * 100)
+                  ? Math.round((a.completions_count / Math.max(studentCount, 1)) * 100)
                   : 0;
                 return (
                   <div key={a.id} className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm hover:shadow-md transition-shadow">
@@ -223,10 +224,10 @@ export default function OdevPage() {
                     </div>
                     <div className="flex items-center gap-3">
                       <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                        <div className="h-full bg-teal-500 rounded-full" style={{ width: `${completePct}%` }} />
+                        <div className="h-full bg-teal-500 rounded-full" style={{ width: `${Math.min(completePct, 100)}%` }} />
                       </div>
                       <span className="text-xs text-slate-500">
-                        {a.completions_count ?? 0} tamamlandı
+                        {a.completions_count ?? 0}/{studentCount} tamamlandı (%{completePct})
                       </span>
                     </div>
                   </div>
@@ -239,3 +240,4 @@ export default function OdevPage() {
     </div>
   );
 }
+

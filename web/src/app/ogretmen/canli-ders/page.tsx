@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/lib/auth-context";
-import { api, LiveSession } from "@/lib/api";
+import { api, LiveSession, ClassRoom } from "@/lib/api";
 import { Video, Calendar, Clock, CheckCircle, Copy, Loader2, RefreshCw, Play } from "lucide-react";
 
 function Skeleton({ className }: { className?: string }) {
@@ -24,9 +24,9 @@ const STATUS_CONFIG = {
 
 export default function CanliDersPage() {
   const { token } = useAuth();
-  const isDemo = !token || token.startsWith("demo-token-");
 
   const [lessons, setLessons] = useState<LiveSession[]>([]);
+  const [classes, setClasses] = useState<ClassRoom[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -35,57 +35,49 @@ export default function CanliDersPage() {
   const [copied, setCopied] = useState(false);
   const [form, setForm] = useState({
     title: "",
-    class_name: "",
+    class_room_id: "" as string | number,
     scheduled_at: "",
     duration_minutes: 45,
   });
 
   const loadLessons = useCallback(async () => {
-    if (isDemo) {
-      setLessons([
-        { id: 1, title: "Matematik — Üslü Sayılar", scheduled_at: new Date(Date.now() + 30 * 60 * 1000).toISOString(), duration_minutes: 45, daily_room_url: "https://meet.terence.com/mat-1", status: "scheduled", class_room: { id: 1, name: "10-A" } },
-        { id: 2, title: "Fizik — Hareket", scheduled_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), duration_minutes: 40, status: "scheduled", class_room: { id: 2, name: "11-A" } },
-      ]);
-      setLoading(false);
-      return;
-    }
+    if (!token) return;
     try {
-      const data = await api.getLiveSessions(token!);
+      const data = await api.getLiveSessions(token);
       setLessons(data);
     } catch {
       setLessons([]);
     } finally {
       setLoading(false);
     }
-  }, [token, isDemo]);
+  }, [token]);
 
-  useEffect(() => { loadLessons(); }, [loadLessons]);
+  const loadClasses = useCallback(async () => {
+    if (!token) return;
+    try {
+      const res = await api.getTeacherClasses(token);
+      setClasses(res);
+    } catch {}
+  }, [token]);
+
+  useEffect(() => {
+    loadLessons();
+    loadClasses();
+  }, [loadLessons, loadClasses]);
 
   const handleCreate = async () => {
-    if (!form.scheduled_at || !form.class_name) {
-      setError("Tarih ve sınıf zorunludur.");
+    if (!token) return;
+    if (!form.scheduled_at) {
+      setError("Tarih ve saat zorunludur.");
       return;
     }
     setSaving(true);
     setError("");
 
-    if (isDemo) {
-      await new Promise((r) => setTimeout(r, 800));
-      const url = `https://meet.terence.com/${Date.now()}`;
-      setCreatedUrl(url);
-      setSaved(true);
-      setSaving(false);
-      setLessons((prev) => [{
-        id: Date.now(), title: form.title || form.class_name,
-        daily_room_url: url, scheduled_at: form.scheduled_at,
-        duration_minutes: form.duration_minutes, status: "scheduled" as const,
-      }, ...prev]);
-      return;
-    }
-
     try {
-      const res = await api.createLiveSession(token!, {
-        title: form.title || form.class_name,
+      const res = await api.createLiveSession(token, {
+        title: form.title || (classes.find((c) => c.id === Number(form.class_room_id))?.name ?? "Canlı Ders"),
+        class_room_id: form.class_room_id ? Number(form.class_room_id) : undefined,
         scheduled_at: form.scheduled_at,
         duration_minutes: form.duration_minutes,
       });
@@ -114,11 +106,6 @@ export default function CanliDersPage() {
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-slate-900">Canlı Ders</h1>
         <p className="text-slate-600 mt-1">Ders planla · Link oluştur · Öğrencilerle paylaş</p>
-        {isDemo && (
-          <span className="inline-flex items-center gap-1.5 mt-2 px-3 py-1 bg-amber-100 text-amber-700 text-xs font-semibold rounded-full">
-            Demo Modu
-          </span>
-        )}
       </div>
 
       <div className="grid lg:grid-cols-2 gap-8">
@@ -153,7 +140,7 @@ export default function CanliDersPage() {
                 </div>
               )}
               <button
-                onClick={() => { setSaved(false); setCreatedUrl(""); setForm({ title: "", class_name: "", scheduled_at: "", duration_minutes: 45 }); }}
+                onClick={() => { setSaved(false); setCreatedUrl(""); setForm({ title: "", class_room_id: "", scheduled_at: "", duration_minutes: 45 }); }}
                 className="w-full py-3 border border-teal-200 text-teal-700 font-semibold rounded-xl hover:bg-teal-50 transition-colors"
               >
                 Yeni Ders Oluştur
@@ -168,13 +155,21 @@ export default function CanliDersPage() {
                   placeholder="Örn: Limit ve Türev"
                   className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" />
               </div>
+
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Sınıf / Grup <span className="text-red-500">*</span></label>
-                <input type="text" value={form.class_name}
-                  onChange={(e) => setForm({ ...form, class_name: e.target.value })}
-                  placeholder="Örn: 10-A"
-                  className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" />
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Sınıf / Grup</label>
+                <select
+                  value={form.class_room_id}
+                  onChange={(e) => setForm({ ...form, class_room_id: e.target.value })}
+                  className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none"
+                >
+                  <option value="">Sınıf seçin (isteğe bağlı)</option>
+                  {classes.map((c) => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
               </div>
+
               <div className="grid sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-1.5">Tarih ve Saat <span className="text-red-500">*</span></label>
@@ -235,6 +230,9 @@ export default function CanliDersPage() {
                           {fmtDate(l.scheduled_at)}
                           <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{l.duration_minutes} dk</span>
                         </p>
+                        {l.class_room && (
+                          <p className="text-xs text-teal-600 mt-0.5">{l.class_room.name}</p>
+                        )}
                       </div>
                       <div className="flex items-center gap-2">
                         <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${sc.cls}`}>{sc.label}</span>

@@ -33,7 +33,7 @@ function formatDuration(seconds: number) {
 
 export default function VideoPage() {
   const { token, user } = useAuth();
-  const isDemo = token?.startsWith("demo-token-");
+
   const isPro = user?.subscription_plan && user.subscription_plan !== "free";
 
   const [videos, setVideos] = useState<VideoItem[]>([]);
@@ -44,12 +44,6 @@ export default function VideoPage() {
   const [courseFilter, setCourseFilter] = useState("");
 
   const loadData = useCallback(async () => {
-    if (isDemo) {
-      setVideos(DEMO_VIDEOS);
-      setCourses(DEMO_COURSES);
-      setLoading(false);
-      return;
-    }
     try {
       const coursesRes = await api.getCourses(token);
       setCourses(coursesRes);
@@ -73,7 +67,7 @@ export default function VideoPage() {
       setCourses(DEMO_COURSES);
     }
     setLoading(false);
-  }, [token, isDemo]);
+  }, [token]);
 
   useEffect(() => { loadData(); }, [loadData]);
 
@@ -94,11 +88,6 @@ export default function VideoPage() {
         <p className="text-slate-600 mt-1">
           Hız ayarlı izleme · Kaldığın yerden devam · PDF not indirme
         </p>
-        {isDemo && (
-          <span className="inline-flex items-center gap-1.5 mt-2 px-3 py-1 bg-amber-100 text-amber-700 text-xs font-semibold rounded-full">
-            Demo Modu
-          </span>
-        )}
       </div>
 
       {/* Hız ayarı bilgi */}
@@ -323,3 +312,5 @@ export default function VideoPage() {
     </div>
   );
 }
+
+

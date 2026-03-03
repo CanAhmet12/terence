@@ -580,8 +580,27 @@ export const api = {
   },
 
   async getTeachers(params?: Record<string, string>) {
-    const q = params ? "?" + new URLSearchParams(params).toString() : "";
-    return fetchApi<{ data: User[] }>(`/admin/users?role=teacher${q.replace("?","&")}`);
+    const extra = params ? "&" + new URLSearchParams(params).toString() : "";
+    return fetchApi<{ data: User[] }>(`/admin/users?role=teacher${extra}`);
+  },
+
+  async updateAssignment(token: string, assignmentId: number, data: Partial<{ title: string; description: string; type: string; target_count: number; subject: string; due_date: string; class_room_id: number }>) {
+    return fetchApi<{ success: boolean; assignment: Assignment }>(`/teacher/assignments/${assignmentId}`, {
+      method: "PATCH",
+      token,
+      body: JSON.stringify(data),
+    });
+  },
+
+  async deleteAssignment(token: string, assignmentId: number) {
+    return fetchApi<{ success: boolean; message: string }>(`/teacher/assignments/${assignmentId}`, {
+      method: "DELETE",
+      token,
+    });
+  },
+
+  async getTeacherAnalytics(token: string, type: "kazanim-errors" | "hard-topics" | "time-analysis") {
+    return fetchApi<{ success: boolean; data: Record<string, unknown>[] }>(`/teacher/analytics/${type}`, { token });
   },
 
   async uploadContent(token: string, data: FormData) {
@@ -918,6 +937,8 @@ export interface ClassRoom {
   exam_type?: string;
   is_active?: boolean;
   students_count?: number;
+  avg_net?: number;
+  risk_level?: "green" | "yellow" | "red" | string;
 }
 
 export interface RiskStudent {
@@ -950,7 +971,7 @@ export interface Assignment {
   due_date?: string;
   is_active?: boolean;
   completions_count?: number;
-  class_room?: { id: number; name: string };
+  class_room?: { id: number; name: string; student_count?: number };
 }
 
 export interface LiveSession {
@@ -983,6 +1004,7 @@ export interface ChildSummary {
   last_active_at?: string;
   weekly_nets?: number[];
   weak_subjects?: { subject: string; accuracy: number }[];
+  recent_exams?: { title?: string; name?: string; finished_at?: string; date?: string; net_score?: number; net?: number }[];
 }
 
 // Admin
@@ -1159,3 +1181,6 @@ export interface LeaderboardEntry {
   net_increase?: number;
   is_current_user?: boolean;
 }
+
+
+

@@ -2,16 +2,8 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/lib/auth-context";
-import { api, TeacherMessage } from "@/lib/api";
-import { MessageSquare, Users, User, Clock, Send, CheckCircle, Bell, Loader2, RefreshCw } from "lucide-react";
-
-const DEMO_MESSAGES: TeacherMessage[] = [
-  { id: 1, recipient_type: "class", recipient_name: "10-A Matematik", content: "Üslü sayılar ödevinizin teslim tarihi yarın. Lütfen tamamlayın.", created_at: "2026-03-01T10:00:00" },
-  { id: 2, recipient_type: "student", recipient_name: "Ahmet Yılmaz", content: "Fizik konusunda geride kaldın. Bugün video izlemeyi unutma.", created_at: "2026-03-02T14:30:00" },
-];
-
-const CLASSES = ["10-A Matematik", "10-B Matematik", "11-A Fizik"];
-const STUDENTS = ["Ahmet Yılmaz", "Zeynep Kaya", "Burak Demir", "Selin Çelik", "Mehmet Arslan"];
+import { api, TeacherMessage, ClassRoom, User } from "@/lib/api";
+import { MessageSquare, Users, User as UserIcon, Clock, Send, CheckCircle, Bell, Loader2, RefreshCw } from "lucide-react";
 
 function timeAgo(iso: string) {
   const diff = Date.now() - new Date(iso).getTime();
@@ -29,74 +21,97 @@ function Skeleton({ className }: { className?: string }) {
 
 export default function MesajPage() {
   const { token } = useAuth();
-  const isDemo = token?.startsWith("demo-token-");
 
   const [messages, setMessages] = useState<TeacherMessage[]>([]);
+  const [classes, setClasses] = useState<ClassRoom[]>([]);
+  const [students, setStudents] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
+  const [studentsLoading, setStudentsLoading] = useState(false);
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState("");
 
   const [tip, setTip] = useState<"sinif" | "ozel">("sinif");
   const [mesaj, setMesaj] = useState("");
-  const [seciliSinif, setSeciliSinif] = useState("");
-  const [seciliOgrenci, setSeciliOgrenci] = useState("");
+  const [seciliSinifId, setSeciliSinifId] = useState<number | "">("");
+  const [seciliOgrenciId, setSeciliOgrenciId] = useState<number | "">("");
   const [sendSms, setSendSms] = useState(false);
 
   const loadMessages = useCallback(async () => {
-    if (isDemo || !token) {
-      setMessages(DEMO_MESSAGES);
-      setLoading(false);
-      return;
-    }
+    if (!token) return;
     try {
       const res = await api.getTeacherMessages(token);
       setMessages(res);
-    } catch {
-      setMessages(DEMO_MESSAGES);
-    }
+    } catch {}
     setLoading(false);
-  }, [token, isDemo]);
+  }, [token]);
 
-  useEffect(() => { loadMessages(); }, [loadMessages]);
+  const loadClasses = useCallback(async () => {
+    if (!token) return;
+    try {
+      const res = await api.getTeacherClasses(token);
+      setClasses(res);
+    } catch {}
+  }, [token]);
+
+  useEffect(() => {
+    loadMessages();
+    loadClasses();
+  }, [loadMessages, loadClasses]);
+
+  const handleClassChange = async (classId: number) => {
+    setSeciliSinifId(classId);
+    if (!token || !classId) return;
+    setStudentsLoading(true);
+    try {
+      const res = await api.getClassStudents(token, classId);
+      setStudents(res);
+    } catch {}
+    setStudentsLoading(false);
+  };
 
   const handleSend = async () => {
-    const recipientId = tip === "sinif" ? seciliSinif : seciliOgrenci;
-    if (!recipientId || !mesaj.trim()) {
-      setError("Alıcı ve mesaj alanı zorunludur.");
+    if (!token) return;
+    if (tip === "sinif" && !seciliSinifId) {
+      setError("Sınıf seçimi zorunludur.");
+      return;
+    }
+    if (tip === "ozel" && !seciliOgrenciId) {
+      setError("Öğrenci seçimi zorunludur.");
+      return;
+    }
+    if (!mesaj.trim()) {
+      setError("Mesaj alanı zorunludur.");
       return;
     }
     setSending(true);
     setError("");
 
-    if (isDemo || !token) {
-      await new Promise((r) => setTimeout(r, 600));
-      setMessages((prev) => [{
-        id: Date.now(),
-        recipient_type: tip === "sinif" ? "class" : "student",
-        recipient_name: recipientId,
-        content: mesaj,
-        created_at: new Date().toISOString(),
-      }, ...prev]);
-      setSent(true);
-      setTimeout(() => setSent(false), 3000);
-      setMesaj("");
-      setSending(false);
-      return;
-    }
-
     try {
-      const res = await api.sendMessage(token, {
-        recipient_type: tip === "sinif" ? "class" : "student",
-        recipient_id: typeof recipientId === "string" ? undefined : recipientId,
-        recipient_name: typeof recipientId === "string" ? recipientId : undefined,
-        content: mesaj,
-        send_sms: sendSms,
-      });
+      const payload =
+        tip === "sinif"
+          ? {
+              recipient_type: "class" as const,
+              recipient_id: seciliSinifId as number,
+              recipient_name: classes.find((c) => c.id === seciliSinifId)?.name,
+              content: mesaj,
+              send_sms: sendSms,
+            }
+          : {
+              recipient_type: "student" as const,
+              recipient_id: seciliOgrenciId as number,
+              recipient_name: students.find((s) => s.id === seciliOgrenciId)?.name,
+              content: mesaj,
+              send_sms: sendSms,
+            };
+
+      const res = await api.sendMessage(token, payload);
       setMessages((prev) => [res.message, ...prev]);
       setSent(true);
       setTimeout(() => setSent(false), 3000);
       setMesaj("");
+      setSeciliSinifId("");
+      setSeciliOgrenciId("");
     } catch (e) {
       setError((e as Error).message);
     }
@@ -108,11 +123,6 @@ export default function MesajPage() {
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-slate-900">Mesaj & Duyuru</h1>
         <p className="text-slate-600 mt-1">Sınıfa duyuru · Özel mesaj · Otomatik hatırlatıcılar</p>
-        {isDemo && (
-          <span className="inline-flex items-center gap-1.5 mt-2 px-3 py-1 bg-amber-100 text-amber-700 text-xs font-semibold rounded-full">
-            Demo Modu
-          </span>
-        )}
       </div>
 
       <div className="grid lg:grid-cols-2 gap-8">
@@ -127,11 +137,11 @@ export default function MesajPage() {
           <div className="flex gap-2 mb-5 p-1 bg-slate-100 rounded-xl">
             {([
               { key: "sinif", label: "Sınıfa Duyuru", icon: Users },
-              { key: "ozel", label: "Özel Mesaj", icon: User },
+              { key: "ozel", label: "Özel Mesaj", icon: UserIcon },
             ] as const).map(({ key, label, icon: Icon }) => (
               <button
                 key={key}
-                onClick={() => setTip(key)}
+                onClick={() => { setTip(key); setSeciliSinifId(""); setSeciliOgrenciId(""); }}
                 className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg font-semibold text-sm transition-all ${
                   tip === key ? "bg-white text-teal-700 shadow-sm" : "text-slate-600 hover:text-slate-900"
                 }`}
@@ -149,22 +159,44 @@ export default function MesajPage() {
             </label>
             {tip === "sinif" ? (
               <select
-                value={seciliSinif}
-                onChange={(e) => setSeciliSinif(e.target.value)}
+                value={seciliSinifId}
+                onChange={(e) => handleClassChange(Number(e.target.value))}
                 className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none"
               >
-                <option value="">Seçin</option>
-                {CLASSES.map((c) => <option key={c}>{c}</option>)}
+                <option value="">Sınıf seçin</option>
+                {classes.map((c) => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
               </select>
             ) : (
-              <select
-                value={seciliOgrenci}
-                onChange={(e) => setSeciliOgrenci(e.target.value)}
-                className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none"
-              >
-                <option value="">Seçin</option>
-                {STUDENTS.map((s) => <option key={s}>{s}</option>)}
-              </select>
+              <>
+                <select
+                  value={seciliSinifId}
+                  onChange={(e) => handleClassChange(Number(e.target.value))}
+                  className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none mb-2"
+                >
+                  <option value="">Önce sınıf seçin</option>
+                  {classes.map((c) => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
+                {studentsLoading ? (
+                  <div className="h-12 bg-slate-100 rounded-xl animate-pulse" />
+                ) : students.length > 0 ? (
+                  <select
+                    value={seciliOgrenciId}
+                    onChange={(e) => setSeciliOgrenciId(Number(e.target.value))}
+                    className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none"
+                  >
+                    <option value="">Öğrenci seçin</option>
+                    {students.map((s) => (
+                      <option key={s.id} value={s.id}>{s.name}</option>
+                    ))}
+                  </select>
+                ) : seciliSinifId ? (
+                  <p className="text-xs text-slate-500 px-1">Bu sınıfta öğrenci bulunamadı.</p>
+                ) : null}
+              </>
             )}
           </div>
 
@@ -233,14 +265,14 @@ export default function MesajPage() {
             </p>
             <ul className="space-y-2.5">
               {[
-                { text: "Ödev teslim tarihi 24 saat kalmışsa → öğrenciye bildirim", active: true },
-                { text: "3 gün çalışmayan öğrenci → veliye SMS", active: true },
-                { text: "Hedef risk altındaki öğrenci → veliye SMS", active: true },
-                { text: "Canlı ders başlamadan 15 dk önce → tüm sınıfa bildirim", active: true },
-              ].map((item, i) => (
+                "Ödev teslim tarihi 24 saat kalmışsa → öğrenciye bildirim",
+                "3 gün çalışmayan öğrenci → veliye SMS",
+                "Hedef risk altındaki öğrenci → veliye SMS",
+                "Canlı ders başlamadan 15 dk önce → tüm sınıfa bildirim",
+              ].map((text, i) => (
                 <li key={i} className="flex items-start gap-2.5 text-sm text-slate-700">
-                  <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${item.active ? "bg-teal-500" : "bg-slate-300"}`} />
-                  {item.text}
+                  <div className="w-2 h-2 rounded-full mt-1.5 shrink-0 bg-teal-500" />
+                  {text}
                 </li>
               ))}
             </ul>
@@ -270,7 +302,7 @@ export default function MesajPage() {
                       <span className={`w-6 h-6 rounded-full flex items-center justify-center ${m.recipient_type === "class" ? "bg-teal-100" : "bg-indigo-100"}`}>
                         {m.recipient_type === "class"
                           ? <Users className="w-3.5 h-3.5 text-teal-600" />
-                          : <User className="w-3.5 h-3.5 text-indigo-600" />
+                          : <UserIcon className="w-3.5 h-3.5 text-indigo-600" />
                         }
                       </span>
                       <span className="text-sm font-semibold text-slate-900">{m.recipient_name}</span>
@@ -287,3 +319,4 @@ export default function MesajPage() {
     </div>
   );
 }
+

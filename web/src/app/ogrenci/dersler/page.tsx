@@ -28,7 +28,7 @@ const EXAM_COLORS: Record<string, string> = {
 
 export default function OgrenciDerslerPage() {
   const { token, user } = useAuth();
-  const isDemo = token?.startsWith("demo-token-");
+
 
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
@@ -36,19 +36,14 @@ export default function OgrenciDerslerPage() {
   const [examFilter, setExamFilter] = useState("");
 
   const loadCourses = useCallback(async () => {
-    if (isDemo) {
-      setCourses(DEMO_COURSES);
-      setLoading(false);
-      return;
-    }
     try {
       const res = await api.getCourses(token);
       setCourses(res);
     } catch {
-      setCourses(DEMO_COURSES);
+      setCourses([]);
     }
     setLoading(false);
-  }, [isDemo]);
+  }, [token]);
 
   useEffect(() => { loadCourses(); }, [loadCourses]);
 
@@ -69,11 +64,6 @@ export default function OgrenciDerslerPage() {
         <p className="text-slate-600 mt-1">
           Konu anlatım videoları, PDF notlar, kazanım bazlı ilerleme takibi
         </p>
-        {isDemo && (
-          <span className="inline-flex items-center gap-1.5 mt-2 px-3 py-1 bg-amber-100 text-amber-700 text-xs font-semibold rounded-full">
-            Demo Modu
-          </span>
-        )}
       </div>
 
       {/* Filtreler */}
@@ -208,3 +198,8 @@ export default function OgrenciDerslerPage() {
     </div>
   );
 }
+
+
+
+
+

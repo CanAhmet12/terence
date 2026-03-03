@@ -56,14 +56,14 @@ const DEMO_NOTIFICATIONS: Notification[] = [
 export default function BildirimlerPage() {
   const { user, token } = useAuth();
   const router = useRouter();
-  const isDemo = token?.startsWith("demo-token-");
+
 
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [markingAll, setMarkingAll] = useState(false);
 
   const loadNotifications = useCallback(async () => {
-    if (!token || isDemo) {
+    if (!token) {
       setNotifications(DEMO_NOTIFICATIONS);
       setLoading(false);
       return;
@@ -73,7 +73,7 @@ export default function BildirimlerPage() {
       setNotifications(res.data);
     } catch {}
     setLoading(false);
-  }, [token, isDemo]);
+  }, [token]);
 
   useEffect(() => {
     if (!user) { router.replace("/giris"); return; }
@@ -84,7 +84,7 @@ export default function BildirimlerPage() {
     if (notif.is_read) return;
     // Optimistik
     setNotifications((prev) => prev.map((n) => n.id === notif.id ? { ...n, is_read: true } : n));
-    if (token && !isDemo) {
+    if (token) {
       try {
         await api.markNotificationRead(token, notif.id);
       } catch {
@@ -96,7 +96,7 @@ export default function BildirimlerPage() {
   const handleMarkAllRead = async () => {
     setMarkingAll(true);
     setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
-    if (token && !isDemo) {
+    if (token) {
       try {
         await api.markAllNotificationsRead(token);
       } catch {
@@ -226,3 +226,6 @@ export default function BildirimlerPage() {
     </>
   );
 }
+
+
+

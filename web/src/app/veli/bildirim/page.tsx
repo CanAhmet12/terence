@@ -6,22 +6,8 @@ import { useAuth } from "@/lib/auth-context";
 import { api, ParentNotificationSettings } from "@/lib/api";
 import {
   ArrowLeft, Mail, MessageSquare, Bell, Smartphone,
-  CheckCircle, Loader2, AlertCircle, Settings
+  CheckCircle, Loader2, AlertCircle, Settings, Phone
 } from "lucide-react";
-
-const DEMO_SETTINGS: ParentNotificationSettings = {
-  sms_enabled: true,
-  email_enabled: true,
-  push_enabled: false,
-  inactivity_alert: true,
-  inactivity_days: 3,
-  risk_alert: true,
-  exam_results: true,
-  live_lesson_reminder: true,
-  homework_reminder: true,
-  phone: "+90 5XX XXX XX XX",
-  email: "veli@ornek.com",
-};
 
 function Toggle({
   checked, onChange, disabled,
@@ -46,53 +32,63 @@ function Skeleton({ className }: { className?: string }) {
   return <div className={`bg-slate-100 rounded-xl animate-pulse ${className ?? ""}`} />;
 }
 
+
 export default function VeliBildirimPage() {
   const { token } = useAuth();
-  const isDemo = token?.startsWith("demo-token-");
 
   const [settings, setSettings] = useState<ParentNotificationSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [err, setErr] = useState("");
+  const [phone, setPhone] = useState("");
+  const [phoneMsg, setPhoneMsg] = useState("");
+  const [phoneSaving, setPhoneSaving] = useState(false);
 
   const loadSettings = useCallback(async () => {
-    if (isDemo || !token) {
-      setSettings(DEMO_SETTINGS);
-      setLoading(false);
-      return;
-    }
+    if (!token) return;
     try {
       const res = await api.getParentNotificationSettings(token);
       setSettings(res);
+      setPhone(res.phone ?? "");
     } catch {
-      setSettings(DEMO_SETTINGS);
+      setSettings({});
     }
     setLoading(false);
-  }, [token, isDemo]);
+  }, [token]);
 
   useEffect(() => { loadSettings(); }, [loadSettings]);
 
   const handleSave = async () => {
-    if (!settings) return;
+    if (!settings || !token) return;
     setSaving(true);
     setErr("");
     setSaved(false);
-    if (!isDemo && token) {
-      try {
-        const updated = await api.updateParentNotificationSettings(token, settings);
-        setSettings(updated);
-      } catch (e) {
-        setErr((e as Error).message || "Kaydedilemedi.");
-        setSaving(false);
-        return;
-      }
-    } else {
-      await new Promise((r) => setTimeout(r, 600));
+    try {
+      const updated = await api.updateParentNotificationSettings(token, settings);
+      setSettings(updated);
+    } catch (e) {
+      setErr((e as Error).message || "Kaydedilemedi.");
+      setSaving(false);
+      return;
     }
     setSaved(true);
     setSaving(false);
     setTimeout(() => setSaved(false), 3000);
+  };
+
+  const handlePhoneSave = async () => {
+    if (!token || !phone.trim()) return;
+    setPhoneSaving(true);
+    setPhoneMsg("");
+    try {
+      await api.updateProfile(token, { phone });
+      setPhoneMsg("ok");
+      setTimeout(() => setPhoneMsg(""), 3000);
+    } catch (e) {
+      setPhoneMsg((e as Error).message || "Güncellenemedi.");
+    }
+    setPhoneSaving(false);
   };
 
   const update = <K extends keyof ParentNotificationSettings>(key: K, value: ParentNotificationSettings[K]) => {
@@ -137,17 +133,43 @@ export default function VeliBildirimPage() {
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-slate-900 mb-2">Bildirim Ayarları</h1>
         <p className="text-slate-600">SMS ve e-posta ile çocuğunuzun gelişimini takip edin.</p>
-        {isDemo && (
-          <span className="inline-flex items-center gap-1.5 mt-2 px-3 py-1 bg-amber-100 text-amber-700 text-xs font-semibold rounded-full">
-            Demo Modu
-          </span>
-        )}
       </div>
 
       {loading ? (
         <div className="space-y-4">{[1, 2, 3].map((i) => <Skeleton key={i} className="h-24" />)}</div>
       ) : settings ? (
         <div className="space-y-6">
+          {/* Telefon güncelleme */}
+          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+            <h2 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
+              <Phone className="w-4 h-4 text-teal-600" />
+              SMS Telefon Numarası
+            </h2>
+            <div className="flex gap-3">
+              <input
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="+90 5XX XXX XX XX"
+                className="flex-1 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
+              />
+              <button
+                onClick={handlePhoneSave}
+                disabled={phoneSaving}
+                className="px-5 py-3 bg-teal-600 hover:bg-teal-700 disabled:opacity-60 text-white font-semibold rounded-xl text-sm transition-colors flex items-center gap-2"
+              >
+                {phoneSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : "Güncelle"}
+              </button>
+            </div>
+            {phoneMsg && (
+              <div className={`flex items-center gap-2 mt-3 text-sm ${phoneMsg === "ok" ? "text-teal-700" : "text-red-600"}`}>
+                {phoneMsg === "ok"
+                  ? <><CheckCircle className="w-4 h-4" /> Telefon numarası güncellendi.</>
+                  : <><AlertCircle className="w-4 h-4" /> {phoneMsg}</>}
+              </div>
+            )}
+          </div>
+
           {/* Kanal seçimi */}
           <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
             <h2 className="font-bold text-slate-900 mb-5 flex items-center gap-2">
@@ -160,7 +182,7 @@ export default function VeliBildirimPage() {
                   key: "sms_enabled" as const,
                   icon: MessageSquare,
                   label: "SMS",
-                  detail: settings.phone ?? "Telefon numarası ayarlı değil",
+                  detail: (settings.phone ?? phone) || "Telefon numarası ayarli degil",
                   color: "text-green-600 bg-green-50",
                 },
                 {
@@ -188,7 +210,7 @@ export default function VeliBildirimPage() {
                       <p className="text-xs text-slate-500 mt-0.5">{detail}</p>
                     </div>
                   </div>
-                  <Toggle checked={settings[key] as boolean} onChange={(v) => update(key, v)} />
+                  <Toggle checked={settings[key] as boolean ?? false} onChange={(v) => update(key, v)} />
                 </div>
               ))}
             </div>
@@ -215,7 +237,7 @@ export default function VeliBildirimPage() {
                       <div className="flex items-center gap-2 mt-2">
                         <span className="text-xs text-slate-500">Gün sayısı:</span>
                         <select
-                          value={settings.inactivity_days}
+                          value={settings.inactivity_days ?? 3}
                           onChange={(e) => update("inactivity_days", Number(e.target.value))}
                           className="text-xs border border-slate-200 rounded-lg px-2 py-1 focus:ring-1 focus:ring-teal-500 outline-none"
                         >
@@ -227,7 +249,7 @@ export default function VeliBildirimPage() {
                     )}
                   </div>
                   <Toggle
-                    checked={settings[key] as boolean}
+                    checked={settings[key] as boolean ?? false}
                     onChange={(v) => update(key, v)}
                   />
                 </div>
@@ -235,7 +257,6 @@ export default function VeliBildirimPage() {
             </div>
           </div>
 
-          {/* Mesaj */}
           {err && (
             <div className="flex items-center gap-2 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
               <AlertCircle className="w-4 h-4 shrink-0" />
@@ -249,7 +270,6 @@ export default function VeliBildirimPage() {
             </div>
           )}
 
-          {/* Kaydet */}
           <button
             onClick={handleSave}
             disabled={saving}
@@ -258,7 +278,11 @@ export default function VeliBildirimPage() {
             {saving ? <><Loader2 className="w-5 h-5 animate-spin" /> Kaydediliyor...</> : "Tercihleri Kaydet"}
           </button>
         </div>
-      ) : null}
+      ) : (
+        <div className="text-center py-16 text-slate-500">Ayarlar yüklenemedi.</div>
+      )}
     </div>
   );
 }
+
+

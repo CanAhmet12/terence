@@ -30,47 +30,46 @@ export default function ExamSessionPage() {
   const [error, setError] = useState<string | null>(null);
   const durationRef = useRef(135 * 60);
   const questionStartTimes = useRef<Record<number, number>>({});
-
-  // Demo için sessiz mod
-  const isDemo = params.id === "demo" || !token || token.startsWith("demo-token-");
+  const isSubmittingRef = useRef(false);
 
   const loadSession = useCallback(async () => {
-    if (isDemo) {
-      // Demo sorular
-      const demoQs: ExamQuestion[] = Array.from({ length: 10 }, (_, i) => ({
-        id: i + 1,
-        question_text: `Demo Soru ${i + 1}: Aşağıdaki işlemin sonucu kaçtır? (${i + 1} × 5 = ?)`,
-        subject: i < 4 ? "Matematik" : i < 7 ? "Türkçe" : "Fizik",
-        options: [
-          { letter: "A", text: String((i + 1) * 5) },
-          { letter: "B", text: String((i + 1) * 5 + 5) },
-          { letter: "C", text: String((i + 1) * 5 - 5) },
-          { letter: "D", text: String((i + 1) * 5 + 10) },
-        ],
-      }));
-      setQuestions(demoQs);
-      durationRef.current = 30 * 60;
-      setTimeLeft(30 * 60);
-      const now = Date.now();
-      demoQs.forEach((q) => { questionStartTimes.current[q.id] = now; });
-      setLoading(false);
-      return;
+    if (!token) return;
+
+    // 1. localStorage'dan soruları kontrol et
+    const stored = localStorage.getItem(`exam_questions_${sessionId}`);
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored) as { questions: ExamQuestion[]; duration?: number };
+        const qs = parsed.questions ?? (parsed as unknown as ExamQuestion[]);
+        const dur = parsed.duration ?? 135;
+        if (Array.isArray(qs) && qs.length > 0) {
+          setQuestions(qs);
+          durationRef.current = dur * 60;
+          setTimeLeft(dur * 60);
+          const now = Date.now();
+          qs.forEach((q) => { questionStartTimes.current[q.id] = now; });
+          setLoading(false);
+          return;
+        }
+      } catch {
+        localStorage.removeItem(`exam_questions_${sessionId}`);
+      }
     }
 
-    // API'den geçmiş sonuç sayfasına yönlendir
+    // 2. localStorage yoksa → API'den sonuç kontrol et
     try {
-      const res = await api.getExamResult(token!, sessionId);
+      const res = await api.getExamResult(token, sessionId);
       if (res.result.status === "completed") {
         router.replace(`/ogrenci/deneme/${sessionId}/sonuc`);
         return;
       }
     } catch {
-      // oturum henüz tamamlanmamış, devam et
+      // oturum henüz tamamlanmamış veya bulunamadı
     }
 
-    // Oturum bilgisini almak için history'den bul
+    // 3. Oturum bilgisi için geçmiş kontrol
     try {
-      const history = await api.getExamHistory(token!);
+      const history = await api.getExamHistory(token);
       const session = history.find((s) => s.id === sessionId);
       if (session) {
         durationRef.current = session.duration_minutes * 60;
@@ -79,19 +78,22 @@ export default function ExamSessionPage() {
     } catch { /* sessiz geç */ }
 
     setLoading(false);
-    setError("Bu deneme oturumu için sorular yüklenemedi. Lütfen yeni bir deneme başlatın.");
-  }, [token, sessionId, isDemo, router]);
+    setError("Bu deneme oturumu için sorular bulunamadı. Lütfen yeni bir deneme başlatın.");
+  }, [token, sessionId, router]);
 
   useEffect(() => { loadSession(); }, [loadSession]);
 
   // Geri sayım
   useEffect(() => {
-    if (loading || timeLeft <= 0) return;
+    if (loading || timeLeft <= 0 || questions.length === 0) return;
     const timer = setInterval(() => {
       setTimeLeft((t) => {
         if (t <= 1) {
           clearInterval(timer);
-          handleFinish();
+          if (!isSubmittingRef.current) {
+            isSubmittingRef.current = true;
+            handleFinish();
+          }
           return 0;
         }
         return t - 1;
@@ -99,7 +101,7 @@ export default function ExamSessionPage() {
     }, 1000);
     return () => clearInterval(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loading]);
+  }, [loading, questions.length]);
 
   // Soru değiştiğinde başlangıç zamanını kaydet
   useEffect(() => {
@@ -113,50 +115,46 @@ export default function ExamSessionPage() {
 
   const handleAnswer = async (letter: string) => {
     const question = questions[currentIdx];
-    if (!question) return;
+    if (!question || !token) return;
     const prev = answers[question.id];
     setAnswers((a) => ({ ...a, [question.id]: letter === prev ? null : letter }));
 
-    if (!isDemo && token) {
-      const startTime = questionStartTimes.current[question.id] ?? Date.now();
-      const timeSpent = Math.round((Date.now() - startTime) / 1000);
-      api.answerExamQuestion(token, sessionId, {
-        question_id: question.id,
-        selected_option: letter === prev ? undefined : letter,
-        time_spent_seconds: timeSpent,
-      }).catch(() => {});
-    }
+    const startTime = questionStartTimes.current[question.id] ?? Date.now();
+    const timeSpent = Math.round((Date.now() - startTime) / 1000);
+    api.answerExamQuestion(token, sessionId, {
+      question_id: question.id,
+      selected_option: letter === prev ? undefined : letter,
+      time_spent_seconds: timeSpent,
+    }).catch(() => {});
   };
 
-  const toggleFlag = async (questionId: number) => {
+  const toggleFlag = (questionId: number) => {
+    if (!token) return;
     setFlagged((f) => {
       const next = new Set(f);
       if (next.has(questionId)) next.delete(questionId);
       else next.add(questionId);
       return next;
     });
-    if (!isDemo && token) {
-      api.answerExamQuestion(token, sessionId, {
-        question_id: questionId,
-        is_flagged: !flagged.has(questionId),
-      }).catch(() => {});
-    }
+    api.answerExamQuestion(token, sessionId, {
+      question_id: questionId,
+      is_flagged: !flagged.has(questionId),
+    }).catch(() => {});
   };
 
   const handleFinish = async () => {
-    if (submitting) return;
+    if (submitting || isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
     setSubmitting(true);
-    if (isDemo) {
-      // Demo sonuç
-      router.push("/ogrenci/deneme");
-      return;
-    }
+    if (!token) return;
     try {
-      const result = await api.finishExam(token!, sessionId);
+      const result = await api.finishExam(token, sessionId);
+      localStorage.removeItem(`exam_questions_${sessionId}`);
       router.push(`/ogrenci/deneme/${result.session_id}/sonuc`);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Deneme bitirilemedi");
       setSubmitting(false);
+      isSubmittingRef.current = false;
     }
   };
 
@@ -199,12 +197,8 @@ export default function ExamSessionPage() {
       {/* Üst Bar */}
       <div className="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between sticky top-0 z-10">
         <div className="flex items-center gap-4">
-          <span className="font-bold text-slate-900">
-            {isDemo ? "Demo Deneme" : `Deneme #${sessionId}`}
-          </span>
-          <span className="text-sm text-slate-500">
-            {currentIdx + 1} / {questions.length}
-          </span>
+          <span className="font-bold text-slate-900">Deneme #{sessionId}</span>
+          <span className="text-sm text-slate-500">{currentIdx + 1} / {questions.length}</span>
         </div>
 
         <div className={`flex items-center gap-2 font-mono font-bold text-xl ${timerColor}`}>
@@ -300,6 +294,10 @@ export default function ExamSessionPage() {
                   </button>
                 </div>
 
+                {question.image_url && (
+                  <img src={question.image_url} alt="Soru görseli" className="w-full max-h-64 object-contain rounded-xl mb-6 border border-slate-100" />
+                )}
+
                 <p className="text-slate-800 text-base leading-relaxed font-medium mb-8">
                   {question.question_text}
                 </p>
@@ -322,9 +320,13 @@ export default function ExamSessionPage() {
                         }`}>
                           {opt.letter}
                         </span>
-                        <span className={`text-sm ${isSelected ? "text-teal-900 font-semibold" : "text-slate-700"}`}>
-                          {opt.text}
-                        </span>
+                        {opt.image ? (
+                          <img src={opt.image} alt={`Şık ${opt.letter}`} className="max-h-16 object-contain" />
+                        ) : (
+                          <span className={`text-sm ${isSelected ? "text-teal-900 font-semibold" : "text-slate-700"}`}>
+                            {opt.text}
+                          </span>
+                        )}
                       </button>
                     );
                   })}

@@ -31,7 +31,7 @@ const labelCls = "block text-sm font-semibold text-slate-700 mb-1.5";
 
 export default function IcerikYuklemePage() {
   const { token } = useAuth();
-  const isDemo = token?.startsWith("demo-token-");
+
 
   const [secim, setSecim] = useState<ContentType>("video");
   const [form, setForm] = useState<FormState>(INITIAL_FORM);
@@ -75,7 +75,7 @@ export default function IcerikYuklemePage() {
     setUploading(true);
     setError("");
 
-    if (isDemo || !token) {
+    if (!token) {
       await new Promise((r) => setTimeout(r, 1200));
       setUploaded(true);
       setUploading(false);
@@ -156,11 +156,6 @@ export default function IcerikYuklemePage() {
         <p className="text-slate-600 mt-1">
           Video, PDF ve soru ekleme · Kazanım etiketleme zorunlu · Tüm alanlar doldurulmadan yayına alınamaz
         </p>
-        {isDemo && (
-          <span className="inline-flex items-center gap-1.5 mt-2 px-3 py-1 bg-amber-100 text-amber-700 text-xs font-semibold rounded-full">
-            Demo Modu — Gerçek yükleme yapılmayacak
-          </span>
-        )}
       </div>
 
       {/* Tip seçimi */}
@@ -395,3 +390,5 @@ export default function IcerikYuklemePage() {
     </div>
   );
 }
+
+

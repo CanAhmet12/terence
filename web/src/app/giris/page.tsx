@@ -8,7 +8,7 @@ import { useAuth } from "@/lib/auth-context";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login, loginDemo, error, clearError, loading, user } = useAuth();
+  const { login, error, clearError, loading, user } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -29,20 +29,13 @@ export default function LoginPage() {
     try {
       await login(email, password);
     } catch {
-      // error shown by context
+      // hata auth-context'ten gösteriliyor
     }
-  };
-
-  const handleDemo = (role: "student" | "teacher" | "admin" | "parent") => {
-    loginDemo(role);
-    if (role === "admin") router.push("/admin");
-    else if (role === "teacher") router.push("/ogretmen");
-    else if (role === "parent") router.push("/veli");
-    else router.push("/ogrenci");
   };
 
   return (
     <div className="min-h-screen flex">
+      {/* Sol: Form */}
       <div className="flex-1 flex items-center justify-center p-8 bg-white">
         <div className="w-full max-w-md">
           <Link href="/" className="inline-flex items-center gap-3 text-slate-900 mb-10 group">
@@ -120,22 +113,6 @@ export default function LoginPage() {
           </form>
 
           <div className="mt-8 pt-6 border-t border-slate-200">
-            <p className="text-sm text-slate-500 text-center mb-3 font-medium">Demo ile hemen dene:</p>
-            <div className="flex flex-wrap gap-2">
-              {(["student", "teacher", "admin", "parent"] as const).map((role) => (
-                <button
-                  key={role}
-                  type="button"
-                  onClick={() => handleDemo(role)}
-                  className="flex-1 min-w-[90px] py-2.5 border-2 border-slate-200 rounded-xl text-sm font-semibold text-slate-700 hover:bg-teal-50 hover:border-teal-200 transition-all"
-                >
-                  {role === "student" ? "Öğrenci" : role === "teacher" ? "Öğretmen" : role === "admin" ? "Admin" : "Veli"}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="mt-8 pt-6 border-t border-slate-200">
             <p className="text-sm text-slate-600 text-center">
               Hesabın yok mu?{" "}
               <Link href="/kayit" className="text-teal-600 font-bold hover:underline inline-flex items-center gap-1">
@@ -147,6 +124,7 @@ export default function LoginPage() {
         </div>
       </div>
 
+      {/* Sağ: Tanıtım */}
       <div className="hidden lg:flex flex-1 relative overflow-hidden">
         <div className="absolute inset-0 gradient-hero" />
         <div className="absolute inset-0 bg-gradient-to-br from-teal-900/30 via-transparent to-emerald-900/20" />

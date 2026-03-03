@@ -25,10 +25,7 @@ export default function ExamResultPage() {
   const [error, setError] = useState<string | null>(null);
 
   const loadResult = useCallback(async () => {
-    if (!token || token.startsWith("demo-token-")) {
-      setLoading(false);
-      return;
-    }
+    if (!token) return;
     try {
       const res = await api.getExamResult(token, sessionId);
       setResult(res.result);

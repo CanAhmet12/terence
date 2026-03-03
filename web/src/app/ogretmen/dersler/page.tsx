@@ -53,7 +53,7 @@ function Skeleton({ className }: { className?: string }) {
 
 export default function OgretmenDerslerPage() {
   const { token } = useAuth();
-  const isDemo = token?.startsWith("demo-token-");
+
 
   const [courses, setCourses] = useState<Course[]>([]);
   const [units, setUnits] = useState<Unit[]>([]);
@@ -63,7 +63,7 @@ export default function OgretmenDerslerPage() {
   const [openUnitId, setOpenUnitId] = useState<number | null>(null);
 
   const loadCourses = useCallback(async () => {
-    if (isDemo || !token) {
+    if (!token) {
       setCourses(DEMO_COURSES);
       setSelectedCourseSlug("matematik");
       setLoading(false);
@@ -78,16 +78,10 @@ export default function OgretmenDerslerPage() {
       setSelectedCourseSlug("matematik");
     }
     setLoading(false);
-  }, [token, isDemo]);
+  }, [token]);
 
   const loadUnits = useCallback(async (slug: string) => {
     setLoadingUnits(true);
-    if (isDemo) {
-      setUnits(DEMO_UNITS[slug] ?? []);
-      setOpenUnitId(DEMO_UNITS[slug]?.[0]?.id ?? null);
-      setLoadingUnits(false);
-      return;
-    }
     try {
       const res = await api.getCourseUnits(slug, token ?? undefined);
       setUnits(res);
@@ -96,7 +90,7 @@ export default function OgretmenDerslerPage() {
       setUnits(DEMO_UNITS[slug] ?? []);
     }
     setLoadingUnits(false);
-  }, [token, isDemo]);
+  }, [token]);
 
   useEffect(() => { loadCourses(); }, [loadCourses]);
   useEffect(() => {
@@ -285,3 +279,5 @@ export default function OgretmenDerslerPage() {
     </div>
   );
 }
+
+

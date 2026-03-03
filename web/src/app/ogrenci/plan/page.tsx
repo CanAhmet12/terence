@@ -12,17 +12,6 @@ function Skeleton({ cls }: { cls?: string }) {
   return <div className={`bg-slate-100 rounded-xl animate-pulse ${cls ?? ""}`} />;
 }
 
-const DEMO_PLAN: DailyPlan = {
-  id: 1, plan_date: new Date().toISOString(), status: "active",
-  total_tasks: 4, completed_tasks: 2,
-  tasks: [
-    { id: 1, title: "M.8.1.1 Üslü İfadeler — 10 soru", type: "question", subject: "Matematik", is_completed: true },
-    { id: 2, title: "Fizik: Hareket — Video izle", type: "video", subject: "Fizik", is_completed: true },
-    { id: 3, title: "TYT Deneme — 40 soru", type: "exam", is_completed: false },
-    { id: 4, title: "Kimya: Bağlar — 15 soru", type: "question", subject: "Kimya", is_completed: false },
-  ],
-};
-
 const TASK_ICONS: Record<string, React.ElementType> = {
   question: Dumbbell, video: VideoIcon, exam: FileText,
   read: BookOpen, repeat: RefreshCw, custom: BookOpen,
@@ -38,9 +27,7 @@ const TASK_COLORS: Record<string, string> = {
 
 export default function GunlukPlanPage() {
   const { token } = useAuth();
-  const isDemo = !token || token.startsWith("demo-token-");
-
-  const [plan, setPlan] = useState<DailyPlan | null>(null);
+    const [plan, setPlan] = useState<DailyPlan | null>(null);
   const [loading, setLoading] = useState(true);
   const [newTask, setNewTask] = useState("");
   const [adding, setAdding] = useState(false);
@@ -49,7 +36,6 @@ export default function GunlukPlanPage() {
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
   const loadPlan = useCallback(async () => {
-    if (isDemo) { setPlan(DEMO_PLAN); setLoading(false); return; }
     try {
       const p = await api.getTodayPlan(token!);
       setPlan(p);
@@ -58,7 +44,7 @@ export default function GunlukPlanPage() {
     } finally {
       setLoading(false);
     }
-  }, [token, isDemo]);
+  }, [token]);
 
   useEffect(() => { loadPlan(); }, [loadPlan]);
 
@@ -67,7 +53,7 @@ export default function GunlukPlanPage() {
     setCompletingId(task.id);
     // Optimistik
     setPlan((p) => p ? { ...p, completed_tasks: p.completed_tasks + 1, tasks: p.tasks?.map((t) => t.id === task.id ? { ...t, is_completed: true } : t) } : p);
-    if (!isDemo && token) {
+    if (token) {
       try {
         await api.completeTask(token, task.id);
       } catch {
@@ -85,7 +71,7 @@ export default function GunlukPlanPage() {
       completed_tasks: task.is_completed ? p.completed_tasks - 1 : p.completed_tasks,
       tasks: p.tasks?.filter((t) => t.id !== task.id),
     } : p);
-    if (!isDemo && token) {
+    if (token) {
       try { await api.deleteTask(token, task.id); } catch {}
     }
     setDeletingId(null);
@@ -98,7 +84,7 @@ export default function GunlukPlanPage() {
     const tmpTask: PlanTask = { id: tmpId, title: newTask.trim(), type: "custom", is_completed: false };
     setPlan((p) => p ? { ...p, total_tasks: p.total_tasks + 1, tasks: [...(p.tasks ?? []), tmpTask] } : p);
 
-    if (!isDemo && token) {
+    if (token) {
       try {
         const res = await api.addPlanTask(token, { title: newTask.trim(), type: "custom" });
         setPlan((p) => p ? { ...p, tasks: p.tasks?.map((t) => t.id === tmpId ? res.task : t) } : p);
@@ -124,11 +110,6 @@ export default function GunlukPlanPage() {
         <div>
           <h1 className="text-2xl font-extrabold text-slate-900">Günlük Plan</h1>
           <p className="text-slate-500 mt-0.5 capitalize">{today}</p>
-          {isDemo && (
-            <span className="inline-flex mt-1 px-2.5 py-0.5 bg-amber-100 text-amber-700 text-xs font-semibold rounded-full">
-              Demo
-            </span>
-          )}
         </div>
         <button
           onClick={loadPlan}
@@ -264,3 +245,5 @@ export default function GunlukPlanPage() {
     </div>
   );
 }
+
+

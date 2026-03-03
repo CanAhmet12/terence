@@ -25,7 +25,7 @@ function formatCurrency(n: number) {
 
 export default function AdminDashboardPage() {
   const { token } = useAuth();
-  const isDemo = token?.startsWith("demo-token-");
+
 
   const [stats, setStats] = useState<PlatformStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -49,7 +49,7 @@ export default function AdminDashboardPage() {
     if (!silent) setLoading(true);
     else setRefreshing(true);
 
-    if (!token || isDemo) {
+    if (!token) {
       setStats(DEMO_STATS);
       setLoading(false);
       setRefreshing(false);
@@ -72,7 +72,7 @@ export default function AdminDashboardPage() {
     setLoading(false);
     setRefreshing(false);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token, isDemo]);
+  }, [token]);
 
   useEffect(() => { loadStats(); }, [loadStats]);
 
@@ -123,11 +123,6 @@ export default function AdminDashboardPage() {
         <div>
           <h1 className="text-3xl font-extrabold text-slate-900">Yönetim Paneli</h1>
           <p className="text-slate-600 mt-1 text-lg">Platform özeti, içerik, satış ve trafik analizi</p>
-          {isDemo && (
-            <span className="inline-flex items-center gap-1.5 mt-2 px-3 py-1 bg-amber-100 text-amber-700 text-xs font-semibold rounded-full">
-              Demo Modu
-            </span>
-          )}
         </div>
         <button
           onClick={() => loadStats(true)}
@@ -272,3 +267,5 @@ export default function AdminDashboardPage() {
     </div>
   );
 }
+
+

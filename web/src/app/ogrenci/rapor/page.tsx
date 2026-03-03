@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { api, StudentStatistics, GoalAnalysis } from "@/lib/api";
-import { Clock, FileQuestion, TrendingUp, AlertTriangle, BarChart3, Zap, Target } from "lucide-react";
+import { Clock, FileQuestion, TrendingUp, Zap, BarChart3, Target } from "lucide-react";
 
 const DAYS = ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"];
 
@@ -20,36 +20,13 @@ function Skeleton({ className }: { className?: string }) {
 
 export default function RaporPage() {
   const { token } = useAuth();
-  const isDemo = token?.startsWith("demo-token-");
 
   const [stats, setStats] = useState<StudentStatistics | null>(null);
   const [goal, setGoal] = useState<GoalAnalysis | null>(null);
   const [loading, setLoading] = useState(true);
 
   const loadData = useCallback(async () => {
-    if (!token || isDemo) {
-      setStats({
-        tasks_done_today: 5,
-        tasks_total_today: 8,
-        study_time_today_seconds: 9240,
-        study_time_weekly_seconds: 45900,
-        xp_points: 1240,
-        level: 5,
-        current_net: 52,
-        target_net: 75,
-        weekly_nets: [42, 45, 43, 48, 47, 49, 52],
-      });
-      setGoal({
-        target_net: 75,
-        current_net: 52,
-        days_remaining: 165,
-        weekly_net_needed: 1,
-        risk_level: "yellow",
-        predicted_net: 61,
-      });
-      setLoading(false);
-      return;
-    }
+    if (!token) return;
     const [statsRes, goalRes] = await Promise.allSettled([
       api.getPlanStats(token),
       api.getGoalAnalysis(token),
@@ -57,7 +34,7 @@ export default function RaporPage() {
     if (statsRes.status === "fulfilled") setStats(statsRes.value);
     if (goalRes.status === "fulfilled") setGoal(goalRes.value);
     setLoading(false);
-  }, [token, isDemo]);
+  }, [token]);
 
   useEffect(() => { loadData(); }, [loadData]);
 
@@ -93,7 +70,7 @@ export default function RaporPage() {
       valueColor: netArtis >= 0 ? "text-teal-600" : "text-red-600",
     },
     {
-      icon: AlertTriangle,
+      icon: Zap,
       color: "text-amber-600",
       bg: "bg-amber-50",
       label: "XP Puanı",
@@ -107,11 +84,6 @@ export default function RaporPage() {
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-slate-900">Performans Raporu</h1>
         <p className="text-slate-600 mt-1">Çalışma süresi, soru istatistikleri, net artışı ve hedef analizi</p>
-        {isDemo && (
-          <span className="inline-flex items-center gap-1.5 mt-2 px-3 py-1 bg-amber-100 text-amber-700 text-xs font-semibold rounded-full">
-            Demo Modu
-          </span>
-        )}
       </div>
 
       {/* Özet kartlar */}

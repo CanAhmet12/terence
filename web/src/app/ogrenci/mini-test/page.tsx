@@ -75,7 +75,7 @@ type AnswerState = {
 
 export default function MiniTestPage() {
   const { token } = useAuth();
-  const isDemo = token?.startsWith("demo-token-");
+
 
   const [phase, setPhase] = useState<Phase>("start");
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -95,7 +95,7 @@ export default function MiniTestPage() {
 
   const loadQuestions = useCallback(async () => {
     setLoading(true);
-    if (isDemo || !token) {
+    if (!token) {
       setQuestions(DEMO_QUESTIONS);
       setLoading(false);
       return;
@@ -107,7 +107,7 @@ export default function MiniTestPage() {
       setQuestions(DEMO_QUESTIONS);
     }
     setLoading(false);
-  }, [token, isDemo]);
+  }, [token]);
 
   const startTest = async () => {
     await loadQuestions();
@@ -129,7 +129,7 @@ export default function MiniTestPage() {
     let isCorrect = false;
     let explanation: string | undefined;
 
-    if (isDemo || !token) {
+    if (!token) {
       correctOption = DEMO_CORRECT[currentQ.id] ?? currentQ.options[0]?.option_letter;
       isCorrect = optionLetter === correctOption;
     } else {
@@ -420,3 +420,5 @@ export default function MiniTestPage() {
     </div>
   );
 }
+
+

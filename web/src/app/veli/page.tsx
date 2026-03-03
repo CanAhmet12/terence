@@ -20,39 +20,32 @@ function Skeleton({ className }: { className?: string }) {
 }
 
 export default function VeliDashboardPage() {
-  const { user, token } = useAuth();
-  const isDemo = token?.startsWith("demo-token-");
+  const { token } = useAuth();
 
   const [summary, setSummary] = useState<ChildSummary | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const loadData = useCallback(async () => {
-    if (!token || isDemo) {
-      setLoading(false);
-      return;
-    }
+    if (!token) return;
+    setError(null);
     try {
       const res = await api.getChildSummary(token);
       if (res) setSummary(res);
-    } catch {}
+    } catch (e) {
+      setError((e as Error).message || "Veriler yüklenemedi");
+    }
     setLoading(false);
-  }, [token, isDemo]);
+  }, [token]);
 
   useEffect(() => { loadData(); }, [loadData]);
 
-  // Demo verisi
-  const demoNets = [38, 40, 42, 45, 43, 47, 49];
-  const demoExams = [
-    { name: "TYT Deneme 1", tarih: "15.02.2025", net: 42 },
-    { name: "TYT Deneme 2", tarih: "20.02.2025", net: 47 },
-  ];
-
-  const childName = isDemo ? "Ahmet" : (summary?.child.name || "Çocuğunuz");
-  const studyTime = isDemo ? "2s 34dk" : secondsToHuman(summary?.study_time_today_seconds ?? 0);
-  const weeklyChange = isDemo ? "+3" : (summary ? `+${summary.net_today}` : "—");
-  const riskLevel = isDemo ? "yellow" : (summary?.risk_level ?? "green");
-  const tasksDone = isDemo ? 2 : (summary?.tasks_done_today ?? 0);
-  const tasksTotal = isDemo ? 4 : (summary?.tasks_total_today ?? 0);
+  const childName = summary?.child.name || "Çocuğunuz";
+  const studyTime = secondsToHuman(summary?.study_time_today_seconds ?? 0);
+  const netToday = summary?.net_today ?? 0;
+  const riskLevel = summary?.risk_level ?? "green";
+  const tasksDone = summary?.tasks_done_today ?? 0;
+  const tasksTotal = summary?.tasks_total_today ?? 0;
 
   const riskColors = {
     green: { bg: "bg-emerald-50", border: "border-emerald-200", text: "text-emerald-700", label: "Hedefte İlerliyor" },
@@ -61,8 +54,13 @@ export default function VeliDashboardPage() {
   };
   const risk = riskColors[riskLevel];
 
-  const nets = isDemo ? demoNets : (summary?.weekly_nets ?? demoNets);
-  const maxNet = Math.max(...nets, 1);
+  const nets = summary?.weekly_nets ?? [];
+  const maxNet = nets.length > 0 ? Math.max(...nets, 1) : 1;
+  const weeklyChange = nets.length >= 2 ? nets[nets.length - 1] - nets[0] : 0;
+
+  // Son denemeler: summary.recent_exams varsa kullan
+  type RecentExam = { title?: string; net_score?: number; finished_at?: string; [k: string]: unknown };
+  const recentExams: RecentExam[] = (summary as unknown as { recent_exams?: RecentExam[] })?.recent_exams ?? [];
 
   return (
     <div className="p-6 lg:p-10">
@@ -71,15 +69,16 @@ export default function VeliDashboardPage() {
         <p className="text-slate-600 mt-1 text-lg">
           {childName} adlı çocuğunuzun çalışma durumu ve gelişimi
         </p>
-        {isDemo && (
-          <span className="inline-flex items-center gap-1.5 mt-2 px-3 py-1 bg-amber-100 text-amber-700 text-xs font-semibold rounded-full">
-            Demo Modu — Veriler gerçek değil
-          </span>
-        )}
       </div>
 
+      {error && (
+        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-2xl text-sm text-red-700">
+          {error}
+        </div>
+      )}
+
       {/* Risk durumu bandı */}
-      {!loading && (
+      {!loading && summary && (
         <div className={`mb-8 p-4 rounded-2xl border flex items-center gap-3 ${risk.bg} ${risk.border}`}>
           {riskLevel === "green" ? (
             <CheckCircle className={`w-5 h-5 shrink-0 ${risk.text}`} />
@@ -118,7 +117,7 @@ export default function VeliDashboardPage() {
                 </div>
                 <div>
                   <p className="text-xs text-slate-500 font-medium">Çalışma</p>
-                  <p className="text-xl font-bold text-slate-900">{studyTime}</p>
+                  <p className="text-xl font-bold text-slate-900">{studyTime || "0dk"}</p>
                 </div>
               </div>
               <div className="flex items-center gap-4 p-5 rounded-2xl bg-teal-50 border border-teal-100">
@@ -127,7 +126,7 @@ export default function VeliDashboardPage() {
                 </div>
                 <div>
                   <p className="text-xs text-slate-500 font-medium">Günlük Net</p>
-                  <p className="text-xl font-bold text-slate-900">{weeklyChange}</p>
+                  <p className="text-xl font-bold text-slate-900">{netToday}</p>
                 </div>
               </div>
               <div className="col-span-2 flex items-center gap-4 p-5 rounded-2xl bg-slate-50 border border-slate-100">
@@ -181,29 +180,6 @@ export default function VeliDashboardPage() {
                 </li>
               ))}
             </ul>
-          ) : isDemo ? (
-            <ul className="space-y-3">
-              {[
-                { subject: "Matematik", accuracy: 65 },
-                { subject: "Fizik", accuracy: 72 },
-                { subject: "Kimya", accuracy: 80 },
-              ].map(({ subject, accuracy }) => (
-                <li key={subject} className="py-3 px-4 rounded-xl bg-slate-50 border border-slate-100">
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="font-medium text-slate-900">{subject}</span>
-                    <span className={`text-sm font-semibold ${accuracy < 70 ? "text-red-600" : "text-amber-600"}`}>
-                      %{accuracy} doğru
-                    </span>
-                  </div>
-                  <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
-                    <div
-                      className={`h-full rounded-full ${accuracy < 70 ? "bg-red-400" : "bg-amber-400"}`}
-                      style={{ width: `${accuracy}%` }}
-                    />
-                  </div>
-                </li>
-              ))}
-            </ul>
           ) : (
             <p className="text-slate-500 text-sm text-center py-4">Henüz yeterli veri yok.</p>
           )}
@@ -211,19 +187,20 @@ export default function VeliDashboardPage() {
       </div>
 
       {/* Net gelişim grafiği */}
-      <div className="bg-white rounded-2xl border border-slate-200/80 p-8 shadow-sm hover:shadow-md transition-shadow mb-10">
-        <h2 className="font-bold text-slate-900 flex items-center gap-2 mb-2 text-lg">
-          <BarChart3 className="w-5 h-5 text-teal-600" />
-          Net Gelişim Grafiği
-        </h2>
-        <p className="text-sm text-slate-600 mb-6">Son 7 haftalık net değişimi</p>
-
-        {loading ? (
-          <div className="flex items-end gap-2 h-40">
-            {WEEKS.map((_, i) => <Skeleton key={i} className="flex-1 h-full" />)}
-          </div>
-        ) : (
-          <>
+      {nets.length > 0 && (
+        <div className="bg-white rounded-2xl border border-slate-200/80 p-8 shadow-sm hover:shadow-md transition-shadow mb-10">
+          <h2 className="font-bold text-slate-900 flex items-center gap-2 mb-2 text-lg">
+            <BarChart3 className="w-5 h-5 text-teal-600" />
+            Net Gelişim Grafiği
+          </h2>
+          <p className="text-sm text-slate-600 mb-6">
+            Son {nets.length} haftalık net değişimi · Haftalık değişim: {weeklyChange >= 0 ? "+" : ""}{weeklyChange}
+          </p>
+          {loading ? (
+            <div className="flex items-end gap-2 h-40">
+              {WEEKS.map((_, i) => <Skeleton key={i} className="flex-1 h-full" />)}
+            </div>
+          ) : (
             <div className="flex items-end gap-2 h-40">
               {nets.map((net, i) => (
                 <div key={i} className="flex-1 flex flex-col items-center gap-2">
@@ -235,16 +212,13 @@ export default function VeliDashboardPage() {
                       {net}
                     </span>
                   </div>
-                  <span className="text-xs font-medium text-slate-500">{WEEKS[i]}</span>
+                  <span className="text-xs font-medium text-slate-500">{WEEKS[i] ?? `H${i + 1}`}</span>
                 </div>
               ))}
             </div>
-            <p className="text-xs text-slate-500 mt-3">
-              7 haftalık trend — Son net: <span className="font-bold text-teal-600">{nets[nets.length - 1]}</span>
-            </p>
-          </>
-        )}
-      </div>
+          )}
+        </div>
+      )}
 
       {/* Deneme sonuçları */}
       <div className="bg-white rounded-2xl border border-slate-200/80 p-8 shadow-sm hover:shadow-md transition-shadow mb-10">
@@ -254,6 +228,8 @@ export default function VeliDashboardPage() {
         </h2>
         {loading ? (
           <div className="space-y-3">{[1, 2].map((i) => <Skeleton key={i} className="h-14" />)}</div>
+        ) : recentExams.length === 0 ? (
+          <p className="text-sm text-slate-500 py-4">Henüz deneme sonucu yok.</p>
         ) : (
           <div className="overflow-hidden rounded-xl border border-slate-200">
             <table className="w-full text-sm">
@@ -265,11 +241,15 @@ export default function VeliDashboardPage() {
                 </tr>
               </thead>
               <tbody>
-                {demoExams.map((d) => (
-                  <tr key={d.name} className="border-b border-slate-100 last:border-0 hover:bg-slate-50/50 transition-colors">
-                    <td className="py-4 px-4 font-medium text-slate-900">{d.name}</td>
-                    <td className="py-4 px-4 text-slate-600">{d.tarih}</td>
-                    <td className="text-right py-4 px-4 font-bold text-teal-600">{d.net}</td>
+                {recentExams.map((d, i) => (
+                  <tr key={i} className="border-b border-slate-100 last:border-0 hover:bg-slate-50/50 transition-colors">
+                    <td className="py-4 px-4 font-medium text-slate-900">{String(d.title ?? "—")}</td>
+                    <td className="py-4 px-4 text-slate-600">
+                      {d.finished_at ? new Date(String(d.finished_at)).toLocaleDateString("tr-TR") : "—"}
+                    </td>
+                    <td className="text-right py-4 px-4 font-bold text-teal-600">
+                      {d.net_score !== undefined ? Number(d.net_score).toFixed(1) : "—"}
+                    </td>
                   </tr>
                 ))}
               </tbody>
