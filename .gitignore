@@ -109,3 +109,14 @@ ssl/
 
 # Monitoring
 monitoring/data/
+# Backend - sadece kritik kodlar takip edilsin, sistem dosyalari degil
+nazliyavuz-platform/backend/artisan
+nazliyavuz-platform/backend/composer.json
+nazliyavuz-platform/backend/composer.lock
+nazliyavuz-platform/backend/config/
+nazliyavuz-platform/backend/vendor/
+nazliyavuz-platform/backend/public/index.php
+nazliyavuz-platform/backend/public/storage
+nazliyavuz-platform/backend/.env
+nazliyavuz-platform/backend/storage/
+nazliyavuz-platform/backend/bootstrap/cache/
