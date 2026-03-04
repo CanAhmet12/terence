@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import { api, ChildReport } from "@/lib/api";
 import { TrendingUp, Clock, BookOpen, AlertCircle, BarChart3, Download } from "lucide-react";
@@ -73,8 +74,8 @@ export default function VeliRaporPage() {
       label: "Tamamlanan Görev",
       value: loading ? null : `${tasksDoneThisWeek}`,
       icon: BookOpen,
-      bgClass: "bg-blue-100",
-      iconClass: "text-blue-600",
+      bgClass: "bg-teal-100",
+      iconClass: "text-teal-600",
     },
     {
       label: "Hedef Sapması",
@@ -254,9 +255,9 @@ export default function VeliRaporPage() {
                 {childName} adlı çocuğunuzun hedefini karşılama ihtimali düşük.
                 Net artışına odaklanması gerekiyor.
               </p>
-              <button className="mt-3 text-sm font-semibold text-amber-700 hover:text-amber-800 underline transition-colors">
-                Destek Paketi İncele →
-              </button>
+              <Link href="/veli/bildirim" className="mt-3 inline-block text-sm font-semibold text-amber-700 hover:text-amber-800 underline transition-colors">
+                Bildirimler Sayfasına Git →
+              </Link>
             </div>
           </div>
         </div>

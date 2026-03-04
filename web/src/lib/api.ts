@@ -340,11 +340,19 @@ export const api = {
     return res.data;
   },
 
-  async initiatePayment(token: string, data: { plan_id: number; billing_cycle: "monthly" | "yearly" }) {
-    return fetchApi<{ success: boolean; token: string; merchant_oid: string; iframe_url: string }>("/payment/initiate", {
+  async initiatePayment(token: string, data: { plan_id: number; billing_cycle: "monthly" | "yearly"; coupon_code?: string }) {
+    return fetchApi<{ success: boolean; token: string; merchant_oid: string; iframe_url: string; discount_amount?: number; final_price?: number }>("/payment/initiate", {
       method: "POST",
       token,
       body: JSON.stringify(data),
+    });
+  },
+
+  async applyCoupon(token: string, coupon_code: string, plan_id: number) {
+    return fetchApi<{ success: boolean; discount_amount: number; final_price: number; message?: string }>("/payment/apply-coupon", {
+      method: "POST",
+      token,
+      body: JSON.stringify({ coupon_code, plan_id }),
     });
   },
 
@@ -446,16 +454,18 @@ export const api = {
     return fetchApi<AdminStats>("/admin/stats", { token });
   },
 
-  async getAdminUsers(token: string, params?: { search?: string; role?: string; page?: number }) {
+  async getAdminUsers(token: string, params?: { search?: string; role?: string; teacher_status?: string; page?: number; per_page?: number }) {
     const query = new URLSearchParams();
     if (params?.search) query.set("search", params.search);
     if (params?.role) query.set("role", params.role);
+    if (params?.teacher_status) query.set("teacher_status", params.teacher_status);
     if (params?.page) query.set("page", String(params.page));
+    if (params?.per_page) query.set("per_page", String(params.per_page));
     const qs = query.toString() ? `?${query.toString()}` : "";
     return fetchApi<{ success: boolean; data: User[]; meta: { total: number; current_page: number; last_page: number } }>(`/admin/users${qs}`, { token });
   },
 
-  async updateAdminUser(token: string, userId: number, data: Partial<{ name: string; role: string; subscription_plan: string; is_active: boolean }>) {
+  async updateAdminUser(token: string, userId: number, data: Partial<{ name: string; role: string; subscription_plan: string; is_active: boolean; teacher_status: string }>) {
     return fetchApi<{ success: boolean; user: User }>(`/admin/users/${userId}`, {
       method: "PATCH",
       token,
@@ -492,6 +502,42 @@ export const api = {
     });
   },
 
+  async deleteAdminQuestion(token: string, questionId: number) {
+    return fetchApi<{ success: boolean; message: string }>(`/admin/questions/${questionId}`, {
+      method: "DELETE",
+      token,
+    });
+  },
+
+  // ── Admin Kupon Yönetimi ────────────────────────────────────────────────────
+  async getAdminCoupons(token: string, search?: string) {
+    const qs = search ? `?search=${encodeURIComponent(search)}` : "";
+    return fetchApi<{ data: AdminCoupon[] }>(`/admin/coupons${qs}`, { token });
+  },
+
+  async createAdminCoupon(token: string, data: { code: string; discount_type: "percent" | "fixed"; discount_value: number; max_uses?: number | null; expires_at?: string | null; applicable_plans?: string[] }) {
+    return fetchApi<{ success: boolean; coupon: AdminCoupon }>("/admin/coupons", {
+      method: "POST",
+      token,
+      body: JSON.stringify(data),
+    });
+  },
+
+  async updateAdminCoupon(token: string, couponId: number, data: { is_active?: boolean; code?: string }) {
+    return fetchApi<{ success: boolean }>(`/admin/coupons/${couponId}`, {
+      method: "PATCH",
+      token,
+      body: JSON.stringify(data),
+    });
+  },
+
+  async deleteAdminCoupon(token: string, couponId: number) {
+    return fetchApi<{ success: boolean }>(`/admin/coupons/${couponId}`, {
+      method: "DELETE",
+      token,
+    });
+  },
+
   async getAdminReports(token: string) {
     return fetchApi<AdminReports>("/admin/reports", { token });
   },
@@ -523,6 +569,9 @@ export const api = {
   async markAllNotificationsRead(token: string) {
     return fetchApi<{ message: string }>("/notifications/read-all", { method: "POST", token });
   },
+  async deleteNotification(token: string, id: number) {
+    return fetchApi<{ message: string }>(`/notifications/${id}`, { method: "DELETE", token });
+  },
   async registerPushToken(token: string, push_token: string, platform: "web" | "ios" | "android") {
     return fetchApi<{ message: string }>("/notifications/register-token", {
       method: "POST", token, body: JSON.stringify({ push_token, platform }),
@@ -545,6 +594,73 @@ export const api = {
 
   async getBadges(token: string) {
     return fetchApi<BadgeData>("/student/badges", { token });
+  },
+
+  async askCoach(token: string, message: string, history?: { role: "user" | "assistant"; content: string }[]) {
+    return fetchApi<{ reply: string; suggestions?: string[] }>("/student/coach/ask", {
+      method: "POST",
+      token,
+      body: JSON.stringify({ message, history: history ?? [] }),
+    });
+  },
+
+  async getCoachHistory(token: string) {
+    return fetchApi<{ messages: { role: "user" | "assistant"; content: string; created_at?: string }[] }>("/student/coach/history", { token });
+  },
+
+  // ── Yapay Zeka Özellikleri ──────────────────────────────────────────────────
+  async generateQuestion(token: string, data: { kazanim_code: string; subject: string; topic: string; difficulty: "easy" | "medium" | "hard"; question_type?: string }) {
+    return fetchApi<{ question: Question }>("/ai/generate-question", {
+      method: "POST",
+      token,
+      body: JSON.stringify(data),
+    });
+  },
+
+  async summarizeContent(token: string, data: { topic_id?: number; content_item_id?: number; text?: string }) {
+    return fetchApi<{ summary: string; key_points: string[]; estimated_read_minutes?: number }>("/ai/summarize", {
+      method: "POST",
+      token,
+      body: JSON.stringify(data),
+    });
+  },
+
+  async generatePersonalTest(token: string, data: { subject?: string; count?: number; difficulty?: string }) {
+    return fetchApi<{ session_id: number; questions: Question[] }>("/ai/personal-test", {
+      method: "POST",
+      token,
+      body: JSON.stringify(data),
+    });
+  },
+
+  async getHardAchievements(token: string, params?: { limit?: number }) {
+    const q = params ? "?" + new URLSearchParams(params as Record<string, string>).toString() : "";
+    return fetchApi<{ data: { kazanim_code: string; subject: string; topic: string; wrong_rate: number; total_attempts: number; label?: string }[] }>(`/ai/hard-achievements${q}`, { token });
+  },
+
+  async getForumPosts(token: string, params?: { subject?: string; search?: string; sort?: string; page?: number }) {
+    const q = params ? "?" + new URLSearchParams(Object.fromEntries(Object.entries(params).filter(([, v]) => v !== undefined && v !== "").map(([k, v]) => [k, String(v)]))).toString() : "";
+    return fetchApi<{ data: ForumPost[]; total: number; current_page: number; last_page: number }>(`/forum/posts${q}`, { token });
+  },
+
+  async getForumPost(token: string, postId: number) {
+    return fetchApi<{ post: ForumPost; replies: ForumReply[] }>(`/forum/posts/${postId}`, { token });
+  },
+
+  async createForumPost(token: string, data: { title: string; content: string; subject?: string }) {
+    return fetchApi<{ post: ForumPost }>("/forum/posts", { method: "POST", token, body: JSON.stringify(data) });
+  },
+
+  async createForumReply(token: string, postId: number, content: string) {
+    return fetchApi<{ reply: ForumReply }>(`/forum/posts/${postId}/replies`, { method: "POST", token, body: JSON.stringify({ content }) });
+  },
+
+  async likeForumPost(token: string, postId: number) {
+    return fetchApi<{ liked: boolean; like_count: number }>(`/forum/posts/${postId}/like`, { method: "POST", token });
+  },
+
+  async markForumReplyBest(token: string, postId: number, replyId: number) {
+    return fetchApi<{ success: boolean }>(`/forum/posts/${postId}/replies/${replyId}/best`, { method: "POST", token });
   },
 
   async getLeaderboard(token: string, period?: "weekly" | "monthly") {
@@ -579,9 +695,9 @@ export const api = {
     return this.createLiveSession(token, data);
   },
 
-  async getTeachers(params?: Record<string, string>) {
+  async getTeachers(token: string, params?: Record<string, string>) {
     const extra = params ? "&" + new URLSearchParams(params).toString() : "";
-    return fetchApi<{ data: User[] }>(`/admin/users?role=teacher${extra}`);
+    return fetchApi<{ data: User[] }>(`/admin/users?role=teacher${extra}`, { token });
   },
 
   async updateAssignment(token: string, assignmentId: number, data: Partial<{ title: string; description: string; type: string; target_count: number; subject: string; due_date: string; class_room_id: number }>) {
@@ -659,6 +775,7 @@ export interface User {
   profile_photo_url?: string;
   phone?: string;
   bio?: string;
+  subject?: string;
   teacher_status?: string;
   subscription_plan?: "free" | "bronze" | "plus" | "pro";
   subscription_expires_at?: string;
@@ -685,10 +802,17 @@ export interface RegisterInput {
   role: "student" | "teacher" | "parent";
   phone?: string;
   grade?: number;
+  target_exam?: string;
+  target_school?: string;
+  target_department?: string;
+  target_net?: number;
+  subject?: string;
+  bio?: string;
+  child_email?: string;
 }
 
 export interface GoalInput {
-  exam_type?: "TYT" | "AYT" | "LGS" | "KPSS" | "TYT-AYT" | "KPSS";
+  exam_type?: "TYT" | "AYT" | "LGS" | "TYT-AYT" | "KPSS";
   grade?: number;
   target_school?: string;
   target_department?: string;
@@ -965,7 +1089,7 @@ export interface Assignment {
   class_room_id?: number;
   title: string;
   description?: string;
-  type: "question" | "video" | "read";
+  type: "question" | "video" | "read" | "homework";
   target_count?: number;
   subject?: string;
   due_date?: string;
@@ -1014,11 +1138,14 @@ export interface AdminStats {
   total_students: number;
   total_teachers: number;
   active_users_today: number;
+  new_users_this_week?: number;
   total_courses: number;
   total_questions: number;
   total_exams: number;
   monthly_revenue: number;
   active_subscriptions: number;
+  top_content?: { title: string; views: number }[];
+  subscription_conversions?: { from: string; to: string; count: number }[];
 }
 
 export interface AdminContentItem {
@@ -1160,6 +1287,8 @@ export interface Badge {
   earned?: boolean;
   earned_at?: string;
   xp_reward?: number;
+  progress?: number;
+  required?: number;
 }
 
 export interface BadgeData {
@@ -1181,6 +1310,47 @@ export interface LeaderboardEntry {
   net_increase?: number;
   is_current_user?: boolean;
 }
+
+export interface AdminCoupon {
+  id: number;
+  code: string;
+  discount_type: "percent" | "fixed";
+  discount_value: number;
+  max_uses: number | null;
+  used_count: number;
+  expires_at: string | null;
+  is_active: boolean;
+  applicable_plans?: string[];
+  created_at: string;
+}
+
+export interface ForumPost {
+  id: number;
+  title: string;
+  content: string;
+  subject?: string;
+  author_name: string;
+  author_photo?: string;
+  author_role?: string;
+  created_at: string;
+  reply_count: number;
+  like_count: number;
+  is_liked?: boolean;
+  is_solved: boolean;
+  views?: number;
+}
+
+export interface ForumReply {
+  id: number;
+  content: string;
+  author_name: string;
+  author_photo?: string;
+  author_role?: string;
+  created_at: string;
+  is_best_answer: boolean;
+  like_count?: number;
+}
+
 
 
 
