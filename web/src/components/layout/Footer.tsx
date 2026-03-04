@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { GraduationCap, Mail, Phone, ArrowUpRight } from "lucide-react";
+import Image from "next/image";
+import { Mail, Phone, ArrowUpRight } from "lucide-react";
 
 const footerLinks = {
   platform: [
@@ -31,9 +32,7 @@ export function Footer() {
           {/* Brand - premium his */}
           <div className="col-span-2 md:col-span-3 lg:col-span-1">
             <Link href="/" className="inline-flex items-center gap-3 mb-6 group">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center shadow-lg shadow-teal-500/20 group-hover:shadow-teal-500/30 transition-shadow">
-                <GraduationCap className="w-7 h-7 text-white" strokeWidth={2.5} />
-              </div>
+              <Image src="/logo.png" alt="Terence Eğitim" width={48} height={48} className="rounded-2xl" />
               <span className="font-bold text-xl text-white tracking-tight">
                 TERENCE <span className="text-teal-400">EĞİTİM</span>
               </span>

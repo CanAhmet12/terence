@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { Users, BarChart3, Bell, GraduationCap, ChevronLeft } from "lucide-react";
+import { Users, BarChart3, Bell, ChevronLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const veliNav = [
@@ -18,8 +19,8 @@ export function VeliSidebar() {
     <aside className="w-64 min-h-screen bg-white border-r border-slate-200/80 flex flex-col">
       <div className="p-6 border-b border-slate-100">
         <Link href="/" className="flex items-center gap-3 group">
-          <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-teal-600 via-teal-500 to-emerald-500 flex items-center justify-center shadow-lg shadow-teal-500/20 group-hover:shadow-teal-500/30 transition-shadow">
-            <GraduationCap className="w-6 h-6 text-white" strokeWidth={2.5} />
+          <div className="w-11 h-11 rounded-2xl overflow-hidden shadow-lg">
+            <Image src="/logo.png" alt="Terence Eğitim" width={44} height={44} />
           </div>
           <span className="font-bold text-slate-900 tracking-tight">
             TERENCE <span className="text-teal-600">EĞİTİM</span>

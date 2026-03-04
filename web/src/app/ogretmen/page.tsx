@@ -6,7 +6,7 @@ import { useAuth } from "@/lib/auth-context";
 import { api, RiskStudent } from "@/lib/api";
 import {
   AlertTriangle, Users, CheckCircle,
-  BarChart2, Clock, Bell
+  BarChart2, Clock, Bell, Send, FileQuestion
 } from "lucide-react";
 
 function Skeleton({ className }: { className?: string }) {
@@ -22,6 +22,75 @@ function timeAgo(dateStr?: string) {
   if (hours < 24) return `${hours} saat önce`;
   if (days === 1) return "Dün";
   return `${days} gün önce`;
+}
+
+function QuickAssignmentForm({ token }: { token: string | null }) {
+  const [subject, setSubject] = useState("");
+  const [topic, setTopic] = useState("");
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
+
+  const handleSend = async () => {
+    if (!token || !subject.trim() || !topic.trim()) return;
+    setSending(true);
+    try {
+      await api.createAssignment(token, {
+        title: `${subject} — ${topic}`,
+        type: "homework",
+        subject,
+        description: topic,
+        due_date: new Date(Date.now() + 7 * 24 * 3600 * 1000).toISOString().split("T")[0],
+      });
+      setSent(true);
+      setSubject("");
+      setTopic("");
+      setTimeout(() => setSent(false), 3000);
+    } catch {}
+    setSending(false);
+  };
+
+  if (sent) {
+    return (
+      <div className="flex items-center gap-2 text-teal-700 font-semibold text-sm">
+        <CheckCircle className="w-4 h-4" /> Ödev başarıyla gönderildi!
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-wrap items-end gap-3">
+      <div className="flex-1 min-w-[140px]">
+        <label className="block text-xs font-semibold text-slate-600 mb-1">Ders</label>
+        <input
+          value={subject}
+          onChange={(e) => setSubject(e.target.value)}
+          placeholder="Matematik"
+          className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 bg-white"
+        />
+      </div>
+      <div className="flex-1 min-w-[160px]">
+        <label className="block text-xs font-semibold text-slate-600 mb-1">Konu / Açıklama</label>
+        <input
+          value={topic}
+          onChange={(e) => setTopic(e.target.value)}
+          placeholder="Üslü sayılar — 20 soru"
+          className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 bg-white"
+        />
+      </div>
+      <button
+        onClick={handleSend}
+        disabled={sending || !subject.trim() || !topic.trim()}
+        className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-semibold rounded-xl text-sm transition-colors active:scale-95"
+      >
+        {sending ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <Send className="w-4 h-4" />}
+        Gönder
+      </button>
+      <Link href="/ogretmen/odev" className="flex items-center gap-2 px-5 py-2.5 bg-white border border-indigo-200 text-indigo-700 font-semibold rounded-xl text-sm hover:bg-indigo-50 transition-colors">
+        <FileQuestion className="w-4 h-4" />
+        Tüm Ödevler
+      </Link>
+    </div>
+  );
 }
 
 export default function TeacherDashboardPage() {
@@ -101,6 +170,17 @@ export default function TeacherDashboardPage() {
             )}
           </div>
         ))}
+      </div>
+
+      {/* Hızlı Ödev Ver widget */}
+      <div className="mb-8 bg-gradient-to-br from-indigo-50 to-blue-50 border border-indigo-100 rounded-2xl p-6 shadow-sm">
+        <div className="flex items-center gap-2 mb-4">
+          <div className="w-8 h-8 rounded-xl bg-indigo-100 flex items-center justify-center">
+            <CheckCircle className="w-4 h-4 text-indigo-600" />
+          </div>
+          <h2 className="font-bold text-slate-900">Hızlı Ödev Ver</h2>
+        </div>
+        <QuickAssignmentForm token={token} />
       </div>
 
       {/* Başarı Tahmin Paneli */}

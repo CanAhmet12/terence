@@ -61,7 +61,18 @@ const nextConfig: NextConfig = {
     ];
   },
   async redirects() {
-    return [];
+    return [
+      {
+        source: "/ogrenci/zayif-kazan%C4%B1m",
+        destination: "/ogrenci/zayif-kazanim",
+        permanent: true,
+      },
+      {
+        source: "/ogrenci/zayif-kazan%C4%B1m/:path*",
+        destination: "/ogrenci/zayif-kazanim/:path*",
+        permanent: true,
+      },
+    ];
   },
 };
 

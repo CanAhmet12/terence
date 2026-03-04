@@ -71,6 +71,10 @@ export default function ProfilPage() {
       setHedefOkul(user.goal.target_school || "");
       setHedefBolum(user.goal.target_department || "");
     }
+    if (user.role === "teacher") {
+      setBrans((user as unknown as { branch?: string }).branch || "");
+      setOzgecmis(user.bio || "");
+    }
   }, [user, router]);
 
   const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -99,7 +103,12 @@ export default function ProfilPage() {
     setSaveState("saving");
     setSaveError("");
     try {
-      const updated = await api.updateProfile(token, { name, phone: phone || undefined });
+      const updated = await api.updateProfile(token, {
+        name,
+        phone: phone || undefined,
+        bio: isTeacher ? ozgecmis || undefined : undefined,
+        ...(isTeacher ? { branch: brans || undefined } as Record<string, string | undefined> : {}),
+      });
       updateUser(updated);
 
       if (user?.role === "student") {

@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useState } from "react";
-import { Menu, X, GraduationCap } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 
 const navItems = [
@@ -34,9 +35,7 @@ export function Header() {
             href="/"
             className="flex items-center gap-3 text-slate-900 hover:opacity-90 transition-opacity group"
           >
-            <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-teal-600 via-teal-500 to-emerald-500 flex items-center justify-center shadow-lg shadow-teal-500/20 group-hover:shadow-teal-500/30 transition-shadow">
-              <GraduationCap className="w-6 h-6 text-white" strokeWidth={2.5} />
-            </div>
+            <Image src="/logo.png" alt="Terence Eğitim" width={44} height={44} className="rounded-2xl" />
             <span className="font-bold text-xl tracking-tight">
               TERENCE{" "}
               <span className="text-teal-600 bg-gradient-to-r from-teal-600 to-teal-500 bg-clip-text text-transparent">

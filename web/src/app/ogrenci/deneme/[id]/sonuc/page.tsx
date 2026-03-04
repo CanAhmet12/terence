@@ -3,8 +3,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
-import { api, ExamSession } from "@/lib/api";
-import { Trophy, CheckCircle, XCircle, Minus, Clock, ChevronRight, BarChart3, Loader2 } from "lucide-react";
+import { api, ExamSession, WeakAchievement } from "@/lib/api";
+import { Trophy, CheckCircle, XCircle, Minus, Clock, ChevronRight, BarChart3, Loader2, BookOpen, RefreshCw } from "lucide-react";
 import Link from "next/link";
 
 function secondsToHuman(s: number) {
@@ -23,12 +23,21 @@ export default function ExamResultPage() {
   const [result, setResult] = useState<ExamSession | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [weakAchievements, setWeakAchievements] = useState<WeakAchievement[]>([]);
+  const [weakLoading, setWeakLoading] = useState(false);
 
   const loadResult = useCallback(async () => {
     if (!token) return;
     try {
       const res = await api.getExamResult(token, sessionId);
       setResult(res.result);
+      // Zayıf kazanımları da yükle
+      setWeakLoading(true);
+      try {
+        const wa = await api.getWeakAchievements(token);
+        setWeakAchievements(wa.slice(0, 5));
+      } catch {}
+      setWeakLoading(false);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Sonuç yüklenemedi");
     } finally {
@@ -141,6 +150,61 @@ export default function ExamResultPage() {
                 </div>
               );
             })}
+          </div>
+        </div>
+      )}
+
+      {/* Kazanım Bazlı Zayıf Analiz */}
+      {(weakLoading || weakAchievements.length > 0) && (
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-8 mb-6">
+          <h2 className="font-bold text-slate-900 mb-6 flex items-center gap-2">
+            <BookOpen className="w-5 h-5 text-red-500" /> Zayıf Kazanım Analizi
+          </h2>
+          {weakLoading ? (
+            <div className="space-y-3">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="h-12 bg-slate-100 rounded-xl animate-pulse" />
+              ))}
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {weakAchievements.map((wa) => {
+                const accuracyColor = wa.accuracy_rate < 40
+                  ? "bg-red-500"
+                  : wa.accuracy_rate < 70
+                  ? "bg-amber-500"
+                  : "bg-teal-500";
+                return (
+                  <div key={wa.id} className="flex items-center gap-4 p-4 bg-slate-50 rounded-xl border border-slate-100">
+                    <div className="shrink-0">
+                      <span className="font-mono text-xs font-bold text-teal-600 bg-teal-50 px-2 py-1 rounded-lg">
+                        {wa.kod}
+                      </span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-slate-800 truncate">{wa.konu}</p>
+                      {wa.subject && <p className="text-xs text-slate-500">{wa.subject}</p>}
+                    </div>
+                    <div className="text-right shrink-0">
+                      <div className="flex items-center gap-2">
+                        <div className="w-20 h-2 bg-slate-200 rounded-full overflow-hidden">
+                          <div
+                            className={`h-full rounded-full ${accuracyColor}`}
+                            style={{ width: `${wa.accuracy_rate}%` }}
+                          />
+                        </div>
+                        <span className="text-xs font-bold text-slate-700">%{wa.accuracy_rate}</span>
+                      </div>
+                      <p className="text-xs text-slate-400 mt-0.5">{wa.wrong_count}/{wa.total_count} hatalı</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+          <div className="mt-4 pt-4 border-t border-slate-100 flex items-center gap-2 text-xs text-amber-600">
+            <RefreshCw className="w-3.5 h-3.5" />
+            <span className="font-medium">Bu kazanımlara ait sorular günlük planına otomatik eklendi.</span>
           </div>
         </div>
       )}

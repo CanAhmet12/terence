@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Menu, X, GraduationCap } from "lucide-react";
+import Image from "next/image";
+import { Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -60,8 +61,8 @@ export function DashboardWrapper({ sidebar, header, children }: Props) {
             <Menu className="w-6 h-6" />
           </button>
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-teal-600 to-teal-500 flex items-center justify-center">
-              <GraduationCap className="w-4 h-4 text-white" />
+            <div className="w-8 h-8 rounded-lg overflow-hidden">
+              <Image src="/logo.png" alt="Terence Eğitim" width={32} height={32} />
             </div>
             <span className="font-bold text-slate-900 text-sm">TERENCE EĞİTİM</span>
           </div>

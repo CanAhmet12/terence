@@ -4,42 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import { api, Course, Unit } from "@/lib/api";
-import { BookOpen, ChevronDown, ChevronRight, Play, FileText, RefreshCw, BarChart3 } from "lucide-react";
-
-// Demo ders verisi
-const DEMO_COURSES: Course[] = [
-  { id: 1, title: "Matematik", slug: "matematik", exam_type: "TYT", units_count: 5, progress_percent: 72, is_free: true },
-  { id: 2, title: "Fizik", slug: "fizik", exam_type: "TYT", units_count: 3, progress_percent: 55, is_free: true },
-];
-
-const DEMO_UNITS: Record<string, Unit[]> = {
-  matematik: [
-    {
-      id: 1, course_id: 1, title: "Sayılar ve Cebir", sort_order: 1,
-      topics: [
-        { id: 1, unit_id: 1, title: "Üslü İfadeler", kazanim_code: "M.10.1.1", kazanim_desc: "Üslü ifadeleri tanır ve hesaplar", sort_order: 1, progress: "completed" },
-        { id: 2, unit_id: 1, title: "Köklü İfadeler", kazanim_code: "M.10.1.2", kazanim_desc: "Köklü sayıları hesaplar", sort_order: 2, progress: "in_progress" },
-        { id: 3, unit_id: 1, title: "Denklemler", kazanim_code: "M.10.1.3", kazanim_desc: "Birinci dereceden denklemleri çözer", sort_order: 3, progress: "not_started" },
-      ],
-    },
-    {
-      id: 2, course_id: 1, title: "Fonksiyonlar", sort_order: 2,
-      topics: [
-        { id: 4, unit_id: 2, title: "Fonksiyon Tanımı", kazanim_code: "M.10.2.1", kazanim_desc: "Fonksiyon kavramını açıklar", sort_order: 1, progress: "in_progress" },
-        { id: 5, unit_id: 2, title: "Bileşke Fonksiyon", kazanim_code: "M.10.2.2", kazanim_desc: "Bileşke fonksiyon hesaplar", sort_order: 2, progress: "not_started" },
-      ],
-    },
-  ],
-  fizik: [
-    {
-      id: 3, course_id: 2, title: "Kuvvet ve Hareket", sort_order: 1,
-      topics: [
-        { id: 6, unit_id: 3, title: "Newton Yasaları", kazanim_code: "F.11.1.1", kazanim_desc: "Newton'un hareket yasalarını uygular", sort_order: 1, progress: "completed" },
-        { id: 7, unit_id: 3, title: "Sürtünme Kuvveti", kazanim_code: "F.11.1.2", kazanim_desc: "Sürtünme kuvvetini hesaplar", sort_order: 2, progress: "in_progress" },
-      ],
-    },
-  ],
-};
+import { BookOpen, ChevronDown, ChevronRight, Play, FileText, RefreshCw, BarChart3, AlertCircle } from "lucide-react";
 
 const PROGRESS_COLOR: Record<string, string> = {
   completed: "bg-teal-500",
@@ -54,30 +19,31 @@ function Skeleton({ className }: { className?: string }) {
 export default function OgretmenDerslerPage() {
   const { token } = useAuth();
 
-
   const [courses, setCourses] = useState<Course[]>([]);
   const [units, setUnits] = useState<Unit[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [loadingUnits, setLoadingUnits] = useState(false);
   const [selectedCourseSlug, setSelectedCourseSlug] = useState<string | null>(null);
   const [openUnitId, setOpenUnitId] = useState<number | null>(null);
 
   const loadCourses = useCallback(async () => {
     if (!token) {
-      setCourses(DEMO_COURSES);
-      setSelectedCourseSlug("matematik");
       setLoading(false);
       return;
     }
+    setLoading(true);
+    setError(null);
     try {
       const res = await api.getCourses(token);
       setCourses(res);
       if (res.length > 0) setSelectedCourseSlug(res[0].slug);
-    } catch {
-      setCourses(DEMO_COURSES);
-      setSelectedCourseSlug("matematik");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Dersler yüklenemedi.");
+      setCourses([]);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }, [token]);
 
   const loadUnits = useCallback(async (slug: string) => {
@@ -87,7 +53,7 @@ export default function OgretmenDerslerPage() {
       setUnits(res);
       if (res.length > 0) setOpenUnitId(res[0].id);
     } catch {
-      setUnits(DEMO_UNITS[slug] ?? []);
+      setUnits([]);
     }
     setLoadingUnits(false);
   }, [token]);
@@ -123,6 +89,28 @@ export default function OgretmenDerslerPage() {
         <div className="grid lg:grid-cols-4 gap-8">
           <div className="space-y-2">{[1, 2, 3].map((i) => <Skeleton key={i} className="h-16" />)}</div>
           <div className="lg:col-span-3 space-y-3">{[1, 2, 3].map((i) => <Skeleton key={i} className="h-20" />)}</div>
+        </div>
+      ) : error ? (
+        <div className="p-6 bg-red-50 border border-red-100 rounded-2xl flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3 text-red-700">
+            <AlertCircle className="w-5 h-5 shrink-0" />
+            <p className="text-sm font-medium">{error}</p>
+          </div>
+          <button
+            onClick={loadCourses}
+            className="flex items-center gap-1.5 text-sm font-semibold text-red-600 hover:text-red-700 shrink-0"
+          >
+            <RefreshCw className="w-4 h-4" />
+            Yenile
+          </button>
+        </div>
+      ) : courses.length === 0 ? (
+        <div className="text-center py-16 text-slate-400">
+          <BookOpen className="w-10 h-10 mx-auto mb-3 opacity-30" />
+          <p className="font-medium text-slate-600">Henüz ders eklenmemiş</p>
+          <Link href="/ogretmen/icerik" className="mt-3 inline-block text-sm text-teal-600 hover:underline font-semibold">
+            İçerik ekle →
+          </Link>
         </div>
       ) : (
         <div className="grid lg:grid-cols-4 gap-8">

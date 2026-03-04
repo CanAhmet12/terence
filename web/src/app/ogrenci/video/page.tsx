@@ -1,25 +1,20 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import Link from "next/link";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { api, Course, ContentItem } from "@/lib/api";
-import { Play, FileDown, Clock, Search, BookOpen, Lock, ChevronRight } from "lucide-react";
+import {
+  Play, FileDown, Clock, Search, BookOpen, Lock, ChevronRight,
+  ChevronDown, Loader2, X, Settings, CheckCircle
+} from "lucide-react";
 
-type VideoItem = ContentItem & { course_title?: string; topic_title?: string };
+type VideoItem = ContentItem & { course_title?: string; topic_title?: string; topic_id?: number };
 
-const DEMO_VIDEOS: VideoItem[] = [
-  { id: 1, topic_id: 1, type: "video", title: "Üslü İfadeler — Konu Anlatımı", course_title: "Matematik", topic_title: "Üslü İfadeler", duration_seconds: 754, is_free: true, url: "#" },
-  { id: 2, topic_id: 1, type: "pdf", title: "Üslü İfadeler — PDF Notlar", course_title: "Matematik", topic_title: "Üslü İfadeler", is_free: true, url: "#" },
-  { id: 3, topic_id: 2, type: "video", title: "Hareket Denklemleri — Konu Anlatımı", course_title: "Fizik", topic_title: "Hareket", duration_seconds: 1090, is_free: true, url: "#" },
-  { id: 4, topic_id: 3, type: "video", title: "Paragraf Yorumu — Teknik ve Örnekler", course_title: "Türkçe", topic_title: "Paragraf", duration_seconds: 920, is_free: false },
-];
-
-const DEMO_COURSES: Course[] = [
-  { id: 1, title: "Matematik", slug: "matematik", progress_percent: 65, is_free: true },
-  { id: 2, title: "Fizik", slug: "fizik", progress_percent: 40, is_free: true },
-  { id: 3, title: "Türkçe", slug: "turkce", progress_percent: 80, is_free: true },
-];
+type CourseUnit = {
+  id: number;
+  title: string;
+  topics?: { id: number; title: string }[];
+};
 
 function Skeleton({ className }: { className?: string }) {
   return <div className={`bg-slate-100 rounded-xl animate-pulse ${className ?? ""}`} />;
@@ -31,286 +26,487 @@ function formatDuration(seconds: number) {
   return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
-export default function VideoPage() {
-  const { token, user } = useAuth();
+const SPEED_OPTIONS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
 
-  const isPro = user?.subscription_plan && user.subscription_plan !== "free";
+// Video Player bileşeni — kaldığın yerden devam + hız kontrolü
+function VideoPlayerModal({
+  item,
+  token,
+  onClose,
+}: {
+  item: VideoItem;
+  token: string | null;
+  onClose: () => void;
+}) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const saveTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const [playbackRate, setPlaybackRate] = useState(1);
+  const [showSpeedMenu, setShowSpeedMenu] = useState(false);
+  const [saved, setSaved] = useState(false);
 
-  const [videos, setVideos] = useState<VideoItem[]>([]);
-  const [courses, setCourses] = useState<Course[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
-  const [typeFilter, setTypeFilter] = useState<"" | "video" | "pdf">("");
-  const [courseFilter, setCourseFilter] = useState("");
+  // localStorage'dan son izleme konumunu al
+  const storageKey = `video_pos_${item.id}`;
+  const savedPos = typeof window !== "undefined" ? parseFloat(localStorage.getItem(storageKey) ?? "0") : 0;
 
-  const loadData = useCallback(async () => {
+  useEffect(() => {
+    const vid = videoRef.current;
+    if (!vid) return;
+
+    // Kaldığı yerden başlat
+    const onLoaded = () => {
+      if (savedPos > 5) {
+        vid.currentTime = savedPos;
+      }
+    };
+    vid.addEventListener("loadedmetadata", onLoaded);
+    return () => vid.removeEventListener("loadedmetadata", onLoaded);
+  }, [savedPos]);
+
+  useEffect(() => {
+    const vid = videoRef.current;
+    if (!vid) return;
+    vid.playbackRate = playbackRate;
+  }, [playbackRate]);
+
+  // 5 sn'de bir konumu kaydet
+  useEffect(() => {
+    const vid = videoRef.current;
+    if (!vid) return;
+
+    const handleTimeUpdate = () => {
+      localStorage.setItem(storageKey, String(Math.floor(vid.currentTime)));
+    };
+
+    const handleProgress = () => {
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+      saveTimerRef.current = setTimeout(async () => {
+        if (!token || !item.topic_id) return;
+        try {
+          await api.updateProgress(token, {
+            content_item_id: item.id,
+            topic_id: item.topic_id,
+            status: "in_progress",
+            watch_seconds: Math.floor(vid.currentTime),
+          });
+          setSaved(true);
+          setTimeout(() => setSaved(false), 2000);
+        } catch {}
+      }, 5000);
+    };
+
+    vid.addEventListener("timeupdate", handleTimeUpdate);
+    vid.addEventListener("timeupdate", handleProgress);
+    return () => {
+      vid.removeEventListener("timeupdate", handleTimeUpdate);
+      vid.removeEventListener("timeupdate", handleProgress);
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    };
+  }, [token, item.id, item.topic_id, storageKey]);
+
+  // Video bitince "tamamlandı" kaydet
+  const handleEnded = useCallback(async () => {
+    localStorage.removeItem(storageKey);
+    if (!token || !item.topic_id) return;
     try {
-      const coursesRes = await api.getCourses(token);
-      setCourses(coursesRes);
-      const allContent: VideoItem[] = [];
-      await Promise.allSettled(
-        coursesRes.slice(0, 6).map(async (course) => {
-          const units = await api.getCourseUnits(course.id, token ?? undefined);
-          for (const unit of units.slice(0, 3)) {
-            for (const topic of (unit.topics ?? []).slice(0, 3)) {
-              const content = await api.getTopicContent(topic.id, token ?? undefined);
-              content.forEach((item) =>
-                allContent.push({ ...item, course_title: course.title, topic_title: topic.title })
-              );
-            }
-          }
-        })
-      );
-      setVideos(allContent);
-    } catch {
-      setVideos(DEMO_VIDEOS);
-      setCourses(DEMO_COURSES);
+      await api.updateProgress(token, {
+        content_item_id: item.id,
+        topic_id: item.topic_id,
+        status: "completed",
+      });
+    } catch {}
+  }, [token, item.id, item.topic_id, storageKey]);
+
+  const isYoutube = item.url?.includes("youtube.com") || item.url?.includes("youtu.be");
+  const isVimeo = item.url?.includes("vimeo.com");
+  const isEmbed = isYoutube || isVimeo;
+
+  const getEmbedUrl = () => {
+    if (!item.url) return "";
+    if (isYoutube) {
+      const id = item.url.match(/(?:v=|youtu\.be\/)([\w-]+)/)?.[1] ?? "";
+      return `https://www.youtube.com/embed/${id}?autoplay=1&start=${Math.floor(savedPos)}`;
     }
-    setLoading(false);
-  }, [token]);
-
-  useEffect(() => { loadData(); }, [loadData]);
-
-  const filtered = videos.filter((v) => {
-    const matchSearch = !search || v.title.toLowerCase().includes(search.toLowerCase()) ||
-      v.course_title?.toLowerCase().includes(search.toLowerCase());
-    const matchType = !typeFilter || v.type === typeFilter;
-    const matchCourse = !courseFilter || v.course_title === courseFilter;
-    return matchSearch && matchType && matchCourse;
-  });
-
-  const inProgressVideos = videos.filter((v) => v.type === "video" && v.is_free);
+    if (isVimeo) {
+      const id = item.url.match(/vimeo\.com\/(\d+)/)?.[1] ?? "";
+      return `https://player.vimeo.com/video/${id}?autoplay=1#t=${Math.floor(savedPos)}s`;
+    }
+    return item.url;
+  };
 
   return (
-    <div className="p-8 lg:p-12">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-slate-900">Video & PDF</h1>
-        <p className="text-slate-600 mt-1">
-          Hız ayarlı izleme · Kaldığın yerden devam · PDF not indirme
-        </p>
-      </div>
-
-      {/* Hız ayarı bilgi */}
-      <div className="mb-8 p-4 rounded-xl bg-teal-50 border border-teal-100">
-        <p className="text-sm text-teal-800">
-          <strong>Hız ayarı:</strong> Video oynatıcıda 0.5x, 1x, 1.25x, 1.5x, 2x hız seçenekleri mevcuttur. İlerleme otomatik kaydedilir.
-        </p>
-      </div>
-
-      {/* Kaldığın yerden devam */}
-      {!loading && inProgressVideos.length > 0 && (
-        <div className="mb-10">
-          <h2 className="text-lg font-bold text-slate-900 mb-4">Kaldığın Yerden Devam Et</h2>
-          <div className="space-y-3">
-            {inProgressVideos.slice(0, 3).map((v) => (
-              <div
-                key={v.id}
-                className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col sm:flex-row sm:items-center justify-between gap-4"
-              >
-                <div className="flex items-center gap-4 flex-1 min-w-0">
-                  <div className="w-12 h-12 rounded-xl bg-teal-100 flex items-center justify-center shrink-0">
-                    <Play className="w-6 h-6 text-teal-600" />
-                  </div>
-                  <div className="min-w-0">
-                    <h3 className="font-semibold text-slate-900 truncate">{v.title}</h3>
-                    <p className="text-sm text-slate-500">
-                      {v.course_title} · {v.duration_seconds ? formatDuration(v.duration_seconds) : "—"}
-                    </p>
-                    {v.duration_seconds && (
-                      <div className="mt-1.5 h-1.5 bg-slate-200 rounded-full overflow-hidden w-full max-w-[200px]">
-                        <div className="h-full bg-teal-500 rounded-full" style={{ width: "0%" }} />
-                      </div>
-                    )}
-                  </div>
-                </div>
-                <div className="flex gap-2 shrink-0">
-                  {v.url && v.url !== "#" ? (
-                    <a
-                      href={v.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-2 px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-semibold text-sm transition-colors"
-                    >
-                      <Play className="w-4 h-4" />
-                      İzle
-                    </a>
-                  ) : (
-                    <Link
-                      href={`/ogrenci/dersler/${v.course_title?.toLowerCase() ?? "matematik"}`}
-                      className="flex items-center gap-2 px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-semibold text-sm transition-colors"
-                    >
-                      <Play className="w-4 h-4" />
-                      Derse Git
-                    </Link>
-                  )}
-                </div>
-              </div>
-            ))}
+    <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <div
+        className="bg-slate-900 rounded-2xl w-full max-w-4xl overflow-hidden shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+        onContextMenu={(e) => e.preventDefault()}
+      >
+        {/* Başlık */}
+        <div className="flex items-center justify-between px-5 py-3 border-b border-slate-700">
+          <div className="flex items-center gap-3">
+            <p className="font-semibold text-white text-sm truncate max-w-sm">{item.title}</p>
+            {saved && (
+              <span className="flex items-center gap-1 text-xs text-teal-400 font-medium">
+                <CheckCircle className="w-3.5 h-3.5" /> Kaydedildi
+              </span>
+            )}
           </div>
-        </div>
-      )}
-
-      {/* Filtreler */}
-      <div className="flex flex-wrap gap-3 mb-6">
-        <div className="flex-1 min-w-[200px] relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Video veya ders ara..."
-            className="w-full pl-11 pr-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none transition-all"
-          />
-        </div>
-        <select
-          value={typeFilter}
-          onChange={(e) => setTypeFilter(e.target.value as "" | "video" | "pdf")}
-          className="px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none"
-        >
-          <option value="">Tüm Türler</option>
-          <option value="video">Video</option>
-          <option value="pdf">PDF</option>
-        </select>
-        <select
-          value={courseFilter}
-          onChange={(e) => setCourseFilter(e.target.value)}
-          className="px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none"
-        >
-          <option value="">Tüm Dersler</option>
-          {courses.map((c) => (
-            <option key={c.id} value={c.title}>{c.title}</option>
-          ))}
-        </select>
-      </div>
-
-      {/* İçerik listesi */}
-      <div>
-        <h2 className="text-lg font-bold text-slate-900 mb-4">
-          {typeFilter === "pdf" ? "PDF Notlar" : typeFilter === "video" ? "Videolar" : "Tüm İçerikler"}
-          {!loading && <span className="ml-2 text-sm font-normal text-slate-400">({filtered.length})</span>}
-        </h2>
-
-        {loading ? (
-          <div className="space-y-3">{[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-20" />)}</div>
-        ) : filtered.length === 0 ? (
-          <div className="text-center py-16">
-            <BookOpen className="w-10 h-10 text-slate-300 mx-auto mb-3" />
-            <p className="font-semibold text-slate-600">İçerik bulunamadı</p>
-            <p className="text-sm text-slate-500 mt-1">Filtreleri değiştirmeyi deneyin.</p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {filtered.map((item) => {
-              const locked = !item.is_free && !isPro;
-              return (
-                <div
-                  key={item.id}
-                  className={`bg-white rounded-2xl border p-5 shadow-sm transition-shadow ${
-                    locked ? "border-slate-200 opacity-70" : "border-slate-200 hover:shadow-md hover:border-teal-100"
-                  }`}
+          <div className="flex items-center gap-3">
+            {!isEmbed && (
+              <div className="relative">
+                <button
+                  onClick={() => setShowSpeedMenu((p) => !p)}
+                  className="flex items-center gap-1.5 text-xs font-semibold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg transition-colors"
                 >
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div className="flex items-center gap-4 flex-1 min-w-0">
-                      <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 ${
-                        item.type === "video" ? "bg-teal-100" : "bg-red-100"
-                      }`}>
-                        {item.type === "video" ? (
-                          <Play className="w-5 h-5 text-teal-600" />
-                        ) : (
-                          <FileDown className="w-5 h-5 text-red-600" />
-                        )}
-                      </div>
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <h3 className="font-semibold text-slate-900 truncate">{item.title}</h3>
-                          {!item.is_free && (
-                            <span className="text-xs font-semibold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">Pro</span>
-                          )}
-                        </div>
-                        <p className="text-sm text-slate-500 mt-0.5">
-                          {item.course_title}
-                          {item.topic_title && ` · ${item.topic_title}`}
-                          {item.duration_seconds && (
-                            <span className="ml-2 inline-flex items-center gap-1">
-                              <Clock className="w-3 h-3" />
-                              {formatDuration(item.duration_seconds)}
-                            </span>
-                          )}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex gap-2 shrink-0">
-                      {locked ? (
-                        <Link
-                          href="/#paketler"
-                          className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-amber-200 bg-amber-50 text-amber-700 text-sm font-semibold hover:bg-amber-100 transition-colors"
-                        >
-                          <Lock className="w-4 h-4" />
-                          Kilidi Aç
-                        </Link>
-                      ) : item.url && item.url !== "#" ? (
-                        item.type === "pdf" ? (
-                          <a
-                            href={item.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-red-200 bg-red-50 text-red-700 text-sm font-semibold hover:bg-red-100 transition-colors"
-                          >
-                            <FileDown className="w-4 h-4" />
-                            PDF İndir
-                          </a>
-                        ) : (
-                          <a
-                            href={item.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-sm font-semibold transition-colors"
-                          >
-                            <Play className="w-4 h-4" />
-                            İzle
-                          </a>
-                        )
-                      ) : (
-                        <Link
-                          href={`/ogrenci/dersler/${item.course_title?.toLowerCase() ?? "matematik"}`}
-                          className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-slate-200 text-slate-700 text-sm font-semibold hover:bg-slate-50 transition-colors"
-                        >
-                          Derse Git
-                          <ChevronRight className="w-4 h-4" />
-                        </Link>
-                      )}
-                    </div>
+                  <Settings className="w-3.5 h-3.5" />
+                  {playbackRate}x
+                </button>
+                {showSpeedMenu && (
+                  <div className="absolute right-0 top-full mt-1 bg-slate-800 border border-slate-700 rounded-xl shadow-lg z-10 py-1 min-w-[80px]">
+                    {SPEED_OPTIONS.map((s) => (
+                      <button
+                        key={s}
+                        onClick={() => { setPlaybackRate(s); setShowSpeedMenu(false); }}
+                        className={`w-full text-center px-4 py-1.5 text-sm transition-colors ${
+                          playbackRate === s
+                            ? "text-teal-400 font-semibold"
+                            : "text-slate-300 hover:text-white hover:bg-slate-700"
+                        }`}
+                      >
+                        {s}x
+                      </button>
+                    ))}
                   </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
-
-      {/* Ders bazlı hızlı erişim */}
-      {!loading && courses.length > 0 && (
-        <div className="mt-12">
-          <h2 className="text-lg font-bold text-slate-900 mb-4">Derslere Göre</h2>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {courses.map((c) => (
-              <Link
-                key={c.id}
-                href={`/ogrenci/dersler/${c.slug}`}
-                className="bg-white rounded-2xl border border-slate-200 p-5 hover:shadow-md hover:border-teal-200 transition-all flex items-center justify-between"
-              >
-                <div>
-                  <h3 className="font-semibold text-slate-900">{c.title}</h3>
-                  <p className="text-sm text-slate-500 mt-0.5">%{c.progress_percent ?? 0} tamamlandı</p>
-                </div>
-                <ChevronRight className="w-5 h-5 text-slate-400" />
-              </Link>
-            ))}
+                )}
+              </div>
+            )}
+            {savedPos > 10 && (
+              <span className="text-xs text-amber-400 font-medium">
+                {formatDuration(Math.floor(savedPos))} kaldığın yer
+              </span>
+            )}
+            <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors">
+              <X className="w-5 h-5" />
+            </button>
           </div>
         </div>
-      )}
+
+        {/* Video */}
+        <div className="aspect-video bg-black">
+          {isEmbed ? (
+            <iframe
+              src={getEmbedUrl()}
+              className="w-full h-full"
+              allow="autoplay; fullscreen; picture-in-picture"
+              allowFullScreen
+            />
+          ) : item.url ? (
+            <video
+              ref={videoRef}
+              src={item.url}
+              controls
+              autoPlay
+              onEnded={handleEnded}
+              className="w-full h-full"
+              controlsList="nodownload noremoteplayback"
+              disablePictureInPicture
+              onContextMenu={(e) => e.preventDefault()}
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-slate-500">
+              <p>Video bağlantısı bulunamadı.</p>
+            </div>
+          )}
+        </div>
+
+        {/* Alt bilgi */}
+        <div className="px-5 py-3 bg-slate-800/60 flex items-center gap-4 text-xs text-slate-400">
+          {item.topic_title && <span>Konu: <strong className="text-slate-200">{item.topic_title}</strong></span>}
+          {item.duration_seconds && (
+            <span className="flex items-center gap-1">
+              <Clock className="w-3.5 h-3.5" /> Toplam: {formatDuration(item.duration_seconds)}
+            </span>
+          )}
+          <span className="ml-auto">İlerleme otomatik kaydedilir</span>
+        </div>
+      </div>
     </div>
   );
 }
 
+export default function VideoPage() {
+  const { token, user } = useAuth();
+  const isPro = user?.subscription_plan && user.subscription_plan !== "free";
 
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [typeFilter, setTypeFilter] = useState<"" | "video" | "pdf">("");
+  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
+  const [units, setUnits] = useState<CourseUnit[]>([]);
+  const [unitsLoading, setUnitsLoading] = useState(false);
+  const [expandedUnitId, setExpandedUnitId] = useState<number | null>(null);
+  const [topicContent, setTopicContent] = useState<Record<number, VideoItem[]>>({});
+  const [topicLoading, setTopicLoading] = useState<number | null>(null);
+  const [activeVideo, setActiveVideo] = useState<VideoItem | null>(null);
+
+  useEffect(() => {
+    if (!token) { setLoading(false); return; }
+    api.getCourses(token).then((res) => {
+      setCourses(res);
+    }).catch(() => setCourses([])).finally(() => setLoading(false));
+  }, [token]);
+
+  const handleSelectCourse = useCallback(async (course: Course) => {
+    setSelectedCourse(course);
+    setUnits([]);
+    setExpandedUnitId(null);
+    setTopicContent({});
+    if (!token) return;
+    setUnitsLoading(true);
+    try {
+      const res = await api.getCourseUnits(course.id, token);
+      setUnits(res as CourseUnit[]);
+    } catch {
+      setUnits([]);
+    }
+    setUnitsLoading(false);
+  }, [token]);
+
+  const handleExpandUnit = useCallback(async (unit: CourseUnit) => {
+    if (expandedUnitId === unit.id) {
+      setExpandedUnitId(null);
+      return;
+    }
+    setExpandedUnitId(unit.id);
+    if (!token || !unit.topics) return;
+    for (const topic of unit.topics) {
+      if (topicContent[topic.id]) continue;
+      setTopicLoading(topic.id);
+      try {
+        const content = await api.getTopicContent(topic.id, token);
+        setTopicContent((prev) => ({
+          ...prev,
+          [topic.id]: content.map((item) => ({
+            ...item,
+            course_title: selectedCourse?.title,
+            topic_title: topic.title,
+            topic_id: topic.id,
+          })),
+        }));
+      } catch {}
+      setTopicLoading(null);
+    }
+  }, [token, expandedUnitId, topicContent, selectedCourse]);
+
+  return (
+    <>
+      {/* Video Player Modal */}
+      {activeVideo && (
+        <VideoPlayerModal
+          item={activeVideo}
+          token={token}
+          onClose={() => setActiveVideo(null)}
+        />
+      )}
+
+      <div className="p-8 lg:p-12">
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold text-slate-900">Video & PDF</h1>
+          <p className="text-slate-600 mt-1">
+            Hız ayarlı izleme · Kaldığın yerden devam · PDF not indirme
+          </p>
+        </div>
+
+        <div className="mb-6 p-4 rounded-xl bg-teal-50 border border-teal-100 flex items-start gap-3">
+          <Settings className="w-4 h-4 text-teal-600 mt-0.5 shrink-0" />
+          <p className="text-sm text-teal-800">
+            <strong>Hız ayarı:</strong> Video oynatıcıda 0.5x — 2x arasında hız seçebilirsin. İzleme konumun otomatik kaydedilir, kaldığın yerden devam edersin.
+          </p>
+        </div>
+
+        <div className="grid lg:grid-cols-[260px,1fr] gap-8">
+          {/* Ders listesi */}
+          <div>
+            <h2 className="font-bold text-slate-900 mb-3 text-sm uppercase tracking-wide">Dersler</h2>
+            {loading ? (
+              <div className="space-y-2">{[1, 2, 3].map((i) => <Skeleton key={i} className="h-12" />)}</div>
+            ) : courses.length === 0 ? (
+              <p className="text-sm text-slate-400">Ders bulunamadı.</p>
+            ) : (
+              <div className="space-y-1">
+                {courses.map((c) => (
+                  <button
+                    key={c.id}
+                    onClick={() => handleSelectCourse(c)}
+                    className={`w-full text-left px-4 py-3 rounded-xl transition-colors flex items-center justify-between ${
+                      selectedCourse?.id === c.id
+                        ? "bg-teal-600 text-white font-semibold"
+                        : "bg-white border border-slate-200 text-slate-700 hover:border-teal-300 hover:bg-teal-50"
+                    }`}
+                  >
+                    <span className="truncate">{c.title}</span>
+                    <span className={`text-xs ml-2 shrink-0 ${selectedCourse?.id === c.id ? "text-teal-200" : "text-slate-400"}`}>
+                      %{c.progress_percent ?? 0}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Ünite / içerik */}
+          <div>
+            {!selectedCourse ? (
+              <div className="flex flex-col items-center justify-center py-20 bg-slate-50 rounded-2xl border border-slate-200">
+                <BookOpen className="w-12 h-12 text-slate-300 mb-3" />
+                <p className="font-semibold text-slate-500">Bir ders seç</p>
+                <p className="text-sm text-slate-400 mt-1">İçeriklere erişmek için soldan bir ders seçin.</p>
+              </div>
+            ) : (
+              <>
+                <div className="flex flex-wrap gap-3 mb-5">
+                  <div className="flex-1 min-w-[200px] relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                    <input
+                      type="text"
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      placeholder="Video veya konu ara..."
+                      className="w-full pl-11 pr-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none"
+                    />
+                  </div>
+                  <select
+                    value={typeFilter}
+                    onChange={(e) => setTypeFilter(e.target.value as "" | "video" | "pdf")}
+                    className="px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none"
+                  >
+                    <option value="">Tüm Türler</option>
+                    <option value="video">Video</option>
+                    <option value="pdf">PDF</option>
+                  </select>
+                </div>
+
+                {unitsLoading ? (
+                  <div className="space-y-3">{[1, 2, 3].map((i) => <Skeleton key={i} className="h-14" />)}</div>
+                ) : units.length === 0 ? (
+                  <div className="text-center py-12 text-slate-400">Bu ders için ünite bulunamadı.</div>
+                ) : (
+                  <div className="space-y-3">
+                    {units.map((unit) => (
+                      <div key={unit.id} className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                        <button
+                          onClick={() => handleExpandUnit(unit)}
+                          className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50 transition-colors"
+                        >
+                          <span className="font-semibold text-slate-900">{unit.title}</span>
+                          <ChevronDown className={`w-5 h-5 text-slate-400 transition-transform ${expandedUnitId === unit.id ? "rotate-180" : ""}`} />
+                        </button>
+
+                        {expandedUnitId === unit.id && (
+                          <div className="border-t border-slate-100">
+                            {(unit.topics ?? []).length === 0 ? (
+                              <p className="text-sm text-slate-400 p-5">Bu ünitede konu yok.</p>
+                            ) : (
+                              (unit.topics ?? []).map((topic) => {
+                                const content = (topicContent[topic.id] ?? []).filter((item) =>
+                                  (!typeFilter || item.type === typeFilter) &&
+                                  (!search || item.title.toLowerCase().includes(search.toLowerCase()))
+                                );
+                                const isLoadingTopic = topicLoading === topic.id;
+
+                                return (
+                                  <div key={topic.id} className="border-t border-slate-50 first:border-0">
+                                    <div className="px-5 py-3 bg-slate-50/60">
+                                      <p className="text-sm font-semibold text-slate-700">{topic.title}</p>
+                                    </div>
+                                    {isLoadingTopic ? (
+                                      <div className="px-5 py-3"><Loader2 className="w-4 h-4 animate-spin text-slate-400" /></div>
+                                    ) : content.length === 0 ? (
+                                      <p className="text-xs text-slate-400 px-5 py-2">İçerik yok.</p>
+                                    ) : (
+                                      content.map((item) => {
+                                        const locked = !item.is_free && !isPro;
+                                        const savedPos = parseFloat(localStorage.getItem(`video_pos_${item.id}`) ?? "0");
+                                        const hasProgress = savedPos > 5;
+                                        return (
+                                          <div
+                                            key={item.id}
+                                            className={`flex items-center justify-between px-5 py-3 hover:bg-slate-50 transition-colors border-t border-slate-50/60 ${locked ? "opacity-60" : ""}`}
+                                          >
+                                            <div className="flex items-center gap-3 flex-1 min-w-0">
+                                              <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${item.type === "video" ? "bg-teal-100" : "bg-red-100"}`}>
+                                                {item.type === "video"
+                                                  ? <Play className="w-4 h-4 text-teal-600" />
+                                                  : <FileDown className="w-4 h-4 text-red-600" />
+                                                }
+                                              </div>
+                                              <div className="min-w-0">
+                                                <p className="text-sm font-medium text-slate-900 truncate">{item.title}</p>
+                                                <p className="text-xs text-slate-400 flex items-center gap-2">
+                                                  {!item.is_free && <span className="text-amber-500 font-semibold">Pro</span>}
+                                                  {item.duration_seconds && (
+                                                    <span className="inline-flex items-center gap-1">
+                                                      <Clock className="w-3 h-3" />
+                                                      {formatDuration(item.duration_seconds)}
+                                                    </span>
+                                                  )}
+                                                  {hasProgress && item.type === "video" && (
+                                                    <span className="text-teal-600 font-medium">
+                                                      {formatDuration(Math.floor(savedPos))} izlendi
+                                                    </span>
+                                                  )}
+                                                </p>
+                                              </div>
+                                            </div>
+                                            <div className="shrink-0 ml-3">
+                                              {locked ? (
+                                                <span className="text-xs text-amber-600 flex items-center gap-1">
+                                                  <Lock className="w-3.5 h-3.5" /> Pro
+                                                </span>
+                                              ) : item.url ? (
+                                                item.type === "pdf" ? (
+                                                  <a
+                                                    href={item.url}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="text-xs px-3 py-1.5 rounded-lg bg-red-50 text-red-700 font-semibold hover:bg-red-100 transition-colors"
+                                                  >
+                                                    İndir
+                                                  </a>
+                                                ) : (
+                                                  <button
+                                                    onClick={() => setActiveVideo({ ...item, topic_id: topic.id })}
+                                                    className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg bg-teal-600 text-white font-semibold hover:bg-teal-700 transition-colors"
+                                                  >
+                                                    <Play className="w-3.5 h-3.5" />
+                                                    {hasProgress ? "Devam Et" : "İzle"}
+                                                  </button>
+                                                )
+                                              ) : (
+                                                <span className="text-xs text-slate-400 flex items-center gap-1">
+                                                  <ChevronRight className="w-3.5 h-3.5" /> Yakında
+                                                </span>
+                                              )}
+                                            </div>
+                                          </div>
+                                        );
+                                      })
+                                    )}
+                                  </div>
+                                );
+                              })
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}

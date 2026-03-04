@@ -9,22 +9,7 @@ import {
   Mic, MicOff, Camera, CameraOff, Monitor, Maximize2
 } from "lucide-react";
 
-// ─── Demo verisi ──────────────────────────────────────────────────────────────
-const DEMO_LESSONS: TeacherLesson[] = [
-  {
-    id: 1, title: "Matematik — Limit ve Türev",
-    scheduled_at: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
-    duration_minutes: 45, daily_room_url: "https://terence.daily.co/demo-room", status: "scheduled",
-    class_room: { id: 1, name: "10-A Matematik" },
-  },
-  {
-    id: 2, title: "Fizik — Hareket",
-    scheduled_at: new Date(Date.now() + 25 * 60 * 60 * 1000).toISOString(),
-    duration_minutes: 40, status: "scheduled",
-    class_room: { id: 2, name: "11-A Fizik" },
-  },
-];
-
+// ─── Yardımcı fonksiyonlar ────────────────────────────────────────────────────
 function Skeleton({ className }: { className?: string }) {
   return <div className={`bg-slate-100 rounded-xl animate-pulse ${className ?? ""}`} />;
 }
@@ -77,7 +62,6 @@ function LiveClassRoom({
 
   return (
     <div className="fixed inset-0 z-50 bg-black flex flex-col">
-      {/* Üst bar */}
       <div className="flex items-center justify-between px-6 py-3 bg-slate-900 border-b border-slate-700">
         <div className="flex items-center gap-3">
           <div className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse" />
@@ -100,8 +84,6 @@ function LiveClassRoom({
           </button>
         </div>
       </div>
-
-      {/* iframe */}
       <div className="flex-1 relative">
         <iframe
           ref={iframeRef}
@@ -112,8 +94,6 @@ function LiveClassRoom({
           title="Canlı Ders"
         />
       </div>
-
-      {/* Alt bilgi çubuğu */}
       <div className="flex items-center justify-between px-6 py-2.5 bg-slate-900 border-t border-slate-700 text-xs text-slate-400">
         <span className="flex items-center gap-2">
           <Mic className="w-3.5 h-3.5" />
@@ -131,7 +111,6 @@ function LiveClassRoom({
 export default function OgrenciCanliDersPage() {
   const { token } = useAuth();
 
-
   const [lessons, setLessons] = useState<TeacherLesson[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeLesson, setActiveLesson] = useState<TeacherLesson | null>(null);
@@ -141,7 +120,6 @@ export default function OgrenciCanliDersPage() {
 
   const loadLessons = useCallback(async () => {
     if (!token) {
-      setLessons(DEMO_LESSONS);
       setLoading(false);
       return;
     }
@@ -149,7 +127,7 @@ export default function OgrenciCanliDersPage() {
       const res = await api.getStudentUpcomingLessons(token);
       setLessons(res);
     } catch {
-      setLessons(DEMO_LESSONS);
+      setLessons([]);
     }
     setLoading(false);
   }, [token]);
@@ -157,15 +135,12 @@ export default function OgrenciCanliDersPage() {
   useEffect(() => { loadLessons(); }, [loadLessons]);
 
   const handleJoin = async (lesson: TeacherLesson) => {
+    if (!token) return;
     setJoiningId(lesson.id);
     setErr("");
     try {
-      if (token) {
-        const room = await api.getVideoRoom(token, lesson.id);
-        setActiveRoom(room);
-      } else {
-        setActiveRoom({ room_url: lesson.daily_room_url || "https://terence.daily.co/demo" });
-      }
+      const room = await api.getVideoRoom(token, lesson.id);
+      setActiveRoom(room);
       setActiveLesson(lesson);
     } catch (e) {
       setErr((e as Error).message || "Derse bağlanılamadı. Lütfen tekrar dene.");
