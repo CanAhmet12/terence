@@ -7,36 +7,112 @@ import { useAuth } from "@/lib/auth-context";
 import { api, Unit, ContentItem } from "@/lib/api";
 import {
   ArrowLeft, Play, FileText, CheckCircle, RefreshCw, ChevronDown, ChevronRight,
-  Lock, Clock, FileDown
+  Lock, Clock, FileDown, AlertCircle, Sparkles, X, Bot, BookOpen
 } from "lucide-react";
-
-const DEMO_UNITS: Unit[] = [
-  {
-    id: 1, course_id: 1, title: "Üslü Sayılar", sort_order: 1,
-    topics: [
-      { id: 1, unit_id: 1, title: "Üslü İfadeler", kazanim_code: "M.8.1.1", kazanim_desc: "Üslü ifadeleri tanır ve hesaplar", sort_order: 1, progress: "completed" },
-      { id: 2, unit_id: 1, title: "Üslü İfadelerde İşlemler", kazanim_code: "M.8.1.2", kazanim_desc: "Üslü ifadelerle toplama ve çarpma yapar", sort_order: 2, progress: "in_progress" },
-    ],
-  },
-  {
-    id: 2, course_id: 1, title: "Köklü Sayılar", sort_order: 2,
-    topics: [
-      { id: 3, unit_id: 2, title: "Köklü İfadeler", kazanim_code: "M.8.2.1", kazanim_desc: "Kareköklü ifadeleri hesaplar", sort_order: 1, progress: "not_started" },
-    ],
-  },
-  {
-    id: 3, course_id: 1, title: "Cebirsel İfadeler", sort_order: 3,
-    topics: [
-      { id: 4, unit_id: 3, title: "Cebirsel Denklemler", kazanim_code: "M.8.3.1", kazanim_desc: "Birinci dereceden denklemleri çözer", sort_order: 1, progress: "not_started" },
-      { id: 5, unit_id: 3, title: "Eşitsizlikler", kazanim_code: "M.8.3.2", kazanim_desc: "Birinci dereceden eşitsizlikleri çözer", sort_order: 2, progress: "not_started" },
-    ],
-  },
-];
 
 type ProgressType = "not_started" | "in_progress" | "completed";
 
 function Skeleton({ className }: { className?: string }) {
   return <div className={`bg-slate-100 rounded-xl animate-pulse ${className ?? ""}`} />;
+}
+
+// ─── AI Özet Modalı ───────────────────────────────────────────────────────────
+function AISummaryModal({
+  topicId,
+  topicTitle,
+  token,
+  onClose,
+}: {
+  topicId: number;
+  topicTitle: string;
+  token: string | null;
+  onClose: () => void;
+}) {
+  const [summary, setSummary] = useState<string | null>(null);
+  const [keyPoints, setKeyPoints] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!token) { setError("Oturum bulunamadı."); setLoading(false); return; }
+    api.summarizeContent(token, { topic_id: topicId })
+      .then((res) => {
+        setSummary(res.summary);
+        setKeyPoints(res.key_points ?? []);
+      })
+      .catch((e) => setError(e.message || "Özet alınamadı."))
+      .finally(() => setLoading(false));
+  }, [topicId, token]);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden max-h-[85vh] flex flex-col">
+        <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100 shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center">
+              <Sparkles className="w-5 h-5 text-purple-600" />
+            </div>
+            <div>
+              <h3 className="font-bold text-base text-slate-900">AI Konu Özeti</h3>
+              <p className="text-xs text-slate-500 truncate max-w-[220px]">{topicTitle}</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="w-9 h-9 rounded-xl border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-100 transition-colors">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        <div className="overflow-y-auto flex-1 p-6">
+          {loading ? (
+            <div className="space-y-3">
+              <div className="flex items-center gap-3 text-purple-600 text-sm font-medium">
+                <Bot className="w-4 h-4 animate-pulse" />
+                AI özet hazırlanıyor...
+              </div>
+              {[1, 2, 3].map((i) => <Skeleton key={i} className="h-4" />)}
+            </div>
+          ) : error ? (
+            <div className="flex items-center gap-2 p-4 bg-red-50 border border-red-100 rounded-xl">
+              <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
+              <p className="text-sm text-red-700">{error}</p>
+            </div>
+          ) : (
+            <div className="space-y-5">
+              {/* Özet */}
+              {summary && (
+                <div className="p-4 bg-purple-50 border border-purple-200 rounded-2xl">
+                  <div className="flex items-center gap-2 text-purple-700 font-semibold text-sm mb-3">
+                    <Bot className="w-4 h-4" />
+                    Konu Özeti
+                  </div>
+                  <p className="text-slate-700 text-sm leading-relaxed">{summary}</p>
+                </div>
+              )}
+              {/* Anahtar noktalar */}
+              {keyPoints.length > 0 && (
+                <div>
+                  <div className="flex items-center gap-2 text-slate-700 font-semibold text-sm mb-3">
+                    <BookOpen className="w-4 h-4 text-teal-600" />
+                    Anahtar Noktalar
+                  </div>
+                  <ul className="space-y-2">
+                    {keyPoints.map((point, i) => (
+                      <li key={i} className="flex items-start gap-2.5 text-sm text-slate-700">
+                        <span className="w-5 h-5 rounded-full bg-teal-100 text-teal-700 text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">
+                          {i + 1}
+                        </span>
+                        {point}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 const PROGRESS_CONFIG: Record<ProgressType, { label: string; dot: string }> = {
@@ -49,29 +125,22 @@ export default function DersDetayPage() {
   const params = useParams();
   const slug = params.ders as string;
   const { token } = useAuth();
-  const isDemo = token?.startsWith("demo-token-");
 
   const [units, setUnits] = useState<Unit[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [openUnitId, setOpenUnitId] = useState<number | null>(null);
   const [openTopicId, setOpenTopicId] = useState<number | null>(null);
   const [topicContent, setTopicContent] = useState<Record<number, ContentItem[]>>({});
   const [loadingTopicId, setLoadingTopicId] = useState<number | null>(null);
   const [progressMap, setProgressMap] = useState<Record<number, ProgressType>>({});
+  const [summaryTopic, setSummaryTopic] = useState<{ id: number; title: string } | null>(null);
 
   const loadUnits = useCallback(async () => {
-    if (isDemo) {
-      setUnits(DEMO_UNITS);
-      // Demo ilerleme durumu
-      const pm: Record<number, ProgressType> = {};
-      DEMO_UNITS.forEach((u) => (u.topics ?? []).forEach((t) => { pm[t.id] = (t.progress as ProgressType) ?? "not_started"; }));
-      setProgressMap(pm);
-      setOpenUnitId(DEMO_UNITS[0]?.id ?? null);
-      setLoading(false);
-      return;
-    }
+    if (!token) { setLoading(false); return; }
+    setLoading(true);
+    setError(null);
     try {
-      // Önce slug'dan kurs id'sini bul, sonra üniteleri al
       const courses = await api.getCourses(token);
       const course = courses.find((c) => c.slug === slug) ?? courses[0];
       const courseId = course?.id ?? slug;
@@ -81,11 +150,13 @@ export default function DersDetayPage() {
       res.forEach((u) => (u.topics ?? []).forEach((t) => { pm[t.id] = (t.progress as ProgressType) ?? "not_started"; }));
       setProgressMap(pm);
       if (res.length > 0) setOpenUnitId(res[0].id);
-    } catch {
-      setUnits(DEMO_UNITS);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "İçerik yüklenemedi.");
+      setUnits([]);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
-  }, [slug, token, isDemo]);
+  }, [slug, token]);
 
   useEffect(() => { loadUnits(); }, [loadUnits]);
 
@@ -112,11 +183,11 @@ export default function DersDetayPage() {
 
   const updateProgress = async (topicId: number, status: "in_progress" | "completed") => {
     setProgressMap((prev) => ({ ...prev, [topicId]: status }));
-    if (token && !isDemo) {
+    if (token) {
       try {
         await api.updateProgress(token, { topic_id: topicId, status });
       } catch {
-        // Sessizce geç
+        // Sunucu hatası olsa da UI'daki değişiklik korunur
       }
     }
   };
@@ -158,6 +229,20 @@ export default function DersDetayPage() {
       {loading ? (
         <div className="space-y-4">
           {[1, 2, 3].map((i) => <Skeleton key={i} className="h-20" />)}
+        </div>
+      ) : error ? (
+        <div className="p-6 bg-red-50 border border-red-100 rounded-2xl flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3 text-red-700">
+            <AlertCircle className="w-5 h-5 shrink-0" />
+            <p className="text-sm font-medium">{error}</p>
+          </div>
+          <button
+            onClick={loadUnits}
+            className="flex items-center gap-1.5 text-sm font-semibold text-red-600 hover:text-red-700 shrink-0"
+          >
+            <RefreshCw className="w-4 h-4" />
+            Yenile
+          </button>
         </div>
       ) : units.length === 0 ? (
         <div className="text-center py-16 text-slate-400">
@@ -233,7 +318,7 @@ export default function DersDetayPage() {
                               </div>
 
                               {/* Aksiyon butonları */}
-                              <div className="flex items-center gap-2 shrink-0 ml-5 sm:ml-0">
+                              <div className="flex items-center gap-2 shrink-0 ml-5 sm:ml-0 flex-wrap">
                                 <button
                                   onClick={() => toggleTopic(topic.id)}
                                   className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 text-sm font-medium transition-colors"
@@ -242,28 +327,37 @@ export default function DersDetayPage() {
                                   İçerik
                                 </button>
 
-                                {progress !== "not_started" && (
-                                  <>
-                                    <button
-                                      onClick={() => updateProgress(topic.id, "completed")}
-                                      className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-colors ${
-                                        progress === "completed"
-                                          ? "bg-teal-100 text-teal-700 border border-teal-200"
-                                          : "border border-teal-200 hover:bg-teal-50 text-teal-700"
-                                      }`}
-                                    >
-                                      <CheckCircle className="w-3.5 h-3.5" />
-                                      Anladım
-                                    </button>
-                                    <button
-                                      onClick={() => updateProgress(topic.id, "in_progress")}
-                                      className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-amber-200 hover:bg-amber-50 text-amber-700 text-sm font-medium transition-colors"
-                                    >
-                                      <RefreshCw className="w-3.5 h-3.5" />
-                                      Tekrar
-                                    </button>
-                                  </>
-                                )}
+                                <button
+                                  onClick={() => setSummaryTopic({ id: topic.id, title: topic.title })}
+                                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-purple-200 hover:bg-purple-50 text-purple-700 text-sm font-medium transition-colors"
+                                  title="AI ile konu özetini görüntüle"
+                                >
+                                  <Sparkles className="w-3.5 h-3.5" />
+                                  AI Özet
+                                </button>
+
+                                <button
+                                  onClick={() => updateProgress(topic.id, "completed")}
+                                  className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-colors ${
+                                    progress === "completed"
+                                      ? "bg-teal-100 text-teal-700 border border-teal-200"
+                                      : "border border-teal-200 hover:bg-teal-50 text-teal-700"
+                                  }`}
+                                >
+                                  <CheckCircle className="w-3.5 h-3.5" />
+                                  Anladım
+                                </button>
+                                <button
+                                  onClick={() => updateProgress(topic.id, "in_progress")}
+                                  className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-colors ${
+                                    progress === "in_progress"
+                                      ? "bg-amber-100 text-amber-700 border border-amber-200"
+                                      : "border border-amber-200 hover:bg-amber-50 text-amber-700"
+                                  }`}
+                                >
+                                  <RefreshCw className="w-3.5 h-3.5" />
+                                  Tekrar
+                                </button>
                               </div>
                             </div>
 
@@ -357,6 +451,16 @@ export default function DersDetayPage() {
         <strong>Anladım:</strong> Konuyu öğrendim olarak işaretler. &nbsp;
         <strong>Tekrar:</strong> Günlük plana otomatik eklenir.
       </p>
+
+      {/* AI Özet Modal */}
+      {summaryTopic && (
+        <AISummaryModal
+          topicId={summaryTopic.id}
+          topicTitle={summaryTopic.title}
+          token={token}
+          onClose={() => setSummaryTopic(null)}
+        />
+      )}
     </div>
   );
 }

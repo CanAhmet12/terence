@@ -36,20 +36,6 @@ export default function HedefPage() {
 
   const loadAnalysis = useCallback(async () => {
     if (!token) {
-      // Demo verisi
-      setAnalysis({
-        target_net: 75,
-        current_net: 42,
-        days_remaining: 165,
-        weekly_net_needed: 1,
-        risk_level: "yellow",
-        predicted_net: 61,
-      });
-      setExamType("TYT");
-      setTargetSchool("İstanbul Üniversitesi");
-      setTargetDept("Hukuk");
-      setTargetNet("75");
-      setCurrentNet("42");
       setLoading(false);
       return;
     }
@@ -135,6 +121,55 @@ export default function HedefPage() {
             <p className="text-xs text-slate-600 mt-0.5">
               Tahmin edilen net: <strong>{analysis.predicted_net}</strong> · Hedef: <strong>{analysis.target_net}</strong>
             </p>
+          </div>
+        </div>
+      )}
+
+      {/* Akıllı Hedef Bilgi Kartı */}
+      {!loading && analysis && analysis.days_remaining > 0 && (
+        <div className="mb-8 grid sm:grid-cols-3 gap-4">
+          <div className="bg-gradient-to-br from-teal-600 to-teal-500 rounded-2xl p-5 text-white shadow-lg shadow-teal-500/20">
+            <p className="text-teal-100 text-xs font-semibold uppercase tracking-wide mb-1">Sınava Kalan</p>
+            <p className="text-3xl font-black">{analysis.days_remaining}</p>
+            <p className="text-teal-100 text-sm mt-0.5">gün</p>
+          </div>
+          <div className={`rounded-2xl p-5 shadow-sm ${
+            riskLevel === "red" ? "bg-red-50 border border-red-100" :
+            riskLevel === "yellow" ? "bg-amber-50 border border-amber-100" :
+            "bg-emerald-50 border border-emerald-100"
+          }`}>
+            <p className="text-slate-500 text-xs font-semibold uppercase tracking-wide mb-1">Haftada Gereken</p>
+            <p className={`text-3xl font-black ${
+              riskLevel === "red" ? "text-red-600" :
+              riskLevel === "yellow" ? "text-amber-600" : "text-emerald-600"
+            }`}>+{analysis.weekly_net_needed}</p>
+            <p className="text-slate-500 text-sm mt-0.5">net artışı</p>
+          </div>
+          <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
+            <p className="text-slate-500 text-xs font-semibold uppercase tracking-wide mb-1">Artması Gereken</p>
+            <p className="text-3xl font-black text-slate-900">+{gapNet}</p>
+            <p className="text-slate-500 text-sm mt-0.5">toplam net</p>
+          </div>
+        </div>
+      )}
+
+      {/* Paket Yükseltme Önerisi */}
+      {!loading && analysis && riskLevel === "red" && (!user?.subscription_plan || user.subscription_plan === "free") && (
+        <div className="mb-8 p-5 rounded-2xl bg-gradient-to-r from-red-600 to-red-500 text-white shadow-lg shadow-red-500/20">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p className="font-bold text-lg">Yüksek Risk — Destek Almanın Tam Zamanı!</p>
+              <p className="text-red-100 text-sm mt-1">
+                Mevcut net hızınla hedefe ulaşman zor görünüyor. Pro paketteki kişisel koçluk ve özel plan sistemi
+                net artışını hızlandırır. Pro paket öğrencilerinde %43 daha yüksek başarı oranı gözlemlenmektedir.
+              </p>
+            </div>
+            <a
+              href="/paketler"
+              className="shrink-0 px-4 py-2.5 bg-white text-red-700 font-bold text-sm rounded-xl hover:bg-red-50 transition-colors whitespace-nowrap"
+            >
+              Paketi İncele →
+            </a>
           </div>
         </div>
       )}

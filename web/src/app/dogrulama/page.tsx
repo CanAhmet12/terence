@@ -2,7 +2,8 @@
 
 import { Suspense, useState, useEffect, useRef, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { GraduationCap, Mail, CheckCircle, RefreshCw, ArrowLeft } from "lucide-react";
+import { Mail, CheckCircle, RefreshCw, ArrowLeft } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { api } from "@/lib/api";
 
@@ -151,8 +152,8 @@ function DogrulamaContent() {
         </Link>
 
         <Link href="/" className="inline-flex items-center gap-3 text-slate-900 mb-8 group">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-teal-600 via-teal-500 to-emerald-500 flex items-center justify-center shadow-lg shadow-teal-500/20">
-            <GraduationCap className="w-7 h-7 text-white" strokeWidth={2.5} />
+          <div className="w-12 h-12 rounded-2xl overflow-hidden shadow-lg shadow-teal-500/20">
+            <Image src="/logo.png" alt="Terence Eğitim" width={48} height={48} />
           </div>
           <span className="font-bold text-xl tracking-tight">
             TERENCE <span className="text-teal-600">EĞİTİM</span>

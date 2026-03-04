@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { GraduationCap, Mail } from "lucide-react";
+import { Mail } from "lucide-react";
+import Image from "next/image";
 import { useAuth } from "@/lib/auth-context";
 
 export default function ForgotPasswordPage() {
@@ -30,8 +31,8 @@ export default function ForgotPasswordPage() {
     <div className="min-h-screen flex items-center justify-center p-8 bg-slate-50">
       <div className="w-full max-w-md">
         <Link href="/" className="inline-flex items-center gap-2 text-slate-900 mb-8">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-600 to-teal-500 flex items-center justify-center">
-            <GraduationCap className="w-6 h-6 text-white" />
+          <div className="w-10 h-10 rounded-xl overflow-hidden">
+            <Image src="/logo.png" alt="Terence Eğitim" width={40} height={40} />
           </div>
           <span className="font-bold text-xl">TERENCE EĞİTİM</span>
         </Link>

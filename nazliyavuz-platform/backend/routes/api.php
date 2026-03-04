@@ -43,18 +43,10 @@ Route::prefix('v1')->group(function () {
     Route::get('/health/basic', [App\Http\Controllers\HealthCheckController::class, 'basic']);
     
     // Public routes
-    Route::post('/auth/register', [AuthController::class, 'register'])->middleware(['throttle:5,1', 'sql_injection_protection']);
-    Route::post('/auth/login', [AuthController::class, 'login'])->middleware(['throttle:5,1', 'sql_injection_protection']);
-    Route::post('/auth/refresh', [AuthController::class, 'refresh']);
-    Route::post('/auth/logout', [AuthController::class, 'logout']);
     Route::get('/auth/me', [AuthController::class, 'me'])->middleware('auth:sanctum');
     
     // Email verification and password reset (public)
-    Route::post('/auth/verify-email', [AuthController::class, 'verifyEmail'])->middleware('auth_rate_limit');
     Route::post('/auth/verify-email-code', [AuthController::class, 'verifyEmailCode'])->middleware('auth_rate_limit');
-    Route::post('/auth/resend-verification', [AuthController::class, 'resendVerification'])->middleware('auth_rate_limit');
-    Route::post('/auth/forgot-password', [AuthController::class, 'forgotPassword'])->middleware('auth_rate_limit');
-    Route::post('/auth/reset-password', [AuthController::class, 'resetPassword'])->middleware('auth_rate_limit');
     
     // Social Authentication (public)
     Route::post('/auth/social/google', [App\Http\Controllers\SocialAuthController::class, 'googleAuth'])->middleware('auth_rate_limit');
@@ -377,4 +369,161 @@ Route::prefix('v1')->group(function () {
     
     // PayTR callback (public route - inside v1 prefix)
     Route::post('/payments/callback', [PaymentController::class, 'handleCallback']);
+});
+
+
+
+// ============================================================
+// TERENCE EGITIM PLATFORMU - PUBLIC ROUTES
+// ============================================================
+Route::get('/packages', [\App\Http\Controllers\Api\PaymentController::class, 'packages']);
+Route::get('/courses', [\App\Http\Controllers\Api\CourseController::class, 'index']);
+Route::get('/courses/{id}', [\App\Http\Controllers\Api\CourseController::class, 'show']);
+Route::get('/questions', [\App\Http\Controllers\Api\QuestionController::class, 'index']);
+Route::get('/kazanimlar', [\App\Http\Controllers\Api\QuestionController::class, 'kazanimlar']);
+Route::post('/auth/login', [\App\Http\Controllers\Api\AuthController::class, 'login']);
+Route::post('/auth/register', [\App\Http\Controllers\Api\AuthController::class, 'register']);
+Route::post('/auth/refresh', [\App\Http\Controllers\Api\AuthController::class, 'refresh']);
+Route::post('/auth/logout', [\App\Http\Controllers\Api\AuthController::class, 'logout']);
+Route::post('/auth/forgot-password', [\App\Http\Controllers\Api\AuthController::class, 'forgotPassword']);
+Route::post('/auth/reset-password', [\App\Http\Controllers\Api\AuthController::class, 'resetPassword']);
+Route::post('/auth/verify-email', [\App\Http\Controllers\Api\AuthController::class, 'verifyEmail']);
+Route::post('/auth/resend-verification', [\App\Http\Controllers\Api\AuthController::class, 'resendVerification']);
+Route::post('/payment/callback', [\App\Http\Controllers\Api\PaymentController::class, 'callback']);
+
+// ============================================================
+// TERENCE EÄÄ°TÄ°M PLATFORMU - API ROUTES
+// ============================================================
+Route::middleware(['auth:api'])->group(function () {
+
+    // â”€â”€ Auth (Education) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    Route::get('/auth/me', [\App\Http\Controllers\Api\AuthController::class, 'me']);
+    Route::patch('/user/profile', [\App\Http\Controllers\Api\AuthController::class, 'updateProfile']);
+    Route::post('/user/goal', [\App\Http\Controllers\Api\AuthController::class, 'updateGoal']);
+    Route::post('/user/change-password', [\App\Http\Controllers\Api\AuthController::class, 'changePassword']);
+    Route::post('/user/photo', [\App\Http\Controllers\Api\AuthController::class, 'uploadProfilePhoto']);
+
+    // â”€â”€ Kurslar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    Route::post('/courses/{id}/enroll', [\App\Http\Controllers\Api\CourseController::class, 'enroll']);
+    Route::get('/courses/{id}/progress', [\App\Http\Controllers\Api\CourseController::class, 'progress']);
+    Route::post('/progress', [\App\Http\Controllers\Api\CourseController::class, 'updateProgress']);
+
+    // â”€â”€ Soru BankasÄ± â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    Route::post('/questions/answer', [\App\Http\Controllers\Api\QuestionController::class, 'answer']);
+    Route::get('/questions/similar', [\App\Http\Controllers\Api\QuestionController::class, 'similar']);
+    Route::get('/questions/weak', [\App\Http\Controllers\Api\QuestionController::class, 'weakAchievements']);
+
+    // â”€â”€ Deneme SÄ±navÄ± â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    Route::post('/exams/start', [\App\Http\Controllers\Api\ExamController::class, 'start']);
+    Route::get('/exams/history', [\App\Http\Controllers\Api\ExamController::class, 'history']);
+    Route::post('/exams/{id}/answer', [\App\Http\Controllers\Api\ExamController::class, 'answer']);
+    Route::post('/exams/{id}/finish', [\App\Http\Controllers\Api\ExamController::class, 'finish']);
+    Route::get('/exams/{id}/result', [\App\Http\Controllers\Api\ExamController::class, 'result']);
+
+    // â”€â”€ GÃ¼nlÃ¼k Plan â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    Route::get('/plan/today', [\App\Http\Controllers\Api\PlanController::class, 'today']);
+    Route::get('/plan', [\App\Http\Controllers\Api\PlanController::class, 'index']);
+    Route::get('/plan/stats', [\App\Http\Controllers\Api\PlanController::class, 'stats']);
+    Route::post('/plan/tasks', [\App\Http\Controllers\Api\PlanController::class, 'addTask']);
+    Route::patch('/plan/tasks/{id}/complete', [\App\Http\Controllers\Api\PlanController::class, 'completeTask']);
+    Route::delete('/plan/tasks/{id}', [\App\Http\Controllers\Api\PlanController::class, 'deleteTask']);
+    Route::post('/plan/study-session/start', [\App\Http\Controllers\Api\PlanController::class, 'startStudySession']);
+    Route::post('/plan/study-session/{id}/end', [\App\Http\Controllers\Api\PlanController::class, 'endStudySession']);
+
+    // â”€â”€ Abonelik / Ã–deme â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    Route::post('/payment/initiate', [\App\Http\Controllers\Api\PaymentController::class, 'initiate']);
+    Route::get('/subscription/status', [\App\Http\Controllers\Api\PaymentController::class, 'status']);
+
+    // â”€â”€ Ã–ÄŸrenci Gamification â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    Route::get('/student/badges', [\App\Http\Controllers\Api\StudentController::class, 'badges']);
+    Route::get('/student/leaderboard', [\App\Http\Controllers\Api\StudentController::class, 'leaderboard']);
+    Route::get('/student/upcoming-lessons', [\App\Http\Controllers\Api\StudentController::class, 'upcomingLessons']);
+    Route::post('/student/generate-parent-code', [\App\Http\Controllers\Api\ParentController::class, 'generateParentCode']);
+
+    // â”€â”€ Bildirimler â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    Route::get('/notifications', [\App\Http\Controllers\Api\NotificationApiController::class, 'index']);
+    Route::put('/notifications/{id}/read', [\App\Http\Controllers\Api\NotificationApiController::class, 'markAsRead']);
+    Route::put('/notifications/read-all', [\App\Http\Controllers\Api\NotificationApiController::class, 'markAllRead']);
+    Route::post('/notifications/read-all', [\App\Http\Controllers\Api\NotificationApiController::class, 'markAllRead']);
+    Route::delete('/notifications/{id}', [\App\Http\Controllers\Api\NotificationApiController::class, 'destroy']);
+
+    // -- Push Token
+    Route::post('/push-token', [\App\Http\Controllers\Api\StudentController::class, 'registerPushToken']);
+
+    // -- Student Goal Engine
+    Route::get('/student/goal-engine', [\App\Http\Controllers\Api\StudentController::class, 'goalEngine']);
+    Route::get('/student/report', [\App\Http\Controllers\Api\StudentController::class, 'report']);
+
+    // -- AI Endpoints
+    Route::post('/ai/generate-question', [\App\Http\Controllers\Api\AiController::class, 'generateQuestion']);
+    Route::post('/ai/summarize', [\App\Http\Controllers\Api\AiController::class, 'summarize']);
+    Route::post('/ai/personal-test', [\App\Http\Controllers\Api\AiController::class, 'personalTest']);
+    Route::get('/ai/hard-achievements', [\App\Http\Controllers\Api\AiController::class, 'hardAchievements']);
+    Route::post('/ai/ask-coach', [\App\Http\Controllers\Api\AiController::class, 'askCoach']);
+    Route::get('/ai/coach/history', [\App\Http\Controllers\Api\AiController::class, 'coachHistory']);
+    Route::delete('/ai/coach/history', [\App\Http\Controllers\Api\AiController::class, 'clearCoachHistory']);
+
+    // -- Kupon
+    Route::post('/payment/apply-coupon', [\App\Http\Controllers\Api\PaymentController::class, 'applyCoupon']);
+
+    // â”€â”€ Ã–ÄŸretmen â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    Route::middleware('role:teacher,admin')->group(function () {
+        Route::get('/teacher/stats', [\App\Http\Controllers\Api\TeacherController::class, 'stats']);
+        Route::get('/teacher/classes', [\App\Http\Controllers\Api\TeacherController::class, 'classes']);
+        Route::post('/teacher/classes', [\App\Http\Controllers\Api\TeacherController::class, 'createClass']);
+        Route::get('/teacher/classes/{id}/students', [\App\Http\Controllers\Api\TeacherController::class, 'classStudents']);
+        Route::get('/teacher/students/risk', [\App\Http\Controllers\Api\TeacherController::class, 'riskStudents']);
+        Route::get('/teacher/assignments', [\App\Http\Controllers\Api\TeacherController::class, 'assignments']);
+        Route::post('/teacher/assignments', [\App\Http\Controllers\Api\TeacherController::class, 'createAssignment']);
+        Route::patch('/teacher/assignments/{id}', [\App\Http\Controllers\Api\TeacherController::class, 'updateAssignment']);
+        Route::delete('/teacher/assignments/{id}', [\App\Http\Controllers\Api\TeacherController::class, 'deleteAssignment']);
+        Route::get('/teacher/live-sessions', [\App\Http\Controllers\Api\TeacherController::class, 'liveSessions']);
+        Route::post('/teacher/live-sessions', [\App\Http\Controllers\Api\TeacherController::class, 'createLiveSession']);
+        Route::get('/teacher/analytics/{type}', [\App\Http\Controllers\Api\TeacherController::class, 'analytics']);
+        Route::get('/teacher/messages', [\App\Http\Controllers\Api\TeacherController::class, 'messages']);
+        Route::post('/teacher/messages', [\App\Http\Controllers\Api\TeacherController::class, 'sendMessage']);
+    });
+
+    // â”€â”€ Veli â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    Route::middleware('role:parent,admin')->group(function () {
+        Route::get('/parent/children', [\App\Http\Controllers\Api\ParentController::class, 'children']);
+        Route::get('/parent/children/{id}/summary', [\App\Http\Controllers\Api\ParentController::class, 'childSummary']);
+        Route::post('/parent/link', [\App\Http\Controllers\Api\ParentController::class, 'linkChild']);
+        Route::get('/parent/child-report', [\App\Http\Controllers\Api\ParentController::class, 'childReport']);
+        Route::get('/parent/notification-settings', [\App\Http\Controllers\Api\ParentController::class, 'getNotificationSettings']);
+        Route::patch('/parent/notification-settings', [\App\Http\Controllers\Api\ParentController::class, 'updateNotificationSettings']);
+    });
+
+    // â”€â”€ Admin â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    Route::middleware('role:admin')->group(function () {
+        Route::get('/admin/stats', [\App\Http\Controllers\Api\AdminController::class, 'stats']);
+        Route::get('/admin/users', [\App\Http\Controllers\Api\AdminController::class, 'users']);
+        Route::patch('/admin/users/{id}', [\App\Http\Controllers\Api\AdminController::class, 'updateUser']);
+        Route::delete('/admin/users/{id}', [\App\Http\Controllers\Api\AdminController::class, 'deleteUser']);
+        Route::post('/admin/users/{id}/toggle-status', [\App\Http\Controllers\Api\AdminController::class, 'toggleUserStatus']);
+        Route::get('/admin/content', [\App\Http\Controllers\Api\AdminController::class, 'content']);
+        Route::delete('/admin/content/{id}', [\App\Http\Controllers\Api\AdminController::class, 'deleteContent']);
+        Route::get('/admin/reports', [\App\Http\Controllers\Api\AdminController::class, 'reports']);
+        Route::get('/admin/audit-logs', [\App\Http\Controllers\Api\AdminController::class, 'auditLogs']);
+        Route::get('/admin/questions', [\App\Http\Controllers\Api\AdminController::class, 'questions']);
+        Route::post('/admin/questions', [\App\Http\Controllers\Api\AdminController::class, 'createQuestion']);
+        Route::delete('/admin/questions/{id}', [\App\Http\Controllers\Api\AdminController::class, 'deleteQuestion']);
+        Route::get('/admin/teachers/pending', [\App\Http\Controllers\Api\AdminController::class, 'pendingTeachers']);
+        Route::post('/admin/teachers/{id}/approve', [\App\Http\Controllers\Api\AdminController::class, 'approveTeacher']);
+        Route::post('/admin/teachers/{id}/reject', [\App\Http\Controllers\Api\AdminController::class, 'rejectTeacher']);
+        Route::get('/admin/coupons', [\App\Http\Controllers\Api\AdminController::class, 'coupons']);
+        Route::post('/admin/coupons', [\App\Http\Controllers\Api\AdminController::class, 'createCoupon']);
+        Route::patch('/admin/coupons/{id}', [\App\Http\Controllers\Api\AdminController::class, 'updateCoupon']);
+        Route::delete('/admin/coupons/{id}', [\App\Http\Controllers\Api\AdminController::class, 'deleteCoupon']);
+        Route::post('/admin/settings', [\App\Http\Controllers\Api\AdminController::class, 'updateSettings']);
+    });
+});
+
+// Payment callback (public)
+Route::post('/payment/callback', [\App\Http\Controllers\Api\PaymentController::class, 'callback']);
+
+// TEMP DEBUG
+Route::post('/debug/body', function($req) {
+    $raw = file_get_contents('php://input');
+    return response()->json(['raw'=>$raw,'all'=>$req->all(),'len'=>strlen($raw),'ct'=>$req->header('Content-Type')]);
 });

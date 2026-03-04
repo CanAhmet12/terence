@@ -9,10 +9,200 @@ const DIFFICULTY_CONFIG = {
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { api, Question, AnswerResult } from "@/lib/api";
-import { Search, RefreshCw, CheckCircle, XCircle, ChevronRight, BookOpen, Loader2 } from "lucide-react";
+import { Search, RefreshCw, CheckCircle, XCircle, ChevronRight, BookOpen, Loader2, Mic, MicOff, Volume2, Sparkles, X, Bot, AlertCircle } from "lucide-react";
 
 function Skeleton({ className }: { className?: string }) {
   return <div className={`bg-slate-100 rounded-xl animate-pulse ${className ?? ""}`} />;
+}
+
+// ─── Sesli Soru Asistanı Modal ─────────────────────────────────────────────
+function VoiceAssistantModal({ token, onClose }: { token: string | null; onClose: () => void }) {
+  const [isListening, setIsListening] = useState(false);
+  const [transcript, setTranscript] = useState("");
+  const [aiAnswer, setAiAnswer] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [speaking, setSpeaking] = useState(false);
+  const recognitionRef = useRef<unknown>(null);
+
+  const supported = typeof window !== "undefined" && ("SpeechRecognition" in window || "webkitSpeechRecognition" in window);
+
+  const startListening = () => {
+    if (!supported) { setError("Tarayıcınız ses tanımayı desteklemiyor."); return; }
+    const SRConstructor = (window as unknown as Record<string, unknown>)["SpeechRecognition"] as (new() => { lang: string; continuous: boolean; interimResults: boolean; start: () => void; stop: () => void; onresult: ((e: { results: { [key: number]: { [key: number]: { transcript: string } } } }) => void) | null; onerror: (() => void) | null; onend: (() => void) | null }) | undefined;
+    const SRWebkit = (window as unknown as Record<string, unknown>)["webkitSpeechRecognition"] as typeof SRConstructor;
+    const SR = SRConstructor || SRWebkit;
+    if (!SR) return;
+    const recognition = new SR();
+    recognition.lang = "tr-TR";
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognitionRef.current = recognition;
+
+    recognition.onresult = (event) => {
+      const text = event.results[0][0].transcript;
+      setTranscript(text);
+      setIsListening(false);
+    };
+    recognition.onerror = () => { setIsListening(false); setError("Ses alınamadı. Tekrar deneyin."); };
+    recognition.onend = () => setIsListening(false);
+
+    setIsListening(true);
+    setError(null);
+    recognition.start();
+  };
+
+  const stopListening = () => {
+    const r = recognitionRef.current as { stop: () => void } | null;
+    r?.stop();
+    setIsListening(false);
+  };
+
+  const askAI = async () => {
+    if (!transcript.trim() || !token) return;
+    setLoading(true);
+    setAiAnswer(null);
+    setError(null);
+    try {
+      const res = await api.askCoach(token, `Şu soruyu Türkçe kısaca açıkla ve cevabını ver: ${transcript}`);
+      setAiAnswer(res.reply);
+      // Sesli okuma
+      if ("speechSynthesis" in window) {
+        const utterance = new SpeechSynthesisUtterance(res.reply);
+        utterance.lang = "tr-TR";
+        utterance.onstart = () => setSpeaking(true);
+        utterance.onend = () => setSpeaking(false);
+        window.speechSynthesis.speak(utterance);
+      }
+    } catch (e) {
+      setError((e as Error).message || "AI yanıt veremedi.");
+    }
+    setLoading(false);
+  };
+
+  const stopSpeaking = () => {
+    window.speechSynthesis?.cancel();
+    setSpeaking(false);
+  };
+
+  useEffect(() => {
+    return () => {
+      const r = recognitionRef.current as { stop: () => void } | null;
+      r?.stop();
+      window.speechSynthesis?.cancel();
+    };
+  }, []);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden">
+        <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100">
+          <div className="flex items-center gap-3">
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isListening ? "bg-red-100 animate-pulse" : "bg-teal-100"}`}>
+              <Mic className={`w-5 h-5 ${isListening ? "text-red-600" : "text-teal-600"}`} />
+            </div>
+            <div>
+              <h3 className="font-bold text-base text-slate-900">Sesli Soru Çözüm Asistanı</h3>
+              <p className="text-xs text-slate-500">Soruyu sesli oku, AI açıklasın</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="w-9 h-9 rounded-xl border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-100">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        <div className="p-6 space-y-5">
+          {!supported && (
+            <div className="flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-700">
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              Bu tarayıcı ses tanımayı desteklemiyor. Chrome veya Edge kullanın.
+            </div>
+          )}
+
+          {/* Ses kaydı alanı */}
+          <div className="text-center space-y-4">
+            <button
+              onClick={isListening ? stopListening : startListening}
+              disabled={!supported}
+              className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto transition-all shadow-lg ${
+                isListening
+                  ? "bg-red-500 hover:bg-red-600 shadow-red-500/30 scale-110"
+                  : "bg-teal-600 hover:bg-teal-700 shadow-teal-500/30 hover:scale-105"
+              } disabled:opacity-50 disabled:cursor-not-allowed`}
+            >
+              {isListening ? <MicOff className="w-8 h-8 text-white" /> : <Mic className="w-8 h-8 text-white" />}
+            </button>
+            <p className="text-sm font-medium text-slate-600">
+              {isListening ? "Dinleniyor... (durdurmak için tıkla)" : "Soruyu sesli okumak için tıkla"}
+            </p>
+          </div>
+
+          {/* Transkript */}
+          {transcript && (
+            <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
+              <p className="text-xs text-slate-500 font-semibold uppercase tracking-wide">Duyulan Soru</p>
+              <p className="text-sm text-slate-800 leading-relaxed">{transcript}</p>
+              <div className="flex gap-2">
+                <button
+                  onClick={askAI}
+                  disabled={loading}
+                  className="flex-1 py-2.5 bg-teal-600 hover:bg-teal-700 disabled:opacity-60 text-white text-sm font-bold rounded-xl flex items-center justify-center gap-2 transition-colors"
+                >
+                  {loading ? <><Loader2 className="w-4 h-4 animate-spin" /> Yanıt alınıyor...</> : <><Bot className="w-4 h-4" /> AI'dan Cevap Al</>}
+                </button>
+                <button
+                  onClick={() => { setTranscript(""); setAiAnswer(null); }}
+                  className="px-4 py-2.5 border border-slate-200 text-slate-600 text-sm font-semibold rounded-xl hover:bg-slate-50 transition-colors"
+                >
+                  Temizle
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* AI Yanıtı */}
+          {aiAnswer && (
+            <div className="p-4 bg-teal-50 border border-teal-200 rounded-2xl space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-teal-700 font-semibold text-sm">
+                  <Bot className="w-4 h-4" />
+                  AI Cevabı
+                </div>
+                {speaking ? (
+                  <button onClick={stopSpeaking} className="flex items-center gap-1.5 text-xs text-red-600 hover:text-red-700 font-medium">
+                    <MicOff className="w-3.5 h-3.5" /> Durdur
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => {
+                      if ("speechSynthesis" in window) {
+                        const u = new SpeechSynthesisUtterance(aiAnswer);
+                        u.lang = "tr-TR";
+                        u.onstart = () => setSpeaking(true);
+                        u.onend = () => setSpeaking(false);
+                        window.speechSynthesis.speak(u);
+                      }
+                    }}
+                    className="flex items-center gap-1.5 text-xs text-teal-600 hover:text-teal-700 font-medium"
+                  >
+                    <Volume2 className="w-3.5 h-3.5" /> Sesli Oku
+                  </button>
+                )}
+              </div>
+              <p className="text-sm text-slate-700 leading-relaxed">{aiAnswer}</p>
+            </div>
+          )}
+
+          {error && (
+            <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-100 rounded-xl">
+              <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
+              <p className="text-sm text-red-700">{error}</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export default function SoruBankasiPage() {
@@ -28,6 +218,8 @@ export default function SoruBankasiPage() {
   const [answeringId, setAnsweringId] = useState<number | null>(null);
   const searchTimer = useRef<NodeJS.Timeout | null>(null);
   const questionStartTimes = useRef<Record<number, number>>({});
+  const [showVoice, setShowVoice] = useState(false);
+  const [showPersonalTest, setShowPersonalTest] = useState(false);
 
   const loadQuestions = useCallback(async (kazanim?: string, diff?: string) => {
     if (!token) { setLoading(false); return; }
@@ -106,9 +298,29 @@ export default function SoruBankasiPage() {
 
   return (
     <div className="p-8 lg:p-12">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-slate-900">Soru Bankası</h1>
-        <p className="text-slate-600 mt-1">Zorluk & kazanım filtresi · Anında doğrulama · Benzer soru getir</p>
+      <div className="mb-8 flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">Soru Bankası</h1>
+          <p className="text-slate-600 mt-1">Zorluk & kazanım filtresi · Anında doğrulama · Benzer soru getir</p>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            onClick={() => setShowVoice(true)}
+            className="flex items-center gap-2 px-4 py-2.5 border border-teal-200 bg-teal-50 hover:bg-teal-100 text-teal-700 font-semibold text-sm rounded-xl transition-colors"
+            title="Sesli soru çöz"
+          >
+            <Mic className="w-4 h-4" />
+            <span className="hidden sm:inline">Sesli Çöz</span>
+          </button>
+          <button
+            onClick={() => setShowPersonalTest(true)}
+            className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-700 hover:to-purple-600 text-white font-semibold text-sm rounded-xl transition-all shadow-sm shadow-purple-500/20"
+            title="Zayıf konularından kişisel test oluştur"
+          >
+            <Sparkles className="w-4 h-4" />
+            <span className="hidden sm:inline">Bana Özel Test</span>
+          </button>
+        </div>
       </div>
 
       {/* İstatistik bandı */}
@@ -296,6 +508,146 @@ export default function SoruBankasiPage() {
       <p className="mt-6 text-sm text-slate-500">
         Yanlış yaptığın sorular kazanım bazlı analiz edilir ve günlük planına otomatik eklenir.
       </p>
+
+      {/* Sesli Asistan Modal */}
+      {showVoice && (
+        <VoiceAssistantModal token={token} onClose={() => setShowVoice(false)} />
+      )}
+
+      {/* Bana Özel Test Modal */}
+      {showPersonalTest && (
+        <PersonalTestModal
+          token={token}
+          onClose={() => setShowPersonalTest(false)}
+          onLoad={(qs) => {
+            setQuestions(qs);
+            setShowPersonalTest(false);
+            setSelectedAnswers({});
+            setAnswerResults({});
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+// ─── Bana Özel Test Modal (5.4) ───────────────────────────────────────────────
+function PersonalTestModal({
+  token,
+  onClose,
+  onLoad,
+}: {
+  token: string | null;
+  onClose: () => void;
+  onLoad: (questions: Question[]) => void;
+}) {
+  const [subject, setSubject] = useState("");
+  const [count, setCount] = useState(10);
+  const [difficulty, setDifficulty] = useState("");
+  const [generating, setGenerating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleGenerate = async () => {
+    if (!token) { setError("Oturum bulunamadı."); return; }
+    setGenerating(true);
+    setError(null);
+    try {
+      const res = await api.generatePersonalTest(token, {
+        subject: subject || undefined,
+        count,
+        difficulty: difficulty || undefined,
+      });
+      onLoad(res.questions);
+    } catch (e) {
+      setError((e as Error).message || "Test oluşturulamadı.");
+    }
+    setGenerating(false);
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden">
+        <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center">
+              <Sparkles className="w-5 h-5 text-purple-600" />
+            </div>
+            <div>
+              <h3 className="font-bold text-base text-slate-900">Bana Özel Test</h3>
+              <p className="text-xs text-slate-500">Zayıf kazanımlarına göre özelleştirilmiş test</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="w-9 h-9 rounded-xl border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-100">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        <div className="p-6 space-y-5">
+          <div className="p-4 bg-purple-50 border border-purple-200 rounded-2xl text-sm text-purple-700 flex items-start gap-2">
+            <Bot className="w-4 h-4 shrink-0 mt-0.5" />
+            AI, zayıf kazanımlarını analiz ederek en çok gelişime ihtiyacın olan konulardan soru seçer.
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-2">Ders (opsiyonel)</label>
+            <select
+              value={subject}
+              onChange={(e) => setSubject(e.target.value)}
+              className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none"
+            >
+              <option value="">Tüm Dersler (AI seçsin)</option>
+              {["Matematik", "Fizik", "Kimya", "Biyoloji", "Türkçe", "Edebiyat", "Tarih", "Coğrafya"].map((d) => (
+                <option key={d}>{d}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">Soru Sayısı</label>
+              <select
+                value={count}
+                onChange={(e) => setCount(Number(e.target.value))}
+                className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none"
+              >
+                {[5, 10, 15, 20].map((n) => <option key={n} value={n}>{n} Soru</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">Zorluk</label>
+              <select
+                value={difficulty}
+                onChange={(e) => setDifficulty(e.target.value)}
+                className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none"
+              >
+                <option value="">Karışık</option>
+                <option value="easy">Kolay</option>
+                <option value="medium">Orta</option>
+                <option value="hard">Zor</option>
+              </select>
+            </div>
+          </div>
+
+          {error && (
+            <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-100 rounded-xl">
+              <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
+              <p className="text-sm text-red-700">{error}</p>
+            </div>
+          )}
+
+          <button
+            onClick={handleGenerate}
+            disabled={generating}
+            className="w-full py-3.5 bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-700 hover:to-purple-600 disabled:opacity-60 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-purple-500/20"
+          >
+            {generating ? (
+              <><Loader2 className="w-4 h-4 animate-spin" /> Test Oluşturuluyor...</>
+            ) : (
+              <><Sparkles className="w-4 h-4" /> {count} Soruluk Test Oluştur</>
+            )}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

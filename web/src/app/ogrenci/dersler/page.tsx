@@ -4,16 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import { api, Course } from "@/lib/api";
-import { ChevronRight, BookOpen, Search, Lock } from "lucide-react";
-
-const DEMO_COURSES: Course[] = [
-  { id: 1, title: "Matematik", slug: "matematik", exam_type: "TYT", units_count: 12, progress_percent: 65, is_free: true },
-  { id: 2, title: "Fizik", slug: "fizik", exam_type: "TYT", units_count: 8, progress_percent: 40, is_free: true },
-  { id: 3, title: "Türkçe", slug: "turkce", exam_type: "TYT", units_count: 10, progress_percent: 80, is_free: true },
-  { id: 4, title: "Kimya", slug: "kimya", exam_type: "AYT", units_count: 9, progress_percent: 20, is_free: false },
-  { id: 5, title: "Biyoloji", slug: "biyoloji", exam_type: "AYT", units_count: 11, progress_percent: 0, is_free: false },
-  { id: 6, title: "Tarih", slug: "tarih", exam_type: "TYT", units_count: 7, progress_percent: 10, is_free: false },
-];
+import { ChevronRight, BookOpen, Search, Lock, AlertCircle, RefreshCw } from "lucide-react";
 
 function Skeleton({ className }: { className?: string }) {
   return <div className={`bg-slate-100 rounded-2xl animate-pulse ${className ?? ""}`} />;
@@ -29,20 +20,25 @@ const EXAM_COLORS: Record<string, string> = {
 export default function OgrenciDerslerPage() {
   const { token, user } = useAuth();
 
-
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [examFilter, setExamFilter] = useState("");
 
   const loadCourses = useCallback(async () => {
+    if (!token) { setLoading(false); return; }
+    setLoading(true);
+    setError(null);
     try {
       const res = await api.getCourses(token);
       setCourses(res);
-    } catch {
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Dersler yüklenemedi.");
       setCourses([]);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }, [token]);
 
   useEffect(() => { loadCourses(); }, [loadCourses]);
@@ -101,16 +97,37 @@ export default function OgrenciDerslerPage() {
         </div>
       </div>
 
+      {/* Hata durumu */}
+      {error && (
+        <div className="mb-6 p-4 bg-red-50 border border-red-100 rounded-2xl flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3 text-red-700">
+            <AlertCircle className="w-5 h-5 shrink-0" />
+            <p className="text-sm font-medium">{error}</p>
+          </div>
+          <button
+            onClick={loadCourses}
+            className="flex items-center gap-1.5 text-sm font-semibold text-red-600 hover:text-red-700 shrink-0"
+          >
+            <RefreshCw className="w-4 h-4" />
+            Yenile
+          </button>
+        </div>
+      )}
+
       {/* Ders listesi */}
       {loading ? (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {[1, 2, 3, 4, 5, 6].map((i) => <Skeleton key={i} className="h-52" />)}
         </div>
-      ) : filtered.length === 0 ? (
+      ) : filtered.length === 0 && !error ? (
         <div className="text-center py-16">
           <BookOpen className="w-10 h-10 text-slate-300 mx-auto mb-3" />
-          <p className="font-semibold text-slate-700">Ders bulunamadı</p>
-          <p className="text-sm text-slate-500 mt-1">Arama kriterlerini değiştirmeyi dene.</p>
+          <p className="font-semibold text-slate-700">
+            {search || examFilter ? "Arama kriterine uyan ders bulunamadı" : "Henüz ders eklenmemiş"}
+          </p>
+          <p className="text-sm text-slate-500 mt-1">
+            {search || examFilter ? "Filtreleri temizlemeyi dene." : "Dersler yakında eklenecek."}
+          </p>
         </div>
       ) : (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -126,7 +143,7 @@ export default function OgrenciDerslerPage() {
                     </div>
                     <p className="text-xs font-semibold text-slate-500">Pro paket gerekli</p>
                     <Link
-                      href="/#paketler"
+                      href="/paketler"
                       className="text-xs font-bold text-teal-600 hover:underline"
                     >
                       Paketi Yükselt →
@@ -188,7 +205,7 @@ export default function OgrenciDerslerPage() {
             Bronze veya üstü bir pakete geçerek kilitli tüm derslerin kilidini açabilirsin.
           </p>
           <Link
-            href="/#paketler"
+            href="/paketler"
             className="inline-flex items-center gap-1 mt-3 text-sm font-bold text-teal-700 hover:underline"
           >
             Paketleri İncele →
@@ -198,8 +215,3 @@ export default function OgrenciDerslerPage() {
     </div>
   );
 }
-
-
-
-
-

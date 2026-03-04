@@ -3,6 +3,7 @@ import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/lib/auth-context";
 import { PwaInit } from "@/components/PwaInit";
+import { Toaster } from "react-hot-toast";
 
 const font = Plus_Jakarta_Sans({
   variable: "--font-display",
@@ -76,6 +77,27 @@ export default function RootLayout({
         <AuthProvider>
           <PwaInit />
           {children}
+          <Toaster
+            position="top-right"
+            toastOptions={{
+              duration: 3500,
+              style: {
+                borderRadius: "12px",
+                fontFamily: "var(--font-display, system-ui, sans-serif)",
+                fontSize: "14px",
+                fontWeight: "500",
+                boxShadow: "0 10px 25px -5px rgba(0,0,0,0.12), 0 4px 10px -5px rgba(0,0,0,0.08)",
+              },
+              success: {
+                iconTheme: { primary: "#0d9488", secondary: "#fff" },
+                style: { background: "#f0fdfa", color: "#134e4a", border: "1px solid #99f6e4" },
+              },
+              error: {
+                iconTheme: { primary: "#ef4444", secondary: "#fff" },
+                style: { background: "#fef2f2", color: "#7f1d1d", border: "1px solid #fecaca" },
+              },
+            }}
+          />
         </AuthProvider>
       </body>
     </html>

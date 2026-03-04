@@ -7,7 +7,10 @@ import { useAuth } from "@/lib/auth-context";
 import { api, Notification } from "@/lib/api";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
-import { Bell, ArrowLeft, Clock, FileCheck, AlertTriangle, Check, CheckCheck, RefreshCw } from "lucide-react";
+import {
+  Bell, ArrowLeft, Clock, FileCheck, AlertTriangle, Check, CheckCheck,
+  RefreshCw, Trash2, BookOpen, MessageSquare, Trophy, Info, Filter
+} from "lucide-react";
 
 function getBackLink(role: string | undefined) {
   if (role === "student") return "/ogrenci";
@@ -17,17 +20,37 @@ function getBackLink(role: string | undefined) {
   return "/";
 }
 
-function getNotifConfig(type: string) {
-  if (type === "study" || type === "calisma" || type === "daily_reminder") {
-    return { icon: Clock, bg: "bg-teal-50", border: "border-teal-100", iconColor: "text-teal-600", label: "Çalışma" };
+type NotifCategory = "all" | "study" | "exam" | "risk" | "message" | "badge" | "other";
+
+interface NotifConfig {
+  icon: React.ElementType;
+  bg: string;
+  border: string;
+  iconColor: string;
+  label: string;
+  category: NotifCategory;
+}
+
+function getNotifConfig(type: string): NotifConfig {
+  if (["study", "calisma", "daily_reminder", "plan"].includes(type)) {
+    return { icon: Clock, bg: "bg-teal-50", border: "border-teal-100", iconColor: "text-teal-600", label: "Çalışma", category: "study" };
   }
-  if (type === "exam" || type === "deneme") {
-    return { icon: FileCheck, bg: "bg-amber-50", border: "border-amber-100", iconColor: "text-amber-600", label: "Deneme" };
+  if (["exam", "deneme", "sinav"].includes(type)) {
+    return { icon: FileCheck, bg: "bg-amber-50", border: "border-amber-100", iconColor: "text-amber-600", label: "Deneme", category: "exam" };
   }
-  if (type === "risk" || type === "hedef" || type === "risk_alert") {
-    return { icon: AlertTriangle, bg: "bg-red-50", border: "border-red-100", iconColor: "text-red-600", label: "Hedef Risk" };
+  if (["risk", "hedef", "risk_alert", "goal"].includes(type)) {
+    return { icon: AlertTriangle, bg: "bg-red-50", border: "border-red-100", iconColor: "text-red-600", label: "Hedef Risk", category: "risk" };
   }
-  return { icon: Bell, bg: "bg-slate-50", border: "border-slate-100", iconColor: "text-slate-500", label: "Genel" };
+  if (["message", "mesaj", "chat"].includes(type)) {
+    return { icon: MessageSquare, bg: "bg-blue-50", border: "border-blue-100", iconColor: "text-blue-600", label: "Mesaj", category: "message" };
+  }
+  if (["badge", "rozet", "achievement"].includes(type)) {
+    return { icon: Trophy, bg: "bg-purple-50", border: "border-purple-100", iconColor: "text-purple-600", label: "Rozet", category: "badge" };
+  }
+  if (["lesson", "ders", "content"].includes(type)) {
+    return { icon: BookOpen, bg: "bg-indigo-50", border: "border-indigo-100", iconColor: "text-indigo-600", label: "Ders", category: "study" };
+  }
+  return { icon: Info, bg: "bg-slate-50", border: "border-slate-100", iconColor: "text-slate-500", label: "Genel", category: "other" };
 }
 
 function timeAgo(dateStr: string): string {
@@ -44,34 +67,35 @@ function timeAgo(dateStr: string): string {
   return date.toLocaleDateString("tr-TR");
 }
 
-// Demo bildirimleri
-const DEMO_NOTIFICATIONS: Notification[] = [
-  { id: 1, type: "calisma", title: "Çalışma Hatırlatması", body: "Bugün 2 saat çalışma hedefin var. 45 dk tamamladın, devam et!", is_read: false, created_at: new Date(Date.now() - 3600000).toISOString() },
-  { id: 2, type: "calisma", title: "Günlük görevlerin bekliyor", body: "3 görev kaldı: M.8.1.1 tekrar, Fizik video, TYT deneme", is_read: false, created_at: new Date(Date.now() - 10800000).toISOString() },
-  { id: 3, type: "deneme", title: "Deneme Uyarısı", body: "Bu hafta TYT Deneme 2'yi çözmen gerekiyor. Son tarih: Cuma", is_read: false, created_at: new Date(Date.now() - 18000000).toISOString() },
-  { id: 4, type: "hedef", title: "Hedef Risk Uyarısı", body: "Bu hızla devam edersen hedef bölüm risk altında. Pro pakete geçersen net artış ihtimalin %43 artar.", is_read: true, created_at: new Date(Date.now() - 86400000).toISOString() },
-  { id: 5, type: "deneme", title: "Deneme sonucun hazır", body: "TYT Deneme 1 — 42 net, Türkiye #12.500", is_read: true, created_at: new Date(Date.now() - 172800000).toISOString() },
+const CATEGORY_TABS: { key: NotifCategory; label: string; icon: React.ElementType }[] = [
+  { key: "all", label: "Tümü", icon: Bell },
+  { key: "study", label: "Çalışma", icon: Clock },
+  { key: "exam", label: "Deneme", icon: FileCheck },
+  { key: "risk", label: "Hedef Risk", icon: AlertTriangle },
+  { key: "message", label: "Mesaj", icon: MessageSquare },
+  { key: "badge", label: "Rozet", icon: Trophy },
 ];
 
 export default function BildirimlerPage() {
   const { user, token } = useAuth();
   const router = useRouter();
 
-
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [markingAll, setMarkingAll] = useState(false);
+  const [activeTab, setActiveTab] = useState<NotifCategory>("all");
+  const [filter, setFilter] = useState<"all" | "unread">("all");
+  const [deleting, setDeleting] = useState<number | null>(null);
 
   const loadNotifications = useCallback(async () => {
-    if (!token) {
-      setNotifications(DEMO_NOTIFICATIONS);
-      setLoading(false);
-      return;
-    }
+    if (!token) { setLoading(false); return; }
+    setLoading(true);
     try {
-      const res = await api.getNotifications(token, { per_page: 50 });
+      const res = await api.getNotifications(token, { per_page: 100 });
       setNotifications(res.data);
-    } catch {}
+    } catch {
+      setNotifications([]);
+    }
     setLoading(false);
   }, [token]);
 
@@ -82,7 +106,6 @@ export default function BildirimlerPage() {
 
   const handleMarkRead = async (notif: Notification) => {
     if (notif.is_read) return;
-    // Optimistik
     setNotifications((prev) => prev.map((n) => n.id === notif.id ? { ...n, is_read: true } : n));
     if (token) {
       try {
@@ -94,21 +117,46 @@ export default function BildirimlerPage() {
   };
 
   const handleMarkAllRead = async () => {
+    if (!token) return;
     setMarkingAll(true);
     setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
-    if (token) {
-      try {
-        await api.markAllNotificationsRead(token);
-      } catch {
-        await loadNotifications();
-      }
+    try {
+      await api.markAllNotificationsRead(token);
+    } catch {
+      await loadNotifications();
     }
     setMarkingAll(false);
   };
 
+  const handleDelete = async (id: number) => {
+    if (!token) return;
+    setDeleting(id);
+    setNotifications((prev) => prev.filter((n) => n.id !== id));
+    try {
+      await api.deleteNotification(token, id);
+    } catch {
+      await loadNotifications();
+    }
+    setDeleting(null);
+  };
+
   if (!user) return null;
 
+  // Filtreleme
+  const filtered = notifications.filter((n) => {
+    const config = getNotifConfig(n.type);
+    if (activeTab !== "all" && config.category !== activeTab) return false;
+    if (filter === "unread" && n.is_read) return false;
+    return true;
+  });
+
   const unreadCount = notifications.filter((n) => !n.is_read).length;
+
+  // Kategoriye göre sayılar
+  const countByCategory = (cat: NotifCategory) =>
+    cat === "all"
+      ? notifications.length
+      : notifications.filter((n) => getNotifConfig(n.type).category === cat).length;
 
   return (
     <>
@@ -123,66 +171,130 @@ export default function BildirimlerPage() {
             Geri dön
           </Link>
 
-          <div className="mb-8 flex items-start justify-between gap-4">
+          {/* Başlık */}
+          <div className="mb-6 flex items-start justify-between gap-4">
             <div>
               <h1 className="text-3xl font-extrabold text-slate-900 flex items-center gap-3">
-                <div className="w-12 h-12 rounded-xl bg-teal-50 border border-teal-100 flex items-center justify-center">
+                <div className="relative w-12 h-12 rounded-xl bg-teal-50 border border-teal-100 flex items-center justify-center">
                   <Bell className="w-6 h-6 text-teal-600" />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1.5 -right-1.5 min-w-[20px] h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center px-1">
+                      {unreadCount > 99 ? "99+" : unreadCount}
+                    </span>
+                  )}
                 </div>
                 Bildirimler
               </h1>
-              <p className="text-slate-600 mt-2">Çalışma hatırlatmaları, deneme uyarıları, hedef risk bildirimleri</p>
-              {!loading && unreadCount > 0 && (
-                <p className="mt-1.5 text-sm font-semibold text-teal-600">
-                  {unreadCount} okunmamış bildirim
-                </p>
+              <p className="text-slate-500 mt-2 text-sm">Çalışma hatırlatmaları, deneme uyarıları, hedef risk bildirimleri</p>
+            </div>
+            <div className="flex items-center gap-2 shrink-0 mt-1">
+              <button
+                onClick={loadNotifications}
+                disabled={loading}
+                className="p-2 rounded-xl hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors disabled:opacity-50"
+                title="Yenile"
+              >
+                <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
+              </button>
+              {unreadCount > 0 && (
+                <button
+                  onClick={handleMarkAllRead}
+                  disabled={markingAll}
+                  className="flex items-center gap-2 px-3 py-2 text-sm font-semibold text-slate-700 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 disabled:opacity-60 transition-colors"
+                >
+                  {markingAll ? (
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <CheckCheck className="w-4 h-4" />
+                  )}
+                  <span className="hidden sm:inline">Tümünü Oku</span>
+                </button>
               )}
             </div>
-            {unreadCount > 0 && (
-              <button
-                onClick={handleMarkAllRead}
-                disabled={markingAll}
-                className="shrink-0 flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-slate-700 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 disabled:opacity-60 transition-colors"
-              >
-                {markingAll ? (
-                  <RefreshCw className="w-4 h-4 animate-spin" />
-                ) : (
-                  <CheckCheck className="w-4 h-4" />
-                )}
-                Tümünü Okundu İşaretle
-              </button>
-            )}
           </div>
 
+          {/* Sekme Filtreleri */}
+          <div className="flex gap-1.5 overflow-x-auto pb-1 mb-4 scrollbar-hide">
+            {CATEGORY_TABS.map((tab) => {
+              const count = countByCategory(tab.key);
+              const TabIcon = tab.icon;
+              return (
+                <button
+                  key={tab.key}
+                  onClick={() => setActiveTab(tab.key)}
+                  className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
+                    activeTab === tab.key
+                      ? "bg-teal-600 text-white shadow-sm"
+                      : "bg-white text-slate-600 border border-slate-200 hover:border-teal-300 hover:text-teal-600"
+                  }`}
+                >
+                  <TabIcon className="w-3.5 h-3.5" />
+                  {tab.label}
+                  {count > 0 && (
+                    <span className={`px-1.5 py-0.5 rounded-full text-xs font-bold ${
+                      activeTab === tab.key ? "bg-white/20 text-white" : "bg-slate-100 text-slate-500"
+                    }`}>
+                      {count}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Okundu/Okunmadı filtresi */}
+          <div className="flex items-center gap-2 mb-5">
+            <Filter className="w-4 h-4 text-slate-400" />
+            {(["all", "unread"] as const).map((f) => (
+              <button
+                key={f}
+                onClick={() => setFilter(f)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                  filter === f
+                    ? "bg-slate-900 text-white"
+                    : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
+                }`}
+              >
+                {f === "all" ? "Tümü" : `Okunmamış (${unreadCount})`}
+              </button>
+            ))}
+          </div>
+
+          {/* Liste */}
           {loading ? (
             <div className="space-y-3">
               {[1, 2, 3, 4].map((i) => (
                 <div key={i} className="h-24 bg-white rounded-2xl border border-slate-200 animate-pulse" />
               ))}
             </div>
-          ) : notifications.length === 0 ? (
+          ) : filtered.length === 0 ? (
             <div className="text-center py-20">
               <div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-4">
                 <Bell className="w-8 h-8 text-slate-300" />
               </div>
-              <h3 className="font-bold text-slate-700 mb-1">Bildirim yok</h3>
-              <p className="text-sm text-slate-500">Yeni bildirimler burada görünecek.</p>
+              <h3 className="font-bold text-slate-700 mb-1">Bildirim bulunamadı</h3>
+              <p className="text-sm text-slate-500">
+                {filter === "unread" ? "Tüm bildirimler okunmuş." : "Bu kategoride bildirim yok."}
+              </p>
             </div>
           ) : (
-            <div className="space-y-3">
-              {notifications.map((n) => {
+            <div className="space-y-2.5">
+              {filtered.map((n) => {
                 const config = getNotifConfig(n.type);
                 const Icon = config.icon;
                 return (
                   <div
                     key={n.id}
-                    className={`p-5 rounded-2xl border transition-all duration-200 ${
+                    onClick={() => handleMarkRead(n)}
+                    className={`group p-5 rounded-2xl border transition-all duration-200 cursor-pointer ${
                       n.is_read
-                        ? "bg-white border-slate-200/80 hover:border-slate-300"
-                        : `bg-white border-l-4 ${
-                            n.type === "hedef" || n.type === "risk_alert"
-                              ? "border-l-red-400 border-red-200/60 shadow-sm"
-                              : "border-l-teal-400 border-teal-200/60 shadow-sm"
+                        ? "bg-white border-slate-200/80 hover:border-slate-300 hover:shadow-sm"
+                        : `bg-white border-l-4 shadow-sm ${
+                            config.category === "risk"
+                              ? "border-l-red-400 border-red-200/60"
+                              : config.category === "badge"
+                              ? "border-l-purple-400 border-purple-200/60"
+                              : "border-l-teal-400 border-teal-200/60"
                           }`
                     }`}
                   >
@@ -192,28 +304,43 @@ export default function BildirimlerPage() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
-                          <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                          <span className={`text-xs font-bold uppercase tracking-wide ${config.iconColor}`}>
                             {config.label}
                           </span>
                           {!n.is_read && (
                             <span className="w-2 h-2 rounded-full bg-teal-500 shrink-0" />
                           )}
                         </div>
-                        <p className="font-bold text-slate-900">{n.title}</p>
+                        <p className={`font-bold text-slate-900 ${n.is_read ? "font-semibold text-slate-700" : ""}`}>
+                          {n.title}
+                        </p>
                         <p className="text-slate-600 mt-0.5 leading-relaxed text-sm">{n.body}</p>
                         <p className="text-xs text-slate-400 mt-2 font-medium">
                           {timeAgo(n.created_at)}
                         </p>
                       </div>
-                      {!n.is_read && (
+                      <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                        {!n.is_read && (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleMarkRead(n); }}
+                            className="w-8 h-8 rounded-xl bg-teal-50 hover:bg-teal-100 border border-teal-100 flex items-center justify-center transition-colors"
+                            title="Okundu"
+                          >
+                            <Check className="w-3.5 h-3.5 text-teal-600" />
+                          </button>
+                        )}
                         <button
-                          onClick={() => handleMarkRead(n)}
-                          className="w-9 h-9 rounded-xl bg-teal-50 hover:bg-teal-100 border border-teal-100 flex items-center justify-center shrink-0 transition-colors"
-                          title="Okundu olarak işaretle"
+                          onClick={(e) => { e.stopPropagation(); handleDelete(n.id); }}
+                          disabled={deleting === n.id}
+                          className="w-8 h-8 rounded-xl bg-red-50 hover:bg-red-100 border border-red-100 flex items-center justify-center transition-colors disabled:opacity-50"
+                          title="Sil"
                         >
-                          <Check className="w-4 h-4 text-teal-600" />
+                          {deleting === n.id
+                            ? <RefreshCw className="w-3.5 h-3.5 text-red-400 animate-spin" />
+                            : <Trash2 className="w-3.5 h-3.5 text-red-500" />
+                          }
                         </button>
-                      )}
+                      </div>
                     </div>
                   </div>
                 );
@@ -226,6 +353,3 @@ export default function BildirimlerPage() {
     </>
   );
 }
-
-
-

@@ -3,7 +3,8 @@
 import { useState, useRef, useCallback } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { api } from "@/lib/api";
-import { Video, FileText, FileQuestion, Upload, CheckCircle, Loader2, X, AlertCircle } from "lucide-react";
+import type { Question, QuestionOption } from "@/lib/api";
+import { Video, FileText, FileQuestion, Upload, CheckCircle, Loader2, X, AlertCircle, Sparkles, Bot, RefreshCw } from "lucide-react";
 
 type ContentType = "video" | "pdf" | "soru";
 type DifficultyType = "kolay" | "orta" | "zor";
@@ -29,9 +30,167 @@ const INITIAL_FORM: FormState = {
 const inputCls = "w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none transition-all bg-white";
 const labelCls = "block text-sm font-semibold text-slate-700 mb-1.5";
 
+// ─── AI Soru Üretme Modalı ────────────────────────────────────────────────────
+function AIQuestionModal({
+  token,
+  prefillForm,
+  onClose,
+  onApply,
+}: {
+  token: string | null;
+  prefillForm: FormState;
+  onClose: () => void;
+  onApply: (q: { stem: string; options: Record<string, string>; correct_answer: string; explanation?: string }) => void;
+}) {
+  const [aiKazanim, setAiKazanim] = useState(prefillForm.kazanim_code);
+  const [aiSubject, setAiSubject] = useState(prefillForm.ders);
+  const [aiTopic, setAiTopic] = useState(prefillForm.konu);
+  const [aiDifficulty, setAiDifficulty] = useState<"easy" | "medium" | "hard">("medium");
+  const [generating, setGenerating] = useState(false);
+  const [generatedQ, setGeneratedQ] = useState<{ stem: string; options: Record<string, string>; correct_answer: string; explanation?: string } | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleGenerate = async () => {
+    if (!aiKazanim || !aiSubject || !aiTopic) {
+      setError("Kazanım kodu, ders ve konu zorunludur.");
+      return;
+    }
+    if (!token) {
+      setError("Oturum bulunamadı.");
+      return;
+    }
+    setGenerating(true);
+    setError(null);
+    setGeneratedQ(null);
+    try {
+      const res = await api.generateQuestion(token, {
+        kazanim_code: aiKazanim,
+        subject: aiSubject,
+        topic: aiTopic,
+        difficulty: aiDifficulty,
+      });
+      // API'den gelen Question objesini parse et
+      const q = res.question as Question & { stem?: string; correct_answer?: string; explanation?: string };
+      const parsed = {
+        stem: q.stem || q.question_text || "Soru metni alınamadı.",
+        options: q.options
+          ? Object.fromEntries((q.options as QuestionOption[]).map((o) => [o.option_letter, o.option_text]))
+          : {} as Record<string, string>,
+        correct_answer: q.correct_answer ?? (q.options?.find((o) => o.is_correct)?.option_letter ?? "A"),
+        explanation: q.explanation,
+      };
+      setGeneratedQ(parsed);
+    } catch (e) {
+      setError((e as Error).message || "AI soru üretirken hata oluştu.");
+    }
+    setGenerating(false);
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-xl overflow-hidden max-h-[90vh] flex flex-col">
+        {/* Başlık */}
+        <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100 shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center">
+              <Sparkles className="w-5 h-5 text-purple-600" />
+            </div>
+            <div>
+              <h3 className="font-bold text-lg text-slate-900">AI ile Soru Üret</h3>
+              <p className="text-xs text-slate-500">Kazanım ve konu bilgileriyle otomatik soru oluştur</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="w-9 h-9 rounded-xl border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-100 transition-colors">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* İçerik */}
+        <div className="overflow-y-auto flex-1 p-6 space-y-4">
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div>
+              <label className={labelCls}>Ders <span className="text-red-500">*</span></label>
+              <select value={aiSubject} onChange={(e) => setAiSubject(e.target.value)} className={inputCls}>
+                <option value="">Seçin</option>
+                {["Matematik", "Fizik", "Kimya", "Biyoloji", "Türkçe", "Edebiyat", "Tarih", "Coğrafya", "Felsefe", "İngilizce"].map((d) => (
+                  <option key={d}>{d}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className={labelCls}>Zorluk</label>
+              <select value={aiDifficulty} onChange={(e) => setAiDifficulty(e.target.value as "easy" | "medium" | "hard")} className={inputCls}>
+                <option value="easy">Kolay</option>
+                <option value="medium">Orta</option>
+                <option value="hard">Zor</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label className={labelCls}>Konu <span className="text-red-500">*</span></label>
+            <input type="text" value={aiTopic} onChange={(e) => setAiTopic(e.target.value)} placeholder="Örn: Üslü Sayılar" className={inputCls} />
+          </div>
+          <div>
+            <label className={labelCls}>Kazanım Kodu <span className="text-red-500">*</span></label>
+            <input type="text" value={aiKazanim} onChange={(e) => setAiKazanim(e.target.value.toUpperCase())} placeholder="Örn: M.8.1.1" className={`${inputCls} font-mono`} />
+          </div>
+
+          {error && (
+            <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-100 rounded-xl">
+              <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+              <p className="text-sm text-red-700">{error}</p>
+            </div>
+          )}
+
+          <button
+            onClick={handleGenerate}
+            disabled={generating}
+            className="w-full py-3.5 bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-700 hover:to-purple-600 disabled:opacity-60 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-purple-500/20"
+          >
+            {generating ? (
+              <><RefreshCw className="w-4 h-4 animate-spin" /> Üretiliyor...</>
+            ) : (
+              <><Sparkles className="w-4 h-4" /> Soru Üret</>
+            )}
+          </button>
+
+          {/* Üretilen soru önizlemesi */}
+          {generatedQ && (
+            <div className="p-4 bg-purple-50 border border-purple-200 rounded-2xl space-y-3">
+              <div className="flex items-center gap-2 text-purple-700 font-semibold text-sm">
+                <Bot className="w-4 h-4" />
+                AI Tarafından Üretildi
+              </div>
+              <p className="font-medium text-slate-900 text-sm leading-relaxed">{generatedQ.stem}</p>
+              {Object.entries(generatedQ.options).map(([k, v]) => (
+                <div key={k} className={`flex items-start gap-2 p-2.5 rounded-xl text-sm ${generatedQ.correct_answer === k ? "bg-teal-100 border border-teal-300 font-semibold text-teal-800" : "bg-white border border-slate-200 text-slate-700"}`}>
+                  <span className="font-bold shrink-0 w-5">{k})</span>
+                  <span>{v}</span>
+                  {generatedQ.correct_answer === k && <CheckCircle className="w-4 h-4 text-teal-600 ml-auto shrink-0 mt-0.5" />}
+                </div>
+              ))}
+              {generatedQ.explanation && (
+                <p className="text-xs text-purple-700 bg-purple-100 rounded-xl p-3">
+                  <strong>Çözüm:</strong> {generatedQ.explanation}
+                </p>
+              )}
+              <button
+                onClick={() => onApply(generatedQ)}
+                className="w-full py-3 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-xl text-sm transition-colors flex items-center justify-center gap-2"
+              >
+                <CheckCircle className="w-4 h-4" />
+                Bu Soruyu Sisteme Ekle
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function IcerikYuklemePage() {
   const { token } = useAuth();
-
 
   const [secim, setSecim] = useState<ContentType>("video");
   const [form, setForm] = useState<FormState>(INITIAL_FORM);
@@ -41,6 +200,7 @@ export default function IcerikYuklemePage() {
   const [uploaded, setUploaded] = useState(false);
   const [error, setError] = useState("");
   const [dragOver, setDragOver] = useState(false);
+  const [showAIModal, setShowAIModal] = useState(false);
 
   const fileRef = useRef<HTMLInputElement>(null);
   const solRef = useRef<HTMLInputElement>(null);
@@ -152,10 +312,23 @@ export default function IcerikYuklemePage() {
   return (
     <div className="p-8 lg:p-12">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-slate-900">İçerik Yükleme</h1>
-        <p className="text-slate-600 mt-1">
-          Video, PDF ve soru ekleme · Kazanım etiketleme zorunlu · Tüm alanlar doldurulmadan yayına alınamaz
-        </p>
+        <div className="flex items-start justify-between gap-4 flex-wrap">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900">İçerik Yükleme</h1>
+            <p className="text-slate-600 mt-1">
+              Video, PDF ve soru ekleme · Kazanım etiketleme zorunlu · Tüm alanlar doldurulmadan yayına alınamaz
+            </p>
+          </div>
+          {secim === "soru" && (
+            <button
+              onClick={() => setShowAIModal(true)}
+              className="flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-700 hover:to-purple-600 text-white font-bold rounded-xl shadow-lg shadow-purple-500/20 transition-all shrink-0"
+            >
+              <Sparkles className="w-5 h-5" />
+              AI ile Soru Üret
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Tip seçimi */}
@@ -387,6 +560,19 @@ export default function IcerikYuklemePage() {
           </button>
         </div>
       </div>
+
+      {/* AI Soru Üretme Modal */}
+      {showAIModal && (
+        <AIQuestionModal
+          token={token}
+          prefillForm={form}
+          onClose={() => setShowAIModal(false)}
+          onApply={(_q) => {
+            setShowAIModal(false);
+            setUploaded(true);
+          }}
+        />
+      )}
     </div>
   );
 }

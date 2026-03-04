@@ -2,11 +2,15 @@
   "name": "Terence Eğitim",
   "short_name": "Terence",
   "description": "LGS, TYT, AYT, KPSS hazırlık — Akıllı öğrenme platformu",
-  "start_url": "/",
+  "start_url": "/ogrenci",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#0d9488",
   "orientation": "portrait-primary",
+  "lang": "tr",
+  "dir": "ltr",
+  "prefer_related_applications": false,
   "icons": [
     {
       "src": "/icons/icon-72x72.png",
@@ -49,6 +53,29 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Günlük Plan",
+      "short_name": "Plan",
+      "description": "Bugünkü çalışma planını görüntüle",
+      "url": "/ogrenci/plan",
+      "icons": [{ "src": "/icons/icon-96x96.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Mini Test",
+      "short_name": "Test",
+      "description": "Hızlı mini test çöz",
+      "url": "/ogrenci/mini-test",
+      "icons": [{ "src": "/icons/icon-96x96.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Dijital Koç",
+      "short_name": "Koç",
+      "description": "AI koçunla konuş",
+      "url": "/ogrenci/koc",
+      "icons": [{ "src": "/icons/icon-96x96.png", "sizes": "96x96" }]
     }
   ],
   "categories": ["education", "productivity"],

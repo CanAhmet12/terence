@@ -279,4 +279,36 @@ class User extends Authenticatable implements JWTSubject
         return $this->hasMany(AuditLog::class);
     }
 
+
+    public function toApiArray(): array
+    {
+        return [
+            'id'                      => $this->id,
+            'name'                    => $this->name,
+            'email'                   => $this->email,
+            'role'                    => $this->role,
+            'phone'                   => $this->phone,
+            'grade'                   => $this->grade,
+            'target_exam'             => $this->target_exam ?? $this->exam_goal,
+            'exam_goal'               => $this->exam_goal ?? $this->target_exam,
+            'target_school'           => $this->target_school,
+            'target_department'       => $this->target_department,
+            'target_net'              => $this->target_net,
+            'current_net'             => $this->current_net,
+            'subject'                 => $this->subject,
+            'bio'                     => $this->bio,
+            'profile_photo_url'       => $this->profile_photo_url,
+            'subscription_plan'       => $this->subscription_plan ?? 'free',
+            'subscription_expires_at' => $this->subscription_expires_at,
+            'email_verified_at'       => $this->email_verified_at,
+            'teacher_status'          => $this->teacher_status,
+            'xp_points'               => (int)($this->xp_points ?? 0),
+            'level'                   => (int)($this->level ?? 1),
+            'streak_days'             => (int)($this->streak_days ?? 0),
+            'exam_date'               => $this->exam_date,
+            'daily_reminder_time'     => $this->daily_reminder_time,
+            'created_at'              => $this->created_at,
+        ];
+    }
+
 }

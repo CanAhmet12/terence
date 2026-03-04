@@ -6,62 +6,6 @@ import { useAuth } from "@/lib/auth-context";
 import { api, Question } from "@/lib/api";
 import { ArrowLeft, Clock, CheckCircle, XCircle, RefreshCw, Trophy, Zap } from "lucide-react";
 
-const DEMO_QUESTIONS: Question[] = [
-  {
-    id: 1, question_text: "2³ · 2⁴ işleminin sonucu kaçtır?",
-    kazanim_code: "M.8.1.1", difficulty: "easy", type: "classic",
-    options: [
-      { id: 1, option_letter: "A", option_text: "16" },
-      { id: 2, option_letter: "B", option_text: "32" },
-      { id: 3, option_letter: "C", option_text: "128" },
-      { id: 4, option_letter: "D", option_text: "64" },
-    ],
-  },
-  {
-    id: 2, question_text: "√16 + √9 işleminin sonucu kaçtır?",
-    kazanim_code: "M.8.2.1", difficulty: "easy", type: "classic",
-    options: [
-      { id: 5, option_letter: "A", option_text: "5" },
-      { id: 6, option_letter: "B", option_text: "6" },
-      { id: 7, option_letter: "C", option_text: "7" },
-      { id: 8, option_letter: "D", option_text: "8" },
-    ],
-  },
-  {
-    id: 3, question_text: "3x + 5 = 20 ise x kaçtır?",
-    kazanim_code: "M.8.3.1", difficulty: "medium", type: "classic",
-    options: [
-      { id: 9, option_letter: "A", option_text: "3" },
-      { id: 10, option_letter: "B", option_text: "4" },
-      { id: 11, option_letter: "C", option_text: "5" },
-      { id: 12, option_letter: "D", option_text: "6" },
-    ],
-  },
-  {
-    id: 4, question_text: "Bir çarpım 0'a eşitse en az bir çarpan sıfırdır. Bu kuralın adı nedir?",
-    kazanim_code: "M.8.3.2", difficulty: "medium", type: "classic",
-    options: [
-      { id: 13, option_letter: "A", option_text: "Dağılma özelliği" },
-      { id: 14, option_letter: "B", option_text: "Sıfır çarpanlar özelliği" },
-      { id: 15, option_letter: "C", option_text: "Birleşme özelliği" },
-      { id: 16, option_letter: "D", option_text: "Ötelenme özelliği" },
-    ],
-  },
-  {
-    id: 5, question_text: "(-3)² işleminin sonucu kaçtır?",
-    kazanim_code: "M.8.1.1", difficulty: "easy", type: "classic",
-    options: [
-      { id: 17, option_letter: "A", option_text: "-9" },
-      { id: 18, option_letter: "B", option_text: "9" },
-      { id: 19, option_letter: "C", option_text: "6" },
-      { id: 20, option_letter: "D", option_text: "-6" },
-    ],
-  },
-];
-
-// Demo cevap anahtarı: soru id → doğru şık (demo için index 1 / 2 / 1 / 1 / 1)
-const DEMO_CORRECT: Record<number, string> = { 1: "C", 2: "C", 3: "C", 4: "B", 5: "B" };
-
 const TEST_DURATION = 300; // 5 dk
 
 type Phase = "start" | "test" | "result";
@@ -80,6 +24,7 @@ export default function MiniTestPage() {
   const [phase, setPhase] = useState<Phase>("start");
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState(false);
   const [soruIndex, setSoruIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<number, AnswerState>>({});
   const [sure, setSure] = useState(TEST_DURATION);
@@ -95,16 +40,22 @@ export default function MiniTestPage() {
 
   const loadQuestions = useCallback(async () => {
     setLoading(true);
+    setLoadError(false);
     if (!token) {
-      setQuestions(DEMO_QUESTIONS);
       setLoading(false);
       return;
     }
     try {
       const res = await api.getQuestions(token, { per_page: 5, difficulty: "easy" });
-      setQuestions(res.data.length >= 3 ? res.data : DEMO_QUESTIONS);
+      if (res.data.length === 0) {
+        setLoadError(true);
+        setLoading(false);
+        return;
+      }
+      setQuestions(res.data);
     } catch {
-      setQuestions(DEMO_QUESTIONS);
+      setLoadError(true);
+      setQuestions([]);
     }
     setLoading(false);
   }, [token]);
@@ -118,6 +69,11 @@ export default function MiniTestPage() {
     setPhase("test");
   };
 
+  const handleExitTest = () => {
+    if (!window.confirm("Testi bırakmak istediğine emin misin? Cevapların kaydedilmeyecek.")) return;
+    setPhase("start");
+  };
+
   const currentQ = questions[soruIndex];
   const currentAnswer = currentQ ? answers[currentQ.id] : undefined;
 
@@ -129,23 +85,20 @@ export default function MiniTestPage() {
     let isCorrect = false;
     let explanation: string | undefined;
 
-    if (!token) {
-      correctOption = DEMO_CORRECT[currentQ.id] ?? currentQ.options[0]?.option_letter;
-      isCorrect = optionLetter === correctOption;
-    } else {
-      try {
-        const res = await api.answerQuestion(token, {
-          question_id: currentQ.id,
-          selected_option: optionLetter,
-          time_spent_seconds: timeSpent,
-        });
-        correctOption = res.correct_option;
-        isCorrect = res.is_correct;
-        explanation = res.explanation;
-      } catch {
-        correctOption = optionLetter;
-        isCorrect = true;
-      }
+    if (!token) return;
+
+    try {
+      const res = await api.answerQuestion(token, {
+        question_id: currentQ.id,
+        selected_option: optionLetter,
+        time_spent_seconds: timeSpent,
+      });
+      correctOption = res.correct_option;
+      isCorrect = res.is_correct;
+      explanation = res.explanation;
+    } catch {
+      correctOption = optionLetter;
+      isCorrect = true;
     }
 
     setAnswers((prev) => ({
@@ -196,6 +149,18 @@ export default function MiniTestPage() {
         <p className="text-slate-600 mb-8">
           Anında doğru/yanlış · Süre sayacı · Yanlış sorulara otomatik tekrar
         </p>
+
+        {/* Error state */}
+        {loadError && (
+          <div className="mb-6 p-5 bg-red-50 border border-red-200 rounded-2xl flex items-start gap-3">
+            <XCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+            <div>
+              <p className="font-semibold text-red-800 text-sm">Test yüklenemedi</p>
+              <p className="text-xs text-red-600 mt-0.5">Sorular yüklenirken bir hata oluştu. Tekrar denemek için aşağıdaki butona tıkla.</p>
+            </div>
+          </div>
+        )}
+
         <div className="bg-white rounded-2xl border border-slate-200 p-8 max-w-md shadow-sm">
           <ul className="space-y-3 text-sm text-slate-600 mb-8">
             {[
@@ -213,10 +178,12 @@ export default function MiniTestPage() {
           <button
             onClick={startTest}
             disabled={loading}
-            className="w-full py-4 bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-700 hover:to-teal-600 disabled:opacity-70 text-white font-bold rounded-xl transition-all shadow-lg shadow-teal-500/25 flex items-center justify-center gap-2"
+            className="w-full py-4 bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-700 hover:to-teal-600 disabled:opacity-70 text-white font-bold rounded-xl transition-all shadow-lg shadow-teal-500/25 flex items-center justify-center gap-2 active:scale-95"
           >
             {loading ? (
               <><span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" /> Yükleniyor...</>
+            ) : loadError ? (
+              <><RefreshCw className="w-5 h-5" /> Tekrar Dene</>
             ) : (
               <><Zap className="w-5 h-5" /> Testi Başlat</>
             )}
@@ -319,7 +286,7 @@ export default function MiniTestPage() {
       {/* Üst bar */}
       <div className="flex items-center justify-between mb-6">
         <button
-          onClick={() => setPhase("result")}
+          onClick={handleExitTest}
           className="text-sm text-slate-600 hover:text-teal-600 font-medium transition-colors"
         >
           ← Çıkış
@@ -338,7 +305,7 @@ export default function MiniTestPage() {
       {/* İlerleme çubuğu */}
       <div className="h-1.5 bg-slate-200 rounded-full mb-8 overflow-hidden">
         <div
-          className="h-full bg-teal-500 rounded-full transition-all"
+          className={`h-full rounded-full transition-all ${sure <= 30 ? "bg-red-500 animate-pulse" : sure <= 60 ? "bg-amber-500" : "bg-teal-500"}`}
           style={{ width: `${((soruIndex + 1) / questions.length) * 100}%` }}
         />
       </div>

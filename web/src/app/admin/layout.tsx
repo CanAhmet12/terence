@@ -10,18 +10,22 @@ import {
   FileQuestion,
   BarChart3,
   Settings,
-  GraduationCap,
   Menu,
   X,
+  UserCheck,
+  Tag,
 } from "lucide-react";
+import Image from "next/image";
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 
 const navItems = [
   { href: "/admin", icon: LayoutDashboard, label: "Dashboard" },
   { href: "/admin/kullanicilar", icon: Users, label: "Kullanıcılar" },
+  { href: "/admin/ogretmen-onay", icon: UserCheck, label: "Öğretmen Onay" },
   { href: "/admin/icerik", icon: BookOpen, label: "İçerik" },
   { href: "/admin/sorular", icon: FileQuestion, label: "Soru Havuzu" },
+  { href: "/admin/kupon", icon: Tag, label: "Kuponlar" },
   { href: "/admin/raporlar", icon: BarChart3, label: "Raporlar" },
   { href: "/admin/ayarlar", icon: Settings, label: "Ayarlar" },
 ];
@@ -41,8 +45,8 @@ export default function AdminLayout({
         <aside className="hidden lg:flex w-64 min-h-screen bg-slate-900 text-white flex-col shrink-0">
           <div className="p-6 border-b border-slate-700/80">
             <Link href="/" className="flex items-center gap-3 group">
-              <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center shadow-lg shadow-teal-500/20 group-hover:shadow-teal-500/30 transition-shadow">
-                <GraduationCap className="w-6 h-6 text-white" strokeWidth={2.5} />
+              <div className="w-11 h-11 rounded-2xl overflow-hidden shadow-lg shadow-teal-500/20 group-hover:shadow-teal-500/30 transition-shadow">
+                <Image src="/logo.png" alt="Terence Eğitim" width={44} height={44} />
               </div>
               <span className="font-bold tracking-tight">ADMIN</span>
             </Link>
@@ -90,8 +94,8 @@ export default function AdminLayout({
           <div onClick={() => setMobileOpen(false)} className="overflow-y-auto h-full pt-4">
             <div className="p-6 border-b border-slate-700">
               <Link href="/" className="flex items-center gap-3">
-                <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center">
-                  <GraduationCap className="w-6 h-6 text-white" />
+                <div className="w-11 h-11 rounded-2xl overflow-hidden">
+                  <Image src="/logo.png" alt="Terence Eğitim" width={44} height={44} />
                 </div>
                 <span className="font-bold">ADMIN</span>
               </Link>
@@ -119,8 +123,8 @@ export default function AdminLayout({
               <Menu className="w-6 h-6" />
             </button>
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-slate-900 flex items-center justify-center">
-                <GraduationCap className="w-4 h-4 text-teal-400" />
+              <div className="w-8 h-8 rounded-lg overflow-hidden">
+                <Image src="/logo.png" alt="Terence Eğitim" width={32} height={32} />
               </div>
               <span className="font-bold text-slate-900 text-sm">ADMIN</span>
             </div>

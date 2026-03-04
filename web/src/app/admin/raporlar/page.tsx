@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { ArrowLeft, Users, TrendingUp, DollarSign, Video, RefreshCw, BookOpen, Clock } from "lucide-react";
+import { ArrowLeft, Users, TrendingUp, DollarSign, Video, RefreshCw, BookOpen, Clock, AlertTriangle, BarChart2 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { api, AdminReports } from "@/lib/api";
 
@@ -49,6 +49,8 @@ export default function AdminRaporlarPage() {
   const [reports, setReports] = useState<AdminReports | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [hardAchievements, setHardAchievements] = useState<{ kazanim_code: string; subject: string; topic: string; wrong_rate: number; total_attempts: number; label?: string }[]>([]);
+  const [hardLoading, setHardLoading] = useState(false);
 
   const loadReports = useCallback(async () => {
     if (!token) return;
@@ -65,6 +67,16 @@ export default function AdminRaporlarPage() {
   }, [token]);
 
   useEffect(() => { loadReports(); }, [loadReports]);
+
+  // En zor kazanımları yükle
+  useEffect(() => {
+    if (!token) return;
+    setHardLoading(true);
+    api.getHardAchievements(token, { limit: 20 })
+      .then((res) => setHardAchievements(res.data ?? []))
+      .catch(() => {})
+      .finally(() => setHardLoading(false));
+  }, [token]);
 
   const weeklyUsers = reports?.weekly_users?.map((w) => w.value) ?? [];
   const maxWeekly = Math.max(...weeklyUsers, 1);
@@ -232,6 +244,70 @@ export default function AdminRaporlarPage() {
           </div>
         </div>
       )}
+
+      {/* En Zor Kazanımlar — Büyük Veri (5.5) */}
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="w-5 h-5 text-red-500" />
+            <h2 className="font-semibold text-slate-900">Türkiye Geneli En Zor Kazanımlar</h2>
+          </div>
+          <span className="text-xs text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full font-medium">
+            Yanlış oranı en yüksek
+          </span>
+        </div>
+
+        {hardLoading ? (
+          <div className="p-6 space-y-3">
+            {[1, 2, 3, 4, 5].map((i) => <Skeleton key={i} className="h-12" />)}
+          </div>
+        ) : hardAchievements.length === 0 ? (
+          <div className="p-6 text-center text-sm text-slate-500">
+            <BarChart2 className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+            Veri henüz yok. AI endpoint aktif olduğunda burada görünecek.
+          </div>
+        ) : (
+          <div className="divide-y divide-slate-100">
+            {hardAchievements.map((a, i) => {
+              const wrongPct = Math.round(a.wrong_rate * 100);
+              const isVeryHard = wrongPct > 65;
+              return (
+                <div key={a.kazanim_code} className="flex items-center gap-4 px-6 py-4 hover:bg-slate-50 transition-colors">
+                  <span className={`w-8 h-8 rounded-xl flex items-center justify-center text-sm font-bold shrink-0 ${
+                    i < 3 ? "bg-red-100 text-red-700" : "bg-slate-100 text-slate-600"
+                  }`}>
+                    {i + 1}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
+                      <span className="font-mono text-xs font-bold text-teal-600 bg-teal-50 px-2 py-0.5 rounded">{a.kazanim_code}</span>
+                      <span className="text-xs font-semibold text-slate-600">{a.subject}</span>
+                      {isVeryHard && (
+                        <span className="text-xs font-bold text-red-600 bg-red-50 border border-red-200 px-2 py-0.5 rounded-full">
+                          Türkiye geneli zor
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-sm text-slate-700 truncate">{a.topic}</p>
+                    <div className="flex items-center gap-3 mt-1.5">
+                      <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden max-w-[200px]">
+                        <div
+                          className={`h-full rounded-full ${wrongPct > 65 ? "bg-red-500" : wrongPct > 45 ? "bg-amber-500" : "bg-teal-400"}`}
+                          style={{ width: `${wrongPct}%` }}
+                        />
+                      </div>
+                      <span className={`text-xs font-bold ${wrongPct > 65 ? "text-red-600" : wrongPct > 45 ? "text-amber-600" : "text-slate-600"}`}>
+                        %{wrongPct} yanlış
+                      </span>
+                      <span className="text-xs text-slate-400">{a.total_attempts.toLocaleString("tr-TR")} deneme</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

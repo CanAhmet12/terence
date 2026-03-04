@@ -3,7 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, X, Users, BarChart3, Bell, GraduationCap, ChevronLeft } from "lucide-react";
+import { Menu, X, Users, BarChart3, Bell, ChevronLeft, UserCircle } from "lucide-react";
+import Image from "next/image";
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 
@@ -11,6 +12,7 @@ const veliNav = [
   { href: "/veli", icon: Users, label: "Çocuklarım" },
   { href: "/veli/rapor", icon: BarChart3, label: "Raporlar" },
   { href: "/veli/bildirim", icon: Bell, label: "Bildirimler" },
+  { href: "/veli/profil", icon: UserCircle, label: "Profil & Ayarlar" },
 ];
 
 export default function VeliLayout({
@@ -28,8 +30,8 @@ export default function VeliLayout({
         <aside className="hidden lg:flex w-64 min-h-screen bg-white border-r border-slate-200/80 flex-col shrink-0">
           <div className="p-6 border-b border-slate-100">
             <Link href="/" className="flex items-center gap-3 group">
-              <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-teal-600 via-teal-500 to-emerald-500 flex items-center justify-center shadow-lg shadow-teal-500/20 group-hover:shadow-teal-500/30 transition-shadow">
-                <GraduationCap className="w-6 h-6 text-white" strokeWidth={2.5} />
+              <div className="w-11 h-11 rounded-2xl overflow-hidden shadow-lg shadow-teal-500/20 group-hover:shadow-teal-500/30 transition-shadow">
+                <Image src="/logo.png" alt="Terence Eğitim" width={44} height={44} />
               </div>
               <span className="font-bold text-slate-900 tracking-tight">
                 TERENCE <span className="text-teal-600">EĞİTİM</span>
@@ -88,8 +90,8 @@ export default function VeliLayout({
           <div onClick={() => setMobileOpen(false)} className="overflow-y-auto h-full pt-4">
             <div className="p-6 border-b border-slate-100">
               <Link href="/" className="flex items-center gap-3">
-                <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-teal-600 to-teal-500 flex items-center justify-center">
-                  <GraduationCap className="w-6 h-6 text-white" />
+                <div className="w-11 h-11 rounded-2xl overflow-hidden">
+                  <Image src="/logo.png" alt="Terence Eğitim" width={44} height={44} />
                 </div>
                 <span className="font-bold text-slate-900">TERENCE EĞİTİM</span>
               </Link>
@@ -117,8 +119,8 @@ export default function VeliLayout({
               <Menu className="w-6 h-6" />
             </button>
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-teal-600 to-teal-500 flex items-center justify-center">
-                <GraduationCap className="w-4 h-4 text-white" />
+              <div className="w-8 h-8 rounded-lg overflow-hidden">
+                <Image src="/logo.png" alt="Terence Eğitim" width={32} height={32} />
               </div>
               <span className="font-bold text-slate-900 text-sm">TERENCE EĞİTİM</span>
             </div>
