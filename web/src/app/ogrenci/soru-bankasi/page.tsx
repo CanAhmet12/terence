@@ -205,6 +205,21 @@ function VoiceAssistantModal({ token, onClose }: { token: string | null; onClose
   );
 }
 
+const SUBJECT_OPTIONS = [
+  { value: "", label: "Tüm Dersler" },
+  { value: "matematik", label: "Matematik" },
+  { value: "turkce", label: "Türkçe" },
+  { value: "fen", label: "Fen Bilimleri" },
+  { value: "sosyal", label: "Sosyal Bilgiler" },
+  { value: "fizik", label: "Fizik" },
+  { value: "kimya", label: "Kimya" },
+  { value: "biyoloji", label: "Biyoloji" },
+  { value: "tarih", label: "Tarih" },
+  { value: "cografya", label: "Coğrafya" },
+  { value: "edebiyat", label: "Edebiyat" },
+  { value: "ingilizce", label: "İngilizce" },
+];
+
 export default function SoruBankasiPage() {
   const { token } = useAuth();
 
@@ -212,6 +227,9 @@ export default function SoruBankasiPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [difficulty, setDifficulty] = useState("");
+  const [subject, setSubject] = useState("");
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
   const [selectedAnswers, setSelectedAnswers] = useState<Record<number, string>>({});
   const [answerResults, setAnswerResults] = useState<Record<number, AnswerResult & { selected: string }>>({});
   const [loadingSimilar, setLoadingSimilar] = useState<number | null>(null);
@@ -221,31 +239,39 @@ export default function SoruBankasiPage() {
   const [showVoice, setShowVoice] = useState(false);
   const [showPersonalTest, setShowPersonalTest] = useState(false);
 
-  const loadQuestions = useCallback(async (kazanim?: string, diff?: string) => {
+  const loadQuestions = useCallback(async (kazanim?: string, diff?: string, subj?: string, p = 1) => {
     if (!token) { setLoading(false); return; }
     setLoading(true);
     try {
-      const params: Record<string, string | number> = { per_page: 20 };
+      const params: Record<string, string | number> = { per_page: 20, page: p };
       if (kazanim) params.kazanim_code = kazanim;
       if (diff) params.difficulty = diff;
+      if (subj) params.subject = subj;
       const res = await api.getQuestions(token!, params as Parameters<typeof api.getQuestions>[1]);
-      setQuestions(res.data);
+      if (p === 1) {
+        setQuestions(res.data);
+      } else {
+        setQuestions((prev) => [...prev, ...res.data]);
+      }
+      setHasMore(res.data.length === 20);
       const now = Date.now();
       res.data.forEach((q: Question) => { questionStartTimes.current[q.id] = now; });
     } catch {
-      setQuestions([]);
+      if (p === 1) setQuestions([]);
+      setHasMore(false);
     }
     setLoading(false);
   }, [token]);
 
-  // Debounced arama
+  // Debounced arama — filtre değişince page'i sıfırla
   useEffect(() => {
+    setPage(1);
     if (searchTimer.current) clearTimeout(searchTimer.current);
     searchTimer.current = setTimeout(() => {
-      loadQuestions(search, difficulty);
+      loadQuestions(search, difficulty, subject, 1);
     }, 400);
     return () => { if (searchTimer.current) clearTimeout(searchTimer.current); };
-  }, [search, difficulty, loadQuestions]);
+  }, [search, difficulty, subject, loadQuestions]);
 
   const handleAnswer = async (question: Question, optionLetter: string) => {
     if (!token) return;
@@ -348,27 +374,44 @@ export default function SoruBankasiPage() {
       )}
 
       {/* Filtreler */}
-      <div className="flex flex-wrap gap-3 mb-8">
+      <div className="flex flex-wrap gap-3 mb-6">
         <div className="flex-1 min-w-[240px] relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
           <input
             type="text"
-            placeholder="Kazanım kodu veya konu ara (örn: M.8.1.1)"
+            placeholder="Konu ara (örn: Üslü Sayılar, Olasılık, Hücre...)"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-11 pr-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none"
+            className="w-full pl-11 pr-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none bg-white"
           />
         </div>
         <select
+          value={subject}
+          onChange={(e) => setSubject(e.target.value)}
+          className="px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none bg-white"
+        >
+          {SUBJECT_OPTIONS.map((o) => (
+            <option key={o.value} value={o.value}>{o.label}</option>
+          ))}
+        </select>
+        <select
           value={difficulty}
           onChange={(e) => setDifficulty(e.target.value)}
-          className="px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none"
+          className="px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none bg-white"
         >
           <option value="">Tüm Zorluklar</option>
           <option value="easy">Kolay</option>
           <option value="medium">Orta</option>
           <option value="hard">Zor</option>
         </select>
+        {(search || subject || difficulty) && (
+          <button
+            onClick={() => { setSearch(""); setSubject(""); setDifficulty(""); }}
+            className="px-4 py-3 border border-slate-200 text-slate-500 hover:bg-slate-100 rounded-xl text-sm font-medium transition-colors flex items-center gap-2"
+          >
+            <X className="w-4 h-4" /> Temizle
+          </button>
+        )}
       </div>
 
       {/* Sorular */}
@@ -493,16 +536,23 @@ export default function SoruBankasiPage() {
         </div>
       )}
 
-      {!loading && questions.length > 0 && (
+      {!loading && hasMore && (
         <div className="mt-8 flex justify-center">
           <button
-            onClick={() => loadQuestions(search, difficulty)}
+            onClick={() => {
+              const nextPage = page + 1;
+              setPage(nextPage);
+              loadQuestions(search, difficulty, subject, nextPage);
+            }}
             className="flex items-center gap-2 px-6 py-3 bg-white border border-slate-200 text-slate-700 font-semibold rounded-xl hover:bg-slate-50 hover:border-slate-300 transition-colors shadow-sm"
           >
             <ChevronRight className="w-5 h-5 text-teal-600" />
-            Daha Fazla Soru Yükle
+            Sonraki 20 Soru
           </button>
         </div>
+      )}
+      {!loading && !hasMore && questions.length > 0 && (
+        <p className="mt-8 text-center text-sm text-slate-400">Tüm sorular gösterildi.</p>
       )}
 
       <p className="mt-6 text-sm text-slate-500">

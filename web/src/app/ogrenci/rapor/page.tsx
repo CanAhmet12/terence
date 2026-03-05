@@ -13,6 +13,12 @@ import { useRouter } from "next/navigation";
 
 const DAYS = ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"];
 
+const PERIOD_OPTIONS = [
+  { value: 7, label: "7 Gün" },
+  { value: 30, label: "30 Gün" },
+  { value: 90, label: "3 Ay" },
+];
+
 function secondsToHuman(sec: number) {
   const h = Math.floor(sec / 3600);
   const m = Math.floor((sec % 3600) / 60);
@@ -32,6 +38,7 @@ export default function RaporPage() {
   const [goal, setGoal] = useState<GoalAnalysis | null>(null);
   const [weakAchievements, setWeakAchievements] = useState<WeakAchievement[]>([]);
   const [loading, setLoading] = useState(true);
+  const [chartPeriod, setChartPeriod] = useState(7);
 
   const loadData = useCallback(async () => {
     if (!token) return;
@@ -49,7 +56,11 @@ export default function RaporPage() {
   useEffect(() => { loadData(); }, [loadData]);
 
   const weeklyNets = stats?.weekly_nets ?? [];
-  const maxNet = weeklyNets.length > 0 ? Math.max(...weeklyNets, 1) : 1;
+  const chartNets = weeklyNets.slice(-chartPeriod);
+  const chartLabels = chartPeriod === 7
+    ? DAYS.slice(-chartNets.length)
+    : chartNets.map((_, i) => `G${chartNets.length - i}`).reverse();
+  const maxNet = chartNets.length > 0 ? Math.max(...chartNets, 1) : 1;
   const netArtis = weeklyNets.length >= 2 ? weeklyNets[weeklyNets.length - 1] - weeklyNets[0] : 0;
   const tasksDoneRatio = stats ? Math.round((stats.tasks_done_today / Math.max(stats.tasks_total_today, 1)) * 100) : 0;
 
@@ -102,7 +113,24 @@ export default function RaporPage() {
   ];
 
   const handlePrint = () => {
-    window.print();
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) { window.print(); return; }
+    printWindow.document.write(`
+      <html><head><title>Performans Raporu</title>
+      <style>body{font-family:sans-serif;padding:24px;color:#1e293b}h1{color:#0f766e}table{width:100%;border-collapse:collapse}td,th{padding:8px 12px;border:1px solid #e2e8f0;text-align:left}</style>
+      </head><body>
+      <h1>Performans Raporu</h1>
+      <p>Tarih: ${new Date().toLocaleDateString("tr-TR")}</p>
+      <table><tr><th>Metrik</th><th>Değer</th></tr>
+      <tr><td>Toplam Çalışma Süresi</td><td>${secondsToHuman(stats?.total_study_time_seconds ?? 0)}</td></tr>
+      <tr><td>Cevaplanan Soru</td><td>${stats?.total_questions_answered ?? 0}</td></tr>
+      <tr><td>Doğruluk Oranı</td><td>%${stats?.correct_rate?.toFixed(1) ?? 0}</td></tr>
+      <tr><td>XP Puanı</td><td>${stats?.xp_points ?? 0}</td></tr>
+      ${goal ? `<tr><td>Hedef Net</td><td>${goal.target_net}</td></tr><tr><td>Mevcut Net</td><td>${goal.current_net}</td></tr><tr><td>Kalan Gün</td><td>${goal.days_remaining}</td></tr>` : ""}
+      </table></body></html>
+    `);
+    printWindow.document.close();
+    printWindow.print();
   };
 
   return (
@@ -215,19 +243,36 @@ export default function RaporPage() {
       <div className="grid lg:grid-cols-2 gap-8 mb-8">
         {/* Net grafiği */}
         <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm hover:shadow-md transition-shadow">
-          <h2 className="font-semibold text-slate-900 flex items-center gap-2 mb-5">
-            <BarChart3 className="w-5 h-5 text-teal-600" />
-            7 Günlük Net Grafiği
-          </h2>
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="font-semibold text-slate-900 flex items-center gap-2">
+              <BarChart3 className="w-5 h-5 text-teal-600" />
+              Net Grafiği
+            </h2>
+            <div className="flex items-center gap-1 bg-slate-100 rounded-lg p-0.5">
+              {PERIOD_OPTIONS.map((opt) => (
+                <button
+                  key={opt.value}
+                  onClick={() => setChartPeriod(opt.value)}
+                  className={`px-3 py-1 rounded-md text-xs font-semibold transition-all ${
+                    chartPeriod === opt.value
+                      ? "bg-white text-teal-700 shadow-sm"
+                      : "text-slate-500 hover:text-slate-700"
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
           {loading ? (
             <div className="flex items-end gap-2 h-48">
               {DAYS.map((d) => <Skeleton key={d} className="flex-1 h-full" />)}
             </div>
-          ) : weeklyNets.length > 0 ? (
+          ) : chartNets.length > 0 ? (
             <>
-              <div className="flex items-end gap-2 h-48">
-                {weeklyNets.map((val: number, i: number) => (
-                  <div key={i} className="flex-1 flex flex-col items-center gap-2">
+              <div className="flex items-end gap-1 h-48">
+                {chartNets.map((val: number, i: number) => (
+                  <div key={i} className="flex-1 flex flex-col items-center gap-1">
                     <div
                       className="w-full rounded-t-lg bg-teal-500 min-h-[4px] transition-all hover:bg-teal-600 relative group"
                       style={{ height: `${Math.max((val / maxNet) * 100, 5)}%` }}
@@ -236,13 +281,15 @@ export default function RaporPage() {
                         {val}
                       </span>
                     </div>
-                    <span className="text-xs text-slate-500">{DAYS[i] ?? ""}</span>
+                    {chartPeriod === 7 && (
+                      <span className="text-xs text-slate-500">{chartLabels[i] ?? ""}</span>
+                    )}
                   </div>
                 ))}
               </div>
               <p className="text-xs text-slate-500 mt-3">
-                En yüksek: <span className="font-bold text-teal-600">{Math.max(...weeklyNets)}</span> ·
-                En düşük: <span className="font-bold text-red-500">{Math.min(...weeklyNets)}</span>
+                En yüksek: <span className="font-bold text-teal-600">{Math.max(...chartNets)}</span> ·
+                En düşük: <span className="font-bold text-red-500">{Math.min(...chartNets)}</span>
               </p>
             </>
           ) : (

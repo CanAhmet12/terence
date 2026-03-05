@@ -71,12 +71,13 @@ export default function StudentDashboardPage() {
   const riskLevel = stats && stats.target_net > 0
     ? (stats.current_net / Math.max(stats.target_net, 1)) >= 0.85 ? "green"
     : (stats.current_net / Math.max(stats.target_net, 1)) >= 0.6 ? "yellow" : "red"
-    : "green";
+    : "none";
 
   const riskColors = {
     green: { bg: "bg-teal-50", border: "border-teal-200", title: "text-teal-900", body: "text-teal-800" },
     yellow: { bg: "bg-amber-50", border: "border-amber-200", title: "text-amber-900", body: "text-amber-800" },
     red: { bg: "bg-red-50", border: "border-red-200", title: "text-red-900", body: "text-red-800" },
+    none: { bg: "bg-slate-50", border: "border-slate-200", title: "text-slate-700", body: "text-slate-600" },
   };
   const risk = riskColors[riskLevel];
 
@@ -270,11 +271,26 @@ export default function StudentDashboardPage() {
       <div className="grid sm:grid-cols-2 gap-4 mb-8">
         <div className={"p-5 rounded-2xl border " + risk.bg + " " + risk.border}>
           <div className="flex items-center gap-2 mb-1">
-            {riskLevel !== "green" ? <AlertTriangle className={"w-4 h-4 " + risk.title} /> : <Check className="w-4 h-4 text-teal-700" />}
-            <p className={"font-bold " + risk.title}>{riskLevel === "green" ? "Hedefte İlerliyorsun" : riskLevel === "yellow" ? "Orta Hedef Riski" : "Yüksek Hedef Riski"}</p>
+            {riskLevel === "none" ? <Target className={"w-4 h-4 " + risk.title} /> :
+             riskLevel !== "green" ? <AlertTriangle className={"w-4 h-4 " + risk.title} /> :
+             <Check className="w-4 h-4 text-teal-700" />}
+            <p className={"font-bold " + risk.title}>
+              {riskLevel === "none" ? "Hedef Belirlemek İster misin?" :
+               riskLevel === "green" ? "Hedefte İlerliyorsun" :
+               riskLevel === "yellow" ? "Orta Hedef Riski" : "Yüksek Hedef Riski"}
+            </p>
           </div>
-          <p className={"text-sm mt-1 leading-relaxed " + risk.body}>{riskLevel === "green" ? "Bu hızı korursan hedefine ulaşırsın!" : "Net hızını artırman gerekiyor. Zayıf konularına odaklan."}</p>
-          <Link href="/ogrenci/zayif-kazanim" className={"text-sm font-semibold mt-3 inline-flex items-center gap-1 hover:underline " + risk.title}>Zayıf kazanımları gör</Link>
+          <p className={"text-sm mt-1 leading-relaxed " + risk.body}>
+            {riskLevel === "none" ? "Hedef okulunu ve net hedefini girerek günlük planını otomatik oluştur." :
+             riskLevel === "green" ? "Bu hızı korursan hedefine ulaşırsın!" :
+             "Net hızını artırman gerekiyor. Zayıf konularına odaklan."}
+          </p>
+          <Link
+            href={riskLevel === "none" ? "/ogrenci/hedef" : "/ogrenci/zayif-kazanim"}
+            className={"text-sm font-semibold mt-3 inline-flex items-center gap-1 hover:underline " + risk.title}
+          >
+            {riskLevel === "none" ? "Hedef belirle →" : "Zayıf kazanımları gör"}
+          </Link>
         </div>
         <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm">
           <div className="flex items-center justify-between mb-4">

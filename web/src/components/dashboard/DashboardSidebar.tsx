@@ -22,6 +22,14 @@ import {
   MessageSquare,
   Sparkles,
   Bell,
+  Users,
+  ClipboardList,
+  TrendingUp,
+  Settings,
+  GraduationCap,
+  Heart,
+  PieChart,
+  Baby,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -63,34 +71,150 @@ const studentNavGroups = [
   },
 ];
 
+const teacherNavGroups = [
+  {
+    label: "PANEL",
+    items: [
+      { href: "/ogretmen", icon: LayoutDashboard, label: "Ana Panel" },
+      { href: "/ogretmen/dersler", icon: BookOpen, label: "Derslerim" },
+      { href: "/ogretmen/icerik", icon: ClipboardList, label: "İçerik Yönetimi" },
+    ],
+  },
+  {
+    label: "ÖĞRENCİLER",
+    items: [
+      { href: "/ogretmen/analiz", icon: TrendingUp, label: "Öğrenci Analizi" },
+      { href: "/ogrenci/canli-ders", icon: GraduationCap, label: "Canlı Ders" },
+    ],
+  },
+  {
+    label: "İLETİŞİM",
+    items: [
+      { href: "/bildirimler", icon: Bell, label: "Bildirimler" },
+    ],
+  },
+  {
+    label: "HESAP",
+    items: [
+      { href: "/ogretmen/profil", icon: UserCircle, label: "Profil & Ayarlar" },
+    ],
+  },
+];
+
+const parentNavGroups = [
+  {
+    label: "TAKİP",
+    items: [
+      { href: "/veli", icon: LayoutDashboard, label: "Ana Panel" },
+      { href: "/veli/rapor", icon: PieChart, label: "Çocuğumun Raporu" },
+      { href: "/veli/profil", icon: Baby, label: "Çocuk Profili" },
+    ],
+  },
+  {
+    label: "İLETİŞİM",
+    items: [
+      { href: "/bildirimler", icon: Bell, label: "Bildirimler" },
+    ],
+  },
+  {
+    label: "HESAP",
+    items: [
+      { href: "/profil", icon: UserCircle, label: "Profilim" },
+    ],
+  },
+];
+
+const adminNavGroups = [
+  {
+    label: "YÖNETİM",
+    items: [
+      { href: "/admin", icon: LayoutDashboard, label: "Ana Panel" },
+      { href: "/admin/kullanicilar", icon: Users, label: "Kullanıcılar" },
+      { href: "/admin/ogretmen-onay", icon: GraduationCap, label: "Öğretmen Onayı" },
+    ],
+  },
+  {
+    label: "İÇERİK",
+    items: [
+      { href: "/admin/sorular", icon: FileQuestion, label: "Soru Havuzu" },
+      { href: "/admin/icerik", icon: ClipboardList, label: "İçerik" },
+      { href: "/admin/kupon", icon: Heart, label: "Kuponlar" },
+    ],
+  },
+  {
+    label: "RAPORLAR",
+    items: [
+      { href: "/admin/raporlar", icon: BarChart3, label: "Raporlar" },
+    ],
+  },
+  {
+    label: "HESAP",
+    items: [
+      { href: "/admin/ayarlar", icon: Settings, label: "Ayarlar" },
+      { href: "/admin/profil", icon: UserCircle, label: "Profil" },
+    ],
+  },
+];
+
 export function DashboardSidebar() {
   const pathname = usePathname();
   const { user } = useAuth();
 
   const isFreePlan = !user?.subscription_plan || user.subscription_plan === "free";
 
+  const role = user?.role;
+  const navGroups =
+    role === "teacher" ? teacherNavGroups :
+    role === "parent"  ? parentNavGroups :
+    role === "admin"   ? adminNavGroups :
+    studentNavGroups;
+
+  const rootHref =
+    role === "teacher" ? "/ogretmen" :
+    role === "parent"  ? "/veli" :
+    role === "admin"   ? "/admin" :
+    "/ogrenci";
+
+  const roleLabel =
+    role === "teacher" ? "Öğretmen Paneli" :
+    role === "parent"  ? "Veli Paneli" :
+    role === "admin"   ? "Admin Paneli" :
+    "Öğrenci Paneli";
+
+  const roleDot =
+    role === "teacher" ? "bg-indigo-500" :
+    role === "parent"  ? "bg-purple-500" :
+    role === "admin"   ? "bg-red-500" :
+    "bg-teal-500";
+
   return (
     <aside className="w-64 min-h-screen bg-white border-r border-slate-200/80 flex flex-col">
       <div className="p-5 border-b border-slate-100">
-        <Link href="/" className="flex items-center gap-3 group">
+        <Link href={rootHref} className="flex items-center gap-3 group">
           <div className="w-10 h-10 rounded-2xl overflow-hidden shadow-md">
             <Image src="/logo.png" alt="Terence Eğitim" width={40} height={40} />
           </div>
-          <span className="font-bold text-slate-900 tracking-tight text-sm">
-            TERENCE <span className="text-teal-600">EĞİTİM</span>
-          </span>
+          <div>
+            <span className="font-bold text-slate-900 tracking-tight text-sm block">
+              TERENCE <span className="text-teal-600">EĞİTİM</span>
+            </span>
+            <span className="flex items-center gap-1.5 text-[11px] text-slate-400 font-medium">
+              <span className={cn("w-1.5 h-1.5 rounded-full", roleDot)} />
+              {roleLabel}
+            </span>
+          </div>
         </Link>
       </div>
 
       <nav className="flex-1 p-3 overflow-y-auto">
-        {studentNavGroups.map((group, gi) => (
+        {navGroups.map((group, gi) => (
           <div key={group.label} className={cn("mb-1", gi > 0 && "pt-2 mt-1 border-t border-slate-100")}>
             <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 px-3 py-1.5 mb-0.5">
               {group.label}
             </p>
             <div className="space-y-0.5">
               {group.items.map((item) => {
-                const isActive = pathname === item.href || (item.href !== "/ogrenci" && pathname.startsWith(item.href + "/"));
+                const isActive = pathname === item.href || (item.href !== rootHref && pathname.startsWith(item.href + "/"));
                 return (
                   <Link
                     key={item.href}
@@ -102,7 +226,7 @@ export function DashboardSidebar() {
                         : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
                     )}
                   >
-                    <item.icon className="w-4.5 h-4.5 w-[18px] h-[18px] shrink-0" strokeWidth={2} />
+                    <item.icon className="w-[18px] h-[18px] shrink-0" strokeWidth={2} />
                     {item.label}
                   </Link>
                 );
@@ -112,8 +236,7 @@ export function DashboardSidebar() {
         ))}
       </nav>
 
-      {/* Upgrade widget - sadece free plan kullanıcılarına */}
-      {isFreePlan && (
+      {isFreePlan && role !== "teacher" && role !== "admin" && (
         <div className="px-3 pb-3">
           <div className="bg-gradient-to-br from-teal-50 to-emerald-50 border border-teal-100 rounded-xl p-3">
             <div className="flex items-center gap-2 mb-1.5">

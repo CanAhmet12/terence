@@ -3,7 +3,12 @@
 import Link from "next/link";
 import { ArrowRight, Sparkles, BookOpen, Users, BarChart3, TrendingUp, Flame, Star } from "lucide-react";
 
-const exams = ["LGS", "TYT", "AYT", "KPSS"];
+const exams = [
+  { label: "LGS", href: "/kayit?sinav=lgs" },
+  { label: "TYT", href: "/kayit?sinav=tyt" },
+  { label: "AYT", href: "/kayit?sinav=ayt" },
+  { label: "KPSS", href: "/kayit?sinav=kpss" },
+];
 const roles = [
   { label: "Öğrenciyim", desc: "Hedefime ulaş", href: "/kayit", icon: BookOpen, color: "teal" },
   { label: "Öğretmenim", desc: "Sınıfımı yönet", href: "/kayit", icon: Users, color: "indigo" },
@@ -68,15 +73,16 @@ export function HeroSection() {
               kalan günlere bölsün. AI koçun ile zayıf noktalarını hızla kapat.
             </p>
 
-            {/* Sınav rozetleri */}
+            {/* Sınav rozetleri — tıklanabilir */}
             <div className="mt-7 flex flex-wrap justify-center lg:justify-start gap-2">
               {exams.map((exam) => (
-                <span
-                  key={exam}
-                  className="px-4 py-2 rounded-xl bg-white/80 border border-slate-200/80 text-slate-700 font-semibold text-sm shadow-sm hover:bg-teal-50 hover:border-teal-200/80 transition-colors"
+                <Link
+                  key={exam.label}
+                  href={exam.href}
+                  className="px-4 py-2 rounded-xl bg-white/80 border border-slate-200/80 text-slate-700 font-semibold text-sm shadow-sm hover:bg-teal-50 hover:border-teal-300 hover:text-teal-700 transition-all hover:-translate-y-0.5"
                 >
-                  {exam}
-                </span>
+                  {exam.label}
+                </Link>
               ))}
             </div>
 

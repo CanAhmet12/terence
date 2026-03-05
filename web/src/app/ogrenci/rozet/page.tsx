@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import { api, BadgeData, LeaderboardEntry } from "@/lib/api";
 import { Trophy, Award, TrendingUp, Star, RefreshCw, Crown, AlertCircle, Globe, Filter } from "lucide-react";
@@ -289,12 +290,20 @@ export default function RozetPage() {
                       className={`p-5 rounded-2xl border-2 transition-all ${
                         badge.earned
                           ? "bg-amber-50 border-amber-200 shadow-sm hover:shadow-md hover:-translate-y-0.5"
-                          : "bg-slate-50 border-slate-200 opacity-70"
+                          : "bg-slate-50 border-slate-200 hover:border-slate-300 hover:bg-white"
                       }`}
                     >
                       <div className="flex items-start justify-between mb-3">
-                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-2xl shadow-sm border ${badge.earned ? "bg-white border-amber-100" : "bg-slate-100 border-slate-200"}`}>
-                          {badge.earned ? (badge.emoji ?? "✅") : "🔒"}
+                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-2xl shadow-sm border relative ${badge.earned ? "bg-white border-amber-100" : "bg-slate-100 border-slate-200"}`}>
+                          {badge.earned
+                            ? (badge.emoji ?? "✅")
+                            : (
+                              <span className="relative">
+                                <span className="text-2xl opacity-30">{badge.emoji ?? "🏅"}</span>
+                                <span className="absolute -bottom-0.5 -right-0.5 text-xs">🔒</span>
+                              </span>
+                            )
+                          }
                         </div>
                         {/* Progress ring — sadece kilitli rozetlerde göster */}
                         {!badge.earned && badge.required !== undefined && badge.required > 0 && (
@@ -311,15 +320,19 @@ export default function RozetPage() {
                           </div>
                         )}
                       </div>
-                      <h3 className="font-bold text-slate-900 text-sm">{badge.name}</h3>
+                      <h3 className={`font-bold text-sm ${badge.earned ? "text-slate-900" : "text-slate-600"}`}>{badge.name}</h3>
                       <p className="text-xs text-slate-500 mt-1">{badge.description}</p>
+                      {/* Kilitli rozet için "nasıl kazanılır" ipucu */}
+                      {!badge.earned && !badge.progress && (
+                        <p className="text-[11px] text-slate-400 font-medium mt-2 italic">Kazanmak için çalışmaya devam et</p>
+                      )}
                       {/* İlerleme durumu metin */}
                       {!badge.earned && badge.progress !== undefined && badge.required !== undefined && (
                         <p className="text-[11px] text-teal-600 font-semibold mt-2">{badge.progress}/{badge.required} tamamlandı</p>
                       )}
                       <div className="flex items-center justify-between mt-3">
                         <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
-                          badge.earned ? "bg-amber-100 text-amber-700" : "bg-slate-200 text-slate-500"
+                          badge.earned ? "bg-amber-100 text-amber-700" : "bg-slate-200 text-slate-400"
                         }`}>
                           +{badge.xp_reward} XP
                         </span>
@@ -363,7 +376,16 @@ export default function RozetPage() {
           {loading || leaderboardLoading ? (
             <div className="p-4 space-y-3">{[1, 2, 3, 4, 5].map((i) => <Skeleton key={i} className="h-14" />)}</div>
           ) : leaderboard.length === 0 ? (
-            <div className="p-8 text-center text-slate-400 text-sm">Sıralama verisi bulunamadı.</div>
+            <div className="p-10 text-center">
+              <div className="w-14 h-14 rounded-2xl bg-teal-50 flex items-center justify-center mx-auto mb-3">
+                <Trophy className="w-7 h-7 text-teal-400" />
+              </div>
+              <p className="font-semibold text-slate-700">Henüz sıralama oluşmadı</p>
+              <p className="text-sm text-slate-400 mt-1 max-w-xs mx-auto">Soru çöz ve görevleri tamamla — bu haftanın sıralamasında ilk sen görün!</p>
+              <Link href="/ogrenci/soru-bankasi" className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-teal-600 hover:underline">
+                Soru Bankasına Git →
+              </Link>
+            </div>
           ) : (
             <>
               {/* Top 3 podium */}

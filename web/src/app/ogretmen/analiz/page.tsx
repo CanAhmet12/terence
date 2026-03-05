@@ -51,6 +51,8 @@ export default function AnalizPage() {
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [sendingMsg, setSendingMsg] = useState(false);
   const [msgSent, setMsgSent] = useState(false);
+  const [showMsgModal, setShowMsgModal] = useState(false);
+  const [customMsg, setCustomMsg] = useState("");
 
   const [kazanimErrors, setKazanimErrors] = useState<KazanimError[]>([]);
   const [hardTopics, setHardTopics] = useState<HardTopic[]>([]);
@@ -104,20 +106,25 @@ export default function AnalizPage() {
   const handleSendToParents = async () => {
     if (!token || selectedIds.size === 0) return;
     setSendingMsg(true);
+    setShowMsgModal(false);
     try {
       for (const id of selectedIds) {
         const student = students.find((s) => s.id === id);
         if (!student) continue;
+        const msg = customMsg.trim()
+          ? customMsg.replace("{isim}", student.name)
+          : `Sayın veli, ${student.name} adlı öğrenciniz son günlerde düşük performans göstermektedir. Lütfen destek olun.`;
         await api.sendMessage(token, {
           recipient_type: "student",
           recipient_id: id,
           recipient_name: student.name,
-          content: `Sayın veli, ${student.name} adlı öğrenciniz son günlerde düşük performans göstermektedir. Lütfen destek olun.`,
+          content: msg,
           send_push: true,
         });
       }
       setMsgSent(true);
       clearSelection();
+      setCustomMsg("");
       setTimeout(() => setMsgSent(false), 4000);
     } catch {}
     setSendingMsg(false);
@@ -194,7 +201,7 @@ export default function AnalizPage() {
               </button>
               {selectedIds.size > 0 && (
                 <button
-                  onClick={handleSendToParents}
+                  onClick={() => setShowMsgModal(true)}
                   disabled={sendingMsg}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-teal-600 text-white text-xs font-semibold hover:bg-teal-700 transition-colors ml-auto disabled:opacity-70"
                 >
@@ -349,13 +356,54 @@ export default function AnalizPage() {
         <div className="mt-6 bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
           <h2 className="font-semibold text-slate-900 mb-4">Sınıf Net Dağılımı</h2>
           <div className="flex items-end gap-2 h-32">
-            {students.map((s) => (
-              <div key={s.id} className="flex-1 flex flex-col items-center gap-2">
-                <div className={"w-full rounded-t-xl min-h-[8px] " + (s.risk === "green" ? "bg-teal-500" : s.risk === "yellow" ? "bg-amber-500" : "bg-red-500")}
-                  style={{ height: (s.net / 100 * 100) + "%" }} title={s.name + ": " + s.net} />
-                <span className="text-[10px] text-slate-500 truncate w-full text-center">{s.name.split(" ")[0]}</span>
-              </div>
-            ))}
+            {(() => {
+              const maxStudentNet = Math.max(...students.map((s) => s.net), 1);
+              return students.map((s) => (
+                <div key={s.id} className="flex-1 flex flex-col items-center gap-2">
+                  <div
+                    className={"w-full rounded-t-xl min-h-[8px] " + (s.risk === "green" ? "bg-teal-500" : s.risk === "yellow" ? "bg-amber-500" : "bg-red-500")}
+                    style={{ height: Math.min((s.net / maxStudentNet) * 100, 100) + "%" }}
+                    title={s.name + ": " + s.net}
+                  />
+                  <span className="text-[10px] text-slate-500 truncate w-full text-center">{s.name.split(" ")[0]}</span>
+                </div>
+              ));
+            })()}
+          </div>
+        </div>
+      )}
+
+      {/* Veliye Bildir Modal */}
+      {showMsgModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+            <h3 className="font-bold text-lg text-slate-900 mb-1">Velilere Mesaj Gönder</h3>
+            <p className="text-sm text-slate-500 mb-4">
+              <span className="font-semibold text-teal-700">{selectedIds.size} öğrenci</span> seçildi.
+              {" "}<span className="text-slate-400">{"{"}</span>isim<span className="text-slate-400">{"}"}</span> yazarak öğrenci adını otomatik ekleyebilirsiniz.
+            </p>
+            <textarea
+              value={customMsg}
+              onChange={(e) => setCustomMsg(e.target.value)}
+              placeholder={`Sayın veli, {isim} adlı öğrenciniz son günlerde düşük performans göstermektedir. Lütfen destek olun.`}
+              rows={4}
+              className="w-full border border-slate-200 rounded-xl p-3 text-sm text-slate-800 resize-none focus:ring-2 focus:ring-teal-500 outline-none mb-4"
+            />
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowMsgModal(false)}
+                className="flex-1 py-2.5 border border-slate-200 text-slate-600 font-semibold rounded-xl text-sm hover:bg-slate-50 transition-colors"
+              >
+                İptal
+              </button>
+              <button
+                onClick={handleSendToParents}
+                className="flex-1 py-2.5 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-xl text-sm transition-colors flex items-center justify-center gap-2"
+              >
+                <MessageCircle className="w-4 h-4" />
+                Gönder
+              </button>
+            </div>
           </div>
         </div>
       )}

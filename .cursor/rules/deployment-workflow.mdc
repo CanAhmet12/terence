@@ -1,0 +1,61 @@
+---
+description: Terence Eğitim Platformu - Kritik deployment ve sunucu kuralları
+alwaysApply: true
+---
+
+# Terence Eğitim Platformu — Deployment Kuralları
+
+## Sunucu Bilgileri
+
+- **Site:** terenceegitim.com
+- **IP:** 31.210.53.84
+- **SSH:** `root@31.210.53.84` | Şifre: `2EhbrhzP`
+- **Host key:** `SHA256:EUXPR9sNR9HSKmOZ8Opu7bSR79Pa1vLInJw8PRr/p4g`
+- **GitHub:** https://github.com/CanAhmet12/terence.git
+
+
+## Sunucu Yapısı
+
+```
+/var/www/terence/                    ← Git repo kökü
+├── web/                             ← Next.js frontend (PM2: terence-web)
+└── nazliyavuz-platform/backend/     ← Laravel backend (PHP-FPM)
+/root/deploy.sh                      ← TEK KULLANILACAK DEPLOY SCRIPTI
+/root/backend_full_backup/           ← Otomatik backup klasörü
+```
+
+## ✅ Değişiklik Yapma Kuralı
+
+**Adım 1 — Local'de değiştir ve GitHub'a gönder:**
+```
+git add -A
+git commit -m "değişiklik açıklaması"
+git push terence main
+```
+
+**Adım 2 — Sunucuya deploy et:**
+```
+plink -ssh root@31.210.53.84 -pw "2EhbrhzP" -hostkey "SHA256:EUXPR9sNR9HSKmOZ8Opu7bSR79Pa1vLInJw8PRr/p4g" "bash /root/deploy.sh"
+```
+
+Deploy script otomatik olarak:
+1. Backend dosyalarını backup alır
+2. GitHub'dan güncellemeyi çeker
+3. Silinen kritik dosyaları geri yükler
+4. Laravel cache temizler
+5. Frontend build alır
+6. PM2 restart yapar
+
+## ⛔ Kesinlikle Yapılmayacaklar
+
+- `git pull` komutunu direkt çalıştırma — her zaman `bash /root/deploy.sh` kullan
+- `pscp` / `scp` ile direkt dosya yükleme — her şey Git üzerinden gitsin
+- `npm run build` komutunu tek başına çalıştırma — deploy script halleder
+- `/etc/nginx/sites-enabled/terence` dosyasına dokunma
+- `vendor/`, `.env`, `composer.json` dosyalarına dokunma
+- Herhangi bir dosyayı okumadan üzerine yazma
+
+## ⚠️ Kritik Bilgiler
+
+- `User.php` içindeki `toApiArray()` metodunu silme veya değiştirme — login bu metoda bağlı
+- Backend kritik dosyaları (`artisan`, `composer.json`, `config/`, `public/index.php`) git'te takip edilmiyor, deploy script bunları backup'tan geri yükler
