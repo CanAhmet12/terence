@@ -122,11 +122,13 @@ export default function RaporPage() {
       <h1>Performans Raporu</h1>
       <p>Tarih: ${new Date().toLocaleDateString("tr-TR")}</p>
       <table><tr><th>Metrik</th><th>Değer</th></tr>
-      <tr><td>Toplam Çalışma Süresi</td><td>${secondsToHuman(stats?.total_study_time_seconds ?? 0)}</td></tr>
-      <tr><td>Cevaplanan Soru</td><td>${stats?.total_questions_answered ?? 0}</td></tr>
-      <tr><td>Doğruluk Oranı</td><td>%${stats?.correct_rate?.toFixed(1) ?? 0}</td></tr>
+      <tr><td>Bu Hafta Çalışma Süresi</td><td>${secondsToHuman(stats?.study_time_weekly_seconds ?? 0)}</td></tr>
+      <tr><td>Bugün Tamamlanan Görev</td><td>${stats?.tasks_done_today ?? 0} / ${stats?.tasks_total_today ?? 0}</td></tr>
       <tr><td>XP Puanı</td><td>${stats?.xp_points ?? 0}</td></tr>
-      ${goal ? `<tr><td>Hedef Net</td><td>${goal.target_net}</td></tr><tr><td>Mevcut Net</td><td>${goal.current_net}</td></tr><tr><td>Kalan Gün</td><td>${goal.days_remaining}</td></tr>` : ""}
+      <tr><td>Seviye</td><td>${stats?.level ?? 1}</td></tr>
+      <tr><td>Mevcut Net</td><td>${stats?.current_net ?? 0}</td></tr>
+      <tr><td>Hedef Net</td><td>${stats?.target_net ?? 0}</td></tr>
+      ${goal ? `<tr><td>Kalan Gün</td><td>${goal.days_remaining}</td></tr>` : ""}
       </table></body></html>
     `);
     printWindow.document.close();
