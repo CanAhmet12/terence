@@ -42,11 +42,18 @@ Route::prefix('v1')->group(function () {
     Route::get('/health', [App\Http\Controllers\HealthCheckController::class, 'detailed']);
     Route::get('/health/basic', [App\Http\Controllers\HealthCheckController::class, 'basic']);
     
-    // Public routes
-    Route::get('/auth/me', [AuthController::class, 'me'])->middleware('auth:sanctum');
-    
-    // Email verification and password reset (public)
-    Route::post('/auth/verify-email-code', [AuthController::class, 'verifyEmailCode'])->middleware('auth_rate_limit');
+    // ============================================================
+    // PUBLIC AUTH ROUTES (No authentication required)
+    // ============================================================
+    Route::post('/auth/login', [\App\Http\Controllers\Api\AuthController::class, 'login'])->middleware('auth_rate_limit');
+    Route::post('/auth/register', [\App\Http\Controllers\Api\AuthController::class, 'register'])->middleware('auth_rate_limit');
+    Route::post('/auth/refresh', [\App\Http\Controllers\Api\AuthController::class, 'refresh']);
+    Route::post('/auth/logout', [\App\Http\Controllers\Api\AuthController::class, 'logout']);
+    Route::post('/auth/forgot-password', [\App\Http\Controllers\Api\AuthController::class, 'forgotPassword'])->middleware('auth_rate_limit');
+    Route::post('/auth/reset-password', [\App\Http\Controllers\Api\AuthController::class, 'resetPassword'])->middleware('auth_rate_limit');
+    Route::post('/auth/verify-email', [\App\Http\Controllers\Api\AuthController::class, 'verifyEmail']);
+    Route::post('/auth/resend-verification', [\App\Http\Controllers\Api\AuthController::class, 'resendVerification'])->middleware('auth_rate_limit');
+    Route::post('/auth/verify-email-code', [\App\Http\Controllers\Api\AuthController::class, 'verifyEmailCode'])->middleware('auth_rate_limit');
     
     // Social Authentication (public)
     Route::post('/auth/social/google', [App\Http\Controllers\SocialAuthController::class, 'googleAuth'])->middleware('auth_rate_limit');
@@ -54,7 +61,7 @@ Route::prefix('v1')->group(function () {
     Route::post('/auth/social/apple', [App\Http\Controllers\SocialAuthController::class, 'appleAuth'])->middleware('auth_rate_limit');
     
     // Mail status check (public)
-    Route::get('/auth/mail-status', [AuthController::class, 'getMailStatus']);
+    Route::get('/auth/mail-status', [\App\Http\Controllers\Api\AuthController::class, 'getMailStatus']);
     
     // Categories (public)
     Route::get('/categories', [CategoryController::class, 'index'])->middleware('advanced_cache:categories,1800');
@@ -377,18 +384,20 @@ Route::prefix('v1')->group(function () {
 // TERENCE EGITIM PLATFORMU - PUBLIC ROUTES
 // ============================================================
 Route::get('/packages', [\App\Http\Controllers\Api\PaymentController::class, 'packages']);
-Route::get('/courses', [\App\Http\Controllers\Api\CourseController::class, 'index']);
-Route::get('/courses/{id}', [\App\Http\Controllers\Api\CourseController::class, 'show']);
-Route::get('/questions', [\App\Http\Controllers\Api\QuestionController::class, 'index']);
-Route::get('/kazanimlar', [\App\Http\Controllers\Api\QuestionController::class, 'kazanimlar']);
-Route::post('/auth/login', [\App\Http\Controllers\Api\AuthController::class, 'login']);
-Route::post('/auth/register', [\App\Http\Controllers\Api\AuthController::class, 'register']);
-Route::post('/auth/refresh', [\App\Http\Controllers\Api\AuthController::class, 'refresh']);
-Route::post('/auth/logout', [\App\Http\Controllers\Api\AuthController::class, 'logout']);
-Route::post('/auth/forgot-password', [\App\Http\Controllers\Api\AuthController::class, 'forgotPassword']);
-Route::post('/auth/reset-password', [\App\Http\Controllers\Api\AuthController::class, 'resetPassword']);
-Route::post('/auth/verify-email', [\App\Http\Controllers\Api\AuthController::class, 'verifyEmail']);
-Route::post('/auth/resend-verification', [\App\Http\Controllers\Api\AuthController::class, 'resendVerification']);
+// REMOVED: Duplicate auth routes below have been consolidated into /api/v1 prefix above
+// Old routes were:
+// - POST /api/auth/login (duplicated in v1)
+// - POST /api/auth/register (duplicated in v1)
+// - POST /api/auth/refresh (duplicated in v1)
+// - POST /api/auth/logout (duplicated in v1)
+// - POST /api/auth/forgot-password (duplicated in v1)
+// - POST /api/auth/reset-password (duplicated in v1)
+// - POST /api/auth/verify-email (duplicated in v1)
+// - POST /api/auth/resend-verification (duplicated in v1)
+// - GET /api/auth/me (duplicated in v1)
+// All auth endpoints now use /api prefix managed by Terence API below
+
+// Payment callback (public) - Keep outside auth
 Route::post('/payment/callback', [\App\Http\Controllers\Api\PaymentController::class, 'callback']);
 
 // ============================================================
@@ -521,9 +530,3 @@ Route::middleware(['auth:api'])->group(function () {
 
 // Payment callback (public)
 Route::post('/payment/callback', [\App\Http\Controllers\Api\PaymentController::class, 'callback']);
-
-// TEMP DEBUG
-Route::post('/debug/body', function($req) {
-    $raw = file_get_contents('php://input');
-    return response()->json(['raw'=>$raw,'all'=>$req->all(),'len'=>strlen($raw),'ct'=>$req->header('Content-Type')]);
-});

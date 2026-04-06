@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\EmailVerification;
+use App\Models\RefreshToken;
 use App\Services\MailService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -12,6 +13,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Cookie;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use Tymon\JWTAuth\Exceptions\JWTException;
 
@@ -35,6 +37,8 @@ class AuthController extends Controller
             'subject'               => 'nullable|string|max:100',
             'bio'                   => 'nullable|string|max:500',
             'child_email'           => 'nullable|email',
+            'device_name'           => 'nullable|string|max:255',
+            'device_id'             => 'nullable|string|max:255',
         ]);
 
         if ($v->fails()) {
@@ -54,7 +58,7 @@ class AuthController extends Controller
             'target_net'        => $request->target_net,
         ]);
 
-        // Ã–ÄŸretmen ek alanlarÄ±
+        // Öğretmen ek alanları
         if ($request->role === 'teacher' && ($request->subject || $request->bio)) {
             $user->update(array_filter([
                 'subject' => $request->subject,
@@ -62,17 +66,11 @@ class AuthController extends Controller
             ]));
         }
 
-        // Veli-Ã§ocuk baÄŸlantÄ±sÄ±
+        // Veli-çocuk bağlantısı
         if ($request->role === 'parent' && $request->child_email) {
-            $child = \App\Models\User::where('email', $request->child_email)->where('role', 'student')->first();
+            $child = User::where('email', $request->child_email)->where('role', 'student')->first();
             if ($child) {
-                \Illuminate\Support\Facades\DB::table('parent_students')->insertOrIgnore([
-                    'parent_id'  => $user->id,
-                    'student_id' => $child->id,
-                    'status'     => 'approved',
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
+                $user->addChild($child->id);
             }
         }
 
@@ -84,22 +82,36 @@ class AuthController extends Controller
             Log::warning('Email verification send failed: ' . $e->getMessage());
         }
 
-        $token = JWTAuth::fromUser($user);
+        // Generate tokens
+        $accessToken = JWTAuth::fromUser($user);
+        $refreshToken = RefreshToken::generate(
+            $user->id,
+            $request->input('device_name'),
+            $request->input('device_id'),
+            $request->ip(),
+            $request->userAgent(),
+            30 // 30 days
+        );
 
-        return response()->json([
+        $response = response()->json([
             'success' => true,
             'message' => 'Kayıt başarılı',
             'user'    => $user->toApiArray(),
-            'token'   => $this->tokenData($token),
+            'token'   => $this->tokenData($accessToken),
             'verification_required' => $user->email_verified_at === null,
         ], 201);
+
+        // Set HttpOnly cookie for refresh token
+        return $this->attachRefreshTokenCookie($response, $refreshToken->token);
     }
 
     public function login(Request $request): JsonResponse
     {
         $v = Validator::make($request->all(), [
-            'email'    => 'required|email',
-            'password' => 'required|string|min:6',
+            'email'       => 'required|email',
+            'password'    => 'required|string|min:6',
+            'device_name' => 'nullable|string|max:255',
+            'device_id'   => 'nullable|string|max:255',
         ]);
 
         if ($v->fails()) {
@@ -117,13 +129,26 @@ class AuthController extends Controller
         $user = Auth::user();
         $user->update(['last_login_at' => now()]);
 
-        return response()->json([
+        // Generate refresh token
+        $refreshToken = RefreshToken::generate(
+            $user->id,
+            $request->input('device_name'),
+            $request->input('device_id'),
+            $request->ip(),
+            $request->userAgent(),
+            30 // 30 days
+        );
+
+        $response = response()->json([
             'success' => true,
             'message' => 'Giriş başarılı',
             'user'    => $user->toApiArray(),
             'token'   => $this->tokenData($token),
             'verification_required' => $user->email_verified_at === null,
         ]);
+
+        // Set HttpOnly cookie for refresh token
+        return $this->attachRefreshTokenCookie($response, $refreshToken->token);
     }
 
     public function me(): JsonResponse
@@ -219,7 +244,11 @@ class AuthController extends Controller
             ], 400);
         }
         $user->update(['password' => Hash::make($request->password)]);
-        return response()->json(['success' => true, 'message' => 'Şifre başarıyla değiştirildi']);
+        
+        // Revoke all other tokens for security
+        RefreshToken::revokeAllForUser($user->id);
+        
+        return response()->json(['success' => true, 'message' => 'Şifre başarıyla değiştirildi. Lütfen tekrar giriş yapın.']);
     }
 
     public function uploadProfilePhoto(Request $request): JsonResponse
@@ -240,22 +269,90 @@ class AuthController extends Controller
         ]);
     }
 
-    public function logout(): JsonResponse
+    public function logout(Request $request): JsonResponse
     {
         try {
             JWTAuth::invalidate(JWTAuth::getToken());
         } catch (\Exception) {}
-        return response()->json(['success' => true, 'message' => 'Çıkış yapıldı']);
+        
+        // Revoke refresh token from cookie
+        $refreshTokenString = $request->cookie('refresh_token');
+        if ($refreshTokenString) {
+            $refreshToken = RefreshToken::findByToken($refreshTokenString);
+            if ($refreshToken) {
+                $refreshToken->revoke();
+            }
+        }
+        
+        $response = response()->json(['success' => true, 'message' => 'Çıkış yapıldı']);
+        
+        // Clear refresh token cookie
+        return $response->withCookie(Cookie::forget('refresh_token'));
     }
 
-    public function refresh(): JsonResponse
+    public function refresh(Request $request): JsonResponse
     {
-        try {
-            $token = JWTAuth::refresh(JWTAuth::getToken());
-            return response()->json(['success' => true, 'token' => $this->tokenData($token)]);
-        } catch (JWTException) {
-            return response()->json(['error' => true, 'code' => 'TOKEN_EXPIRED', 'message' => 'Token yenilenemedi'], 401);
+        // Get refresh token from HttpOnly cookie
+        $refreshTokenString = $request->cookie('refresh_token');
+        
+        if (!$refreshTokenString) {
+            return response()->json([
+                'error' => true,
+                'code' => 'REFRESH_TOKEN_MISSING',
+                'message' => 'Refresh token bulunamadı'
+            ], 401);
         }
+        
+        $refreshToken = RefreshToken::findByToken($refreshTokenString);
+        
+        if (!$refreshToken || !$refreshToken->isValid()) {
+            return response()->json([
+                'error' => true,
+                'code' => 'REFRESH_TOKEN_INVALID',
+                'message' => 'Refresh token geçersiz veya süresi dolmuş'
+            ], 401);
+        }
+        
+        $user = $refreshToken->user;
+        
+        // Generate new access token
+        $accessToken = JWTAuth::fromUser($user);
+        
+        // Generate new refresh token (rotation)
+        $newRefreshToken = RefreshToken::generate(
+            $user->id,
+            $refreshToken->device_name,
+            $refreshToken->device_id,
+            $request->ip(),
+            $request->userAgent(),
+            30
+        );
+        
+        // Revoke old refresh token
+        $refreshToken->revoke();
+        
+        // Mark new token as used
+        $newRefreshToken->markAsUsed();
+        
+        $response = response()->json([
+            'success' => true,
+            'token' => $this->tokenData($accessToken),
+            'user' => $user->toApiArray()
+        ]);
+        
+        // Set new refresh token cookie
+        return $this->attachRefreshTokenCookie($response, $newRefreshToken->token);
+    }
+
+    public function revokeAllTokens(): JsonResponse
+    {
+        $user = Auth::user();
+        RefreshToken::revokeAllForUser($user->id);
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Tüm cihazlardaki oturumlar sonlandırıldı'
+        ]);
     }
 
     // --------------------------------------------------------
@@ -266,6 +363,23 @@ class AuthController extends Controller
             'token_type'   => 'bearer',
             'expires_in'   => config('jwt.ttl') * 60,
         ];
+    }
+
+    private function attachRefreshTokenCookie(JsonResponse $response, string $refreshToken): JsonResponse
+    {
+        return $response->withCookie(
+            Cookie::make(
+                'refresh_token',
+                $refreshToken,
+                60 * 24 * 30, // 30 days in minutes
+                '/',
+                config('session.domain'),
+                config('session.secure', true), // Secure (HTTPS only)
+                true, // HttpOnly
+                false, // Raw
+                config('session.same_site', 'lax') // SameSite
+            )
+        );
     }
 
     private function validationError(\Illuminate\Validation\Validator $v, Request $request): JsonResponse

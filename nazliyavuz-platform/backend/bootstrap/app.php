@@ -26,6 +26,8 @@ return Application::configure(basePath: dirname(__DIR__))
                'role' => \App\Http\Middleware\RoleMiddleware::class,
                'rate_limit' => \App\Http\Middleware\RateLimitMiddleware::class,
                'auth_rate_limit' => \App\Http\Middleware\AuthRateLimitMiddleware::class,
+               'dynamic_rate_limit' => \App\Http\Middleware\DynamicRateLimitMiddleware::class,
+               'api_logger' => \App\Http\Middleware\ApiRequestLogger::class,
                'cache_response' => \App\Http\Middleware\CacheResponseMiddleware::class,
                'advanced_cache' => \App\Http\Middleware\AdvancedCacheMiddleware::class,
                'advanced_rate_limit' => \App\Http\Middleware\AdvancedRateLimitMiddleware::class,

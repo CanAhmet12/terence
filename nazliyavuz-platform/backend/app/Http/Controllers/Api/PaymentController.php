@@ -3,257 +3,326 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Payment;
 use App\Models\Subscription;
-use App\Models\SubscriptionPlan;
-use App\Models\PaymentLog;
+use App\Models\User;
+use App\Services\PayTRService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
-use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
 
 class PaymentController extends Controller
 {
-    // GET /api/packages — paket listesi
-    public function packages(): JsonResponse
-    {
-        $plans = SubscriptionPlan::where('is_active', true)->orderBy('sort_order')->get();
-        return response()->json(['success' => true, 'data' => $plans]);
-    }
+    public function __construct(private PayTRService $paytrService) {}
 
-    // POST /api/payment/initiate — PayTR ödeme başlat
-    public function initiate(Request $request): JsonResponse
+    /**
+     * Create payment token for checkout
+     */
+    public function createPayment(Request $request): JsonResponse
     {
-        $request->validate([
-            'plan_id'       => 'required|integer|exists:subscription_plans,id',
-            'billing_cycle' => 'required|in:monthly,yearly',
+        $validator = Validator::make($request->all(), [
+            'plan_type' => 'required|in:bronze,plus,pro',
+            'billing_period' => 'required|in:monthly,quarterly,yearly',
+            'installment' => 'sometimes|integer|min:0|max:12',
         ]);
 
-        $user   = Auth::user();
-        $plan   = SubscriptionPlan::findOrFail($request->plan_id);
-        $amount = $request->billing_cycle === 'yearly'
-            ? ($plan->yearly_price ?? $plan->monthly_price * 10)
-            : $plan->monthly_price;
+        if ($validator->fails()) {
+            return response()->json(['error' => true, 'errors' => $validator->errors()], 422);
+        }
 
-        $merchantId  = config('paytr.merchant_id');
-        $merchantKey = config('paytr.merchant_key');
-        $merchantSalt= config('paytr.merchant_salt');
-        $merchantOid = 'TRC-' . Str::upper(Str::random(10)) . '-' . $user->id;
+        $user = Auth::user();
+        $planType = $request->plan_type;
+        $billingPeriod = $request->billing_period;
 
-        // Abonelik kaydı (pending)
-        $subscription = Subscription::create([
-            'user_id'          => $user->id,
-            'plan_id'          => $plan->id,
-            'paytr_merchant_oid'=> $merchantOid,
-            'status'           => 'pending',
-            'billing_cycle'    => $request->billing_cycle,
-            'amount_paid'      => $amount,
+        // Get plan pricing
+        $pricing = $this->getPlanPricing($planType, $billingPeriod);
+
+        // Create payment record
+        $payment = Payment::create([
+            'user_id' => $user->id,
+            'merchant_oid' => null, // Will be set by PayTR
+            'amount' => $pricing['amount'],
+            'currency' => 'TRY',
+            'status' => 'pending',
+            'payment_method' => 'paytr',
+            'plan_type' => $planType,
+            'billing_period' => $billingPeriod,
+            'installment_count' => $request->input('installment', 0),
         ]);
 
-        // PayTR iframe token oluştur
-        $userBasket   = base64_encode(json_encode([[
-            $plan->name . ' ' . ucfirst($request->billing_cycle),
-            number_format($amount, 2, '.', ''),
-            1,
-        ]]));
-        $userIp       = $request->ip();
-        $email        = $user->email;
-        $userName     = $user->name;
-        $userPhone    = $user->phone ?? '05000000000';
-        $userAddress  = 'Türkiye';
-        $noInstallment= '0';
-        $maxInstallment='0';
-        $currency     = 'TL';
-        $testMode     = config('paytr.test_mode', '1');
-        $paymentAmount= (int) round($amount * 100); // kuruş
-        $okUrl        = config('app.url') . '/odeme-basarili?oid=' . $merchantOid;
-        $failUrl      = config('app.url') . '/odeme-hatali?oid=' . $merchantOid;
-        $lang         = 'tr';
-
-        $hashStr = $merchantId . $userIp . $merchantOid . $email . $paymentAmount
-            . $userBasket . $noInstallment . $maxInstallment . $currency . $testMode . $merchantSalt;
-        $paytrToken = base64_encode(hash_hmac('sha256', $hashStr, $merchantKey, true));
-
-        $postData = [
-            'merchant_id'        => $merchantId,
-            'user_ip'            => $userIp,
-            'merchant_oid'       => $merchantOid,
-            'email'              => $email,
-            'payment_amount'     => $paymentAmount,
-            'paytr_token'        => $paytrToken,
-            'user_basket'        => $userBasket,
-            'debug_on'           => '1',
-            'no_installment'     => $noInstallment,
-            'max_installment'    => $maxInstallment,
-            'user_name'          => $userName,
-            'user_address'       => $userAddress,
-            'user_phone'         => $userPhone,
-            'merchant_ok_url'    => $okUrl,
-            'merchant_fail_url'  => $failUrl,
-            'timeout_limit'      => '30',
-            'currency'           => $currency,
-            'test_mode'          => $testMode,
-            'lang'               => $lang,
-            'client_lang'        => $lang,
+        // Prepare PayTR params
+        $paytrParams = [
+            'user_ip' => $request->ip(),
+            'email' => $user->email,
+            'amount' => $pricing['amount'],
+            'installment' => $request->input('installment', 0),
+            'success_url' => config('app.frontend_url') . '/payment/success',
+            'fail_url' => config('app.frontend_url') . '/payment/fail',
+            'user_name' => $user->name,
+            'user_phone' => $user->phone ?? '05000000000',
+            'basket' => [[
+                'name' => $pricing['name'],
+                'price' => $pricing['amount'],
+                'quantity' => 1,
+            ]],
         ];
 
-        $ch = curl_init('https://www.paytr.com/odeme/api/get-token');
-        curl_setopt_array($ch, [
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_SSL_VERIFYPEER => false,
-            CURLOPT_POSTFIELDS     => http_build_query($postData),
-        ]);
-        $result = curl_exec($ch);
-        curl_close($ch);
-        $result = json_decode($result, true);
+        // Get payment token from PayTR
+        $result = $this->paytrService->createPaymentToken($paytrParams);
 
-        if (!isset($result['status']) || $result['status'] !== 'success') {
-            Log::error('PayTR token error', ['result' => $result]);
+        if (!$result['success']) {
             return response()->json([
-                'error'   => true,
-                'code'    => 'PAYTR_TOKEN_ERROR',
-                'message' => 'Ödeme başlatılamadı: ' . ($result['reason'] ?? 'Bilinmeyen hata'),
-            ], 500);
+                'error' => true,
+                'message' => $result['error'],
+            ], 400);
         }
 
+        // Update payment with merchant_oid
+        $payment->update(['merchant_oid' => $result['merchant_oid']]);
+
+        Log::channel('payment')->info('Payment initiated', [
+            'user_id' => $user->id,
+            'payment_id' => $payment->id,
+            'merchant_oid' => $result['merchant_oid'],
+            'amount' => $pricing['amount'],
+        ]);
+
         return response()->json([
-            'success'      => true,
-            'token'        => $result['token'],
-            'merchant_oid' => $merchantOid,
-            'iframe_url'   => 'https://www.paytr.com/odeme/guvenli/' . $result['token'],
+            'success' => true,
+            'payment_token' => $result['token'],
+            'payment_id' => $payment->id,
+            'amount' => $pricing['amount'],
         ]);
     }
 
-    // POST /api/payment/callback — PayTR callback (webhook)
-    public function callback(Request $request): \Illuminate\Http\Response
+    /**
+     * Handle PayTR callback
+     */
+    public function callback(Request $request): string
     {
-        $merchantKey  = config('paytr.merchant_key');
-        $merchantSalt = config('paytr.merchant_salt');
+        $post = $request->post();
 
-        $hash = base64_encode(hash_hmac('sha256',
-            $request->merchant_oid . $merchantSalt . $request->status . $request->total_amount,
-            $merchantKey, true
-        ));
-
-        if ($hash !== $request->hash) {
-            Log::warning('PayTR invalid hash', $request->all());
-            return response('INVALID_HASH', 400);
-        }
-
-        $oid          = $request->merchant_oid;
-        $status       = $request->status;
-        $subscription = Subscription::where('paytr_merchant_oid', $oid)->first();
-
-        if (!$subscription) {
-            return response('OK');
-        }
-
-        PaymentLog::create([
-            'user_id'             => $subscription->user_id,
-            'subscription_id'     => $subscription->id,
-            'paytr_merchant_oid'  => $oid,
-            'paytr_payment_type'  => $request->payment_type ?? null,
-            'paytr_payment_amount'=> $request->total_amount ?? null,
-            'status'              => $status,
-            'raw_response'        => $request->all(),
+        Log::channel('payment')->info('PayTR callback received', [
+            'merchant_oid' => $post['merchant_oid'] ?? null,
+            'status' => $post['status'] ?? null,
         ]);
 
-        if ($status === 'success') {
-            $plan    = $subscription->plan;
-            $expires = $subscription->billing_cycle === 'yearly'
-                ? now()->addYear()
-                : now()->addMonth();
+        // Verify callback
+        $verification = $this->paytrService->verifyCallback($post);
 
-            $subscription->update([
-                'status'     => 'active',
-                'starts_at'  => now(),
-                'expires_at' => $expires,
+        if (!$verification['success']) {
+            Log::channel('payment')->error('PayTR callback verification failed', $post);
+            return 'OK'; // Always return OK to PayTR
+        }
+
+        // Find payment
+        $payment = Payment::where('merchant_oid', $verification['merchant_oid'])->first();
+
+        if (!$payment) {
+            Log::channel('payment')->error('Payment not found', [
+                'merchant_oid' => $verification['merchant_oid'],
+            ]);
+            return 'OK';
+        }
+
+        // Update payment status
+        if ($verification['status'] === 'success') {
+            $payment->update([
+                'status' => 'completed',
+                'paid_at' => now(),
+                'payment_type' => $verification['payment_type'],
+                'reference_no' => $post['reference_no'] ?? null,
             ]);
 
-            $subscription->user->update([
-                'subscription_plan'       => $plan->slug,
-                'subscription_expires_at' => $expires,
+            // Activate subscription
+            $this->activateSubscription($payment);
+
+            Log::channel('payment')->info('Payment completed', [
+                'payment_id' => $payment->id,
+                'user_id' => $payment->user_id,
+                'amount' => $payment->amount,
             ]);
         } else {
-            $subscription->update(['status' => 'cancelled']);
+            $payment->update([
+                'status' => 'failed',
+                'failed_reason' => $verification['failed_reason_msg'],
+                'failed_code' => $verification['failed_reason_code'],
+            ]);
+
+            Log::channel('payment')->warning('Payment failed', [
+                'payment_id' => $payment->id,
+                'reason' => $verification['failed_reason_msg'],
+            ]);
         }
 
-        return response('OK');
+        return 'OK';
     }
 
-    // GET /api/subscription/status
-    public function status(): JsonResponse
+    /**
+     * Get payment status
+     */
+    public function status(int $paymentId): JsonResponse
     {
-        $user = Auth::user();
-        $subscription = Subscription::with('plan')
-            ->where('user_id', $user->id)
-            ->where('status', 'active')
-            ->orderByDesc('starts_at')
+        $payment = Payment::where('id', $paymentId)
+            ->where('user_id', Auth::id())
             ->first();
 
-        return response()->json([
-            'success'           => true,
-            'subscription_plan' => $user->subscription_plan,
-            'expires_at'        => $user->subscription_expires_at,
-            'subscription'      => $subscription,
-        ]);
-    }
-
-    // POST /api/payment/apply-coupon
-    public function applyCoupon(Request $request): JsonResponse
-    {
-        $request->validate([
-            'code'    => 'required|string|max:50',
-            'plan_id' => 'nullable|integer|exists:subscription_plans,id',
-        ]);
-
-        $coupon = DB::table('coupons')
-            ->where('code', strtoupper(trim($request->code)))
-            ->where('is_active', true)
-            ->first();
-
-        if (!$coupon) {
-            return response()->json(['error' => true, 'message' => 'Kupon kodu gecersiz veya kullanimdan kaldirilmis'], 404);
-        }
-
-        if ($coupon->expires_at && Carbon::parse($coupon->expires_at)->isPast()) {
-            return response()->json(['error' => true, 'message' => 'Kupon kodunun kullanim suresi dolmus'], 422);
-        }
-
-        if ($coupon->max_uses !== null && $coupon->used_count >= $coupon->max_uses) {
-            return response()->json(['error' => true, 'message' => 'Kupon kodu maksimum kullanim sayisina ulasmis'], 422);
-        }
-
-        $originalAmount = 0;
-        $discountAmount = 0;
-        $finalAmount    = 0;
-
-        if ($request->filled('plan_id')) {
-            $plan = SubscriptionPlan::find($request->plan_id);
-            if ($plan) {
-                $originalAmount = (float) $plan->monthly_price;
-                if ($coupon->type === 'percent') {
-                    $discountAmount = round($originalAmount * ($coupon->value / 100), 2);
-                } else {
-                    $discountAmount = min((float) $coupon->value, $originalAmount);
-                }
-                $finalAmount = max(0, $originalAmount - $discountAmount);
-            }
+        if (!$payment) {
+            return response()->json(['error' => true, 'message' => 'Ödeme bulunamadı'], 404);
         }
 
         return response()->json([
-            'success'         => true,
-            'coupon'          => [
-                'code'        => $coupon->code,
-                'type'        => $coupon->type,
-                'value'       => $coupon->value,
-                'description' => $coupon->description,
+            'success' => true,
+            'payment' => [
+                'id' => $payment->id,
+                'status' => $payment->status,
+                'amount' => $payment->amount,
+                'plan_type' => $payment->plan_type,
+                'billing_period' => $payment->billing_period,
+                'paid_at' => $payment->paid_at,
             ],
-            'original_amount' => $originalAmount,
-            'discount_amount' => $discountAmount,
-            'final_amount'    => $finalAmount,
         ]);
+    }
+
+    /**
+     * Get user's payment history
+     */
+    public function history(): JsonResponse
+    {
+        $payments = Payment::where('user_id', Auth::id())
+            ->orderBy('created_at', 'desc')
+            ->limit(20)
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'payments' => $payments,
+        ]);
+    }
+
+    /**
+     * Request refund
+     */
+    public function refund(int $paymentId): JsonResponse
+    {
+        $payment = Payment::where('id', $paymentId)
+            ->where('user_id', Auth::id())
+            ->where('status', 'completed')
+            ->first();
+
+        if (!$payment) {
+            return response()->json(['error' => true, 'message' => 'Ödeme bulunamadı'], 404);
+        }
+
+        // Check refund eligibility (14 days)
+        if ($payment->paid_at->diffInDays(now()) > 14) {
+            return response()->json([
+                'error' => true,
+                'message' => 'İade süresi geçmiş (maksimum 14 gün)',
+            ], 400);
+        }
+
+        // Process refund
+        $result = $this->paytrService->refund(
+            $payment->merchant_oid,
+            $payment->amount,
+            $payment->reference_no
+        );
+
+        if ($result['success']) {
+            $payment->update([
+                'status' => 'refunded',
+                'refunded_at' => now(),
+            ]);
+
+            // Deactivate subscription
+            Subscription::where('user_id', $payment->user_id)
+                ->where('status', 'active')
+                ->update(['status' => 'cancelled']);
+
+            Log::channel('payment')->info('Payment refunded', [
+                'payment_id' => $payment->id,
+                'user_id' => $payment->user_id,
+                'amount' => $payment->amount,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'İade işlemi başarılı',
+            ]);
+        }
+
+        return response()->json([
+            'error' => true,
+            'message' => $result['error'],
+        ], 400);
+    }
+
+    /**
+     * Activate subscription after successful payment
+     */
+    private function activateSubscription(Payment $payment): void
+    {
+        $expiresAt = match($payment->billing_period) {
+            'monthly' => now()->addMonth(),
+            'quarterly' => now()->addMonths(3),
+            'yearly' => now()->addYear(),
+        };
+
+        // Deactivate existing subscriptions
+        Subscription::where('user_id', $payment->user_id)
+            ->where('status', 'active')
+            ->update(['status' => 'expired']);
+
+        // Create new subscription
+        Subscription::create([
+            'user_id' => $payment->user_id,
+            'payment_id' => $payment->id,
+            'plan_type' => $payment->plan_type,
+            'billing_period' => $payment->billing_period,
+            'status' => 'active',
+            'started_at' => now(),
+            'expires_at' => $expiresAt,
+        ]);
+
+        // Update user subscription fields
+        User::where('id', $payment->user_id)->update([
+            'subscription_plan' => $payment->plan_type,
+            'subscription_expires_at' => $expiresAt,
+        ]);
+
+        Log::channel('payment')->info('Subscription activated', [
+            'user_id' => $payment->user_id,
+            'plan' => $payment->plan_type,
+            'expires_at' => $expiresAt,
+        ]);
+    }
+
+    /**
+     * Get plan pricing
+     */
+    private function getPlanPricing(string $plan, string $period): array
+    {
+        $pricing = [
+            'bronze' => [
+                'monthly' => ['amount' => 99, 'name' => 'Terence Bronze - Aylık'],
+                'quarterly' => ['amount' => 267, 'name' => 'Terence Bronze - 3 Aylık'],
+                'yearly' => ['amount' => 950, 'name' => 'Terence Bronze - Yıllık'],
+            ],
+            'plus' => [
+                'monthly' => ['amount' => 199, 'name' => 'Terence Plus - Aylık'],
+                'quarterly' => ['amount' => 537, 'name' => 'Terence Plus - 3 Aylık'],
+                'yearly' => ['amount' => 1900, 'name' => 'Terence Plus - Yıllık'],
+            ],
+            'pro' => [
+                'monthly' => ['amount' => 399, 'name' => 'Terence Pro - Aylık'],
+                'quarterly' => ['amount' => 1077, 'name' => 'Terence Pro - 3 Aylık'],
+                'yearly' => ['amount' => 3800, 'name' => 'Terence Pro - Yıllık'],
+            ],
+        ];
+
+        return $pricing[$plan][$period];
     }
 }

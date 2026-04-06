@@ -264,6 +264,130 @@ class User extends Authenticatable implements JWTSubject
     }
 
     /**
+     * Get children (for parent role) - Students linked to this parent
+     */
+    public function children()
+    {
+        return $this->belongsToMany(
+            User::class,
+            'parent_students',
+            'parent_id',
+            'student_id'
+        )
+        ->using(ParentStudent::class)
+        ->withPivot(['relation', 'status', 'invite_code', 'created_at'])
+        ->withTimestamps();
+    }
+
+    /**
+     * Get parents (for student role) - Parents linked to this student
+     */
+    public function parents()
+    {
+        return $this->belongsToMany(
+            User::class,
+            'parent_students',
+            'student_id',
+            'parent_id'
+        )
+        ->using(ParentStudent::class)
+        ->withPivot(['relation', 'status', 'invite_code', 'created_at'])
+        ->withTimestamps();
+    }
+
+    /**
+     * Check if user is a parent
+     */
+    public function isParent(): bool
+    {
+        return $this->role === 'parent';
+    }
+
+    /**
+     * Get approved children only
+     */
+    public function approvedChildren()
+    {
+        return $this->children()->wherePivot('status', 'approved');
+    }
+
+    /**
+     * Get pending children (awaiting approval)
+     */
+    public function pendingChildren()
+    {
+        return $this->children()->wherePivot('status', 'pending');
+    }
+
+    /**
+     * Check if this parent has a specific child
+     */
+    public function hasChild(int $studentId): bool
+    {
+        return $this->children()->where('student_id', $studentId)->exists();
+    }
+
+    /**
+     * Check if this student has a specific parent
+     */
+    public function hasParent(int $parentId): bool
+    {
+        return $this->parents()->where('parent_id', $parentId)->exists();
+    }
+
+    /**
+     * Add a child to this parent with invite code
+     */
+    public function addChild(int $studentId, string $relation = 'parent', ?string $inviteCode = null): void
+    {
+        if (!$this->isParent()) {
+            throw new \InvalidArgumentException('Only parent role can add children');
+        }
+
+        if ($this->hasChild($studentId)) {
+            throw new \InvalidArgumentException('Child already linked to this parent');
+        }
+
+        $this->children()->attach($studentId, [
+            'relation' => $relation,
+            'status' => $inviteCode ? 'pending' : 'approved',
+            'invite_code' => $inviteCode,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
+    /**
+     * Remove a child from this parent
+     */
+    public function removeChild(int $studentId): void
+    {
+        $this->children()->detach($studentId);
+    }
+
+    /**
+     * Approve a pending child connection
+     */
+    public function approveChild(int $studentId): void
+    {
+        $this->children()->updateExistingPivot($studentId, [
+            'status' => 'approved',
+            'updated_at' => now(),
+        ]);
+    }
+
+    /**
+     * Reject a pending child connection
+     */
+    public function rejectChild(int $studentId): void
+    {
+        $this->children()->updateExistingPivot($studentId, [
+            'status' => 'rejected',
+            'updated_at' => now(),
+        ]);
+    }
+
+    /**
      * Get notifications
      */
     public function notifications()

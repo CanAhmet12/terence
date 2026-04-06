@@ -1,0 +1,347 @@
+/* ============================================================
+   ACCESSIBILITY STYLES (WCAG 2.1 AA Compliant)
+   ============================================================ */
+
+/* Screen Reader Only */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+.sr-only-focusable:focus,
+.sr-only-focusable:active {
+  position: static;
+  width: auto;
+  height: auto;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+}
+
+/* High Contrast Mode */
+.high-contrast {
+  --color-bg: #000000;
+  --color-text: #ffffff;
+  --color-primary: #00ffff;
+  --color-secondary: #ffff00;
+  --color-border: #ffffff;
+}
+
+.high-contrast * {
+  border-color: var(--color-border) !important;
+}
+
+.high-contrast body {
+  background-color: var(--color-bg) !important;
+  color: var(--color-text) !important;
+}
+
+.high-contrast a {
+  color: var(--color-primary) !important;
+  text-decoration: underline !important;
+}
+
+.high-contrast button {
+  border: 2px solid var(--color-border) !important;
+  background-color: var(--color-bg) !important;
+  color: var(--color-text) !important;
+}
+
+.high-contrast button:hover,
+.high-contrast button:focus {
+  background-color: var(--color-text) !important;
+  color: var(--color-bg) !important;
+}
+
+/* Font Size Variations */
+.text-normal {
+  font-size: 16px;
+}
+
+.text-large {
+  font-size: 18px;
+}
+
+.text-large h1 { font-size: 2.5rem; }
+.text-large h2 { font-size: 2rem; }
+.text-large h3 { font-size: 1.75rem; }
+.text-large p { font-size: 1.125rem; }
+
+.text-x-large {
+  font-size: 20px;
+}
+
+.text-x-large h1 { font-size: 3rem; }
+.text-x-large h2 { font-size: 2.5rem; }
+.text-x-large h3 { font-size: 2rem; }
+.text-x-large p { font-size: 1.25rem; }
+
+/* Reduced Motion */
+.reduce-motion *,
+.reduce-motion *::before,
+.reduce-motion *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* Focus Visible (keyboard navigation) */
+*:focus-visible {
+  outline: 3px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Remove outline for mouse users */
+*:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Screen Reader Mode Enhancements */
+.screen-reader-mode button,
+.screen-reader-mode a,
+.screen-reader-mode input,
+.screen-reader-mode select,
+.screen-reader-mode textarea {
+  outline: 2px solid #3b82f6 !important;
+}
+
+.screen-reader-mode * {
+  transition: none !important;
+  animation: none !important;
+}
+
+/* Skip Links */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: #3b82f6;
+  color: white;
+  padding: 8px 16px;
+  text-decoration: none;
+  border-radius: 0 0 4px 0;
+  z-index: 100;
+}
+
+.skip-link:focus {
+  top: 0;
+}
+
+/* ARIA Live Regions */
+[role="status"],
+[role="alert"],
+[aria-live] {
+  position: relative;
+}
+
+/* Keyboard-only focus indicators */
+.keyboard-focus:focus-visible {
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
+  outline: 2px solid #3b82f6;
+}
+
+/* Color Contrast Helpers */
+.text-contrast-high {
+  color: #000000;
+  background-color: #ffffff;
+}
+
+.text-contrast-high-inverse {
+  color: #ffffff;
+  background-color: #000000;
+}
+
+/* Touch Target Minimum Size (48x48px) */
+button,
+a,
+input[type="checkbox"],
+input[type="radio"] {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+/* Error States (accessible colors) */
+.error-text {
+  color: #dc2626;
+}
+
+.error-bg {
+  background-color: #fef2f2;
+  border: 2px solid #dc2626;
+}
+
+/* Success States */
+.success-text {
+  color: #16a34a;
+}
+
+.success-bg {
+  background-color: #f0fdf4;
+  border: 2px solid #16a34a;
+}
+
+/* Warning States */
+.warning-text {
+  color: #ea580c;
+}
+
+.warning-bg {
+  background-color: #fff7ed;
+  border: 2px solid #ea580c;
+}
+
+/* Disabled States (clear visual indication) */
+button:disabled,
+input:disabled,
+select:disabled,
+textarea:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background-color: #f3f4f6;
+}
+
+/* Loading States */
+.loading-skeleton {
+  background: linear-gradient(
+    90deg,
+    #f0f0f0 25%,
+    #e0e0e0 50%,
+    #f0f0f0 75%
+  );
+  background-size: 200% 100%;
+  animation: loading 1.5s ease-in-out infinite;
+}
+
+@keyframes loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Respect user's prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  
+  .loading-skeleton {
+    animation: none;
+    background: #f0f0f0;
+  }
+}
+
+/* Respect user's prefers-contrast */
+@media (prefers-contrast: high) {
+  * {
+    border-color: currentColor !important;
+  }
+  
+  button,
+  a {
+    outline: 2px solid currentColor;
+  }
+}
+
+/* Focus trap for modals */
+.modal-open {
+  overflow: hidden;
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 40;
+}
+
+/* Accessible form labels */
+label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+label.required::after {
+  content: " *";
+  color: #dc2626;
+}
+
+/* Error messages for forms */
+.form-error {
+  color: #dc2626;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.form-error::before {
+  content: "⚠";
+}
+
+/* Help text */
+.form-help {
+  color: #6b7280;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+}
+
+/* Accessible tables */
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+th {
+  text-align: left;
+  font-weight: 600;
+  background-color: #f9fafb;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+td {
+  border-bottom: 1px solid #e5e7eb;
+}
+
+/* Keyboard focus for custom elements */
+[tabindex]:focus-visible {
+  outline: 3px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Accessible tooltips */
+[role="tooltip"] {
+  position: absolute;
+  z-index: 50;
+  background-color: #1f2937;
+  color: #ffffff;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  max-width: 300px;
+}
+
+/* Live region for announcements */
+.live-region {
+  position: absolute;
+  left: -10000px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}

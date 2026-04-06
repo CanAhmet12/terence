@@ -2,109 +2,59 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Payment extends Model
 {
-    use HasFactory;
-
     protected $fillable = [
-        'reservation_id',
         'user_id',
+        'merchant_oid',
         'amount',
         'currency',
-        'paytr_order_id',
-        'paytr_token',
         'status',
         'payment_method',
-        'transaction_id',
-        'description',
+        'payment_type',
+        'plan_type',
+        'billing_period',
+        'installment_count',
+        'reference_no',
         'paid_at',
-        'failed_at',
-        'payment_data',
+        'refunded_at',
+        'failed_reason',
+        'failed_code',
     ];
 
-    protected function casts(): array
-    {
-        return [
-            'amount' => 'decimal:2',
-            'paid_at' => 'datetime',
-            'failed_at' => 'datetime',
-            'payment_data' => 'array',
-        ];
-    }
+    protected $casts = [
+        'amount' => 'decimal:2',
+        'paid_at' => 'datetime',
+        'refunded_at' => 'datetime',
+        'installment_count' => 'integer',
+    ];
 
     /**
-     * Get the reservation that owns the payment
+     * User relationship
      */
-    public function reservation()
-    {
-        return $this->belongsTo(Reservation::class);
-    }
-
-    /**
-     * Get the user who made the payment
-     */
-    public function user()
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
     /**
-     * Scope for successful payments
+     * Subscription relationship
      */
-    public function scopeSuccessful($query)
+    public function subscription(): HasOne
     {
-        return $query->where('status', 'success');
+        return $this->hasOne(Subscription::class);
     }
 
     /**
-     * Scope for failed payments
+     * Check if payment is completed
      */
-    public function scopeFailed($query)
+    public function isCompleted(): bool
     {
-        return $query->where('status', 'failed');
-    }
-
-    /**
-     * Scope for pending payments
-     */
-    public function scopePending($query)
-    {
-        return $query->where('status', 'pending');
-    }
-
-    /**
-     * Scope for processing payments
-     */
-    public function scopeProcessing($query)
-    {
-        return $query->where('status', 'processing');
-    }
-
-    /**
-     * Scope for refunded payments
-     */
-    public function scopeRefunded($query)
-    {
-        return $query->where('status', 'refunded');
-    }
-
-    /**
-     * Check if payment is successful
-     */
-    public function isSuccessful(): bool
-    {
-        return $this->status === 'success';
-    }
-
-    /**
-     * Check if payment is failed
-     */
-    public function isFailed(): bool
-    {
-        return $this->status === 'failed';
+        return $this->status === 'completed';
     }
 
     /**
@@ -116,11 +66,27 @@ class Payment extends Model
     }
 
     /**
-     * Check if payment is processing
+     * Check if payment is refunded
      */
-    public function isProcessing(): bool
+    public function isRefunded(): bool
     {
-        return $this->status === 'processing';
+        return $this->status === 'refunded';
+    }
+
+    /**
+     * Check if refundable
+     */
+    public function isRefundable(): bool
+    {
+        if (!$this->isCompleted()) {
+            return false;
+        }
+
+        if ($this->paid_at->diffInDays(now()) > 14) {
+            return false;
+        }
+
+        return true;
     }
 
     /**
@@ -128,51 +94,26 @@ class Payment extends Model
      */
     public function getFormattedAmountAttribute(): string
     {
-        return number_format((float) $this->amount, 2) . ' ' . $this->currency;
+        return number_format($this->amount, 2) . ' ' . $this->currency;
     }
 
     /**
-     * Get payment status in Turkish
+     * Get plan name
      */
-    public function getStatusInTurkishAttribute(): string
+    public function getPlanNameAttribute(): string
     {
-        $statuses = [
-            'pending' => 'Bekliyor',
-            'processing' => 'İşleniyor',
-            'success' => 'Başarılı',
-            'failed' => 'Başarısız',
-            'cancelled' => 'İptal Edildi',
-            'refunded' => 'İade Edildi',
+        $plans = [
+            'bronze' => 'Bronze',
+            'plus' => 'Plus',
+            'pro' => 'Pro',
         ];
 
-        return $statuses[$this->status] ?? $this->status;
-    }
-
-    /**
-     * Get payment method in Turkish
-     */
-    public function getPaymentMethodInTurkishAttribute(): string
-    {
-        $methods = [
-            'credit_card' => 'Kredi Kartı',
-            'debit_card' => 'Banka Kartı',
-            'bank_transfer' => 'Banka Havalesi',
-            'cash' => 'Nakit',
-            'other' => 'Diğer',
+        $periods = [
+            'monthly' => 'Aylık',
+            'quarterly' => '3 Aylık',
+            'yearly' => 'Yıllık',
         ];
 
-        return $methods[$this->payment_method] ?? $this->payment_method ?? 'Bilinmiyor';
-    }
-
-    /**
-     * Get time since payment
-     */
-    public function getTimeSinceAttribute(): string
-    {
-        if ($this->paid_at) {
-            return $this->paid_at->diffForHumans();
-        }
-
-        return $this->created_at->diffForHumans();
+        return 'Terence ' . ($plans[$this->plan_type] ?? '') . ' - ' . ($periods[$this->billing_period] ?? '');
     }
 }

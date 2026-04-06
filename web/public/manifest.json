@@ -1,55 +1,58 @@
 {
-  "name": "Terence Eğitim",
+  "name": "Terence Eğitim Platformu",
   "short_name": "Terence",
-  "description": "LGS, TYT, AYT, KPSS hazırlık — Akıllı öğrenme platformu",
-  "start_url": "/ogrenci",
-  "scope": "/",
+  "description": "Türkiye'nin en gelişmiş eğitim platformu - YKS/LGS hazırlık",
+  "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#0d9488",
-  "orientation": "portrait-primary",
-  "lang": "tr",
-  "dir": "ltr",
-  "prefer_related_applications": false,
+  "theme_color": "#3b82f6",
+  "orientation": "portrait",
+  "scope": "/",
   "icons": [
     {
-      "src": "/icons/icon-72x72.png",
+      "src": "/icon-72x72.png",
       "sizes": "72x72",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
-      "src": "/icons/icon-96x96.png",
+      "src": "/icon-96x96.png",
       "sizes": "96x96",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
-      "src": "/icons/icon-128x128.png",
+      "src": "/icon-128x128.png",
       "sizes": "128x128",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
-      "src": "/icons/icon-144x144.png",
+      "src": "/icon-144x144.png",
       "sizes": "144x144",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
-      "src": "/icons/icon-152x152.png",
+      "src": "/icon-152x152.png",
       "sizes": "152x152",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
-      "src": "/icons/icon-192x192.png",
+      "src": "/icon-192x192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/icons/icon-384x384.png",
+      "src": "/icon-384x384.png",
       "sizes": "384x384",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
-      "src": "/icons/icon-512x512.png",
+      "src": "/icon-512x512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
@@ -57,34 +60,35 @@
   ],
   "shortcuts": [
     {
-      "name": "Günlük Plan",
-      "short_name": "Plan",
-      "description": "Bugünkü çalışma planını görüntüle",
-      "url": "/ogrenci/plan",
-      "icons": [{ "src": "/icons/icon-96x96.png", "sizes": "96x96" }]
+      "name": "Dashboard",
+      "short_name": "Panel",
+      "description": "Panelime git",
+      "url": "/dashboard",
+      "icons": [{ "src": "/icon-96x96.png", "sizes": "96x96" }]
     },
     {
-      "name": "Mini Test",
-      "short_name": "Test",
-      "description": "Hızlı mini test çöz",
-      "url": "/ogrenci/mini-test",
-      "icons": [{ "src": "/icons/icon-96x96.png", "sizes": "96x96" }]
+      "name": "Sorular",
+      "short_name": "Sorular",
+      "description": "Soru çöz",
+      "url": "/questions",
+      "icons": [{ "src": "/icon-96x96.png", "sizes": "96x96" }]
     },
     {
-      "name": "Dijital Koç",
-      "short_name": "Koç",
-      "description": "AI koçunla konuş",
-      "url": "/ogrenci/koc",
-      "icons": [{ "src": "/icons/icon-96x96.png", "sizes": "96x96" }]
+      "name": "Sınavlar",
+      "short_name": "Sınav",
+      "description": "Sınava gir",
+      "url": "/exams",
+      "icons": [{ "src": "/icon-96x96.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "AI Mentor",
+      "short_name": "AI",
+      "description": "AI Mentor ile konuş",
+      "url": "/ai-coach",
+      "icons": [{ "src": "/icon-96x96.png", "sizes": "96x96" }]
     }
   ],
   "categories": ["education", "productivity"],
-  "screenshots": [
-    {
-      "src": "/screenshots/dashboard.png",
-      "sizes": "1280x720",
-      "type": "image/png",
-      "form_factor": "wide"
-    }
-  ]
+  "lang": "tr-TR",
+  "dir": "ltr"
 }
