@@ -27,11 +27,16 @@ return new class extends Migration
         // Course enrollments indexes
         if (Schema::hasTable('course_enrollments')) {
             Schema::table('course_enrollments', function (Blueprint $table) {
+                // Use completion_percentage (actual column name in DB)
                 if (!$this->indexExists('course_enrollments', 'enrollments_user_progress_index')) {
-                    $table->index(['user_id', 'progress_percentage'], 'enrollments_user_progress_index');
+                    if (Schema::hasColumn('course_enrollments', 'completion_percentage')) {
+                        $table->index(['user_id', 'completion_percentage'], 'enrollments_user_progress_index');
+                    }
                 }
                 if (!$this->indexExists('course_enrollments', 'enrollments_course_completed_index')) {
-                    $table->index(['course_id', 'completed_at'], 'enrollments_course_completed_index');
+                    if (Schema::hasColumn('course_enrollments', 'completed_at')) {
+                        $table->index(['course_id', 'completed_at'], 'enrollments_course_completed_index');
+                    }
                 }
                 if (!$this->indexExists('course_enrollments', 'enrollments_user_course_unique')) {
                     $table->unique(['user_id', 'course_id'], 'enrollments_user_course_unique');
