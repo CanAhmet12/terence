@@ -80,9 +80,6 @@ const nextConfig = {
   experimental: {
     optimizePackageImports: ['lucide-react', '@react-three/fiber', '@react-three/drei'],
   },
-
-  // Output standalone for Docker
-  output: 'standalone',
 }
 
 module.exports = nextConfig
