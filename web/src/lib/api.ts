@@ -71,6 +71,22 @@ api.interceptors.response.use(
       toast.error(`Çok fazla istek. ${retryAfter} saniye sonra tekrar deneyin.`)
     }
 
+    // Handle 422 Validation Error
+    if (error.response?.status === 422) {
+      const data = error.response.data as any
+      if (data.errors && typeof data.errors === 'object') {
+        // Get first validation error message
+        const firstError = Object.values(data.errors)[0]
+        if (Array.isArray(firstError) && firstError.length > 0) {
+          toast.error(firstError[0])
+        } else {
+          toast.error(data.message || 'Geçersiz veri')
+        }
+      } else {
+        toast.error(data.message || 'Geçersiz veri')
+      }
+    }
+
     // Handle 403 Forbidden
     if (error.response?.status === 403) {
       toast.error('Bu işlem için yetkiniz yok.')

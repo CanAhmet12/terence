@@ -23,7 +23,19 @@ class AuthController extends Controller
 
     public function register(Request $request): JsonResponse
     {
-        $v = Validator::make($request->all(), [
+        // Get data from JSON body or form data
+        $data = [];
+        if ($request->getContent() && $request->header('Content-Type') === 'application/json') {
+            $rawBody = $request->getContent();
+            \Log::info('Register JSON Body: ' . $rawBody);
+            $data = json_decode($rawBody, true) ?: [];
+        } else {
+            $data = $request->all();
+        }
+        
+        \Log::info('Register Data: ' . json_encode($data));
+        
+        $v = Validator::make($data, [
             'name'                  => 'required|string|max:255',
             'email'                 => 'required|email|max:255|unique:users',
             'password'              => 'required|string|min:8|confirmed',
@@ -42,33 +54,34 @@ class AuthController extends Controller
         ]);
 
         if ($v->fails()) {
+            \Log::warning('Register Validation Failed: ' . json_encode($v->errors()));
             return $this->validationError($v, $request);
         }
 
         $user = User::create([
-            'name'              => $request->name,
-            'email'             => $request->email,
-            'password'          => Hash::make($request->password),
-            'role'              => $request->role,
-            'phone'             => $request->phone,
-            'grade'             => $request->grade,
-            'target_exam'       => $request->target_exam,
-            'target_school'     => $request->target_school,
-            'target_department' => $request->target_department,
-            'target_net'        => $request->target_net,
+            'name'              => $data['name'] ?? null,
+            'email'             => $data['email'] ?? null,
+            'password'          => Hash::make($data['password'] ?? ''),
+            'role'              => $data['role'] ?? 'student',
+            'phone'             => $data['phone'] ?? null,
+            'grade'             => $data['grade'] ?? null,
+            'target_exam'       => $data['target_exam'] ?? null,
+            'target_school'     => $data['target_school'] ?? null,
+            'target_department' => $data['target_department'] ?? null,
+            'target_net'        => $data['target_net'] ?? null,
         ]);
 
         // Öğretmen ek alanları
-        if ($request->role === 'teacher' && ($request->subject || $request->bio)) {
+        if (($data['role'] ?? '') === 'teacher' && (isset($data['subject']) || isset($data['bio']))) {
             $user->update(array_filter([
-                'subject' => $request->subject,
-                'bio'     => $request->bio,
+                'subject' => $data['subject'] ?? null,
+                'bio'     => $data['bio'] ?? null,
             ]));
         }
 
         // Veli-çocuk bağlantısı
-        if ($request->role === 'parent' && $request->child_email) {
-            $child = User::where('email', $request->child_email)->where('role', 'student')->first();
+        if (($data['role'] ?? '') === 'parent' && isset($data['child_email'])) {
+            $child = User::where('email', $data['child_email'])->where('role', 'student')->first();
             if ($child) {
                 $user->addChild($child->id);
             }
@@ -86,8 +99,8 @@ class AuthController extends Controller
         $accessToken = JWTAuth::fromUser($user);
         $refreshToken = RefreshToken::generate(
             $user->id,
-            $request->input('device_name'),
-            $request->input('device_id'),
+            $data['device_name'] ?? null,
+            $data['device_id'] ?? null,
             $request->ip(),
             $request->userAgent(),
             30 // 30 days
