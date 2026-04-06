@@ -99,11 +99,11 @@ return new class extends Migration
                 if (!$this->indexExists('exam_sessions', 'sessions_user_status_index')) {
                     $table->index(['user_id', 'status', 'started_at'], 'sessions_user_status_index');
                 }
-                if (!$this->indexExists('exam_sessions', 'sessions_exam_user_index')) {
-                    $table->index(['exam_id', 'user_id'], 'sessions_exam_user_index');
-                }
-                if (!$this->indexExists('exam_sessions', 'sessions_completed_at_index')) {
-                    $table->index(['completed_at'], 'sessions_completed_at_index');
+                // Skip exam_id index - column doesn't exist
+                if (!$this->indexExists('exam_sessions', 'sessions_finished_at_index')) {
+                    if (Schema::hasColumn('exam_sessions', 'finished_at')) {
+                        $table->index(['finished_at'], 'sessions_finished_at_index');
+                    }
                 }
             });
         }
@@ -204,17 +204,15 @@ return new class extends Migration
             });
         }
 
-        // User suspension indexes
+        // User indexes - only for existing columns
         Schema::table('users', function (Blueprint $table) {
-            if (!$this->indexExists('users', 'users_suspended_until_index')) {
-                $table->index(['suspended_until'], 'users_suspended_until_index');
-            }
+            // Skip suspended_until - column doesn't exist
             if (!$this->indexExists('users', 'users_teacher_status_index')) {
-                $table->index(['teacher_status'], 'users_teacher_status_index');
+                if (Schema::hasColumn('users', 'teacher_status')) {
+                    $table->index(['teacher_status'], 'users_teacher_status_index');
+                }
             }
-            if (!$this->indexExists('users', 'users_subscription_expires_index')) {
-                $table->index(['subscription_expires_at'], 'users_subscription_expires_index');
-            }
+            // Skip subscription_expires_at - column doesn't exist
         });
     }
 
