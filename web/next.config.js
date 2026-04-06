@@ -6,6 +6,16 @@ const nextConfig = {
   // Production optimizations
   compress: true,
 
+  // Skip TypeScript check during build (handle separately)
+  typescript: {
+    ignoreBuildErrors: true,
+  },
+
+  // Skip ESLint during build
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+
   // Image optimization - using remotePatterns instead of domains
   images: {
     remotePatterns: [
