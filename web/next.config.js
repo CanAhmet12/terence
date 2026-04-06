@@ -11,12 +11,10 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
 
-  // Disable static export - use server-side rendering
-  output: undefined,
-
-  // Skip ESLint during build
-  eslint: {
-    ignoreDuringBuilds: true,
+  // Force dynamic rendering for all pages (no static generation)
+  experimental: {
+    optimizePackageImports: ['lucide-react', '@react-three/fiber', '@react-three/drei'],
+    dynamicIO: true,
   },
 
   // Image optimization - using remotePatterns instead of domains
@@ -86,13 +84,8 @@ const nextConfig = {
     ]
   },
 
-  // Turbopack configuration (empty to silence the warning)
+  // Turbopack configuration
   turbopack: {},
-
-  // Experimental features
-  experimental: {
-    optimizePackageImports: ['lucide-react', '@react-three/fiber', '@react-three/drei'],
-  },
 }
 
 module.exports = nextConfig
