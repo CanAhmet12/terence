@@ -107,7 +107,19 @@ class AuthController extends Controller
 
     public function login(Request $request): JsonResponse
     {
-        $v = Validator::make($request->all(), [
+        // Get data from JSON body or form data
+        $data = [];
+        if ($request->getContent() && $request->header('Content-Type') === 'application/json') {
+            $rawBody = $request->getContent();
+            \Log::info('Login JSON Body: ' . $rawBody);
+            $data = json_decode($rawBody, true) ?: [];
+        } else {
+            $data = $request->all();
+        }
+        
+        \Log::info('Login Data: ' . json_encode($data));
+        
+        $v = Validator::make($data, [
             'email'       => 'required|email',
             'password'    => 'required|string|min:6',
             'device_name' => 'nullable|string|max:255',
@@ -115,10 +127,12 @@ class AuthController extends Controller
         ]);
 
         if ($v->fails()) {
+            \Log::warning('Login Validation Failed: ' . json_encode($v->errors()));
             return $this->validationError($v, $request);
         }
 
-        if (!$token = JWTAuth::attempt($request->only('email', 'password'))) {
+        if (!$token = JWTAuth::attempt($data)) {
+            \Log::warning('Login Invalid Credentials for: ' . ($data['email'] ?? 'unknown'));
             return response()->json([
                 'error'   => true,
                 'code'    => 'INVALID_CREDENTIALS',
@@ -132,12 +146,14 @@ class AuthController extends Controller
         // Generate refresh token
         $refreshToken = RefreshToken::generate(
             $user->id,
-            $request->input('device_name'),
-            $request->input('device_id'),
+            $data['device_name'] ?? null,
+            $data['device_id'] ?? null,
             $request->ip(),
             $request->userAgent(),
             30 // 30 days
         );
+
+        \Log::info('Login Successful for: ' . $user->email);
 
         $response = response()->json([
             'success' => true,

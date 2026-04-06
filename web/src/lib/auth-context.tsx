@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
-import { api, User } from "./api";
+import { api, User, authApi } from "./api";
 
 type AuthState = {
   user: User | null;
@@ -59,7 +59,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Set token in axios instance
     api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
-    api
+    authApi
       .getMe()
       .then((user) => {
         localStorage.setItem(USER_KEY, JSON.stringify(user));
@@ -68,10 +68,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .catch(async () => {
         // Token geçersiz olabilir — refresh dene
         try {
-          const refreshed = await api.refresh();
+          const refreshed = await authApi.refresh();
           const newToken = refreshed.token.access_token;
           api.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
-          const user = await api.getMe();
+          const user = await authApi.getMe();
           localStorage.setItem(TOKEN_KEY, newToken);
           localStorage.setItem(USER_KEY, JSON.stringify(user));
           setState({ user, token: newToken, loading: false, error: null });
@@ -88,7 +88,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = useCallback(async (email: string, password: string) => {
     setState((s) => ({ ...s, loading: true, error: null }));
     try {
-      const res = await api.login(email, password);
+      const res = await authApi.login(email, password);
       const user = res.user as User;
       const token = res.token.access_token; // Extract access_token from token object
       
@@ -126,7 +126,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }) => {
       setState((s) => ({ ...s, loading: true, error: null }));
       try {
-        const res = await api.register(data);
+        const res = await authApi.register(data);
         if (res.token && res.user) {
           const token = res.token.access_token; // Extract access_token from token object
           
@@ -152,7 +152,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = useCallback(async () => {
     try { 
-      await api.logout(); 
+      await authApi.logout(); 
     } catch {}
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
@@ -161,7 +161,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const forgotPassword = useCallback(async (email: string) => {
-    await api.forgotPassword(email);
+    await authApi.forgotPassword(email);
   }, []);
 
   const updateUser = useCallback((user: User) => {

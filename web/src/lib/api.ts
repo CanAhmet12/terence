@@ -235,4 +235,7 @@ export const authApi = {
 // Re-export authApi methods on api object for backward compatibility
 Object.assign(api, authApi)
 
+// Export authApi separately for type safety
+export { authApi }
+
 export default api
