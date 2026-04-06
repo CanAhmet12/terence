@@ -11,10 +11,9 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
 
-  // Force dynamic rendering for all pages (no static generation)
+  // Force dynamic rendering for all pages
   experimental: {
     optimizePackageImports: ['lucide-react', '@react-three/fiber', '@react-three/drei'],
-    dynamicIO: true,
   },
 
   // Image optimization - using remotePatterns instead of domains

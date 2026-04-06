@@ -2,6 +2,10 @@ import Script from 'next/script'
 import { Metadata, Viewport } from 'next'
 import './globals.css'
 
+// Force all pages to use dynamic rendering (no static generation)
+export const dynamic = 'force-dynamic'
+export const dynamicParams = true
+
 export const metadata: Metadata = {
   title: 'Terence - YKS/LGS Hazırlık Platformu',
   description: 'Türkiye\'nin en gelişmiş eğitim platformu. AI destekli öğrenme, 3D kütüphane, sınırsız soru bankası.',
