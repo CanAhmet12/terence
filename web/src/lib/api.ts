@@ -241,41 +241,41 @@ export { authApi }
 // Additional API methods (to be implemented as backend endpoints are ready)
 export const courseApi = {
   async getCourses() {
-    // TODO: Backend endpoint not ready yet
-    return { data: [] }
+    // TODO: Backend endpoint not ready yet - return empty array
+    return []
   },
   async getCourse(id: string) {
-    return { data: null }
+    return null
   },
   async enrollCourse(id: string) {
-    return { data: null }
+    return null
   },
 }
 
 export const planApi = {
   async getPlanStats() {
-    return { data: { total: 0, completed: 0, pending: 0 } }
+    return { total: 0, completed: 0, pending: 0 }
   },
   async getTodayPlan() {
-    return { data: [] }
+    return []
   },
 }
 
 export const examApi = {
   async getExams() {
-    return { data: [] }
+    return []
   },
   async startExam(id: string) {
-    return { data: null }
+    return null
   },
 }
 
 export const videoApi = {
   async getVideos() {
-    return { data: [] }
+    return []
   },
   async getVideo(id: string) {
-    return { data: null }
+    return null
   },
 }
 
