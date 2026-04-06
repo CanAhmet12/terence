@@ -1,7 +1,6 @@
 import Script from 'next/script'
 import { Metadata, Viewport } from 'next'
 import './globals.css'
-import './accessibility.css'
 
 export const metadata: Metadata = {
   title: 'Terence - YKS/LGS Hazırlık Platformu',
