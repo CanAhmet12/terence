@@ -11,7 +11,7 @@ class GamificationSeeder extends Seeder
     public function run(): void
     {
         $this->seedBadges();
-        $this->seedAchievements();
+        // $this->seedAchievements(); // Achievement model doesn't exist yet
     }
 
     private function seedBadges(): void
