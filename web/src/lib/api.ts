@@ -238,4 +238,48 @@ Object.assign(api, authApi)
 // Export authApi separately for type safety
 export { authApi }
 
+// Additional API methods (to be implemented as backend endpoints are ready)
+export const courseApi = {
+  async getCourses() {
+    // TODO: Backend endpoint not ready yet
+    return { data: [] }
+  },
+  async getCourse(id: string) {
+    return { data: null }
+  },
+  async enrollCourse(id: string) {
+    return { data: null }
+  },
+}
+
+export const planApi = {
+  async getPlanStats() {
+    return { data: { total: 0, completed: 0, pending: 0 } }
+  },
+  async getTodayPlan() {
+    return { data: [] }
+  },
+}
+
+export const examApi = {
+  async getExams() {
+    return { data: [] }
+  },
+  async startExam(id: string) {
+    return { data: null }
+  },
+}
+
+export const videoApi = {
+  async getVideos() {
+    return { data: [] }
+  },
+  async getVideo(id: string) {
+    return { data: null }
+  },
+}
+
+// Assign all APIs to main api object for backward compatibility
+Object.assign(api, courseApi, planApi, examApi, videoApi)
+
 export default api
