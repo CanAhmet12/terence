@@ -1,6 +1,5 @@
 import { Metadata, Viewport } from 'next'
 import './globals.css'
-import { ClientLayout } from '@/components/ClientLayout'
 
 export const dynamic = 'force-dynamic'
 export const dynamicParams = true
@@ -63,7 +62,7 @@ export default function RootLayout({
         <link rel="dns-prefetch" href="https://cdn.terenceegitim.com" />
       </head>
       <body className="antialiased">
-        <ClientLayout>{children}</ClientLayout>
+        {children}
       </body>
     </html>
   )

@@ -6,12 +6,12 @@ const nextConfig = {
   // Production optimizations
   compress: true,
 
-  // Skip TypeScript check during build (handle separately)
+  // Skip TypeScript check during build
   typescript: {
     ignoreBuildErrors: true,
   },
 
-  // Force dynamic rendering for all pages
+  // Force dynamic rendering and optimizations
   experimental: {
     optimizePackageImports: ['lucide-react', '@react-three/fiber', '@react-three/drei'],
   },
@@ -82,9 +82,6 @@ const nextConfig = {
       },
     ]
   },
-
-  // Turbopack configuration
-  turbopack: {},
 }
 
 module.exports = nextConfig

@@ -130,4 +130,109 @@ export async function apiDelete<T = any>(url: string, config?: AxiosRequestConfi
   return response.data
 }
 
+// Types
+export interface User {
+  id: number
+  name: string
+  email: string
+  role: 'student' | 'teacher' | 'parent' | 'admin'
+  phone?: string
+  avatar?: string
+  email_verified_at?: string | null
+  grade?: number
+  target_exam?: string
+  target_school?: string
+  target_department?: string
+  target_net?: number
+  subject?: string
+  bio?: string
+  created_at: string
+  updated_at: string
+}
+
+export interface TokenData {
+  access_token: string
+  token_type: string
+  expires_in: number
+}
+
+export interface LoginResponse {
+  success: boolean
+  message: string
+  user: User
+  token: TokenData
+  verification_required?: boolean
+}
+
+export interface RegisterData {
+  name: string
+  email: string
+  password: string
+  password_confirmation: string
+  role: 'student' | 'teacher' | 'parent'
+  phone?: string
+  grade?: number
+  target_exam?: string
+  target_school?: string
+  target_department?: string
+  target_net?: number
+  subject?: string
+  bio?: string
+  child_email?: string
+}
+
+// Auth API functions
+export const authApi = {
+  async login(email: string, password: string): Promise<LoginResponse> {
+    const response = await api.post<LoginResponse>('/v1/auth/login', {
+      email,
+      password,
+    })
+    return response.data
+  },
+
+  async register(data: RegisterData): Promise<LoginResponse> {
+    const response = await api.post<LoginResponse>('/v1/auth/register', data)
+    return response.data
+  },
+
+  async logout(): Promise<void> {
+    await api.post('/v1/auth/logout')
+  },
+
+  async refresh(): Promise<{ token: { access_token: string } }> {
+    const response = await api.post('/v1/auth/refresh')
+    return response.data
+  },
+
+  async getMe(): Promise<User> {
+    const response = await api.get<{ success: boolean; user: User }>('/auth/me')
+    return response.data.user
+  },
+
+  async forgotPassword(email: string): Promise<void> {
+    await api.post('/v1/auth/forgot-password', { email })
+  },
+
+  async resetPassword(token: string, email: string, password: string, password_confirmation: string): Promise<void> {
+    await api.post('/v1/auth/reset-password', {
+      token,
+      email,
+      password,
+      password_confirmation,
+    })
+  },
+
+  async verifyEmail(token: string): Promise<void> {
+    await api.post('/v1/auth/verify-email', { token })
+  },
+
+  async resendVerification(email: string): Promise<void> {
+    await api.post('/v1/auth/resend-verification', { email })
+  },
+}
+
+// Re-export authApi methods on api object for backward compatibility
+Object.assign(api, authApi)
+
 export default api

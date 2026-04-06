@@ -19,6 +19,13 @@ type AuthContextType = AuthState & {
     password_confirmation: string;
     role: "student" | "teacher" | "parent";
     phone?: string;
+    grade?: number;
+    target_exam?: string;
+    target_school?: string;
+    target_department?: string;
+    target_net?: number;
+    subject?: string;
+    bio?: string;
     child_email?: string;
   }) => Promise<void>;
   logout: () => Promise<void>;
@@ -49,8 +56,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
+    // Set token in axios instance
+    api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+
     api
-      .getMe(token)
+      .getMe()
       .then((user) => {
         localStorage.setItem(USER_KEY, JSON.stringify(user));
         setState({ user, token, loading: false, error: null });
@@ -58,9 +68,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .catch(async () => {
         // Token geçersiz olabilir — refresh dene
         try {
-          const refreshed = await api.refresh(token);
+          const refreshed = await api.refresh();
           const newToken = refreshed.token.access_token;
-          const user = await api.getMe(newToken);
+          api.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
+          const user = await api.getMe();
           localStorage.setItem(TOKEN_KEY, newToken);
           localStorage.setItem(USER_KEY, JSON.stringify(user));
           setState({ user, token: newToken, loading: false, error: null });
@@ -68,6 +79,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           // Refresh da başarısız → oturumu kapat
           localStorage.removeItem(TOKEN_KEY);
           localStorage.removeItem(USER_KEY);
+          delete api.defaults.headers.common['Authorization'];
           setState({ user: null, token: null, loading: false, error: null });
         }
       });
@@ -78,9 +90,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const res = await api.login(email, password);
       const user = res.user as User;
-      const token = res.token;
+      const token = res.token.access_token; // Extract access_token from token object
+      
+      // Save to localStorage
       localStorage.setItem(TOKEN_KEY, token);
       localStorage.setItem(USER_KEY, JSON.stringify(user));
+      
+      // Set token in axios instance immediately
+      api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      
       setState({ user, token, loading: false, error: null });
     } catch (e: unknown) {
       const raw = e instanceof Error ? e.message : "Giriş başarısız";
@@ -97,15 +115,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       password_confirmation: string;
       role: "student" | "teacher" | "parent";
       phone?: string;
+      grade?: number;
+      target_exam?: string;
+      target_school?: string;
+      target_department?: string;
+      target_net?: number;
+      subject?: string;
+      bio?: string;
       child_email?: string;
     }) => {
       setState((s) => ({ ...s, loading: true, error: null }));
       try {
         const res = await api.register(data);
         if (res.token && res.user) {
-          localStorage.setItem(TOKEN_KEY, res.token);
+          const token = res.token.access_token; // Extract access_token from token object
+          
+          // Save to localStorage
+          localStorage.setItem(TOKEN_KEY, token);
           localStorage.setItem(USER_KEY, JSON.stringify(res.user));
-          setState({ user: res.user, token: res.token, loading: false, error: null });
+          
+          // Set token in axios instance immediately
+          api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+          
+          setState({ user: res.user, token, loading: false, error: null });
         } else {
           setState((s) => ({ ...s, loading: false }));
         }
@@ -119,14 +151,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 
   const logout = useCallback(async () => {
-    const t = state.token;
-    if (t) {
-      try { await api.logout(t); } catch {}
-    }
+    try { 
+      await api.logout(); 
+    } catch {}
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
+    delete api.defaults.headers.common['Authorization'];
     setState({ user: null, token: null, loading: false, error: null });
-  }, [state.token]);
+  }, []);
 
   const forgotPassword = useCallback(async (email: string) => {
     await api.forgotPassword(email);
