@@ -1,8 +1,7 @@
-import Script from 'next/script'
 import { Metadata, Viewport } from 'next'
 import './globals.css'
+import { ClientLayout } from '@/components/ClientLayout'
 
-// Force all pages to use dynamic rendering (no static generation)
 export const dynamic = 'force-dynamic'
 export const dynamicParams = true
 
@@ -12,7 +11,7 @@ export const metadata: Metadata = {
   keywords: ['YKS', 'LGS', 'eğitim', 'online kurs', 'soru bankası', 'AI mentor'],
   authors: [{ name: 'Terence' }],
   manifest: '/manifest.json',
-  themeColor: '#3b82f6',
+  metadataBase: new URL('https://terenceegitim.com'),
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
@@ -60,26 +59,11 @@ export default function RootLayout({
         <link rel="icon" href="/favicon.ico" sizes="any" />
         <link rel="icon" href="/icon.svg" type="image/svg+xml" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-        
-        {/* Preconnect to external domains */}
         <link rel="preconnect" href="https://cdn.terenceegitim.com" />
         <link rel="dns-prefetch" href="https://cdn.terenceegitim.com" />
-        
-        {/* Service Worker registration */}
-        <Script id="register-sw" strategy="afterInteractive">
-          {`
-            if ('serviceWorker' in navigator) {
-              window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/service-worker.js')
-                  .then((reg) => console.log('SW registered:', reg))
-                  .catch((err) => console.log('SW registration failed:', err))
-              })
-            }
-          `}
-        </Script>
       </head>
       <body className="antialiased">
-        {children}
+        <ClientLayout>{children}</ClientLayout>
       </body>
     </html>
   )
