@@ -12,7 +12,11 @@ return new class extends Migration
         if (!Schema::hasTable('videos')) {
             Schema::create('videos', function (Blueprint $table) {
                 $table->id();
-                $table->foreignId('content_item_id')->constrained('course_content_items')->onDelete('cascade');
+                // Make content_item_id nullable, check if content_items table exists
+                $table->unsignedBigInteger('content_item_id')->nullable();
+                if (Schema::hasTable('content_items')) {
+                    $table->foreign('content_item_id')->references('id')->on('content_items')->onDelete('cascade');
+                }
                 $table->string('title');
                 $table->text('description')->nullable();
                 $table->string('original_file_path');
@@ -30,37 +34,41 @@ return new class extends Migration
         }
 
         // Video playbacks tracking
-        Schema::create('video_playbacks', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
-            $table->foreignId('video_id')->constrained('videos')->onDelete('cascade');
-            $table->string('ip_address', 45);
-            $table->text('user_agent');
-            $table->string('device_id')->nullable();
-            $table->string('location')->nullable();
-            $table->timestamp('started_at');
-            $table->timestamp('ended_at')->nullable();
-            $table->timestamps();
-            
-            $table->index(['user_id', 'video_id', 'started_at']);
-            $table->index('device_id');
-        });
+        if (!Schema::hasTable('video_playbacks')) {
+            Schema::create('video_playbacks', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
+                $table->foreignId('video_id')->constrained('videos')->onDelete('cascade');
+                $table->string('ip_address', 45);
+                $table->text('user_agent');
+                $table->string('device_id')->nullable();
+                $table->string('location')->nullable();
+                $table->timestamp('started_at');
+                $table->timestamp('ended_at')->nullable();
+                $table->timestamps();
+                
+                $table->index(['user_id', 'video_id', 'started_at']);
+                $table->index('device_id');
+            });
+        }
 
         // Video analytics
-        Schema::create('video_analytics', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
-            $table->foreignId('video_id')->constrained('videos')->onDelete('cascade');
-            $table->integer('watch_duration')->default(0); // seconds
-            $table->string('quality_used')->default('auto');
-            $table->integer('buffering_count')->default(0);
-            $table->decimal('completion_rate', 5, 2)->default(0); // 0-100%
-            $table->string('device_type')->default('unknown');
-            $table->timestamps();
-            
-            $table->index(['user_id', 'created_at']);
-            $table->index(['video_id', 'created_at']);
-        });
+        if (!Schema::hasTable('video_analytics')) {
+            Schema::create('video_analytics', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
+                $table->foreignId('video_id')->constrained('videos')->onDelete('cascade');
+                $table->integer('watch_duration')->default(0); // seconds
+                $table->string('quality_used')->default('auto');
+                $table->integer('buffering_count')->default(0);
+                $table->decimal('completion_rate', 5, 2)->default(0); // 0-100%
+                $table->string('device_type')->default('unknown');
+                $table->timestamps();
+                
+                $table->index(['user_id', 'created_at']);
+                $table->index(['video_id', 'created_at']);
+            });
+        }
 
         // API request logs table (if not exists)
         if (!Schema::hasTable('api_request_logs')) {

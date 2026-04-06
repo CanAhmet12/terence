@@ -65,11 +65,17 @@ return new class extends Migration
                 if (!$this->indexExists('questions', 'questions_topic_difficulty_index')) {
                     $table->index(['topic_id', 'difficulty'], 'questions_topic_difficulty_index');
                 }
-                if (!$this->indexExists('questions', 'questions_achievement_difficulty_index')) {
-                    $table->index(['achievement_code', 'difficulty'], 'questions_achievement_difficulty_index');
+                // Use kazanim_code instead of achievement_code (actual column name)
+                if (!$this->indexExists('questions', 'questions_kazanim_difficulty_index')) {
+                    if (Schema::hasColumn('questions', 'kazanim_code')) {
+                        $table->index(['kazanim_code', 'difficulty'], 'questions_kazanim_difficulty_index');
+                    }
                 }
-                if (!$this->indexExists('questions', 'questions_subject_level_index')) {
-                    $table->index(['subject', 'level'], 'questions_subject_level_index');
+                // Use grade instead of level
+                if (!$this->indexExists('questions', 'questions_subject_grade_index')) {
+                    if (Schema::hasColumn('questions', 'grade')) {
+                        $table->index(['subject', 'grade'], 'questions_subject_grade_index');
+                    }
                 }
             });
         }
@@ -83,9 +89,7 @@ return new class extends Migration
                 if (!$this->indexExists('question_answers', 'answers_question_user_index')) {
                     $table->index(['question_id', 'user_id'], 'answers_question_user_index');
                 }
-                if (!$this->indexExists('question_answers', 'answers_achievement_user_index')) {
-                    $table->index(['achievement_code', 'user_id', 'is_correct'], 'answers_achievement_user_index');
-                }
+                // Skip achievement_code index if column doesn't exist
             });
         }
 
@@ -158,8 +162,11 @@ return new class extends Migration
         // Badges indexes (gamification)
         if (Schema::hasTable('badges')) {
             Schema::table('badges', function (Blueprint $table) {
-                if (!$this->indexExists('badges', 'badges_type_category_index')) {
-                    $table->index(['type', 'category'], 'badges_type_category_index');
+                // Use category instead of type (actual column name)
+                if (!$this->indexExists('badges', 'badges_category_index')) {
+                    if (Schema::hasColumn('badges', 'category')) {
+                        $table->index(['category'], 'badges_category_index');
+                    }
                 }
             });
         }
