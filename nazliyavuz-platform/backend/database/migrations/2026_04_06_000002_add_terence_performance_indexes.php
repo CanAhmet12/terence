@@ -111,11 +111,15 @@ return new class extends Migration
         // Daily plans indexes
         if (Schema::hasTable('daily_plans')) {
             Schema::table('daily_plans', function (Blueprint $table) {
-                if (!$this->indexExists('daily_plans', 'plans_user_date_index')) {
-                    $table->index(['user_id', 'date'], 'plans_user_date_index');
+                if (!$this->indexExists('daily_plans', 'plans_user_plan_date_index')) {
+                    if (Schema::hasColumn('daily_plans', 'plan_date')) {
+                        $table->index(['user_id', 'plan_date'], 'plans_user_plan_date_index');
+                    }
                 }
-                if (!$this->indexExists('daily_plans', 'plans_user_completed_index')) {
-                    $table->index(['user_id', 'completed'], 'plans_user_completed_index');
+                if (!$this->indexExists('daily_plans', 'plans_user_status_index')) {
+                    if (Schema::hasColumn('daily_plans', 'status')) {
+                        $table->index(['user_id', 'status'], 'plans_user_status_index');
+                    }
                 }
             });
         }
