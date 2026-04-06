@@ -11,6 +11,9 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
 
+  // Disable static export - use server-side rendering
+  output: undefined,
+
   // Skip ESLint during build
   eslint: {
     ignoreDuringBuilds: true,
