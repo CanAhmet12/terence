@@ -462,11 +462,16 @@ class CourseSeeder extends Seeder
         // ────────────────────────────────────────────────────────────────
         // VERİ EKLEME
         // ────────────────────────────────────────────────────────────────
+        // created_by için ilk kullanıcıyı ya da NULL kullan
+        $adminId = DB::table('users')->where('role', 'admin')->value('id')
+            ?? DB::table('users')->value('id');
+
         foreach ($courses as $courseData) {
             $units = $courseData['units'];
             unset($courseData['units']);
 
             $courseId = DB::table('courses')->insertGetId(array_merge($courseData, [
+                'created_by' => $adminId,
                 'created_at' => $now,
                 'updated_at' => $now,
             ]));

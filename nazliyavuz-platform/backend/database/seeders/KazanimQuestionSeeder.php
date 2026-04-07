@@ -649,8 +649,6 @@ class KazanimQuestionSeeder extends Seeder
                     'option_text'   => $opt['text'],
                     'is_correct'    => $opt['is_correct'],
                     'sort_order'    => $sort + 1,
-                    'created_at'    => $now,
-                    'updated_at'    => $now,
                 ]);
                 $optionCount++;
             }
