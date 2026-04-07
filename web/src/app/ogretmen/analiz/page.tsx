@@ -119,7 +119,6 @@ export default function AnalizPage() {
           recipient_id: id,
           content: msg,
         } as Parameters<typeof api.sendMessage>[0]);
-        });
       }
       setMsgSent(true);
       clearSelection();

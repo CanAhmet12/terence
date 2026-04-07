@@ -811,31 +811,6 @@ export const studentApi = {
   },
 }
 
-  async getStudentUpcomingLessons(): Promise<unknown[]> {
-    const response = await api.get<unknown>('/student/upcoming-lessons')
-    return normalizeArray(response.data)
-  },
-
-  async generateParentCode(): Promise<{ code: string }> {
-    const response = await api.post<{ code: string }>('/student/generate-parent-code')
-    return response.data
-  },
-
-  async getGoalEngine(): Promise<unknown> {
-    const response = await api.get<unknown>('/student/goal-engine')
-    return response.data
-  },
-
-  async getReport(): Promise<unknown> {
-    const response = await api.get<unknown>('/student/report')
-    return response.data
-  },
-
-  async registerPushToken(pushToken: string, platform: string = 'web'): Promise<void> {
-    await api.post('/push-token', { token: pushToken, platform })
-  },
-}
-
 // ─── AI / Coach API ──────────────────────────────────────────────────────────
 export const aiApi = {
   async askCoach(_tokenOrMsg?: string, msgOrContext?: string | unknown, context?: unknown): Promise<{ reply: string; suggestions?: string[] }> {
