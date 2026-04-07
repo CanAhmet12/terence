@@ -104,11 +104,17 @@ class TeacherController extends Controller
     public function assignments(): JsonResponse
     {
         $teacher     = Auth::user();
+        // completions ilişkisi yerine assignment_completions tablosundan count al
         $assignments = Assignment::where('teacher_id', $teacher->id)
-            ->with('classRoom:id,name')
-            ->withCount('completions')
             ->orderByDesc('created_at')
-            ->get();
+            ->get()
+            ->map(fn($a) => array_merge($a->toArray(), [
+                'completions_count' => DB::table('assignment_completions')
+                    ->where('assignment_id', $a->id)->count(),
+                'class_room_name' => $a->class_room_id
+                    ? DB::table('class_rooms')->where('id', $a->class_room_id)->value('name')
+                    : null,
+            ]));
         return response()->json(['success' => true, 'data' => $assignments]);
     }
 
@@ -118,17 +124,24 @@ class TeacherController extends Controller
         $v = Validator::make($request->all(), [
             'title'         => 'required|string|max:255',
             'description'   => 'sometimes|nullable|string',
-            'type'          => 'required|in:question,video,read',
-            'target_count'  => 'sometimes|nullable|integer|min:1',
+            'type'          => 'sometimes|nullable|string',
             'subject'       => 'sometimes|nullable|string',
             'due_date'      => 'sometimes|nullable|date',
+            'class_id'      => 'sometimes|nullable|integer|exists:class_rooms,id',
             'class_room_id' => 'sometimes|nullable|integer|exists:class_rooms,id',
         ]);
         if ($v->fails()) {
             return response()->json(['error' => true, 'errors' => $v->errors()], 422);
         }
-        $teacher    = Auth::user();
-        $assignment = Assignment::create(array_merge($v->validated(), ['teacher_id' => $teacher->id]));
+        $teacher = Auth::user();
+        $data = $v->validated();
+        // class_id → class_room_id uyumluluğu
+        if (isset($data['class_id']) && !isset($data['class_room_id'])) {
+            $data['class_room_id'] = $data['class_id'];
+        }
+        unset($data['class_id'], $data['type']);
+
+        $assignment = Assignment::create(array_merge($data, ['teacher_id' => $teacher->id]));
         return response()->json(['success' => true, 'assignment' => $assignment], 201);
     }
 
@@ -297,17 +310,18 @@ class TeacherController extends Controller
     public function messages(): JsonResponse
     {
         $teacher  = Auth::user();
+        // messages tablosunda receiver_id var, recipient_id yok
         $messages = Message::where('sender_id', $teacher->id)
-            ->orWhere('recipient_id', $teacher->id)
+            ->orWhere('receiver_id', $teacher->id)
             ->orderByDesc('created_at')
             ->limit(50)
             ->get()
             ->map(fn($m) => [
                 'id'             => $m->id,
-                'recipient_type' => $m->recipient_type ?? 'student',
-                'recipient_id'   => $m->recipient_id,
-                'recipient_name' => $m->recipient_name,
-                'content'        => $m->content ?? $m->body,
+                'recipient_type' => 'student',
+                'recipient_id'   => $m->receiver_id,
+                'content'        => $m->content,
+                'is_read'        => (bool) $m->is_read,
                 'created_at'     => $m->created_at,
             ]);
 
