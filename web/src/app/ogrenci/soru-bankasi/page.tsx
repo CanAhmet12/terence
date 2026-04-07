@@ -1,5 +1,8 @@
 "use client";
 
+import dynamic from "next/dynamic";
+
+const Library3D = dynamic(() => import("@/components/Library3D"), { ssr: false });
 
 const DIFFICULTY_CONFIG = {
   easy: { label: "Kolay", cls: "bg-emerald-100 text-emerald-700" },
@@ -9,7 +12,7 @@ const DIFFICULTY_CONFIG = {
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { api, Question, AnswerResult } from "@/lib/api";
-import { Search, RefreshCw, CheckCircle, XCircle, ChevronRight, BookOpen, Loader2, Mic, MicOff, Volume2, Sparkles, X, Bot, AlertCircle } from "lucide-react";
+import { Search, RefreshCw, CheckCircle, XCircle, ChevronRight, BookOpen, Loader2, Mic, MicOff, Volume2, Sparkles, X, Bot, AlertCircle, Library, List } from "lucide-react";
 
 function Skeleton({ className }: { className?: string }) {
   return <div className={`bg-slate-100 rounded-xl animate-pulse ${className ?? ""}`} />;
@@ -207,18 +210,28 @@ function VoiceAssistantModal({ token, onClose }: { token: string | null; onClose
 
 const SUBJECT_OPTIONS = [
   { value: "", label: "Tüm Dersler" },
-  { value: "matematik", label: "Matematik" },
-  { value: "turkce", label: "Türkçe" },
-  { value: "fen", label: "Fen Bilimleri" },
-  { value: "sosyal", label: "Sosyal Bilgiler" },
-  { value: "fizik", label: "Fizik" },
-  { value: "kimya", label: "Kimya" },
-  { value: "biyoloji", label: "Biyoloji" },
-  { value: "tarih", label: "Tarih" },
-  { value: "cografya", label: "Coğrafya" },
-  { value: "edebiyat", label: "Edebiyat" },
-  { value: "ingilizce", label: "İngilizce" },
+  { value: "Matematik", label: "Matematik" },
+  { value: "Türkçe", label: "Türkçe" },
+  { value: "Fen Bilimleri", label: "Fen Bilimleri" },
+  { value: "Fizik", label: "Fizik" },
+  { value: "Kimya", label: "Kimya" },
+  { value: "Biyoloji", label: "Biyoloji" },
+  { value: "Tarih", label: "Tarih" },
+  { value: "Coğrafya", label: "Coğrafya" },
 ];
+
+// Ders → 3D kitap rengi eşleşmesi
+const SUBJECT_COLORS: Record<string, string> = {
+  "Matematik":     "#0d9488",
+  "Türkçe":        "#2563eb",
+  "Fen Bilimleri": "#7c3aed",
+  "Fizik":         "#dc2626",
+  "Kimya":         "#d97706",
+  "Biyoloji":      "#16a34a",
+  "Tarih":         "#9333ea",
+  "Coğrafya":      "#0891b2",
+  "default":       "#64748b",
+};
 
 export default function SoruBankasiPage() {
   const { token } = useAuth();
@@ -238,6 +251,8 @@ export default function SoruBankasiPage() {
   const questionStartTimes = useRef<Record<number, number>>({});
   const [showVoice, setShowVoice] = useState(false);
   const [showPersonalTest, setShowPersonalTest] = useState(false);
+  const [viewMode, setViewMode] = useState<"library" | "list">("library");
+  const [selectedLibrarySubject, setSelectedLibrarySubject] = useState<string | null>(null);
 
   const loadQuestions = useCallback(async (kazanim?: string, diff?: string, subj?: string, p = 1) => {
     if (!token) { setLoading(false); return; }
@@ -256,7 +271,7 @@ export default function SoruBankasiPage() {
       }
       setHasMore(resData.length === 20);
       const now = Date.now();
-      res.data.forEach((q: Question) => { questionStartTimes.current[q.id] = now; });
+      resData.forEach((q: Question) => { questionStartTimes.current[q.id] = now; });
     } catch {
       if (p === 1) setQuestions([]);
       setHasMore(false);
@@ -324,6 +339,27 @@ export default function SoruBankasiPage() {
   const correctCount = Object.values(answerResults).filter((r) => r.is_correct).length;
   const answeredCount = Object.keys(answerResults).length;
 
+  // 3D Kütüphane için kitap listesi: her ders bir kitap
+  const libraryBooks = SUBJECT_OPTIONS.filter((s) => s.value !== "").map((s, i) => ({
+    id: i + 1,
+    title: s.label,
+    subject: s.value,
+    color: SUBJECT_COLORS[s.value] ?? SUBJECT_COLORS.default,
+    progress: Math.round(
+      Object.values(answerResults).filter(() => true).length > 0
+        ? (correctCount / Math.max(answeredCount, 1)) * 100
+        : Math.floor(Math.random() * 40)
+    ),
+  }));
+
+  const handleLibraryBookClick = (bookId: number) => {
+    const book = libraryBooks.find((b) => b.id === bookId);
+    if (!book) return;
+    setSelectedLibrarySubject(book.subject);
+    setSubject(book.subject);
+    setViewMode("list");
+  };
+
   return (
     <div className="p-8 lg:p-12">
       <div className="mb-8 flex items-start justify-between gap-4 flex-wrap">
@@ -331,7 +367,34 @@ export default function SoruBankasiPage() {
           <h1 className="text-2xl font-bold text-slate-900">Soru Bankası</h1>
           <p className="text-slate-600 mt-1">Zorluk & kazanım filtresi · Anında doğrulama · Benzer soru getir</p>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-2 shrink-0 flex-wrap">
+          {/* Görünüm toggle */}
+          <div className="flex items-center bg-slate-100 rounded-xl p-1 gap-1">
+            <button
+              onClick={() => setViewMode("library")}
+              title="3D Kütüphane"
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold transition-all ${
+                viewMode === "library"
+                  ? "bg-white shadow-sm text-teal-700"
+                  : "text-slate-500 hover:text-slate-700"
+              }`}
+            >
+              <Library className="w-4 h-4" />
+              <span className="hidden sm:inline">Kütüphane</span>
+            </button>
+            <button
+              onClick={() => setViewMode("list")}
+              title="Liste Görünümü"
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold transition-all ${
+                viewMode === "list"
+                  ? "bg-white shadow-sm text-teal-700"
+                  : "text-slate-500 hover:text-slate-700"
+              }`}
+            >
+              <List className="w-4 h-4" />
+              <span className="hidden sm:inline">Liste</span>
+            </button>
+          </div>
           <button
             onClick={() => setShowVoice(true)}
             className="flex items-center gap-2 px-4 py-2.5 border border-teal-200 bg-teal-50 hover:bg-teal-100 text-teal-700 font-semibold text-sm rounded-xl transition-colors"
@@ -351,8 +414,57 @@ export default function SoruBankasiPage() {
         </div>
       </div>
 
+      {/* ─── 3D KÜTÜPHANE GÖRÜNÜMÜ ──────────────────────────────────────── */}
+      {viewMode === "library" && (
+        <div className="mb-8">
+          <div className="mb-4 flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-bold text-slate-800">Ders Kütüphanesi</h2>
+              <p className="text-sm text-slate-500 mt-0.5">
+                Bir derse tıkla — o dersin sorularına geç. Fareyle döndür, kaydır zoom yap.
+              </p>
+            </div>
+          </div>
+          <div className="relative rounded-2xl overflow-hidden border border-slate-200 shadow-xl">
+            <Library3D
+              books={libraryBooks}
+              onBookClick={handleLibraryBookClick}
+            />
+            {/* Ders etiketleri — 3D canvas altında */}
+            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
+              <div className="flex flex-wrap gap-2 justify-center">
+                {libraryBooks.map((book) => (
+                  <button
+                    key={book.id}
+                    onClick={() => handleLibraryBookClick(book.id)}
+                    className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white transition-all hover:scale-105 hover:brightness-110"
+                    style={{ backgroundColor: book.color + "cc" }}
+                  >
+                    {book.title}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+          {/* Özet istatistikler */}
+          <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-4">
+            {[
+              { label: "Toplam Ders", value: libraryBooks.length, color: "text-teal-600", bg: "bg-teal-50" },
+              { label: "Çözülen Soru", value: answeredCount, color: "text-blue-600", bg: "bg-blue-50" },
+              { label: "Doğru Cevap", value: correctCount, color: "text-emerald-600", bg: "bg-emerald-50" },
+              { label: "Başarı Oranı", value: answeredCount > 0 ? `%${Math.round((correctCount/answeredCount)*100)}` : "—", color: "text-purple-600", bg: "bg-purple-50" },
+            ].map(({ label, value, color, bg }) => (
+              <div key={label} className={`${bg} rounded-2xl p-4 border border-white shadow-sm`}>
+                <p className="text-xs text-slate-500 font-medium">{label}</p>
+                <p className={`text-2xl font-bold mt-1 ${color}`}>{value}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* İstatistik bandı */}
-      {answeredCount > 0 && (
+      {answeredCount > 0 && viewMode === "list" && (
         <div className="mb-6 flex items-center gap-6 p-4 bg-white rounded-2xl border border-slate-200 shadow-sm">
           <div>
             <p className="text-xs text-slate-500 font-medium">Cevaplanan</p>
@@ -375,6 +487,26 @@ export default function SoruBankasiPage() {
         </div>
       )}
 
+      {/* Filtreler ve Soru Listesi — sadece liste modunda */}
+      {viewMode === "list" && (<>
+      {/* Seçili ders etiketi */}
+      {selectedLibrarySubject && (
+        <div className="mb-4 flex items-center gap-2">
+          <span className="text-sm text-slate-500">Filtre:</span>
+          <span
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold text-white"
+            style={{ backgroundColor: SUBJECT_COLORS[selectedLibrarySubject] ?? SUBJECT_COLORS.default }}
+          >
+            {selectedLibrarySubject}
+            <button
+              onClick={() => { setSelectedLibrarySubject(null); setSubject(""); }}
+              className="ml-1 hover:opacity-75"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </span>
+        </div>
+      )}
       {/* Filtreler */}
       <div className="flex flex-wrap gap-3 mb-6">
         <div className="flex-1 min-w-[240px] relative">
@@ -560,6 +692,7 @@ export default function SoruBankasiPage() {
       <p className="mt-6 text-sm text-slate-500">
         Yanlış yaptığın sorular kazanım bazlı analiz edilir ve günlük planına otomatik eklenir.
       </p>
+      </>)}
 
       {/* Sesli Asistan Modal */}
       {showVoice && (

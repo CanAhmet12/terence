@@ -381,6 +381,13 @@ export interface PlanStats {
   target_net?: number
 }
 
+export interface AnswerResult {
+  correct?: boolean
+  is_correct?: boolean
+  correct_option?: string
+  explanation?: string
+}
+
 export interface WeakAchievement {
   id: number
   kod: string
