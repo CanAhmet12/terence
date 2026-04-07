@@ -415,6 +415,8 @@ Route::middleware(['auth:api'])->group(function () {
     // â”€â”€ Kurslar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     Route::post('/courses/{id}/enroll', [\App\Http\Controllers\Api\CourseController::class, 'enroll']);
     Route::get('/courses/{id}/progress', [\App\Http\Controllers\Api\CourseController::class, 'progress']);
+    Route::get('/courses/{id}', [\App\Http\Controllers\Api\CourseController::class, 'show']);
+    Route::get('/courses', [\App\Http\Controllers\Api\CourseController::class, 'index']);
     Route::post('/progress', [\App\Http\Controllers\Api\CourseController::class, 'updateProgress']);
 
     // â”€â”€ Soru BankasÄ± â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€

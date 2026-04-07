@@ -449,6 +449,58 @@ export interface Assignment {
   created_at?: string
 }
 
+export interface ContentItem {
+  id: number
+  type?: 'video' | 'pdf' | 'text' | 'quiz'
+  title?: string
+  url?: string
+  duration_seconds?: number
+  topic_id?: number
+  sort_order?: number
+  progress_status?: 'not_started' | 'in_progress' | 'completed'
+  is_active?: boolean
+}
+
+export interface CourseTopic {
+  id: number
+  title: string
+  slug?: string
+  sort_order?: number
+  content_items_count?: number
+  contentItems?: ContentItem[]
+  progress?: string
+  is_active?: boolean
+}
+
+export interface CourseUnit {
+  id: number
+  title: string
+  slug?: string
+  sort_order?: number
+  topics?: CourseTopic[]
+  is_active?: boolean
+}
+
+export interface Course {
+  id: number
+  title: string
+  slug: string
+  description?: string
+  subject?: string
+  exam_type?: string
+  grade?: number
+  is_free?: boolean
+  is_active?: boolean
+  sort_order?: number
+  units_count?: number
+  progress_percent?: number
+  completion_percentage?: number
+  is_enrolled?: boolean
+  units?: CourseUnit[]
+  thumbnail_url?: string
+  created_at?: string
+}
+
 export interface TeacherLesson {
   id: number
   title?: string
@@ -721,28 +773,45 @@ export const questionApi = {
 
 // ─── Course / Content API ────────────────────────────────────────────────────
 export const courseApi = {
-  async getCourses(_token?: string): Promise<unknown[]> {
-    const response = await api.get<unknown>('/courses')
-    return normalizeArray(response.data)
+  async getCourses(_token?: string): Promise<Course[]> {
+    const response = await api.get<{ success: boolean; data: Course[] }>('/courses')
+    const raw = response.data
+    if (Array.isArray(raw)) return raw as Course[]
+    if (raw?.data && Array.isArray(raw.data)) return raw.data as Course[]
+    return []
   },
 
-  async getCourse(_tokenOrId?: string, id?: string): Promise<unknown> {
+  async getCourse(_tokenOrId?: string, id?: string): Promise<Course | null> {
     const actualId = id ?? _tokenOrId
-    const response = await api.get<unknown>(`/courses/${actualId}`)
-    return response.data
-  },
-
-  async getCourseUnits(_tokenOrId?: string | number, courseId?: string | number): Promise<unknown[]> {
-    const actualId = typeof _tokenOrId === 'string' && !isNaN(Number(_tokenOrId)) ? _tokenOrId : courseId ?? _tokenOrId
-    const response = await api.get<unknown>(`/courses/${actualId}/progress`)
-    return normalizeArray(response.data)
-  },
-
-  async getTopicContent(_tokenOrId?: string | number, topicId?: string | number): Promise<unknown[]> {
-    const actualId = typeof _tokenOrId === 'string' && !isNaN(Number(_tokenOrId)) ? _tokenOrId : topicId ?? _tokenOrId
     try {
+      const response = await api.get<{ success: boolean; data: Course }>(`/courses/${actualId}`)
+      return response.data?.data ?? (response.data as unknown as Course)
+    } catch {
+      return null
+    }
+  },
+
+  async getCourseUnits(_tokenOrId?: string | number, courseId?: string | number): Promise<CourseUnit[]> {
+    // Backend GET /courses/{id} → { data: { units: [...] } }
+    const actualId = (typeof _tokenOrId === 'number') ? _tokenOrId : (courseId ?? _tokenOrId)
+    try {
+      const response = await api.get<{ success: boolean; data: Course }>(`/courses/${actualId}`)
+      const course = response.data?.data ?? (response.data as unknown as Course)
+      return Array.isArray(course?.units) ? course.units : []
+    } catch {
+      return []
+    }
+  },
+
+  async getTopicContent(_tokenOrId?: string | number, topicId?: string | number): Promise<ContentItem[]> {
+    // Backend'de ayrı bir topic content endpoint'i yok.
+    // İçerik getCourseUnits ile gelen contentItems'tan çekiliyor.
+    // Burada direkt boş array döneriz; sayfalar zaten getCourseUnits sonucundan faydalanıyor.
+    try {
+      const actualId = (typeof _tokenOrId === 'number') ? _tokenOrId : (topicId ?? _tokenOrId)
+      // Önce /courses/topic/{id} dene (eğer backend'de varsa)
       const response = await api.get<unknown>(`/courses/topic/${actualId}`)
-      return normalizeArray(response.data)
+      return normalizeArray<ContentItem>(response.data)
     } catch {
       return []
     }
