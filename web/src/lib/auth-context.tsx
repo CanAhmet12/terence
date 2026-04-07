@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
-import { api, User, authApi } from "./api";
+import { api, User, authApi, setAccessToken, clearTokens } from "./api";
 
 type AuthState = {
   user: User | null;
@@ -56,7 +56,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    // Set token in axios instance
+    // Axios header'ını hemen set et
     api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
     authApi
@@ -71,14 +71,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           const refreshed = await authApi.refresh();
           const newToken = refreshed.token.access_token;
           api.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
-          const user = await authApi.getMe();
+          // Her iki anahtarı da güncelle
           localStorage.setItem(TOKEN_KEY, newToken);
+          setAccessToken(newToken);
+          const user = await authApi.getMe();
           localStorage.setItem(USER_KEY, JSON.stringify(user));
           setState({ user, token: newToken, loading: false, error: null });
         } catch {
           // Refresh da başarısız → oturumu kapat
           localStorage.removeItem(TOKEN_KEY);
           localStorage.removeItem(USER_KEY);
+          clearTokens();
           delete api.defaults.headers.common['Authorization'];
           setState({ user: null, token: null, loading: false, error: null });
         }
@@ -90,13 +93,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const res = await authApi.login(email, password);
       const user = res.user as User;
-      const token = res.token.access_token; // Extract access_token from token object
+      const token = res.token.access_token;
       
-      // Save to localStorage
+      // Her iki localStorage anahtarını da güncelle (axios interceptor + auth-context)
       localStorage.setItem(TOKEN_KEY, token);
       localStorage.setItem(USER_KEY, JSON.stringify(user));
+      setAccessToken(token);
       
-      // Set token in axios instance immediately
+      // Axios header'ını hemen set et
       api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       
       setState({ user, token, loading: false, error: null });
@@ -128,13 +132,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         const res = await authApi.register(data);
         if (res.token && res.user) {
-          const token = res.token.access_token; // Extract access_token from token object
+          const token = res.token.access_token;
           
-          // Save to localStorage
+          // Her iki localStorage anahtarını da güncelle
           localStorage.setItem(TOKEN_KEY, token);
           localStorage.setItem(USER_KEY, JSON.stringify(res.user));
+          setAccessToken(token);
           
-          // Set token in axios instance immediately
+          // Axios header'ını hemen set et
           api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
           
           setState({ user: res.user, token, loading: false, error: null });
@@ -156,6 +161,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch {}
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
+    clearTokens();
     delete api.defaults.headers.common['Authorization'];
     setState({ user: null, token: null, loading: false, error: null });
   }, []);

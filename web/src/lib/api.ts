@@ -47,7 +47,12 @@ api.interceptors.response.use(
           { withCredentials: true }
         )
 
-        const newAccessToken = refreshResponse.data.access_token
+        // Backend { token: { access_token } } veya { access_token } formatını destekle
+        const newAccessToken =
+          refreshResponse.data?.token?.access_token ||
+          refreshResponse.data?.access_token
+
+        if (!newAccessToken) throw new Error('No token in refresh response')
 
         // Save new token
         setAccessToken(newAccessToken)
@@ -60,7 +65,7 @@ api.interceptors.response.use(
       } catch (refreshError) {
         // Refresh failed, redirect to login
         clearTokens()
-        window.location.href = '/login'
+        window.location.href = '/giris'
         return Promise.reject(refreshError)
       }
     }
@@ -101,8 +106,8 @@ api.interceptors.response.use(
   }
 )
 
-// Token management
-const TOKEN_KEY = 'access_token'
+// Token management — auth-context ile aynı anahtar
+const TOKEN_KEY = 'terence_token'
 
 export function getAccessToken(): string | null {
   if (typeof window === 'undefined') return null
@@ -115,6 +120,7 @@ export function setAccessToken(token: string): void {
 
 export function clearTokens(): void {
   localStorage.removeItem(TOKEN_KEY)
+  localStorage.removeItem('terence_user')
 }
 
 // API helper functions
