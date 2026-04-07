@@ -46,10 +46,13 @@ export default function AdminKullanicilarPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await api.getAdminUsers(token, { search: q || undefined, role: role || undefined, page: p });
-      setUsers(res.data);
-      setTotal(res.meta.total);
-      setLastPage(res.meta.last_page);
+      const res = await api.getAdminUsers({ search: q || undefined, role: role || undefined, page: p });
+      const resObj = res as Record<string, unknown>;
+      const usersData = Array.isArray((resObj as Record<string, unknown>).data) ? (resObj as Record<string, unknown>).data as AdminUser[] : Array.isArray(res) ? res as AdminUser[] : [];
+      const meta = (resObj as Record<string, unknown>).meta as Record<string, number> | undefined;
+      setUsers(usersData);
+      setTotal(meta?.total ?? usersData.length);
+      setLastPage(meta?.last_page ?? 1);
     } catch {
       setError("Kullanıcılar yüklenemedi.");
     } finally {
@@ -68,8 +71,8 @@ export default function AdminKullanicilarPage() {
     setActionLoading(user.id);
     setOpenMenuId(null);
     try {
-      const updated = await api.toggleAdminUserStatus(token, user.id);
-      setUsers((prev) => prev.map((u) => u.id === user.id ? { ...u, is_active: updated.is_active } : u));
+      await api.toggleAdminUserStatus(user.id);
+      setUsers((prev) => prev.map((u) => u.id === user.id ? { ...u, is_active: !u.is_active } : u));
     } catch {
       setError("Durum güncellenemedi.");
     } finally {
@@ -83,7 +86,7 @@ export default function AdminKullanicilarPage() {
     setActionLoading(user.id);
     setOpenMenuId(null);
     try {
-      await api.deleteAdminUser(token, user.id);
+      await api.deleteAdminUser(user.id);
       setUsers((prev) => prev.filter((u) => u.id !== user.id));
       setTotal((t) => t - 1);
     } catch {

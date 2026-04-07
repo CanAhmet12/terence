@@ -57,7 +57,7 @@ export default function SifreDegistirPage() {
     setSaving(true);
     setError("");
     try {
-      await api.changePassword(token, { current_password: currentPassword, password: newPassword, password_confirmation: confirmPassword });
+      await api.changePassword({ current_password: currentPassword, password: newPassword, password_confirmation: confirmPassword });
       setSuccess(true);
       setTimeout(() => router.push(backHref), 2500);
     } catch (err: unknown) {

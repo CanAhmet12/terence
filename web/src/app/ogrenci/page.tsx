@@ -28,11 +28,11 @@ export default function StudentDashboardPage() {
     setError(null);
     try {
       const [planRes, statsRes] = await Promise.allSettled([
-        api.getTodayPlan(token),
-        api.getPlanStats(token),
+        api.getTodayPlan(),
+        api.getPlanStats(),
       ]);
-      if (planRes.status === "fulfilled") setPlan(planRes.value);
-      if (statsRes.status === "fulfilled") setStats(statsRes.value);
+      if (planRes.status === "fulfilled") setPlan(planRes.value as DailyPlan);
+      if (statsRes.status === "fulfilled") setStats(statsRes.value as PlanStats);
       if (planRes.status === "rejected" && statsRes.status === "rejected") {
         setError("Veriler yuklenemedi. Sayfayi yenileyebilirsiniz.");
       }
@@ -52,7 +52,7 @@ export default function StudentDashboardPage() {
       tasks: prev.tasks?.map((t) => t.id === task.id ? { ...t, is_completed: true } : t),
     } : prev);
     try {
-      await api.completeTask(token, task.id);
+      await api.completeTask(task.id);
     } catch {
       setPlan((prev) => prev ? {
         ...prev, completed_tasks: prev.completed_tasks - 1,

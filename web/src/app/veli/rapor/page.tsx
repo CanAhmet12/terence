@@ -30,8 +30,8 @@ export default function VeliRaporPage() {
     if (!token) return;
     setError(null);
     try {
-      const res = await api.getChildReport(token);
-      setReport(res);
+      const res = await api.getChildReport();
+      setReport(res as ChildReport);
     } catch (e) {
       setError((e as Error).message || "Rapor yüklenemedi");
     }
@@ -41,9 +41,11 @@ export default function VeliRaporPage() {
   useEffect(() => { loadData(); }, [loadData]);
 
   const childName = report?.child.name ?? "Çocuğunuz";
-  const nets = report?.weekly_nets ?? [];
+  const rawNets = report?.weekly_nets
+  const nets = Array.isArray(rawNets) ? rawNets : []
   const maxNet = nets.length > 0 ? Math.max(...nets, 1) : 1;
-  const subjects = report?.subject_analysis ?? [];
+  const rawSubjects = report?.subject_analysis
+  const subjects = Array.isArray(rawSubjects) ? rawSubjects : [];
 
   const weeklyChange = nets.length >= 2 ? nets[nets.length - 1] - nets[0] : 0;
   const studyTimeStr = secondsToHuman(report?.study_time_weekly_seconds ?? 0);

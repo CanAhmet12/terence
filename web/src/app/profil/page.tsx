@@ -86,8 +86,8 @@ export default function ProfilPage() {
     setPhotoUploading(true);
 
     try {
-      const res = await api.uploadProfilePhoto(token, file);
-      const updated = await api.updateProfile(token, { profile_photo_url: res.url });
+      const res = await api.uploadProfilePhoto(file);
+      const updated = await api.updateProfile({ profile_photo_url: res.url });
       updateUser(updated);
     } catch {
       setPhotoPreview(user?.profile_photo_url || null);
@@ -103,7 +103,7 @@ export default function ProfilPage() {
     setSaveState("saving");
     setSaveError("");
     try {
-      const updated = await api.updateProfile(token, {
+      const updated = await api.updateProfile({
         name,
         phone: phone || undefined,
         bio: isTeacher ? ozgecmis || undefined : undefined,
@@ -112,15 +112,15 @@ export default function ProfilPage() {
       updateUser(updated);
 
       if (user?.role === "student") {
-        await api.updateGoal(token, {
-          exam_type: alan as "TYT" | "AYT" | "LGS" | "KPSS",
-          grade: sinif ? Number(sinif) : undefined,
+        await api.updateGoal({
+          exam_goal: alan,
+          target_exam: alan,
           target_school: hedefOkul || undefined,
           target_department: hedefBolum || undefined,
-        });
+        } as Parameters<typeof api.updateGoal>[0]);
       }
 
-      await api.updateNotificationPreferences(token, {
+      await api.updateNotificationPreferences({
         daily_reminders: bildirimCalisma,
         risk_alerts: bildirimHedef,
         email_notifications: bildirimDeneme,

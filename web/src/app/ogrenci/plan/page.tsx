@@ -60,8 +60,8 @@ export default function GunlukPlanPage() {
     setLoading(true);
     setError("");
     try {
-      const p = await api.getTodayPlan(token);
-      setPlan(p);
+      const p = await api.getTodayPlan();
+      setPlan(p as DailyPlan);
     } catch {
       setError("Plan yüklenemedi. Yenile butonuna tıklayın.");
     } finally {
@@ -69,8 +69,9 @@ export default function GunlukPlanPage() {
     }
     // Zayıf kazanımları da yükle
     try {
-      const wa = await api.getWeakAchievements(token);
-      setWeakAchievements(wa.slice(0, 5));
+      const wa = await api.getWeakAchievements();
+      const waArr = Array.isArray(wa) ? wa : [];
+      setWeakAchievements(waArr.slice(0, 5) as WeakAchievement[]);
     } catch {}
   }, [token]);
 
@@ -79,9 +80,9 @@ export default function GunlukPlanPage() {
     setLoading(true);
     setError("");
     try {
-      const { from, to } = getWeekBounds();
-      const plans = await api.getWeeklyPlans(token, from, to);
-      setWeeklyPlans(plans);
+      const plans = await api.getWeeklyPlans();
+      const plansArr = Array.isArray(plans) ? plans : [];
+      setWeeklyPlans(plansArr as DailyPlan[]);
     } catch {
       setError("Haftalık plan yüklenemedi.");
     } finally {
@@ -97,11 +98,11 @@ export default function GunlukPlanPage() {
   const handleComplete = async (task: PlanTask) => {
     if (task.is_completed || !token) return;
     setCompletingId(task.id);
-    setPlan((p) => p ? { ...p, completed_tasks: p.completed_tasks + 1, tasks: p.tasks?.map((t) => t.id === task.id ? { ...t, is_completed: true } : t) } : p);
+    setPlan((p) => p ? { ...p, completed_tasks: (p.completed_tasks ?? 0) + 1, tasks: p.tasks?.map((t) => t.id === task.id ? { ...t, is_completed: true } : t) } : p);
     try {
-      await api.completeTask(token, task.id);
+      await api.completeTask(task.id);
     } catch {
-      setPlan((p) => p ? { ...p, completed_tasks: p.completed_tasks - 1, tasks: p.tasks?.map((t) => t.id === task.id ? { ...t, is_completed: false } : t) } : p);
+      setPlan((p) => p ? { ...p, completed_tasks: Math.max((p.completed_tasks ?? 1) - 1, 0), tasks: p.tasks?.map((t) => t.id === task.id ? { ...t, is_completed: false } : t) } : p);
     }
     setCompletingId(null);
   };
@@ -112,12 +113,12 @@ export default function GunlukPlanPage() {
     const prev = plan;
     setPlan((p) => p ? {
       ...p,
-      total_tasks: p.total_tasks - 1,
-      completed_tasks: task.is_completed ? p.completed_tasks - 1 : p.completed_tasks,
+      total_tasks: Math.max((p.total_tasks ?? 1) - 1, 0),
+      completed_tasks: task.is_completed ? Math.max((p.completed_tasks ?? 1) - 1, 0) : (p.completed_tasks ?? 0),
       tasks: p.tasks?.filter((t) => t.id !== task.id),
     } : p);
     try {
-      await api.deleteTask(token, task.id);
+      await api.deleteTask(task.id);
     } catch {
       setPlan(prev);
     }
@@ -129,12 +130,13 @@ export default function GunlukPlanPage() {
     setAdding(true);
     const tmpId = Date.now();
     const tmpTask: PlanTask = { id: tmpId, title: newTask.trim(), type: "custom", is_completed: false };
-    setPlan((p) => p ? { ...p, total_tasks: p.total_tasks + 1, tasks: [...(p.tasks ?? []), tmpTask] } : p);
+    setPlan((p) => p ? { ...p, total_tasks: (p.total_tasks ?? 0) + 1, tasks: [...(p.tasks ?? []), tmpTask] } : p);
     try {
-      const res = await api.addPlanTask(token, { title: newTask.trim(), type: "custom" });
-      setPlan((p) => p ? { ...p, tasks: p.tasks?.map((t) => t.id === tmpId ? res.task : t) } : p);
+      const res = await api.addPlanTask({ title: newTask.trim(), type: "custom" } as Parameters<typeof api.addPlanTask>[0]);
+      const newTaskObj = (res as Record<string, unknown>).task ?? res;
+      setPlan((p) => p ? { ...p, tasks: p.tasks?.map((t) => t.id === tmpId ? (newTaskObj as PlanTask) : t) } : p);
     } catch {
-      setPlan((p) => p ? { ...p, total_tasks: p.total_tasks - 1, tasks: p.tasks?.filter((t) => t.id !== tmpId) } : p);
+      setPlan((p) => p ? { ...p, total_tasks: Math.max((p.total_tasks ?? 1) - 1, 0), tasks: p.tasks?.filter((t) => t.id !== tmpId) } : p);
     }
     setNewTask("");
     setShowAddForm(false);
@@ -145,16 +147,16 @@ export default function GunlukPlanPage() {
     if (!token) return;
     setAddingWeakId(wa.id);
     try {
-      const res = await api.addPlanTask(token, {
+      const res = await api.addPlanTask({
         title: `${wa.konu} — Tekrar Çalış (${wa.kod})`,
         type: "question",
         subject: wa.subject,
-        kazanim_code: wa.kod,
-      });
+      } as Parameters<typeof api.addPlanTask>[0]);
+      const newTaskObj = ((res as Record<string, unknown>).task ?? res) as PlanTask;
       setPlan((p) => p ? {
         ...p,
-        total_tasks: p.total_tasks + 1,
-        tasks: [...(p.tasks ?? []), res.task],
+        total_tasks: (p.total_tasks ?? 0) + 1,
+        tasks: [...(p.tasks ?? []), newTaskObj],
       } : p);
       setAddedWeakIds((prev) => new Set([...prev, wa.id]));
     } catch {}

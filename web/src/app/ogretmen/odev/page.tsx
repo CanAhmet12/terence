@@ -73,16 +73,15 @@ export default function OdevPage() {
     setError("");
 
     try {
-      const res = await api.createAssignment(token, {
+      const res = await api.createAssignment({
         title: form.title,
         subject: form.subject,
-        type: form.type,
-        target_count: Number(form.target_count),
         due_date: form.due_date || undefined,
         description: form.description || undefined,
-        class_room_id: form.class_room_id ? Number(form.class_room_id) : undefined,
-      });
-      setAssignments((prev) => [res.assignment, ...prev]);
+        class_id: form.class_room_id ? Number(form.class_room_id) : undefined,
+      } as Parameters<typeof api.createAssignment>[0]);
+      const assignment = ((res as Record<string, unknown>)?.assignment ?? res) as Assignment;
+      setAssignments((prev) => [assignment, ...prev]);
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
       setForm({ title: "", subject: "", type: "question", target_count: "10", due_date: "", description: "", class_room_id: "" });

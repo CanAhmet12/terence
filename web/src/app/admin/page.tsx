@@ -48,15 +48,16 @@ export default function AdminDashboardPage() {
     else setRefreshing(true);
 
     try {
-      const adminStats = await api.getAdminStats(token);
+      const adminStats = await api.getAdminStats();
+      const s = adminStats as Record<string, unknown>;
       setStats({
-        total_students: adminStats?.total_students ?? 0,
-        total_teachers: adminStats?.total_teachers ?? 0,
-        monthly_revenue: adminStats?.monthly_revenue ?? 0,
-        new_users_this_week: adminStats?.new_users_this_week ?? adminStats?.active_users_today ?? 0,
-        active_users_today: adminStats?.active_users_today ?? 0,
-        top_content: adminStats?.top_content ?? [],
-        subscription_conversions: adminStats?.subscription_conversions ?? [],
+        total_students: (s?.total_students as number) ?? 0,
+        total_teachers: (s?.total_teachers as number) ?? 0,
+        monthly_revenue: (s?.monthly_revenue as number) ?? 0,
+        new_users_this_week: (s?.new_users_this_week as number) ?? (s?.active_users_today as number) ?? 0,
+        active_users_today: (s?.active_users_today as number) ?? 0,
+        top_content: Array.isArray(s?.top_content) ? (s.top_content as { title: string; views: number }[]) : [],
+        subscription_conversions: Array.isArray(s?.subscription_conversions) ? (s.subscription_conversions as { from: string; to: string; count: number }[]) : [],
       });
     } catch {}
     setLoading(false);
@@ -91,8 +92,8 @@ export default function AdminDashboardPage() {
       bg: "bg-amber-50",
       color: "text-amber-600",
       label: "En Çok İzlenen",
-      value: loading ? null : (s?.top_content[0]?.title.split("—")[0].trim() ?? "—"),
-      sub: loading ? null : `${s?.top_content[0]?.views.toLocaleString("tr") ?? 0} izlenme`,
+      value: loading ? null : (s?.top_content?.[0]?.title?.split?.("—")?.[0]?.trim?.() ?? "—"),
+      sub: loading ? null : `${s?.top_content?.[0]?.views?.toLocaleString?.("tr") ?? 0} izlenme`,
       subColor: "text-slate-500",
     },
     {

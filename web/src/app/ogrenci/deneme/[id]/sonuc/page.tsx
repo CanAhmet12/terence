@@ -29,13 +29,15 @@ export default function ExamResultPage() {
   const loadResult = useCallback(async () => {
     if (!token) return;
     try {
-      const res = await api.getExamResult(token, sessionId);
-      setResult(res.result);
+      const res = await api.getExamResult(sessionId);
+      const resObj = res as Record<string, unknown>;
+      setResult((resObj?.result ?? res) as ExamSession);
       // Zayıf kazanımları da yükle
       setWeakLoading(true);
       try {
-        const wa = await api.getWeakAchievements(token);
-        setWeakAchievements(wa.slice(0, 5));
+        const wa = await api.getWeakAchievements();
+        const waArr = Array.isArray(wa) ? wa : [];
+        setWeakAchievements((waArr as WeakAchievement[]).slice(0, 5));
       } catch {}
       setWeakLoading(false);
     } catch (err: unknown) {

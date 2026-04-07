@@ -43,13 +43,16 @@ export default function RaporPage() {
   const loadData = useCallback(async () => {
     if (!token) return;
     const [statsRes, goalRes, weakRes] = await Promise.allSettled([
-      api.getPlanStats(token),
-      api.getGoalAnalysis(token),
-      api.getWeakAchievements(token),
+      api.getPlanStats(),
+      api.getGoalAnalysis(),
+      api.getWeakAchievements(),
     ]);
-    if (statsRes.status === "fulfilled") setStats(statsRes.value);
-    if (goalRes.status === "fulfilled") setGoal(goalRes.value);
-    if (weakRes.status === "fulfilled") setWeakAchievements(weakRes.value.slice(0, 5));
+    if (statsRes.status === "fulfilled") setStats(statsRes.value as StudentStatistics);
+    if (goalRes.status === "fulfilled") setGoal(goalRes.value as GoalAnalysis);
+    if (weakRes.status === "fulfilled") {
+      const wa = Array.isArray(weakRes.value) ? weakRes.value : [];
+      setWeakAchievements((wa as WeakAchievement[]).slice(0, 5));
+    }
     setLoading(false);
   }, [token]);
 

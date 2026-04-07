@@ -62,11 +62,11 @@ export default function RozetPage() {
     setError(null);
     try {
       const [badges, board] = await Promise.all([
-        api.getBadges(token),
-        api.getLeaderboard(token, period),
+        api.getBadges(),
+        api.getLeaderboard(period),
       ]);
-      setBadgeData(badges);
-      setLeaderboard(board);
+      setBadgeData(badges as BadgeData);
+      setLeaderboard(Array.isArray(board) ? board : []);
     } catch (e) {
       setError((e as Error).message || "Veriler yüklenemedi");
     } finally {
@@ -78,8 +78,8 @@ export default function RozetPage() {
     if (!token) return;
     setLeaderboardLoading(true);
     try {
-      const board = await api.getLeaderboard(token, period);
-      setLeaderboard(board);
+      const board = await api.getLeaderboard(period);
+      setLeaderboard(Array.isArray(board) ? board : []);
     } catch (e) {
       setError((e as Error).message || "Sıralama yüklenemedi");
     } finally {
@@ -91,12 +91,8 @@ export default function RozetPage() {
     if (!token) return;
     setNationalLoading(true);
     try {
-      try {
-        const res = await api.getLeaderboard(token, "monthly");
-        setNationalBoard(res);
-      } catch {
-        setNationalBoard([]);
-      }
+      const res = await api.getLeaderboard("monthly");
+      setNationalBoard(Array.isArray(res) ? res : []);
     } catch {
       setNationalBoard([]);
     } finally {

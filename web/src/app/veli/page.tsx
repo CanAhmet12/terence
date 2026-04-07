@@ -38,8 +38,8 @@ export default function VeliDashboardPage() {
     if (!token) return;
     setError(null);
     try {
-      const res = await api.getChildren(token);
-      setChildren(res ?? []);
+      const res = await api.getChildren();
+      setChildren(Array.isArray(res) ? res as ChildSummary[] : []);
     } catch (e) {
       setError((e as Error).message || "Veriler yüklenemedi");
     }
@@ -53,7 +53,7 @@ export default function VeliDashboardPage() {
     setLinkLoading(true);
     setLinkError("");
     try {
-      await api.linkChild(token, linkCode.trim());
+      await api.linkChild(linkCode.trim());
       setLinkSuccess(true);
       setLinkCode("");
       setShowLink(false);
@@ -80,7 +80,8 @@ export default function VeliDashboardPage() {
   };
   const risk = riskColors[riskLevel];
 
-  const nets = summary?.weekly_nets ?? [];
+  const rawNets = summary?.weekly_nets
+  const nets = Array.isArray(rawNets) ? rawNets : []
   const maxNet = nets.length > 0 ? Math.max(...nets, 1) : 1;
   const weeklyChange = nets.length >= 2 ? nets[nets.length - 1] - nets[0] : 0;
 

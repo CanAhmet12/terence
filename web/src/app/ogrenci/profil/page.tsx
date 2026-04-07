@@ -98,8 +98,8 @@ export default function OgrenciProfilPage() {
     setPhotoPreview(URL.createObjectURL(file));
     setPhotoUploading(true);
     try {
-      const res = await api.uploadProfilePhoto(token, file);
-      const updated = await api.updateProfile(token, { profile_photo_url: res.url });
+      const res = await api.uploadProfilePhoto(file);
+      const updated = await api.updateProfile({ profile_photo_url: res.url });
       updateUser(updated);
     } catch {
       setPhotoPreview(user?.profile_photo_url ?? null);
@@ -118,7 +118,7 @@ export default function OgrenciProfilPage() {
         profileData.bio = bio || undefined;
         profileData.subject = brans || undefined;
       }
-      const updated = await api.updateProfile(token, profileData);
+      const updated = await api.updateProfile(profileData);
       updateUser(updated);
       setSaveState("success");
       setTimeout(() => setSaveState("idle"), 3000);
@@ -134,15 +134,15 @@ export default function OgrenciProfilPage() {
     if (!token) return;
     setSaveState("saving"); setSaveError("");
     try {
-      await api.updateGoal(token, {
-        exam_type: hedefSinav as "TYT" | "AYT" | "LGS" | "KPSS",
-        grade: sinif ? Number(sinif) : undefined,
+      await api.updateGoal({
+        exam_goal: hedefSinav,
+        target_exam: hedefSinav,
         target_school: hedefOkul || undefined,
         target_department: hedefBolum || undefined,
         target_net: hedefNet ? Number(hedefNet) : undefined,
-      });
+      } as Parameters<typeof api.updateGoal>[0]);
       // Re-fetch user to get updated goal
-      const meRes = await api.getMe(token);
+      const meRes = await api.getMe();
       updateUser(meRes);
       setSaveState("success");
       setTimeout(() => setSaveState("idle"), 3000);
@@ -158,7 +158,7 @@ export default function OgrenciProfilPage() {
     if (!token) return;
     setSaveState("saving"); setSaveError("");
     try {
-      await api.updateNotificationPreferences(token, {
+      await api.updateNotificationPreferences({
         daily_reminders: bildirimCalisma,
         risk_alerts: bildirimHedef,
         email_notifications: bildirimDeneme,

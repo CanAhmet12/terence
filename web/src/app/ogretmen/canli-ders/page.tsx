@@ -75,15 +75,15 @@ export default function CanliDersPage() {
     setError("");
 
     try {
-      const res = await api.createLiveSession(token, {
+      const res = await api.createLiveSession({
         title: form.title || (classes.find((c) => c.id === Number(form.class_room_id))?.name ?? "Canlı Ders"),
-        class_room_id: form.class_room_id ? Number(form.class_room_id) : undefined,
-        scheduled_at: form.scheduled_at,
-        duration_minutes: form.duration_minutes,
-      });
-      setCreatedUrl(res.session.daily_room_url ?? "");
+        class_id: form.class_room_id ? Number(form.class_room_id) : undefined,
+        starts_at: form.scheduled_at,
+      } as Parameters<typeof api.createLiveSession>[0]);
+      const session = ((res as Record<string, unknown>)?.session ?? res) as LiveSession;
+      setCreatedUrl((session as Record<string, unknown>)?.daily_room_url as string ?? "");
       setSaved(true);
-      setLessons((prev) => [res.session, ...prev]);
+      setLessons((prev) => [session, ...prev]);
     } catch (e) {
       setError((e as Error).message);
     } finally {

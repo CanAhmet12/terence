@@ -48,9 +48,9 @@ export default function VeliBildirimPage() {
   const loadSettings = useCallback(async () => {
     if (!token) return;
     try {
-      const res = await api.getParentNotificationSettings(token);
-      setSettings(res);
-      setPhone(res.phone ?? "");
+      const res = await api.getParentNotificationSettings();
+      setSettings(res as ParentNotificationSettings);
+      setPhone((res as ParentNotificationSettings).phone as string ?? "");
     } catch {
       setSettings({});
     }
@@ -65,8 +65,8 @@ export default function VeliBildirimPage() {
     setErr("");
     setSaved(false);
     try {
-      const updated = await api.updateParentNotificationSettings(token, settings);
-      setSettings(updated);
+      const updated = await api.updateParentNotificationSettings(settings);
+      setSettings(updated as ParentNotificationSettings);
     } catch (e) {
       setErr((e as Error).message || "Kaydedilemedi.");
       setSaving(false);
@@ -82,7 +82,7 @@ export default function VeliBildirimPage() {
     setPhoneSaving(true);
     setPhoneMsg("");
     try {
-      await api.updateProfile(token, { phone });
+      await api.updateProfile({ phone });
       setPhoneMsg("ok");
       setTimeout(() => setPhoneMsg(""), 3000);
     } catch (e) {

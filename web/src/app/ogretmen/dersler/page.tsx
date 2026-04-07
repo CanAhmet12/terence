@@ -35,9 +35,10 @@ export default function OgretmenDerslerPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await api.getCourses(token);
-      setCourses(res);
-      if (res.length > 0) setSelectedCourseSlug(res[0].slug);
+      const res = await api.getCourses();
+      const courses = Array.isArray(res) ? res as Course[] : [];
+      setCourses(courses);
+      if (courses.length > 0) setSelectedCourseSlug((courses[0] as Course).slug);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Dersler yüklenemedi.");
       setCourses([]);

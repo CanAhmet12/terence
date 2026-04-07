@@ -195,12 +195,12 @@ function PaymentModal({
     if (!token || !planId) return;
     setInitiating(true);
     try {
-      const res = await api.initiatePayment(token, {
-        plan_id: planId,
-        billing_cycle: billing,
+      const res = await api.initiatePayment({
+        package_id: planId,
         coupon_code: couponCode,
-      });
-      setIframeToken(res.token);
+      } as Parameters<typeof api.initiatePayment>[0]);
+      const resObj = res as Record<string, unknown>;
+      setIframeToken((resObj.token ?? resObj.iframe_token) as string ?? null);
     } catch {
       setIframeToken(null);
     } finally {
@@ -217,10 +217,11 @@ function PaymentModal({
     setCouponLoading(true);
     setCouponError(null);
     try {
-      const res = await api.applyCoupon(token, coupon.trim(), planId);
-      if (res.success) {
+      const res = await api.applyCoupon(coupon.trim(), planId);
+      const resObj = res as Record<string, unknown>;
+      if (resObj.success || resObj.valid || (resObj.discount as number) > 0) {
         setCouponApplied(true);
-        setDiscount({ amount: res.discount_amount, finalPrice: res.final_price });
+        setDiscount({ amount: resObj.discount_amount as number ?? resObj.discount as number, finalPrice: resObj.final_price as number });
         // Yeni fiyatla iframe'i yeniden al
         handleInitiate(coupon.trim());
       } else {

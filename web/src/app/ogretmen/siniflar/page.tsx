@@ -64,8 +64,9 @@ export default function SiniflarPage() {
     setStudentsLoading(true);
     setSearch("");
     setRiskFilter("");
-    api.getClassStudents(token, selectedClassId)
-      .then((data) => {
+    api.getClassStudents(selectedClassId)
+      .then((rawData) => {
+        const data = Array.isArray(rawData) ? rawData : []
         // ClassStudents API'den User[] dönüyor, TeacherStudent formatına çeviriyoruz
         setStudents(data.map((u) => ({
           id: u.id,
@@ -73,7 +74,7 @@ export default function SiniflarPage() {
           email: u.email,
           net_score: undefined,
           risk_level: undefined,
-          last_active_at: u.last_login_at,
+          last_active_at: (u as Record<string, unknown>).last_login_at,
           tasks_completed_today: undefined,
           study_time_today_seconds: undefined,
         })));

@@ -45,11 +45,12 @@ export default function AdminIcerikPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await api.getAdminContent(token, {
+      const res = await api.getAdminContent({
         search: search || undefined,
         type: typeFilter || undefined,
-      });
-      setItems(res.data);
+      } as Parameters<typeof api.getAdminContent>[0]);
+      const resObj = res as Record<string, unknown>;
+      setItems(Array.isArray(resObj.data) ? resObj.data as AdminContentItem[] : Array.isArray(res) ? res as AdminContentItem[] : []);
     } catch {
       setError("İçerikler yüklenemedi. API endpoint'i henüz hazır olmayabilir.");
     } finally {
@@ -64,7 +65,7 @@ export default function AdminIcerikPage() {
     if (!confirm(`"${item.title}" içeriğini silmek istediğinizden emin misiniz?`)) return;
     setDeletingId(item.id);
     try {
-      await api.deleteAdminContent(token, item.id);
+      await api.deleteAdminContent(item.id);
       setItems((prev) => prev.filter((i) => i.id !== item.id));
     } catch {
       setError(`"${item.title}" silinemedi.`);

@@ -41,8 +41,8 @@ export default function HedefPage() {
     }
 
     try {
-      const res = await api.getGoalAnalysis(token);
-      setAnalysis(res);
+      const res = await api.getGoalAnalysis();
+      setAnalysis(res as GoalAnalysis);
       // Formu mevcut hedefle doldur
       if (user?.goal) {
         setExamType((user.goal.exam_type as GoalInput["exam_type"]) ?? "TYT");
@@ -64,21 +64,21 @@ export default function HedefPage() {
     setSaveState("saving");
     setSaveError("");
     try {
-      const updatedGoal = await api.updateGoal(token, {
-        exam_type: examType,
+      const updatedGoal = await api.updateGoal({
+        exam_goal: examType,
+        target_exam: examType,
         target_school: targetSchool || undefined,
         target_department: targetDept || undefined,
         target_net: targetNet ? parseInt(targetNet) : undefined,
-        current_net: currentNet ? parseInt(currentNet) : undefined,
-      });
+      } as Parameters<typeof api.updateGoal>[0]);
       // Mevcut kullanıcıyı goal ile güncelle
       if (user) {
-        updateUser({ ...user, goal: updatedGoal });
+        updateUser({ ...user, ...(updatedGoal as Record<string, unknown>) });
       }
 
       // Analizi yenile
-      const newAnalysis = await api.getGoalAnalysis(token);
-      setAnalysis(newAnalysis);
+      const newAnalysis = await api.getGoalAnalysis();
+      setAnalysis(newAnalysis as GoalAnalysis);
 
       setSaveState("success");
       setTimeout(() => setSaveState("idle"), 3000);

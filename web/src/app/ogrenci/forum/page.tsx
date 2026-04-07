@@ -80,8 +80,8 @@ function NewPostModal({ onClose, onCreated, token }: NewPostModalProps) {
     setSubmitting(true);
     setError("");
     try {
-      const res = await api.createForumPost(token, { title: title.trim(), content: content.trim(), subject: subject || undefined });
-      onCreated(res.post);
+      const res = await api.createForumPost({ title: title.trim(), content: content.trim(), subject: subject || undefined });
+      onCreated((res as Record<string, unknown>)?.post ?? res);
     } catch (e) {
       setError((e as Error).message || "Gönderi oluşturulamadı");
     } finally {
@@ -171,9 +171,10 @@ function PostDetail({ postId, token, user, onBack }: PostDetailProps) {
     const load = async () => {
       setLoading(true);
       try {
-        const res = await api.getForumPost(token, postId);
-        setPost(res.post);
-        setReplies(res.replies ?? []);
+        const res = await api.getForumPost(postId);
+        const resObj = res as Record<string, unknown>;
+        setPost(resObj.post as Record<string, unknown>);
+        setReplies(Array.isArray(resObj.replies) ? resObj.replies as Record<string, unknown>[] : []);
       } catch {
         setError("Gönderi yüklenemedi");
       } finally {
@@ -187,8 +188,10 @@ function PostDetail({ postId, token, user, onBack }: PostDetailProps) {
     if (!replyText.trim()) return;
     setSending(true);
     try {
-      const res = await api.createForumReply(token, postId, replyText.trim());
-      setReplies((prev) => [...prev, res.reply]);
+      const res = await api.createForumReply(postId, { content: replyText.trim() });
+      const resObj = res as Record<string, unknown>;
+      const newReply = resObj?.reply ?? res;
+      setReplies((prev) => [...prev, newReply as Record<string, unknown>]);
       setReplyText("");
     } catch (e) {
       setError((e as Error).message || "Yanıt gönderilemedi");
@@ -200,14 +203,15 @@ function PostDetail({ postId, token, user, onBack }: PostDetailProps) {
   const handleLike = async () => {
     if (!post) return;
     try {
-      const res = await api.likeForumPost(token, postId);
-      setPost((p) => p ? { ...p, is_liked: res.liked, like_count: res.like_count } : p);
+      const res = await api.likeForumPost(postId);
+      const resObj = res as Record<string, unknown>;
+      setPost((p) => p ? { ...p, is_liked: resObj?.liked, like_count: resObj?.like_count } : p);
     } catch { /* ignore */ }
   };
 
   const handleMarkBest = async (replyId: number) => {
     try {
-      await api.markForumReplyBest(token, postId, replyId);
+      await api.markForumReplyBest(postId, replyId);
       setReplies((prev) => prev.map((r) => ({ ...r, is_best_answer: r.id === replyId })));
       setPost((p) => p ? { ...p, is_solved: true } : p);
     } catch { /* ignore */ }
@@ -371,13 +375,14 @@ export default function ForumPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await api.getForumPosts(token, {
+      const res = await api.getForumPosts({
         subject: subject || undefined,
         search: search || undefined,
         sort,
         page,
-      });
-      setPosts(res.data ?? []);
+      } as Parameters<typeof api.getForumPosts>[0]);
+      const resObj = res as Record<string, unknown>;
+      setPosts(Array.isArray(resObj.data) ? resObj.data as Record<string, unknown>[] : []);
       setTotal(res.total ?? 0);
       setLastPage(res.last_page ?? 1);
     } catch (e) {

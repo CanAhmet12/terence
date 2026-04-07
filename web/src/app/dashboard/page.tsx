@@ -106,13 +106,18 @@ export default function StudentDashboard() {
 
   const { overview, subject_performance, study_time_analysis, progress_timeline } = data
 
+  // Güvenli dizi erişimi
+  const safeTimeline = Array.isArray(progress_timeline) ? progress_timeline : []
+  const safeSubjectPerf = (subject_performance && typeof subject_performance === 'object') ? subject_performance : {}
+  const safeActivityType = (study_time_analysis?.by_activity_type && typeof study_time_analysis.by_activity_type === 'object') ? study_time_analysis.by_activity_type : {}
+
   // Chart data
   const progressChartData = {
-    labels: progress_timeline.map((w) => w.week_label),
+    labels: safeTimeline.map((w) => w.week_label),
     datasets: [
       {
         label: 'Doğruluk Oranı (%)',
-        data: progress_timeline.map((w) => w.accuracy_rate),
+        data: safeTimeline.map((w) => w.accuracy_rate),
         borderColor: '#3b82f6',
         backgroundColor: 'rgba(59, 130, 246, 0.1)',
         fill: true,
@@ -120,7 +125,7 @@ export default function StudentDashboard() {
       },
       {
         label: 'Çözülen Sorular',
-        data: progress_timeline.map((w) => w.questions_solved),
+        data: safeTimeline.map((w) => w.questions_solved),
         borderColor: '#10b981',
         backgroundColor: 'rgba(16, 185, 129, 0.1)',
         fill: true,
@@ -131,10 +136,10 @@ export default function StudentDashboard() {
   }
 
   const subjectChartData = {
-    labels: Object.keys(subject_performance),
+    labels: Object.keys(safeSubjectPerf),
     datasets: [{
       label: 'Doğruluk Oranı',
-      data: Object.values(subject_performance).map((s) => s.accuracy_rate),
+      data: Object.values(safeSubjectPerf).map((s) => (s as Record<string, number>).accuracy_rate ?? 0),
       backgroundColor: [
         'rgba(59, 130, 246, 0.8)',
         'rgba(16, 185, 129, 0.8)',
@@ -146,7 +151,7 @@ export default function StudentDashboard() {
   }
 
   const activityTypeData = {
-    labels: Object.keys(study_time_analysis.by_activity_type).map((k) => {
+    labels: Object.keys(safeActivityType).map((k) => {
       const labels: Record<string, string> = {
         'video_watch': 'Video İzleme',
         'question_solve': 'Soru Çözme',
@@ -156,7 +161,7 @@ export default function StudentDashboard() {
       return labels[k] || k
     }),
     datasets: [{
-      data: Object.values(study_time_analysis.by_activity_type),
+      data: Object.values(safeActivityType),
       backgroundColor: [
         '#3b82f6',
         '#10b981',

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
@@ -24,8 +24,8 @@ export default function DenemePage() {
   const loadHistory = useCallback(async () => {
     if (!token) return;
     try {
-      const data = await api.getExamHistory(token);
-      setHistory(data);
+      const data = await api.getExamHistory();
+      setHistory(Array.isArray(data) ? data : []);
     } catch { setHistory([]); }
     finally { setLoading(false); }
   }, [token]);
@@ -37,16 +37,18 @@ export default function DenemePage() {
     setStartingType(examType.key);
     setError(null);
     try {
-      const res = await api.startExam(token, {
+      const res = await api.startExam({
         exam_type: examType.key,
-        title: examType.label + " Denemesi",
-        duration_minutes: examType.duration,
         question_count: examType.questions,
+        duration_minutes: examType.duration,
       });
-      if (res.questions?.length) {
-        localStorage.setItem("exam_questions_" + res.session.id, JSON.stringify({ questions: res.questions, duration: examType.duration }));
+      const session = (res as Record<string, unknown>).session ?? res;
+      const sessionId = (session as ExamSession).id;
+      const questions = (res as Record<string, unknown>).questions;
+      if (Array.isArray(questions) && questions.length) {
+        localStorage.setItem("exam_questions_" + sessionId, JSON.stringify({ questions, duration: examType.duration }));
       }
-      router.push("/ogrenci/deneme/" + res.session.id);
+      router.push("/ogrenci/deneme/" + sessionId);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Deneme baslatÄ±lamadÄ±";
       setError(msg.toLowerCase().includes("soru") ? "Bu deneme turu icin henuz yeterli soru bulunmuyor." : msg);

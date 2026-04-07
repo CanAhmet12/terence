@@ -63,21 +63,20 @@ function AIQuestionModal({
     setError(null);
     setGeneratedQ(null);
     try {
-      const res = await api.generateQuestion(token, {
-        kazanim_code: aiKazanim,
+      const res = await api.generateQuestion({
+        topic: aiKazanim || aiTopic,
         subject: aiSubject,
-        topic: aiTopic,
         difficulty: aiDifficulty,
-      });
+      } as Parameters<typeof api.generateQuestion>[0]);
       // API'den gelen Question objesini parse et
-      const q = res.question as Question & { stem?: string; correct_answer?: string; explanation?: string };
+      const q = res as Question & { stem?: string; question?: { stem?: string; options?: Record<string, string>; correct_answer?: string; explanation?: string } };
+      const qInner = (q as Record<string, unknown>).question as typeof q ?? q;
+      const options = Array.isArray(qInner.options) ? Object.fromEntries((qInner.options as {option_letter:string;option_text:string}[]).map((o) => [o.option_letter, o.option_text])) : ((qInner.options && typeof qInner.options === 'object' && !Array.isArray(qInner.options)) ? qInner.options as Record<string, string> : {});
       const parsed = {
-        stem: q.stem || q.question_text || "Soru metni alınamadı.",
-        options: q.options
-          ? Object.fromEntries((q.options as QuestionOption[]).map((o) => [o.option_letter, o.option_text]))
-          : {} as Record<string, string>,
-        correct_answer: q.correct_answer ?? (q.options?.find((o) => o.is_correct)?.option_letter ?? "A"),
-        explanation: q.explanation,
+        stem: qInner.stem || qInner.question_text || "Soru metni alınamadı.",
+        options,
+        correct_answer: qInner.correct_answer ?? (Array.isArray(qInner.options) ? qInner.options.find((o) => (o as {is_correct?:boolean}).is_correct)?.option_letter : "A") ?? "A",
+        explanation: qInner.explanation,
       };
       setGeneratedQ(parsed);
     } catch (e) {

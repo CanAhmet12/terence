@@ -52,8 +52,9 @@ export default function AdminKuponPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await api.getAdminCoupons(token, search || undefined);
-      setCoupons(res.data);
+      const res = await api.getAdminCoupons();
+      const resObj = res as Record<string, unknown>;
+      setCoupons((Array.isArray(resObj.data) ? resObj.data : Array.isArray(res) ? res : []) as AdminCoupon[]);
     } catch (e) {
       setError((e as Error).message || "Kuponlar yüklenemedi.");
     }
@@ -72,14 +73,13 @@ export default function AdminKuponPage() {
     setSaving(true);
     setSaveError(null);
     try {
-      await api.createAdminCoupon(token, {
+      await api.createAdminCoupon({
         code: form.code.trim().toUpperCase(),
         discount_type: form.discount_type,
         discount_value: form.discount_value,
-        max_uses: form.max_uses ? Number(form.max_uses) : null,
-        expires_at: form.expires_at || null,
-        applicable_plans: form.applicable_plans.length ? form.applicable_plans : undefined,
-      });
+        max_uses: form.max_uses ? Number(form.max_uses) : undefined,
+        expires_at: form.expires_at || undefined,
+      } as Parameters<typeof api.createAdminCoupon>[0]);
       setShowForm(false);
       setForm({ code: "", discount_type: "percent", discount_value: 10, max_uses: "", expires_at: "", applicable_plans: [] });
       loadCoupons();
@@ -93,7 +93,7 @@ export default function AdminKuponPage() {
     if (!confirm("Bu kuponu silmek istediğinizden emin misiniz?") || !token) return;
     setDeletingId(id);
     try {
-      await api.deleteAdminCoupon(token, id);
+      await api.deleteAdminCoupon(id);
       setCoupons((prev) => prev.filter((c) => c.id !== id));
     } catch (e) {
       alert((e as Error).message || "Silinemedi.");
@@ -104,7 +104,7 @@ export default function AdminKuponPage() {
   const handleToggle = async (coupon: Coupon) => {
     if (!token) return;
     try {
-      await api.updateAdminCoupon(token, coupon.id, { is_active: !coupon.is_active });
+      await api.updateAdminCoupon(coupon.id, { is_active: !coupon.is_active });
       setCoupons((prev) => prev.map((c) => c.id === coupon.id ? { ...c, is_active: !c.is_active } : c));
     } catch {}
   };

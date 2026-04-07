@@ -35,10 +35,11 @@ function AISummaryModal({
 
   useEffect(() => {
     if (!token) { setError("Oturum bulunamadı."); setLoading(false); return; }
-    api.summarizeContent(token, { topic_id: topicId })
+    api.summarizeContent({ topic_id: topicId } as Parameters<typeof api.summarizeContent>[0])
       .then((res) => {
-        setSummary(res.summary);
-        setKeyPoints(res.key_points ?? []);
+        const resObj = res as Record<string, unknown>;
+        setSummary(resObj.summary as string ?? '');
+        setKeyPoints(Array.isArray(resObj.key_points) ? resObj.key_points as string[] : []);
       })
       .catch((e) => setError(e.message || "Özet alınamadı."))
       .finally(() => setLoading(false));
@@ -141,15 +142,17 @@ export default function DersDetayPage() {
     setLoading(true);
     setError(null);
     try {
-      const courses = await api.getCourses(token);
-      const course = courses.find((c) => c.slug === slug) ?? courses[0];
+      const courses = await api.getCourses();
+      const coursesArr = Array.isArray(courses) ? courses as Course[] : [];
+      const course = coursesArr.find((c) => c.slug === slug) ?? coursesArr[0];
       const courseId = course?.id ?? slug;
-      const res = await api.getCourseUnits(courseId, token ?? undefined);
-      setUnits(res);
+      const res = await api.getCourseUnits(courseId);
+      const unitsArr = Array.isArray(res) ? res as CourseUnit[] : [];
+      setUnits(unitsArr);
       const pm: Record<number, ProgressType> = {};
-      res.forEach((u) => (u.topics ?? []).forEach((t) => { pm[t.id] = (t.progress as ProgressType) ?? "not_started"; }));
+      unitsArr.forEach((u) => (u.topics ?? []).forEach((t) => { pm[t.id] = (t.progress as ProgressType) ?? "not_started"; }));
       setProgressMap(pm);
-      if (res.length > 0) setOpenUnitId(res[0].id);
+      if (unitsArr.length > 0) setOpenUnitId(unitsArr[0].id);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "İçerik yüklenemedi.");
       setUnits([]);
@@ -164,8 +167,9 @@ export default function DersDetayPage() {
     if (topicContent[topicId]) return;
     setLoadingTopicId(topicId);
     try {
-      const res = await api.getTopicContent(topicId, token ?? undefined);
-      setTopicContent((prev) => ({ ...prev, [topicId]: res }));
+      const res = await api.getTopicContent(topicId);
+      const contentArr = Array.isArray(res) ? res : [];
+      setTopicContent((prev) => ({ ...prev, [topicId]: contentArr as ContentItem[] }));
     } catch {
       setTopicContent((prev) => ({ ...prev, [topicId]: [] }));
     }
@@ -185,7 +189,7 @@ export default function DersDetayPage() {
     setProgressMap((prev) => ({ ...prev, [topicId]: status }));
     if (token) {
       try {
-        await api.updateProgress(token, { topic_id: topicId, status });
+        await api.updateProgress({ topic_id: topicId, status } as Parameters<typeof api.updateProgress>[0]);
       } catch {
         // Sunucu hatası olsa da UI'daki değişiklik korunur
       }

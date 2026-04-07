@@ -82,12 +82,10 @@ function VideoPlayerModal({
       saveTimerRef.current = setTimeout(async () => {
         if (!token || !item.topic_id) return;
         try {
-          await api.updateProgress(token, {
-            content_item_id: item.id,
+          await api.updateProgress({
             topic_id: item.topic_id,
             status: "in_progress",
-            watch_seconds: Math.floor(vid.currentTime),
-          });
+          } as Parameters<typeof api.updateProgress>[0]);
           setSaved(true);
           setTimeout(() => setSaved(false), 2000);
         } catch {}
@@ -108,11 +106,10 @@ function VideoPlayerModal({
     localStorage.removeItem(storageKey);
     if (!token || !item.topic_id) return;
     try {
-      await api.updateProgress(token, {
-        content_item_id: item.id,
+      await api.updateProgress({
         topic_id: item.topic_id,
-        status: "completed",
-      });
+        completed: true,
+      } as Parameters<typeof api.updateProgress>[0]);
     } catch {}
   }, [token, item.id, item.topic_id, storageKey]);
 
@@ -251,8 +248,8 @@ export default function VideoPage() {
 
   useEffect(() => {
     if (!token) { setLoading(false); return; }
-    api.getCourses(token).then((res) => {
-      setCourses(res);
+    api.getCourses().then((res) => {
+      setCourses(Array.isArray(res) ? res as Course[] : []);
     }).catch(() => setCourses([])).finally(() => setLoading(false));
   }, [token]);
 
@@ -264,8 +261,8 @@ export default function VideoPage() {
     if (!token) return;
     setUnitsLoading(true);
     try {
-      const res = await api.getCourseUnits(course.id, token);
-      setUnits(res as CourseUnit[]);
+      const res = await api.getCourseUnits(course.id);
+      setUnits(Array.isArray(res) ? res as CourseUnit[] : []);
     } catch {
       setUnits([]);
     }
@@ -283,11 +280,12 @@ export default function VideoPage() {
       if (topicContent[topic.id]) continue;
       setTopicLoading(topic.id);
       try {
-        const content = await api.getTopicContent(topic.id, token);
+        const content = await api.getTopicContent(topic.id);
+        const contentArr = Array.isArray(content) ? content : [];
         setTopicContent((prev) => ({
           ...prev,
-          [topic.id]: content.map((item) => ({
-            ...item,
+          [topic.id]: contentArr.map((item) => ({
+            ...(item as Record<string, unknown>),
             course_title: selectedCourse?.title,
             topic_title: topic.title,
             topic_id: topic.id,

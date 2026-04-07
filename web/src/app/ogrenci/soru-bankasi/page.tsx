@@ -64,7 +64,7 @@ function VoiceAssistantModal({ token, onClose }: { token: string | null; onClose
     setAiAnswer(null);
     setError(null);
     try {
-      const res = await api.askCoach(token, `Şu soruyu Türkçe kısaca açıkla ve cevabını ver: ${transcript}`);
+      const res = await api.askCoach(`Şu soruyu Türkçe kısaca açıkla ve cevabını ver: ${transcript}`);
       setAiAnswer(res.reply);
       // Sesli okuma
       if ("speechSynthesis" in window) {
@@ -247,13 +247,14 @@ export default function SoruBankasiPage() {
       if (kazanim) params.kazanim_code = kazanim;
       if (diff) params.difficulty = diff;
       if (subj) params.subject = subj;
-      const res = await api.getQuestions(token!, params as Parameters<typeof api.getQuestions>[1]);
+      const res = await api.getQuestions(params as Record<string, unknown>);
+      const resData = Array.isArray((res as Record<string, unknown>).data) ? (res as Record<string, unknown>).data as Question[] : Array.isArray(res) ? res as Question[] : [];
       if (p === 1) {
-        setQuestions(res.data);
+        setQuestions(resData);
       } else {
-        setQuestions((prev) => [...prev, ...res.data]);
+        setQuestions((prev) => [...prev, ...resData]);
       }
-      setHasMore(res.data.length === 20);
+      setHasMore(resData.length === 20);
       const now = Date.now();
       res.data.forEach((q: Question) => { questionStartTimes.current[q.id] = now; });
     } catch {
@@ -284,11 +285,11 @@ export default function SoruBankasiPage() {
 
 
     try {
-      const result = await api.answerQuestion(token!, {
+      const result = await api.answerQuestion({
         question_id: question.id,
-        selected_option: optionLetter,
-        time_spent_seconds: timeSpentSeconds > 0 ? timeSpentSeconds : 1,
-      });
+        answer: optionLetter,
+        time_spent: timeSpentSeconds > 0 ? timeSpentSeconds : 1,
+      } as Parameters<typeof api.answerQuestion>[0]);
       setAnswerResults((prev) => ({
         ...prev,
         [question.id]: { ...result, selected: optionLetter },
@@ -306,12 +307,13 @@ export default function SoruBankasiPage() {
     if (!token) return;
     setLoadingSimilar(questionId);
     try {
-      const res = await api.getSimilarQuestions(token, questionId);
-      if (res.data.length > 0) {
+      const res = await api.getSimilarQuestions(questionId);
+      const resArr = Array.isArray(res) ? res : (Array.isArray((res as Record<string, unknown>).data) ? (res as Record<string, unknown>).data as Question[] : []);
+      if (resArr.length > 0) {
         setQuestions((prev) => {
           const idx = prev.findIndex((q) => q.id === questionId);
           const next = [...prev];
-          next.splice(idx + 1, 0, ...res.data.slice(0, 2));
+          next.splice(idx + 1, 0, ...resArr.slice(0, 2));
           return next;
         });
       }
@@ -602,12 +604,13 @@ function PersonalTestModal({
     setGenerating(true);
     setError(null);
     try {
-      const res = await api.generatePersonalTest(token, {
+      const res = await api.generatePersonalTest({
         subject: subject || undefined,
         count,
         difficulty: difficulty || undefined,
-      });
-      onLoad(res.questions);
+      } as Parameters<typeof api.generatePersonalTest>[0]);
+      const questions = Array.isArray(res) ? res : (Array.isArray((res as Record<string, unknown>).questions) ? (res as Record<string, unknown>).questions as Question[] : []);
+      onLoad(questions);
     } catch (e) {
       setError((e as Error).message || "Test oluşturulamadı.");
     }

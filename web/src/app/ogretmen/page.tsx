@@ -34,13 +34,12 @@ function QuickAssignmentForm({ token }: { token: string | null }) {
     if (!token || !subject.trim() || !topic.trim()) return;
     setSending(true);
     try {
-      await api.createAssignment(token, {
+      await api.createAssignment({
         title: `${subject} — ${topic}`,
-        type: "homework",
         subject,
         description: topic,
         due_date: new Date(Date.now() + 7 * 24 * 3600 * 1000).toISOString().split("T")[0],
-      });
+      } as Parameters<typeof api.createAssignment>[0]);
       setSent(true);
       setSubject("");
       setTopic("");
@@ -111,8 +110,8 @@ export default function TeacherDashboardPage() {
         api.getTeacherStats(token),
         api.getRiskStudents(token),
       ]);
-      if (statsRes.status === "fulfilled") setStats(statsRes.value);
-      if (riskRes.status === "fulfilled") setRiskStudents(riskRes.value);
+      if (statsRes.status === "fulfilled") setStats(statsRes.value as Record<string, unknown>);
+      if (riskRes.status === "fulfilled") setRiskStudents(Array.isArray(riskRes.value) ? riskRes.value as RiskStudent[] : []);
     } catch {}
     setLoading(false);
   }, [token]);
@@ -123,7 +122,7 @@ export default function TeacherDashboardPage() {
     if (!token || !notifContent.trim()) return;
     setNotifSending(true);
     try {
-      await api.sendMessage(token, { recipient_type: "all", content: notifContent });
+      await api.sendMessage({ recipient_type: "all", content: notifContent } as Parameters<typeof api.sendMessage>[0]);
       setNotifSent(true);
       setNotifDialog(false);
       setNotifContent("");

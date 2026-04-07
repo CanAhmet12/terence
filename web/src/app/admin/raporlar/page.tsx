@@ -57,8 +57,8 @@ export default function AdminRaporlarPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await api.getAdminReports(token);
-      setReports(res);
+      const res = await api.getAdminReports();
+      setReports(res as AdminReports);
     } catch {
       setError("Raporlar yüklenemedi. API endpoint'i henüz hazır olmayabilir.");
     } finally {
@@ -72,8 +72,11 @@ export default function AdminRaporlarPage() {
   useEffect(() => {
     if (!token) return;
     setHardLoading(true);
-    api.getHardAchievements(token, { limit: 20 })
-      .then((res) => setHardAchievements(res.data ?? []))
+    api.getHardAchievements()
+      .then((res) => {
+        const arr = Array.isArray(res) ? res : []
+        setHardAchievements(arr as typeof hardAchievements)
+      })
       .catch(() => {})
       .finally(() => setHardLoading(false));
   }, [token]);

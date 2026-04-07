@@ -100,9 +100,11 @@ export default function KocPage() {
     if (!token) return;
     const loadHistory = async () => {
       try {
-        const res = await api.getCoachHistory(token);
-        if (res.messages && res.messages.length > 0) {
-          setMessages(res.messages);
+        const res = await api.getCoachHistory();
+        const historyArr = Array.isArray(res) ? res : ((res as Record<string, unknown>).messages ?? []);
+        const historyMessages = historyArr as Message[];
+        if (historyMessages.length > 0) {
+          setMessages(historyMessages);
           setShowSuggestions(false);
         } else {
           setMessages([{
@@ -137,7 +139,7 @@ export default function KocPage() {
     const historyForApi = messages.slice(-10).map((m) => ({ role: m.role, content: m.content }));
 
     try {
-      const res = await api.askCoach(token, text.trim(), historyForApi);
+      const res = await api.askCoach(text.trim(), historyForApi);
       const assistantMsg: Message = {
         role: "assistant",
         content: res.reply || "Üzgünüm, şu an cevap veremiyorum.",

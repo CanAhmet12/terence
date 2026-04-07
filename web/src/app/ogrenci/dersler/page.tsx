@@ -31,8 +31,8 @@ export default function OgrenciDerslerPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await api.getCourses(token);
-      setCourses(res);
+      const res = await api.getCourses();
+      setCourses(Array.isArray(res) ? res as Course[] : []);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Dersler yüklenemedi.");
       setCourses([]);

@@ -46,13 +46,13 @@ export default function OgretmenOnayPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await api.getAdminUsers(token, {
+      const res = await api.getAdminUsers({
         role: "teacher",
-        teacher_status: filter === "all" ? undefined : filter,
         search: search || undefined,
         per_page: 50,
-      });
-      setApplicants(res.data as TeacherApplicant[]);
+      } as Parameters<typeof api.getAdminUsers>[0]);
+      const resObj = res as Record<string, unknown>;
+      setApplicants((Array.isArray(resObj.data) ? resObj.data : Array.isArray(res) ? res : []) as TeacherApplicant[]);
     } catch (e) {
       setError((e as Error).message || "Yüklenemedi.");
     }
@@ -68,7 +68,7 @@ export default function OgretmenOnayPage() {
     if (!token) return;
     setProcessing(id);
     try {
-      await api.updateAdminUser(token, id, { teacher_status: "approved" });
+      await api.updateAdminUser(id, { teacher_status: "approved" } as Parameters<typeof api.updateAdminUser>[1]);
       setApplicants((prev) => prev.map((a) => a.id === id ? { ...a, teacher_status: "approved" } : a));
       if (selectedUser?.id === id) setSelectedUser((u) => u ? { ...u, teacher_status: "approved" } : null);
     } catch (e) {
@@ -82,7 +82,7 @@ export default function OgretmenOnayPage() {
     if (!confirm("Bu öğretmen başvurusunu reddetmek istediğinizden emin misiniz?")) return;
     setProcessing(id);
     try {
-      await api.updateAdminUser(token, id, { teacher_status: "rejected" });
+      await api.updateAdminUser(id, { teacher_status: "rejected" } as Parameters<typeof api.updateAdminUser>[1]);
       setApplicants((prev) => prev.map((a) => a.id === id ? { ...a, teacher_status: "rejected" } : a));
       if (selectedUser?.id === id) setSelectedUser((u) => u ? { ...u, teacher_status: "rejected" } : null);
     } catch (e) {

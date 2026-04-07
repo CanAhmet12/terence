@@ -124,8 +124,8 @@ export default function OgrenciCanliDersPage() {
       return;
     }
     try {
-      const res = await api.getStudentUpcomingLessons(token);
-      setLessons(res);
+      const res = await api.getStudentUpcomingLessons();
+      setLessons(Array.isArray(res) ? res as TeacherLesson[] : []);
     } catch {
       setLessons([]);
     }
@@ -139,7 +139,7 @@ export default function OgrenciCanliDersPage() {
     setJoiningId(lesson.id);
     setErr("");
     try {
-      const room = await api.getVideoRoom(token, lesson.id);
+      const room = await api.getVideoRoom(lesson.id);
       setActiveRoom(room);
       setActiveLesson(lesson);
     } catch (e) {

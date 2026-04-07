@@ -46,16 +46,18 @@ export default function AdminSorularPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await api.getQuestions(token, {
-        q: debouncedSearch || undefined,
+      const res = await api.getQuestions({
+        search: debouncedSearch || undefined,
         difficulty: difficulty || undefined,
         per_page: 20,
         page,
-      });
-      setQuestions(res.data);
-      setTotal(res.meta.total);
-      setCurrentPage(res.meta.current_page);
-      setLastPage(res.meta.last_page);
+      } as Parameters<typeof api.getQuestions>[0]);
+      const resObj = res as Record<string, unknown>;
+      const metaObj = (resObj.meta as Record<string, number>) ?? {};
+      setQuestions(Array.isArray(resObj.data) ? resObj.data as Question[] : []);
+      setTotal(metaObj.total ?? (Array.isArray(resObj.data) ? (resObj.data as Question[]).length : 0));
+      setCurrentPage(metaObj.current_page ?? 1);
+      setLastPage(metaObj.last_page ?? 1);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Sorular yüklenemedi.");
       setQuestions([]);
@@ -70,7 +72,7 @@ export default function AdminSorularPage() {
     if (!token || !confirm("Bu soruyu silmek istediğine emin misin?")) return;
     setDeletingId(id);
     try {
-      await api.deleteAdminQuestion(token, id);
+      await api.deleteAdminQuestion(id);
       setQuestions((prev) => prev.filter((q) => q.id !== id));
       setTotal((prev) => prev - 1);
     } catch (err: unknown) {

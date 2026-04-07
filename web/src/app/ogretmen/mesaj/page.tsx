@@ -64,7 +64,7 @@ export default function MesajPage() {
     if (!token || !classId) return;
     setStudentsLoading(true);
     try {
-      const res = await api.getClassStudents(token, classId);
+      const res = await api.getClassStudents(classId);
       setStudents(res);
     } catch {}
     setStudentsLoading(false);
@@ -105,8 +105,9 @@ export default function MesajPage() {
               send_sms: sendSms,
             };
 
-      const res = await api.sendMessage(token, payload);
-      setMessages((prev) => [res.message, ...prev]);
+      const res = await api.sendMessage(payload as Parameters<typeof api.sendMessage>[0]);
+      const msgObj = ((res as Record<string, unknown>)?.message ?? res) as Record<string, unknown>;
+      setMessages((prev) => [msgObj, ...prev]);
       setSent(true);
       setTimeout(() => setSent(false), 3000);
       setMesaj("");

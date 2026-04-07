@@ -58,8 +58,9 @@ export default function ExamSessionPage() {
 
     // 2. localStorage yoksa → API'den sonuç kontrol et
     try {
-      const res = await api.getExamResult(token, sessionId);
-      if (res.result.status === "completed") {
+      const res = await api.getExamResult(sessionId);
+      const resObj = res as Record<string, unknown>;
+      if (resObj?.result ? (resObj.result as Record<string, unknown>)?.status === "completed" : resObj?.status === "completed") {
         router.replace(`/ogrenci/deneme/${sessionId}/sonuc`);
         return;
       }
@@ -69,7 +70,7 @@ export default function ExamSessionPage() {
 
     // 3. Oturum bilgisi için geçmiş kontrol
     try {
-      const history = await api.getExamHistory(token);
+      const history = await api.getExamHistory();
       const session = history.find((s) => s.id === sessionId);
       if (session) {
         durationRef.current = session.duration_minutes * 60;
@@ -121,11 +122,10 @@ export default function ExamSessionPage() {
 
     const startTime = questionStartTimes.current[question.id] ?? Date.now();
     const timeSpent = Math.round((Date.now() - startTime) / 1000);
-    api.answerExamQuestion(token, sessionId, {
+    api.answerExamQuestion(sessionId, {
       question_id: question.id,
-      selected_option: letter === prev ? undefined : letter,
-      time_spent_seconds: timeSpent,
-    }).catch(() => {});
+      answer: letter === prev ? '' : letter,
+    } as Parameters<typeof api.answerExamQuestion>[1]).catch(() => {});
   };
 
   const toggleFlag = (questionId: number) => {
@@ -136,10 +136,10 @@ export default function ExamSessionPage() {
       else next.add(questionId);
       return next;
     });
-    api.answerExamQuestion(token, sessionId, {
+    api.answerExamQuestion(sessionId, {
       question_id: questionId,
-      is_flagged: !flagged.has(questionId),
-    }).catch(() => {});
+      answer: flagged.has(questionId) ? '' : 'flagged',
+    } as Parameters<typeof api.answerExamQuestion>[1]).catch(() => {});
   };
 
   const handleFinish = async () => {
@@ -148,9 +148,10 @@ export default function ExamSessionPage() {
     setSubmitting(true);
     if (!token) return;
     try {
-      const result = await api.finishExam(token, sessionId);
+      const result = await api.finishExam(sessionId);
+      const resultId = (result as Record<string, unknown>)?.session_id ?? (result as Record<string, unknown>)?.id ?? sessionId;
       localStorage.removeItem(`exam_questions_${sessionId}`);
-      router.push(`/ogrenci/deneme/${result.session_id}/sonuc`);
+      router.push(`/ogrenci/deneme/${resultId}/sonuc`);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Deneme bitirilemedi");
       setSubmitting(false);

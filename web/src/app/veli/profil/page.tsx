@@ -54,8 +54,8 @@ export default function VeliProfilPage() {
     setPhotoPreview(URL.createObjectURL(file));
     setPhotoUploading(true);
     try {
-      const res = await api.uploadProfilePhoto(token, file);
-      const updated = await api.updateProfile(token, { profile_photo_url: res.url });
+      const res = await api.uploadProfilePhoto(file);
+      const updated = await api.updateProfile({ profile_photo_url: res.url });
       updateUser(updated);
     } catch {
       setPhotoPreview(user?.profile_photo_url ?? null);
@@ -69,7 +69,7 @@ export default function VeliProfilPage() {
     if (!token) return;
     setSaveState("saving"); setSaveError("");
     try {
-      const updated = await api.updateProfile(token, {
+      const updated = await api.updateProfile({
         name,
         phone: phone || undefined,
       });
@@ -88,7 +88,7 @@ export default function VeliProfilPage() {
     if (!token) return;
     setSaveState("saving"); setSaveError("");
     try {
-      await api.updateNotificationPreferences(token, {
+      await api.updateNotificationPreferences({
         daily_reminders: bildirimCalisma,
         email_notifications: bildirimDeneme,
         risk_alerts: bildirimHedef,

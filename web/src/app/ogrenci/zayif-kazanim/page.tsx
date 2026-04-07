@@ -21,8 +21,9 @@ export default function ZayifKazanimPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await api.getWeakAchievements(token);
-      setAchievements(res);
+      const res = await api.getWeakAchievements();
+      const resArr = Array.isArray(res) ? res : [];
+      setAchievements(resArr as WeakAchievement[]);
     } catch (e) {
       setError((e as Error).message || "Veriler yüklenemedi");
     } finally {

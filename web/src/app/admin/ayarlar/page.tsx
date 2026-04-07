@@ -28,8 +28,9 @@ export default function AdminAyarlarPage() {
     if (!token) return;
     setLogsLoading(true);
     try {
-      const res = await api.getAdminAuditLogs(token, { per_page: 10 });
-      setLogs(res.data);
+      const res = await api.getAdminAuditLogs({ per_page: 10 });
+      const resObj = res as Record<string, unknown>;
+      setLogs(Array.isArray(resObj.data) ? resObj.data as Record<string, unknown>[] : Array.isArray(res) ? res as Record<string, unknown>[] : []);
     } catch {
       // Loglar yüklenemedi — sessizce geç
     } finally {
@@ -45,7 +46,7 @@ export default function AdminAyarlarPage() {
     setSaveError(null);
     setSaveSuccess(false);
     try {
-      await api.updateAdminSettings(token, { language: lang, maintenance_mode: maintenanceMode });
+      await api.updateAdminSettings({ language: lang, maintenance_mode: maintenanceMode });
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
     } catch {

@@ -46,13 +46,15 @@ export default function MiniTestPage() {
       return;
     }
     try {
-      const res = await api.getQuestions(token, { per_page: 5, difficulty: "easy" });
-      if (res.data.length === 0) {
+      const res = await api.getQuestions({ per_page: 5, difficulty: "easy" } as Parameters<typeof api.getQuestions>[0]);
+      const resObj = res as Record<string, unknown>;
+      const questionsData = Array.isArray(resObj.data) ? resObj.data as Question[] : Array.isArray(res) ? res as Question[] : [];
+      if (questionsData.length === 0) {
         setLoadError(true);
         setLoading(false);
         return;
       }
-      setQuestions(res.data);
+      setQuestions(questionsData);
     } catch {
       setLoadError(true);
       setQuestions([]);
@@ -88,14 +90,15 @@ export default function MiniTestPage() {
     if (!token) return;
 
     try {
-      const res = await api.answerQuestion(token, {
+      const res = await api.answerQuestion({
         question_id: currentQ.id,
-        selected_option: optionLetter,
-        time_spent_seconds: timeSpent,
-      });
-      correctOption = res.correct_option;
-      isCorrect = res.is_correct;
-      explanation = res.explanation;
+        answer: optionLetter,
+        time_spent: timeSpent,
+      } as Parameters<typeof api.answerQuestion>[0]);
+      const resObj = res as Record<string, unknown>;
+      correctOption = resObj.correct_option as string ?? optionLetter;
+      isCorrect = resObj.correct as boolean ?? resObj.is_correct as boolean ?? true;
+      explanation = resObj.explanation as string;
     } catch {
       correctOption = optionLetter;
       isCorrect = true;
