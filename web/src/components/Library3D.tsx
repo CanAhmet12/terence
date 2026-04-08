@@ -2,7 +2,7 @@
 
 import { Suspense, useRef, useState } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
-import { OrbitControls, Environment, Text3D, Center, useTexture, Html } from '@react-three/drei'
+import { OrbitControls, Html } from '@react-three/drei'
 import * as THREE from 'three'
 
 interface Book {
@@ -119,13 +119,11 @@ function LibraryScene({ books, onBookClick }: Library3DProps) {
 
   return (
     <>
-      {/* Lighting */}
-      <ambientLight intensity={0.4} />
-      <directionalLight position={[10, 10, 5]} intensity={1} castShadow />
-      <pointLight position={[0, 5, 0]} intensity={0.5} />
-
-      {/* Environment */}
-      <Environment preset="sunset" />
+      {/* Lighting — Environment preset kaldırıldı (HDR yükleme hatası önlendi) */}
+      <ambientLight intensity={0.8} />
+      <directionalLight position={[10, 10, 5]} intensity={1.2} castShadow />
+      <directionalLight position={[-5, 5, -5]} intensity={0.4} />
+      <pointLight position={[0, 5, 0]} intensity={0.6} color="#ffe4b5" />
 
       {/* Bookshelves and Books */}
       {Array.from({ length: shelves }).map((_, shelfIndex) => {
@@ -178,7 +176,10 @@ export default function Library3D({ books, onBookClick }: Library3DProps) {
       <Canvas
         shadows
         camera={{ position: [0, 2, 8], fov: 50 }}
-        gl={{ antialias: true }}
+        gl={{ antialias: true, failIfMajorPerformanceCaveat: false }}
+        onCreated={({ gl }) => {
+          gl.setClearColor('#111827')
+        }}
       >
         <Suspense
           fallback={
