@@ -3,16 +3,10 @@
 import dynamic from "next/dynamic";
 
 const Library3D = dynamic(() => import("@/components/Library3D"), { ssr: false });
-
-const DIFFICULTY_CONFIG = {
-  easy: { label: "Kolay", cls: "bg-emerald-100 text-emerald-700" },
-  medium: { label: "Orta", cls: "bg-amber-100 text-amber-700" },
-  hard: { label: "Zor", cls: "bg-red-100 text-red-700" },
-};
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { api, Question, AnswerResult } from "@/lib/api";
-import { Search, RefreshCw, CheckCircle, XCircle, ChevronRight, BookOpen, Loader2, Mic, MicOff, Volume2, Sparkles, X, Bot, AlertCircle, Library, List } from "lucide-react";
+import { Loader2, Mic, MicOff, Volume2, Sparkles, X, Bot, AlertCircle } from "lucide-react";
 
 function Skeleton({ className }: { className?: string }) {
   return <div className={`bg-slate-100 rounded-xl animate-pulse ${className ?? ""}`} />;
@@ -251,7 +245,6 @@ export default function SoruBankasiPage() {
   const questionStartTimes = useRef<Record<number, number>>({});
   const [showVoice, setShowVoice] = useState(false);
   const [showPersonalTest, setShowPersonalTest] = useState(false);
-  const [viewMode, setViewMode] = useState<"library" | "list">("library");
   const [selectedLibrarySubject, setSelectedLibrarySubject] = useState<string | null>(null);
 
   const loadQuestions = useCallback(async (kazanim?: string, diff?: string, subj?: string, p = 1) => {
@@ -368,44 +361,17 @@ export default function SoruBankasiPage() {
   };
 
   return (
-    <div className="p-8 lg:p-12">
-      <div className="mb-8 flex items-start justify-between gap-4 flex-wrap">
+    <div className="p-6 lg:p-8">
+      {/* Başlık */}
+      <div className="mb-6 flex items-start justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Soru Bankası</h1>
-          <p className="text-slate-600 mt-1">Zorluk & kazanım filtresi · Anında doğrulama · Benzer soru getir</p>
+          <p className="text-slate-500 mt-1 text-sm">Kategoriye göre ders seç → soruları çöz → anında doğrula</p>
         </div>
         <div className="flex items-center gap-2 shrink-0 flex-wrap">
-          {/* Görünüm toggle */}
-          <div className="flex items-center bg-slate-100 rounded-xl p-1 gap-1">
-            <button
-              onClick={() => setViewMode("library")}
-              title="3D Kütüphane"
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold transition-all ${
-                viewMode === "library"
-                  ? "bg-white shadow-sm text-teal-700"
-                  : "text-slate-500 hover:text-slate-700"
-              }`}
-            >
-              <Library className="w-4 h-4" />
-              <span className="hidden sm:inline">Kütüphane</span>
-            </button>
-            <button
-              onClick={() => setViewMode("list")}
-              title="Liste Görünümü"
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold transition-all ${
-                viewMode === "list"
-                  ? "bg-white shadow-sm text-teal-700"
-                  : "text-slate-500 hover:text-slate-700"
-              }`}
-            >
-              <List className="w-4 h-4" />
-              <span className="hidden sm:inline">Liste</span>
-            </button>
-          </div>
           <button
             onClick={() => setShowVoice(true)}
             className="flex items-center gap-2 px-4 py-2.5 border border-teal-200 bg-teal-50 hover:bg-teal-100 text-teal-700 font-semibold text-sm rounded-xl transition-colors"
-            title="Sesli soru çöz"
           >
             <Mic className="w-4 h-4" />
             <span className="hidden sm:inline">Sesli Çöz</span>
@@ -413,7 +379,6 @@ export default function SoruBankasiPage() {
           <button
             onClick={() => setShowPersonalTest(true)}
             className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-700 hover:to-purple-600 text-white font-semibold text-sm rounded-xl transition-all shadow-sm shadow-purple-500/20"
-            title="Zayıf konularından kişisel test oluştur"
           >
             <Sparkles className="w-4 h-4" />
             <span className="hidden sm:inline">Bana Özel Test</span>
@@ -421,270 +386,45 @@ export default function SoruBankasiPage() {
         </div>
       </div>
 
-      {/* ─── 3D KÜTÜPHANE GÖRÜNÜMÜ ──────────────────────────────────────── */}
-      {viewMode === "library" && (
-        <div className="mb-8">
-          <div className="mb-4 flex items-center justify-between">
-            <div>
-              <h2 className="text-lg font-bold text-slate-800">Ders Kütüphanesi</h2>
-              <p className="text-sm text-slate-500 mt-0.5">
-                Bir derse tıkla — o dersin sorularına geç. Fareyle döndür, kaydır zoom yap.
-              </p>
-            </div>
-          </div>
-          <div className="rounded-2xl overflow-hidden border border-slate-700/50 shadow-xl">
-            <Library3D
-              books={libraryBooks}
-              onBookClick={handleLibraryBookClick}
-            />
-          </div>
-          {/* Özet istatistikler */}
-          <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-4">
-            {[
-              { label: "Toplam Ders", value: libraryBooks.length, color: "text-teal-600", bg: "bg-teal-50" },
-              { label: "Çözülen Soru", value: answeredCount, color: "text-blue-600", bg: "bg-blue-50" },
-              { label: "Doğru Cevap", value: correctCount, color: "text-emerald-600", bg: "bg-emerald-50" },
-              { label: "Başarı Oranı", value: answeredCount > 0 ? `%${Math.round((correctCount/answeredCount)*100)}` : "—", color: "text-purple-600", bg: "bg-purple-50" },
-            ].map(({ label, value, color, bg }) => (
-              <div key={label} className={`${bg} rounded-2xl p-4 border border-white shadow-sm`}>
-                <p className="text-xs text-slate-500 font-medium">{label}</p>
-                <p className={`text-2xl font-bold mt-1 ${color}`}>{value}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
       {/* İstatistik bandı */}
-      {answeredCount > 0 && viewMode === "list" && (
-        <div className="mb-6 flex items-center gap-6 p-4 bg-white rounded-2xl border border-slate-200 shadow-sm">
-          <div>
-            <p className="text-xs text-slate-500 font-medium">Cevaplanan</p>
-            <p className="text-xl font-bold text-slate-900">{answeredCount}</p>
-          </div>
-          <div>
-            <p className="text-xs text-slate-500 font-medium">Doğru</p>
-            <p className="text-xl font-bold text-teal-600">{correctCount}</p>
-          </div>
-          <div>
-            <p className="text-xs text-slate-500 font-medium">Yanlış</p>
-            <p className="text-xl font-bold text-red-500">{answeredCount - correctCount}</p>
-          </div>
-          <div>
-            <p className="text-xs text-slate-500 font-medium">Net</p>
-            <p className="text-xl font-bold text-slate-900">
-              {(correctCount - (answeredCount - correctCount) / 4).toFixed(2)}
-            </p>
-          </div>
+      {answeredCount > 0 && (
+        <div className="mb-6 flex items-center gap-6 p-4 bg-white rounded-2xl border border-slate-200 shadow-sm flex-wrap">
+          {[
+            { label: "Cevaplanan", value: answeredCount, color: "text-slate-900" },
+            { label: "Doğru", value: correctCount, color: "text-teal-600" },
+            { label: "Yanlış", value: answeredCount - correctCount, color: "text-red-500" },
+            { label: "Net", value: (correctCount - (answeredCount - correctCount) / 4).toFixed(2), color: "text-indigo-600" },
+          ].map(({ label, value, color }) => (
+            <div key={label}>
+              <p className="text-xs text-slate-500 font-medium">{label}</p>
+              <p className={`text-xl font-bold ${color}`}>{value}</p>
+            </div>
+          ))}
         </div>
       )}
 
-      {/* Filtreler ve Soru Listesi — sadece liste modunda */}
-      {viewMode === "list" && (<>
-      {/* Seçili ders etiketi */}
-      {selectedLibrarySubject && (
-        <div className="mb-4 flex items-center gap-2">
-          <span className="text-sm text-slate-500">Filtre:</span>
-          <span
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold text-white"
-            style={{ backgroundColor: SUBJECT_COLORS[selectedLibrarySubject] ?? SUBJECT_COLORS.default }}
-          >
-            {selectedLibrarySubject}
-            <button
-              onClick={() => { setSelectedLibrarySubject(null); setSubject(""); }}
-              className="ml-1 hover:opacity-75"
-            >
-              <X className="w-3.5 h-3.5" />
-            </button>
-          </span>
-        </div>
-      )}
-      {/* Filtreler */}
-      <div className="flex flex-wrap gap-3 mb-6">
-        <div className="flex-1 min-w-[240px] relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-          <input
-            type="text"
-            placeholder="Konu ara (örn: Üslü Sayılar, Olasılık, Hücre...)"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-11 pr-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none bg-white"
-          />
-        </div>
-        <select
-          value={subject}
-          onChange={(e) => setSubject(e.target.value)}
-          className="px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none bg-white"
-        >
-          {SUBJECT_OPTIONS.map((o) => (
-            <option key={o.value} value={o.value}>{o.label}</option>
-          ))}
-        </select>
-        <select
-          value={difficulty}
-          onChange={(e) => setDifficulty(e.target.value)}
-          className="px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none bg-white"
-        >
-          <option value="">Tüm Zorluklar</option>
-          <option value="easy">Kolay</option>
-          <option value="medium">Orta</option>
-          <option value="hard">Zor</option>
-        </select>
-        {(search || subject || difficulty) && (
-          <button
-            onClick={() => { setSearch(""); setSubject(""); setDifficulty(""); }}
-            className="px-4 py-3 border border-slate-200 text-slate-500 hover:bg-slate-100 rounded-xl text-sm font-medium transition-colors flex items-center gap-2"
-          >
-            <X className="w-4 h-4" /> Temizle
-          </button>
-        )}
+      {/* 3D Kütüphane */}
+      <div className="rounded-2xl overflow-hidden border border-slate-700/40 shadow-2xl mb-6">
+        <Library3D
+          books={libraryBooks}
+          onBookClick={handleLibraryBookClick}
+        />
       </div>
 
-      {/* Sorular */}
-      {loading ? (
-        <div className="space-y-4">{[1, 2, 3].map((i) => <Skeleton key={i} className="h-48" />)}</div>
-      ) : questions.length === 0 ? (
-        <div className="text-center py-16">
-          <BookOpen className="w-10 h-10 text-slate-300 mx-auto mb-3" />
-          <p className="font-semibold text-slate-600">Soru bulunamadı</p>
-          <p className="text-sm text-slate-500 mt-1">Arama kriterlerini değiştirmeyi dene.</p>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {questions.map((soru) => {
-            const result = answerResults[soru.id];
-            const selected = selectedAnswers[soru.id];
-            const diffConf = DIFFICULTY_CONFIG[soru.difficulty ?? "medium"] ?? DIFFICULTY_CONFIG.medium;
-
-            return (
-              <div
-                key={soru.id}
-                className={`bg-white rounded-2xl border shadow-sm transition-all ${
-                  result
-                    ? result.is_correct
-                      ? "border-teal-200 shadow-teal-100/50"
-                      : "border-red-200 shadow-red-100/50"
-                    : "border-slate-200 hover:shadow-md"
-                }`}
-              >
-                <div className="p-6">
-                  {/* Başlık */}
-                  <div className="flex items-start justify-between gap-4 mb-4">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      {soru.kazanim_code && (
-                        <span className="font-mono text-xs font-bold text-teal-600 bg-teal-50 px-2.5 py-1 rounded-lg">
-                          {soru.kazanim_code}
-                        </span>
-                      )}
-                      <span className={`px-2.5 py-1 text-xs font-semibold rounded-lg ${diffConf.cls}`}>
-                        {diffConf.label}
-                      </span>
-                      {result && (
-                        result.is_correct
-                          ? <span className="flex items-center gap-1 text-xs font-bold text-teal-600"><CheckCircle className="w-4 h-4" /> Doğru</span>
-                          : <span className="flex items-center gap-1 text-xs font-bold text-red-600"><XCircle className="w-4 h-4" /> Yanlış</span>
-                      )}
-                    </div>
-                    <button
-                      onClick={() => handleSimilar(soru.id)}
-                      disabled={!!loadingSimilar}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-teal-200 bg-teal-50 text-teal-700 hover:bg-teal-100 text-xs font-semibold shrink-0 disabled:opacity-50 transition-colors"
-                      title="Benzer soru getir"
-                    >
-                      {loadingSimilar === soru.id ? (
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      ) : (
-                        <RefreshCw className="w-3.5 h-3.5" />
-                      )}
-                      Benzer Soru
-                    </button>
-                  </div>
-
-                  {/* Soru metni */}
-                  <p className="text-slate-800 font-medium mb-5 leading-relaxed">{soru.question_text}</p>
-
-                  {/* Şıklar */}
-                  <div className="grid sm:grid-cols-2 gap-2">
-                    {soru.options.map((opt) => {
-                      const isSelected = selected === opt.option_letter;
-                      const isCorrectOpt = result?.correct_option === opt.option_letter;
-                      const isWrongSelected = result && isSelected && !result.is_correct;
-                      return (
-                        <button
-                          key={opt.id}
-                          onClick={() => handleAnswer(soru, opt.option_letter)}
-                          disabled={!!result || answeringId === soru.id}
-                          className={`w-full text-left p-3.5 rounded-xl border flex items-center gap-3 transition-all text-sm font-medium ${
-                            isCorrectOpt && result
-                              ? "border-teal-400 bg-teal-50 text-teal-800"
-                              : isWrongSelected
-                              ? "border-red-400 bg-red-50 text-red-800"
-                              : isSelected
-                              ? "border-teal-300 bg-teal-50/50"
-                              : "border-slate-200 hover:bg-slate-50 hover:border-slate-300"
-                          } disabled:cursor-not-allowed`}
-                        >
-                          <span className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold shrink-0 ${
-                            isCorrectOpt && result ? "bg-teal-500 text-white" :
-                            isWrongSelected ? "bg-red-500 text-white" :
-                            "bg-slate-200 text-slate-600"
-                          }`}>
-                            {opt.option_letter}
-                          </span>
-                          <span className="flex-1">{opt.option_text}</span>
-                          {isCorrectOpt && result && <CheckCircle className="w-4 h-4 text-teal-600 shrink-0" />}
-                          {isWrongSelected && <XCircle className="w-4 h-4 text-red-600 shrink-0" />}
-                        </button>
-                      );
-                    })}
-                  </div>
-
-                  {/* Açıklama */}
-                  {result?.explanation && (
-                    <div className="mt-4 p-4 bg-slate-50 rounded-xl border border-slate-100">
-                      <p className="text-sm text-slate-700">
-                        <span className="font-semibold">Açıklama: </span>{result.explanation}
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Sonraki soru önerisi */}
-                  {result && !result.is_correct && (
-                    <div className="mt-3 flex items-center gap-2 text-xs text-amber-600">
-                      <RefreshCw className="w-3.5 h-3.5" />
-                      <span className="font-medium">Bu kazanıma benzer sorular günlük planına eklendi.</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      {!loading && hasMore && (
-        <div className="mt-8 flex justify-center">
-          <button
-            onClick={() => {
-              const nextPage = page + 1;
-              setPage(nextPage);
-              loadQuestions(search, difficulty, subject, nextPage);
-            }}
-            className="flex items-center gap-2 px-6 py-3 bg-white border border-slate-200 text-slate-700 font-semibold rounded-xl hover:bg-slate-50 hover:border-slate-300 transition-colors shadow-sm"
-          >
-            <ChevronRight className="w-5 h-5 text-teal-600" />
-            Sonraki 20 Soru
-          </button>
-        </div>
-      )}
-      {!loading && !hasMore && questions.length > 0 && (
-        <p className="mt-8 text-center text-sm text-slate-400">Tüm sorular gösterildi.</p>
-      )}
-
-      <p className="mt-6 text-sm text-slate-500">
-        Yanlış yaptığın sorular kazanım bazlı analiz edilir ve günlük planına otomatik eklenir.
-      </p>
-      </>)}
+      {/* Alt istatistikler */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        {[
+          { label: "Toplam Ders", value: libraryBooks.length, color: "text-teal-600", bg: "bg-teal-50", border: "border-teal-100" },
+          { label: "Çözülen Soru", value: answeredCount, color: "text-blue-600", bg: "bg-blue-50", border: "border-blue-100" },
+          { label: "Doğru Cevap", value: correctCount, color: "text-emerald-600", bg: "bg-emerald-50", border: "border-emerald-100" },
+          { label: "Başarı Oranı", value: answeredCount > 0 ? `%${Math.round((correctCount/answeredCount)*100)}` : "—", color: "text-purple-600", bg: "bg-purple-50", border: "border-purple-100" },
+        ].map(({ label, value, color, bg, border }) => (
+          <div key={label} className={`${bg} rounded-2xl p-4 border ${border} shadow-sm`}>
+            <p className="text-xs text-slate-500 font-medium">{label}</p>
+            <p className={`text-2xl font-bold mt-1 ${color}`}>{value}</p>
+          </div>
+        ))}
+      </div>
 
       {/* Sesli Asistan Modal */}
       {showVoice && (
@@ -705,7 +445,7 @@ export default function SoruBankasiPage() {
         />
       )}
 
-      {/* Kitap PDF Modalı — kitapa tıklanınca açılır */}
+      {/* Kitap PDF Modalı */}
       {bookModalSubject && (
         <BookQuestionsModal
           subject={bookModalSubject}
