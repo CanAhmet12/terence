@@ -72,201 +72,189 @@ export default function OgretmenDerslerPage() {
   const overallPct = allTopics.length > 0 ? Math.round((completedTopics / allTopics.length) * 100) : 0;
 
   return (
-    <div className="p-8 lg:p-12">
-      <div className="mb-8 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Derslerim</h1>
-          <p className="text-slate-600 mt-1">Ünite → Konu → Kazanım · Sınıf bazlı ilerleme · İçerik durumu</p>
-        </div>
-        <Link
-          href="/ogretmen/icerik"
-          className="flex items-center gap-2 px-4 py-2.5 bg-teal-600 hover:bg-teal-700 text-white font-semibold rounded-xl text-sm transition-colors"
-        >
-          + İçerik Ekle
-        </Link>
-      </div>
+    <div className="min-h-screen bg-slate-50">
+      <div className="max-w-7xl mx-auto px-6 py-8">
 
-      {loading ? (
-        <div className="grid lg:grid-cols-4 gap-8">
-          <div className="space-y-2">{[1, 2, 3].map((i) => <Skeleton key={i} className="h-16" />)}</div>
-          <div className="lg:col-span-3 space-y-3">{[1, 2, 3].map((i) => <Skeleton key={i} className="h-20" />)}</div>
-        </div>
-      ) : error ? (
-        <div className="p-6 bg-red-50 border border-red-100 rounded-2xl flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3 text-red-700">
-            <AlertCircle className="w-5 h-5 shrink-0" />
-            <p className="text-sm font-medium">{error}</p>
+        <div className="mb-8 flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-black text-slate-900 tracking-tight">Derslerim</h1>
+            <p className="text-slate-500 mt-1 font-medium">Ünite → Konu → Kazanım · İçerik durumu</p>
           </div>
-          <button
-            onClick={loadCourses}
-            className="flex items-center gap-1.5 text-sm font-semibold text-red-600 hover:text-red-700 shrink-0"
-          >
-            <RefreshCw className="w-4 h-4" />
-            Yenile
-          </button>
-        </div>
-      ) : courses.length === 0 ? (
-        <div className="text-center py-16 text-slate-400">
-          <BookOpen className="w-10 h-10 mx-auto mb-3 opacity-30" />
-          <p className="font-medium text-slate-600">Henüz ders eklenmemiş</p>
-          <Link href="/ogretmen/icerik" className="mt-3 inline-block text-sm text-teal-600 hover:underline font-semibold">
-            İçerik ekle →
+          <Link href="/ogretmen/icerik"
+            className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-sm transition-colors shadow-sm shadow-indigo-500/25">
+            + İçerik Ekle
           </Link>
         </div>
-      ) : (
-        <div className="grid lg:grid-cols-4 gap-8">
-          {/* Ders listesi */}
-          <div className="space-y-2">
-            {courses.map((c) => {
-              const pct = c.progress_percent ?? 0;
-              return (
-                <button
-                  key={c.id}
-                  onClick={() => setSelectedCourseSlug(c.slug)}
-                  className={`w-full text-left p-4 rounded-2xl border transition-all ${
-                    selectedCourseSlug === c.slug
-                      ? "bg-teal-50 border-teal-200 shadow-sm"
-                      : "bg-white border-slate-200 hover:bg-slate-50"
-                  }`}
-                >
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="w-9 h-9 rounded-xl bg-teal-100 flex items-center justify-center shrink-0">
-                      <BookOpen className="w-4 h-4 text-teal-600" />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="font-semibold text-slate-900 truncate">{c.title}</p>
-                      <p className="text-xs text-slate-500">{c.units_count ?? "?"} ünite</p>
-                    </div>
-                  </div>
-                  <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
-                    <div className="h-full bg-teal-500 rounded-full" style={{ width: `${pct}%` }} />
-                  </div>
-                  <p className="text-xs text-slate-500 mt-1">%{pct} tamamlandı</p>
-                </button>
-              );
-            })}
+
+        {loading ? (
+          <div className="grid lg:grid-cols-4 gap-6">
+            <div className="space-y-2.5">{[1, 2, 3].map((i) => <Skeleton key={i} className="h-20 rounded-2xl" />)}</div>
+            <div className="lg:col-span-3 space-y-3">{[1, 2, 3].map((i) => <Skeleton key={i} className="h-20 rounded-2xl" />)}</div>
           </div>
-
-          {/* Ünite-Konu-Kazanım */}
-          <div className="lg:col-span-3">
-            {selectedCourse && (
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <h2 className="font-bold text-slate-900 text-lg">{selectedCourse.title}</h2>
-                  <div className="flex items-center gap-2">
-                    <div className="w-24 h-2 bg-slate-200 rounded-full overflow-hidden">
-                      <div className="h-full bg-teal-500 rounded-full" style={{ width: `${overallPct}%` }} />
+        ) : error ? (
+          <div className="p-5 bg-red-50 border border-red-200 rounded-2xl flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3 text-red-700">
+              <AlertCircle className="w-5 h-5 shrink-0" />
+              <p className="text-sm font-medium">{error}</p>
+            </div>
+            <button onClick={loadCourses}
+              className="flex items-center gap-1.5 text-sm font-semibold text-red-600 hover:text-red-700">
+              <RefreshCw className="w-4 h-4" /> Yenile
+            </button>
+          </div>
+        ) : courses.length === 0 ? (
+          <div className="text-center py-20 bg-white rounded-2xl border border-slate-100 shadow-sm">
+            <div className="w-16 h-16 rounded-3xl bg-indigo-50 flex items-center justify-center mx-auto mb-5">
+              <BookOpen className="w-8 h-8 text-indigo-300" />
+            </div>
+            <p className="font-bold text-slate-700 text-lg">Henüz ders eklenmemiş</p>
+            <Link href="/ogretmen/icerik"
+              className="mt-4 inline-flex items-center gap-1.5 text-sm font-bold text-indigo-600 hover:text-indigo-700">
+              İçerik ekle <ChevronRight className="w-4 h-4" />
+            </Link>
+          </div>
+        ) : (
+          <div className="grid lg:grid-cols-4 gap-6">
+            {/* Ders listesi */}
+            <div className="space-y-2">
+              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-3 px-1">Dersler</p>
+              {courses.map((c) => {
+                const pct = c.progress_percent ?? 0;
+                const isSelected = selectedCourseSlug === c.slug;
+                return (
+                  <button key={c.id} onClick={() => setSelectedCourseSlug(c.slug)}
+                    className={`w-full text-left p-4 rounded-2xl border transition-all ${
+                      isSelected
+                        ? "bg-indigo-50 border-indigo-300 shadow-sm"
+                        : "bg-white border-slate-200 hover:border-indigo-200 hover:bg-indigo-50/30"
+                    }`}>
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${isSelected ? "bg-indigo-100" : "bg-slate-100"}`}>
+                        <BookOpen className={`w-4 h-4 ${isSelected ? "text-indigo-600" : "text-slate-500"}`} />
+                      </div>
+                      <div className="min-w-0">
+                        <p className={`font-bold text-sm truncate ${isSelected ? "text-indigo-800" : "text-slate-800"}`}>{c.title}</p>
+                        <p className="text-[11px] text-slate-400">{c.units_count ?? "?"} ünite</p>
+                      </div>
                     </div>
-                    <span className="text-sm font-semibold text-teal-600">%{overallPct}</span>
+                    <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                      <div className="h-full bg-indigo-400 rounded-full transition-all" style={{ width: `${pct}%` }} />
+                    </div>
+                    <p className="text-[11px] text-slate-400 mt-1">%{pct} tamamlandı</p>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Ünite-Konu */}
+            <div className="lg:col-span-3">
+              {selectedCourse && (
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <h2 className="font-bold text-slate-900">{selectedCourse.title}</h2>
+                    <div className="flex items-center gap-2">
+                      <div className="w-24 h-2 bg-slate-200 rounded-full overflow-hidden">
+                        <div className="h-full bg-indigo-500 rounded-full" style={{ width: `${overallPct}%` }} />
+                      </div>
+                      <span className="text-sm font-bold text-indigo-600">%{overallPct}</span>
+                    </div>
+                  </div>
+                  <div className="hidden sm:flex items-center gap-3 text-[11px] text-slate-400">
+                    <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-500" /> Tamamlandı</span>
+                    <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-500" /> Devam</span>
+                    <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-slate-200" /> Başlanmadı</span>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 text-xs text-slate-500">
-                  <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-teal-500" /> Tamamlandı</div>
-                  <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-500" /> Devam</div>
-                  <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-slate-200" /> Başlanmadı</div>
+              )}
+
+              {loadingUnits ? (
+                <div className="space-y-3">{[1, 2, 3].map((i) => <Skeleton key={i} className="h-16 rounded-2xl" />)}</div>
+              ) : units.length === 0 ? (
+                <div className="text-center py-16 bg-white rounded-2xl border border-slate-100 shadow-sm">
+                  <BookOpen className="w-10 h-10 text-slate-300 mx-auto mb-3" />
+                  <p className="font-semibold text-slate-500">Bu ders için ünite tanımlanmamış</p>
+                  <Link href="/ogretmen/icerik"
+                    className="mt-3 inline-flex items-center gap-1 text-sm font-bold text-indigo-600 hover:text-indigo-700">
+                    İçerik ekle <ChevronRight className="w-4 h-4" />
+                  </Link>
                 </div>
-              </div>
-            )}
+              ) : (
+                <div className="space-y-3">
+                  {units.map((unit) => {
+                    const topics = unit.topics ?? [];
+                    const unitCompleted = topics.filter((t) => t.progress === "completed").length;
+                    const unitPct = topics.length > 0 ? Math.round((unitCompleted / topics.length) * 100) : 0;
+                    const isOpen = openUnitId === unit.id;
 
-            {loadingUnits ? (
-              <div className="space-y-3">{[1, 2, 3].map((i) => <Skeleton key={i} className="h-16" />)}</div>
-            ) : units.length === 0 ? (
-              <div className="bg-white rounded-2xl border border-dashed border-slate-200 p-16 text-center text-slate-400">
-                <BookOpen className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                <p className="font-medium">Bu ders için ünite tanımlanmamış</p>
-                <Link href="/ogretmen/icerik" className="mt-3 inline-block text-sm text-teal-600 hover:underline font-semibold">
-                  İçerik ekle →
-                </Link>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {units.map((unit) => {
-                  const topics = unit.topics ?? [];
-                  const unitCompleted = topics.filter((t) => t.progress === "completed").length;
-                  const unitPct = topics.length > 0 ? Math.round((unitCompleted / topics.length) * 100) : 0;
-                  const isOpen = openUnitId === unit.id;
-
-                  return (
-                    <div key={unit.id} className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                      <button
-                        onClick={() => setOpenUnitId(isOpen ? null : unit.id)}
-                        className="w-full flex items-center justify-between p-5 hover:bg-slate-50 transition-colors text-left"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center">
-                            {isOpen ? <ChevronDown className="w-4 h-4 text-slate-600" /> : <ChevronRight className="w-4 h-4 text-slate-600" />}
-                          </div>
-                          <div>
-                            <p className="font-semibold text-slate-900">{unit.title}</p>
-                            <p className="text-xs text-slate-500">{topics.length} konu</p>
-                          </div>
-                        </div>
-                        <div className="hidden sm:flex items-center gap-3">
-                          <div className="w-32">
-                            <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
-                              <div className="h-full bg-teal-500 rounded-full" style={{ width: `${unitPct}%` }} />
+                    return (
+                      <div key={unit.id} className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+                        <button onClick={() => setOpenUnitId(isOpen ? null : unit.id)}
+                          className="w-full flex items-center justify-between p-5 hover:bg-slate-50/50 transition-colors text-left">
+                          <div className="flex items-center gap-3">
+                            <div className={`w-8 h-8 rounded-xl flex items-center justify-center transition-colors ${isOpen ? "bg-indigo-100" : "bg-slate-100"}`}>
+                              {isOpen
+                                ? <ChevronDown className="w-4 h-4 text-indigo-600" />
+                                : <ChevronRight className="w-4 h-4 text-slate-500" />
+                              }
                             </div>
-                            <p className="text-xs text-slate-500 mt-0.5 text-right">Öğrenci ort. %{unitPct}</p>
+                            <div>
+                              <p className="font-bold text-slate-900">{unit.title}</p>
+                              <p className="text-xs text-slate-400">{topics.length} konu</p>
+                            </div>
                           </div>
-                        </div>
-                      </button>
-
-                      {isOpen && (
-                        <div className="border-t border-slate-100 divide-y divide-slate-50">
-                          {topics.map((topic) => {
-                            const progColor = PROGRESS_COLOR[topic.progress ?? "not_started"];
-                            return (
-                              <div key={topic.id} className="flex items-center gap-4 px-5 py-3.5 hover:bg-slate-50/50 transition-colors">
-                                <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${progColor}`} />
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex items-center gap-2 flex-wrap">
-                                    <span className="font-medium text-slate-900 text-sm">{topic.title}</span>
-                                    {topic.kazanim_code && (
-                                      <span className="font-mono text-xs font-bold text-teal-600 bg-teal-50 px-2 py-0.5 rounded">
-                                        {topic.kazanim_code}
-                                      </span>
-                                    )}
-                                  </div>
-                                  {topic.kazanim_desc && (
-                                    <p className="text-xs text-slate-400 mt-0.5 truncate">{topic.kazanim_desc}</p>
-                                  )}
-                                </div>
-                                <div className="flex items-center gap-1.5 shrink-0">
-                                  <span className="flex items-center gap-1 px-2.5 py-1 bg-teal-50 text-teal-600 rounded-lg text-xs font-medium">
-                                    <Play className="w-3 h-3" /> Video
-                                  </span>
-                                  <span className="flex items-center gap-1 px-2.5 py-1 bg-blue-50 text-blue-600 rounded-lg text-xs font-medium">
-                                    <FileText className="w-3 h-3" /> PDF
-                                  </span>
-                                  <Link
-                                    href={`/ogretmen/analiz?konu=${topic.kazanim_code ?? topic.id}`}
-                                    className="flex items-center gap-1 px-2.5 py-1 bg-slate-100 text-slate-600 rounded-lg text-xs hover:bg-slate-200 transition-colors"
-                                    title="Konu analizini gör"
-                                  >
-                                    <BarChart3 className="w-3 h-3" /> Analiz
-                                  </Link>
-                                  <button
-                                    className="flex items-center gap-1 px-2.5 py-1 bg-amber-50 text-amber-600 rounded-lg text-xs hover:bg-amber-100 transition-colors"
-                                    title="Tekrar planına ekle"
-                                  >
-                                    <RefreshCw className="w-3 h-3" /> Tekrar
-                                  </button>
-                                </div>
+                          <div className="hidden sm:flex items-center gap-3">
+                            <div className="w-28">
+                              <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                <div className="h-full bg-indigo-400 rounded-full" style={{ width: `${unitPct}%` }} />
                               </div>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+                              <p className="text-[10px] text-slate-400 mt-0.5 text-right">Öğrenci %{unitPct}</p>
+                            </div>
+                          </div>
+                        </button>
+
+                        {isOpen && (
+                          <div className="border-t border-slate-100 divide-y divide-slate-50">
+                            {topics.map((topic) => {
+                              const progColor = PROGRESS_COLOR[topic.progress ?? "not_started"];
+                              return (
+                                <div key={topic.id} className="flex items-center gap-4 px-5 py-3.5 hover:bg-slate-50/50 transition-colors">
+                                  <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${progColor}`} />
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                      <span className="font-semibold text-slate-900 text-sm">{topic.title}</span>
+                                      {(topic as Record<string, unknown>).kazanim_code && (
+                                        <span className="font-mono text-[11px] font-bold text-teal-600 bg-teal-50 px-2 py-0.5 rounded-md border border-teal-100">
+                                          {(topic as Record<string, unknown>).kazanim_code as string}
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-1.5 shrink-0">
+                                    <span className="flex items-center gap-1 px-2.5 py-1 bg-indigo-50 text-indigo-600 rounded-lg text-xs font-semibold border border-indigo-100">
+                                      <Play className="w-3 h-3" /> Video
+                                    </span>
+                                    <span className="flex items-center gap-1 px-2.5 py-1 bg-sky-50 text-sky-600 rounded-lg text-xs font-semibold border border-sky-100">
+                                      <FileText className="w-3 h-3" /> PDF
+                                    </span>
+                                    <Link href={`/ogretmen/analiz`}
+                                      className="flex items-center gap-1 px-2.5 py-1 bg-slate-100 text-slate-600 rounded-lg text-xs font-semibold hover:bg-slate-200 transition-colors">
+                                      <BarChart3 className="w-3 h-3" /> Analiz
+                                    </Link>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }
-
-

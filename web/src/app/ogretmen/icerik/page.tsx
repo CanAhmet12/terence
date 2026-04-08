@@ -309,12 +309,13 @@ export default function IcerikYuklemePage() {
   }
 
   return (
-    <div className="p-8 lg:p-12">
-      <div className="mb-8">
-        <div className="flex items-start justify-between gap-4 flex-wrap">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900">İçerik Yükleme</h1>
-            <p className="text-slate-600 mt-1">
+    <div className="min-h-screen bg-slate-50">
+      <div className="max-w-5xl mx-auto px-6 py-8">
+        <div className="mb-8">
+          <div className="flex items-start justify-between gap-4 flex-wrap">
+            <div>
+              <h1 className="text-3xl font-black text-slate-900 tracking-tight">İçerik Yükleme</h1>
+              <p className="text-slate-500 mt-1 font-medium">
               Video, PDF ve soru ekleme · Kazanım etiketleme zorunlu · Tüm alanlar doldurulmadan yayına alınamaz
             </p>
           </div>
@@ -572,6 +573,7 @@ export default function IcerikYuklemePage() {
           }}
         />
       )}
+      </div>
     </div>
   );
 }

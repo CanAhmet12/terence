@@ -102,180 +102,185 @@ export default function CanliDersPage() {
   const past = lessons.filter((l) => l.status === "ended");
 
   return (
-    <div className="p-8 lg:p-12">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-slate-900">Canlı Ders</h1>
-        <p className="text-slate-600 mt-1">Ders planla · Link oluştur · Öğrencilerle paylaş</p>
-      </div>
+    <div className="min-h-screen bg-slate-50">
+      <div className="max-w-7xl mx-auto px-6 py-8">
 
-      <div className="grid lg:grid-cols-2 gap-8">
-        {/* Form */}
-        <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-          <h2 className="font-bold text-slate-900 mb-5 flex items-center gap-2">
-            <Video className="w-5 h-5 text-teal-600" />
-            Yeni Ders Oluştur
-          </h2>
-
-          {saved ? (
-            <div className="space-y-5">
-              <div className="flex items-center gap-3 p-4 bg-teal-50 rounded-2xl border border-teal-200">
-                <CheckCircle className="w-6 h-6 text-teal-600 shrink-0" />
-                <div>
-                  <p className="font-semibold text-teal-800">Ders oluşturuldu!</p>
-                  <p className="text-sm text-teal-600 mt-0.5">Linki öğrencilerle paylaşabilirsin.</p>
-                </div>
-              </div>
-              {createdUrl && (
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Ders Linki</label>
-                  <div className="flex gap-2">
-                    <input type="text" readOnly value={createdUrl}
-                      className="flex-1 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-700" />
-                    <button onClick={() => copyLink(createdUrl)}
-                      className="flex items-center gap-2 px-4 py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-xl font-semibold text-sm transition-colors">
-                      {copied ? <CheckCircle className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                      {copied ? "Kopyalandı!" : "Kopyala"}
-                    </button>
-                  </div>
-                </div>
-              )}
-              <button
-                onClick={() => { setSaved(false); setCreatedUrl(""); setForm({ title: "", class_room_id: "", scheduled_at: "", duration_minutes: 45 }); }}
-                className="w-full py-3 border border-teal-200 text-teal-700 font-semibold rounded-xl hover:bg-teal-50 transition-colors"
-              >
-                Yeni Ders Oluştur
-              </button>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Ders Başlığı</label>
-                <input type="text" value={form.title}
-                  onChange={(e) => setForm({ ...form, title: e.target.value })}
-                  placeholder="Örn: Limit ve Türev"
-                  className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" />
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Sınıf / Grup</label>
-                <select
-                  value={form.class_room_id}
-                  onChange={(e) => setForm({ ...form, class_room_id: e.target.value })}
-                  className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none"
-                >
-                  <option value="">Sınıf seçin (isteğe bağlı)</option>
-                  {classes.map((c) => (
-                    <option key={c.id} value={c.id}>{c.name}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="grid sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">Tarih ve Saat <span className="text-red-500">*</span></label>
-                  <input type="datetime-local" value={form.scheduled_at}
-                    onChange={(e) => setForm({ ...form, scheduled_at: e.target.value })}
-                    className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">Süre (dk)</label>
-                  <input type="number" min={15} max={180} value={form.duration_minutes}
-                    onChange={(e) => setForm({ ...form, duration_minutes: Number(e.target.value) })}
-                    className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" />
-                </div>
-              </div>
-
-              {error && (
-                <p className="text-sm text-red-600 bg-red-50 px-4 py-3 rounded-xl border border-red-200">{error}</p>
-              )}
-
-              <button
-                onClick={handleCreate}
-                disabled={saving}
-                className="w-full py-3.5 bg-teal-600 hover:bg-teal-700 text-white font-semibold rounded-xl transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
-              >
-                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Video className="w-4 h-4" />}
-                {saving ? "Oluşturuluyor..." : "Ders Oluştur"}
-              </button>
-            </div>
-          )}
+        <div className="mb-8">
+          <h1 className="text-3xl font-black text-slate-900 tracking-tight">Canlı Ders</h1>
+          <p className="text-slate-500 mt-1 font-medium">Ders planla · Link oluştur · Öğrencilerle paylaş</p>
         </div>
 
-        {/* Ders Listesi */}
-        <div className="space-y-6">
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-            <div className="flex items-center justify-between p-4 border-b border-slate-100">
-              <h3 className="font-semibold text-slate-900">Yaklaşan Dersler</h3>
-              <button onClick={loadLessons} className="p-2 rounded-lg hover:bg-slate-100 transition-colors">
-                <RefreshCw className="w-4 h-4 text-slate-500" />
-              </button>
+        <div className="grid lg:grid-cols-2 gap-8">
+
+          {/* ── Form ── */}
+          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+            <div className="px-6 py-5 border-b border-slate-100 bg-gradient-to-r from-emerald-50 to-teal-50">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-emerald-100 flex items-center justify-center">
+                  <Video className="w-5 h-5 text-emerald-600" />
+                </div>
+                <h2 className="font-bold text-slate-900">Yeni Ders Oluştur</h2>
+              </div>
             </div>
 
-            {loading ? (
-              <div className="p-4 space-y-3">{[1, 2].map((i) => <Skeleton key={i} className="h-14" />)}</div>
-            ) : upcoming.length === 0 ? (
-              <div className="p-8 text-center text-slate-400 text-sm">
-                Yaklaşan ders yok. Formu kullanarak ders oluşturun.
-              </div>
-            ) : (
-              <div className="divide-y divide-slate-100">
-                {upcoming.map((l) => {
-                  const sc = STATUS_CONFIG[l.status as keyof typeof STATUS_CONFIG] ?? STATUS_CONFIG.scheduled;
-                  return (
-                    <div key={l.id} className="flex items-center justify-between p-4 hover:bg-slate-50/50">
-                      <div>
-                        <p className="font-semibold text-slate-900 text-sm">{l.title}</p>
-                        <p className="text-xs text-slate-500 mt-0.5 flex items-center gap-2">
-                          <Calendar className="w-3 h-3" />
-                          {fmtDate(l.scheduled_at)}
-                          <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{l.duration_minutes} dk</span>
-                        </p>
-                        {l.class_room && (
-                          <p className="text-xs text-teal-600 mt-0.5">{l.class_room.name}</p>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${sc.cls}`}>{sc.label}</span>
-                        {l.daily_room_url && (
-                          <button onClick={() => copyLink(l.daily_room_url!)}
-                            className="p-1.5 rounded-lg bg-teal-50 text-teal-600 hover:bg-teal-100 transition-colors" title="Linki kopyala">
-                            <Copy className="w-4 h-4" />
-                          </button>
-                        )}
-                        {l.status === "live" && l.daily_room_url && (
-                          <a href={l.daily_room_url} target="_blank" rel="noopener noreferrer"
-                            className="flex items-center gap-1 px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold rounded-lg transition-colors">
-                            <Play className="w-3 h-3" /> Katıl
-                          </a>
-                        )}
+            <div className="p-6">
+              {saved ? (
+                <div className="space-y-5">
+                  <div className="flex items-center gap-3 p-4 bg-emerald-50 rounded-2xl border border-emerald-200">
+                    <CheckCircle className="w-6 h-6 text-emerald-600 shrink-0" />
+                    <div>
+                      <p className="font-bold text-emerald-800">Ders oluşturuldu!</p>
+                      <p className="text-sm text-emerald-600 mt-0.5">Linki öğrencilerle paylaşabilirsin.</p>
+                    </div>
+                  </div>
+                  {createdUrl && (
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1.5">Ders Linki</label>
+                      <div className="flex gap-2">
+                        <input type="text" readOnly value={createdUrl}
+                          className="flex-1 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-700" />
+                        <button onClick={() => copyLink(createdUrl)}
+                          className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-sm transition-colors">
+                          {copied ? <CheckCircle className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                          {copied ? "Kopyalandı!" : "Kopyala"}
+                        </button>
                       </div>
                     </div>
-                  );
-                })}
+                  )}
+                  <button
+                    onClick={() => { setSaved(false); setCreatedUrl(""); setForm({ title: "", class_room_id: "", scheduled_at: "", duration_minutes: 45 }); }}
+                    className="w-full py-3 border-2 border-indigo-200 text-indigo-700 font-bold rounded-xl hover:bg-indigo-50 transition-colors">
+                    Yeni Ders Oluştur
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1.5">Ders Başlığı</label>
+                    <input type="text" value={form.title}
+                      onChange={(e) => setForm({ ...form, title: e.target.value })}
+                      placeholder="Örn: Limit ve Türev"
+                      className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-400 outline-none text-sm transition-all" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1.5">Sınıf / Grup</label>
+                    <select value={form.class_room_id}
+                      onChange={(e) => setForm({ ...form, class_room_id: e.target.value })}
+                      className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-400 outline-none text-sm transition-all">
+                      <option value="">Sınıf seçin (isteğe bağlı)</option>
+                      {classes.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                    </select>
+                  </div>
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1.5">Tarih ve Saat <span className="text-red-500">*</span></label>
+                      <input type="datetime-local" value={form.scheduled_at}
+                        onChange={(e) => setForm({ ...form, scheduled_at: e.target.value })}
+                        className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-400 outline-none text-sm transition-all" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1.5">Süre (dk)</label>
+                      <input type="number" min={15} max={180} value={form.duration_minutes}
+                        onChange={(e) => setForm({ ...form, duration_minutes: Number(e.target.value) })}
+                        className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-400 outline-none text-sm transition-all" />
+                    </div>
+                  </div>
+                  {error && (
+                    <p className="text-sm text-red-600 bg-red-50 px-4 py-3 rounded-xl border border-red-200">{error}</p>
+                  )}
+                  <button onClick={handleCreate} disabled={saving}
+                    className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl transition-colors disabled:opacity-60 flex items-center justify-center gap-2 shadow-sm shadow-emerald-500/25 active:scale-[0.98]">
+                    {saving ? <><Loader2 className="w-4 h-4 animate-spin" /> Oluşturuluyor...</>
+                      : <><Video className="w-4 h-4" /> Ders Oluştur</>}
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* ── Ders Listesi ── */}
+          <div className="space-y-5">
+            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+              <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+                <div className="flex items-center gap-3">
+                  <Calendar className="w-4.5 h-4.5 text-indigo-600" />
+                  <h3 className="font-bold text-slate-900">Yaklaşan Dersler</h3>
+                </div>
+                <button onClick={loadLessons} disabled={loading}
+                  className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors">
+                  <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
+                </button>
+              </div>
+
+              {loading ? (
+                <div className="p-4 space-y-3">{[1, 2].map((i) => <Skeleton key={i} className="h-16" />)}</div>
+              ) : upcoming.length === 0 ? (
+                <div className="p-10 text-center">
+                  <Video className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+                  <p className="text-sm text-slate-500">Yaklaşan ders yok</p>
+                </div>
+              ) : (
+                <div className="divide-y divide-slate-50">
+                  {upcoming.map((l) => {
+                    const sc = STATUS_CONFIG[l.status as keyof typeof STATUS_CONFIG] ?? STATUS_CONFIG.scheduled;
+                    return (
+                      <div key={l.id} className="flex items-center justify-between p-4 hover:bg-slate-50/50 transition-colors">
+                        <div className="min-w-0 flex-1">
+                          <p className="font-semibold text-slate-900 text-sm truncate">{l.title}</p>
+                          <p className="text-xs text-slate-500 mt-0.5 flex items-center gap-2">
+                            <Calendar className="w-3 h-3" />
+                            {fmtDate(l.scheduled_at)}
+                            {l.duration_minutes && (
+                              <span className="flex items-center gap-1">
+                                <Clock className="w-3 h-3" />{l.duration_minutes} dk
+                              </span>
+                            )}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full ${sc.cls}`}>{sc.label}</span>
+                          {l.daily_room_url && (
+                            <button onClick={() => copyLink(l.daily_room_url!)}
+                              className="p-1.5 rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-colors" title="Linki kopyala">
+                              <Copy className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                          {l.status === "live" && l.daily_room_url && (
+                            <a href={l.daily_room_url} target="_blank" rel="noopener noreferrer"
+                              className="flex items-center gap-1 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-colors">
+                              <Play className="w-3 h-3" fill="white" /> Katıl
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {past.length > 0 && (
+              <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+                <div className="flex items-center gap-3 px-5 py-4 border-b border-slate-100">
+                  <CheckCircle className="w-4 h-4 text-slate-400" />
+                  <h3 className="font-bold text-slate-700 text-sm">Geçmiş Dersler</h3>
+                </div>
+                <div className="divide-y divide-slate-50">
+                  {past.slice(0, 5).map((l) => (
+                    <div key={l.id} className="flex items-center justify-between px-5 py-3.5 hover:bg-slate-50 transition-colors">
+                      <div>
+                        <p className="font-semibold text-slate-700 text-sm">{l.title}</p>
+                        <p className="text-xs text-slate-400">{fmtDate(l.scheduled_at)}</p>
+                      </div>
+                      <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700">
+                        Tamamlandı
+                      </span>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </div>
-
-          {past.length > 0 && (
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-              <div className="p-4 border-b border-slate-100">
-                <h3 className="font-semibold text-slate-800 text-sm">Geçmiş Dersler</h3>
-              </div>
-              <div className="divide-y divide-slate-100">
-                {past.slice(0, 5).map((l) => (
-                  <div key={l.id} className="flex items-center justify-between p-4">
-                    <div>
-                      <p className="font-medium text-slate-700 text-sm">{l.title}</p>
-                      <p className="text-xs text-slate-400">{fmtDate(l.scheduled_at)}</p>
-                    </div>
-                    <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-slate-100 text-slate-500">
-                      Tamamlandı
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </div>
