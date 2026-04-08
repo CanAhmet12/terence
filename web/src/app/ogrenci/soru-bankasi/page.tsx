@@ -359,12 +359,19 @@ export default function SoruBankasiPage() {
     ),
   }));
 
+  const [bookModalSubject, setBookModalSubject] = useState<string | null>(null);
+  const [bookModalTitle, setBookModalTitle]     = useState<string>("");
+
   const handleLibraryBookClick = (bookId: number) => {
     const book = libraryBooks.find((b) => b.id === bookId);
     if (!book) return;
+    // Kitap modalını aç — PDF kitap görünümünde sorular
+    setBookModalSubject(book.subject);
+    setBookModalTitle(book.title);
     setSelectedLibrarySubject(book.subject);
     setSubject(book.subject);
-    setViewMode("list");
+    // Soruları yükle
+    loadQuestions(undefined, undefined, book.subject, 1);
   };
 
   return (
@@ -704,6 +711,21 @@ export default function SoruBankasiPage() {
           }}
         />
       )}
+
+      {/* Kitap PDF Modalı — kitapa tıklanınca açılır */}
+      {bookModalSubject && (
+        <BookQuestionsModal
+          subject={bookModalSubject}
+          title={bookModalTitle}
+          questions={questions}
+          loading={loading}
+          answerResults={answerResults}
+          selectedAnswers={selectedAnswers}
+          answeringId={answeringId}
+          onAnswer={handleAnswer}
+          onClose={() => setBookModalSubject(null)}
+        />
+      )}
     </div>
   );
 }
@@ -828,6 +850,457 @@ function PersonalTestModal({
       </div>
     </div>
   );
+}
+
+// ─── Kitap PDF Modal ─────────────────────────────────────────────────────────
+const BOOK_COVER_COLORS: Record<string, { bg: string; accent: string; spine: string }> = {
+  'Matematik':     { bg: 'linear-gradient(135deg,#1565c0,#0d47a1)', accent: '#90caf9', spine: '#1a237e' },
+  'Türkçe':        { bg: 'linear-gradient(135deg,#c62828,#b71c1c)', accent: '#ef9a9a', spine: '#7f0000' },
+  'Fen Bilimleri': { bg: 'linear-gradient(135deg,#2e7d32,#1b5e20)', accent: '#a5d6a7', spine: '#1b5e20' },
+  'Fizik':         { bg: 'linear-gradient(135deg,#6a1b9a,#4a148c)', accent: '#ce93d8', spine: '#4a148c' },
+  'Kimya':         { bg: 'linear-gradient(135deg,#ef6c00,#e65100)', accent: '#ffcc80', spine: '#e65100' },
+  'Biyoloji':      { bg: 'linear-gradient(135deg,#00695c,#004d40)', accent: '#80cbc4', spine: '#004d40' },
+  'Tarih':         { bg: 'linear-gradient(135deg,#4e342e,#3e2723)', accent: '#bcaaa4', spine: '#3e2723' },
+  'Coğrafya':      { bg: 'linear-gradient(135deg,#01579b,#0d3349)', accent: '#81d4fa', spine: '#0d3349' },
+  'default':       { bg: 'linear-gradient(135deg,#37474f,#263238)', accent: '#90a4ae', spine: '#263238' },
+}
+
+const DIFF_COLORS: Record<string, { dot: string; label: string }> = {
+  easy:   { dot: '#22c55e', label: 'Kolay' },
+  medium: { dot: '#f59e0b', label: 'Orta' },
+  hard:   { dot: '#ef4444', label: 'Zor' },
+}
+
+function BookQuestionsModal({
+  subject, title, questions, loading,
+  answerResults, selectedAnswers, answeringId,
+  onAnswer, onClose,
+}: {
+  subject: string;
+  title: string;
+  questions: Question[];
+  loading: boolean;
+  answerResults: Record<number, AnswerResult & { selected: string }>;
+  selectedAnswers: Record<number, string>;
+  answeringId: number | null;
+  onAnswer: (q: Question, opt: string) => void;
+  onClose: () => void;
+}) {
+  const [currentPage, setCurrentPage] = useState(0)
+  const theme = BOOK_COVER_COLORS[subject] ?? BOOK_COVER_COLORS.default
+  const questionsPerPage = 2
+  const totalPages = Math.ceil(questions.length / questionsPerPage)
+  const pageQuestions = questions.slice(currentPage * questionsPerPage, (currentPage + 1) * questionsPerPage)
+  const correctCount = Object.values(answerResults).filter((r) => r.is_correct).length
+  const answeredCount = Object.keys(answerResults).length
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)' }}
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+    >
+      <div
+        className="flex w-full max-w-5xl"
+        style={{
+          height: 'min(88vh, 760px)',
+          filter: 'drop-shadow(0 40px 80px rgba(0,0,0,0.7))',
+          animation: 'bookOpen 0.5s cubic-bezier(0.34,1.56,0.64,1)',
+        }}
+      >
+        <style>{`
+          @keyframes bookOpen {
+            from { opacity:0; transform: perspective(1200px) rotateY(-20deg) scale(0.92); }
+            to   { opacity:1; transform: perspective(1200px) rotateY(0deg) scale(1); }
+          }
+        `}</style>
+
+        {/* ── SOL KAPAK / SIRT ── */}
+        <div
+          style={{
+            width: '52px',
+            background: theme.spine,
+            borderRadius: '8px 0 0 8px',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '16px 4px',
+            boxShadow: 'inset -4px 0 12px rgba(0,0,0,0.5), -2px 0 8px rgba(0,0,0,0.4)',
+            flexShrink: 0,
+          }}
+        >
+          <div style={{
+            width: '28px', height: '28px',
+            background: theme.accent,
+            borderRadius: '5px',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: '10px', fontWeight: 900, color: theme.spine,
+          }}>3D</div>
+
+          <div style={{
+            writingMode: 'vertical-rl',
+            transform: 'rotate(180deg)',
+            fontSize: '11px', fontWeight: 800,
+            color: 'rgba(255,255,255,0.9)',
+            letterSpacing: '1px',
+            textTransform: 'uppercase',
+          }}>{title} SORU BANKASI</div>
+
+          <div style={{ fontSize: '9px', color: theme.accent, fontWeight: 700 }}>2026</div>
+        </div>
+
+        {/* ── SOL SAYFA (KAPAK) ── */}
+        <div
+          style={{
+            width: '200px',
+            background: theme.bg,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '24px 16px',
+            borderRight: '2px solid rgba(0,0,0,0.3)',
+            boxShadow: 'inset -6px 0 20px rgba(0,0,0,0.3)',
+            flexShrink: 0,
+            position: 'relative',
+            overflow: 'hidden',
+          }}
+        >
+          <div style={{
+            position: 'absolute', inset: 0,
+            background: 'linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 50%)',
+            pointerEvents: 'none',
+          }} />
+
+          <div style={{ textAlign: 'center', position: 'relative', zIndex: 1 }}>
+            <div style={{
+              fontSize: '48px', fontWeight: 900,
+              color: 'rgba(255,255,255,0.15)',
+              lineHeight: 1, marginBottom: '12px',
+              fontStyle: 'italic',
+            }}>3D</div>
+            <div style={{
+              fontSize: '13px', fontWeight: 900,
+              color: '#fff', textTransform: 'uppercase',
+              letterSpacing: '1px', lineHeight: 1.3,
+              textShadow: '0 2px 8px rgba(0,0,0,0.5)',
+            }}>{title}</div>
+            <div style={{ fontSize: '10px', color: theme.accent, marginTop: '6px', fontWeight: 600, letterSpacing: '2px' }}>
+              SORU BANKASI
+            </div>
+          </div>
+
+          <div style={{ width: '100%', position: 'relative', zIndex: 1 }}>
+            <div style={{
+              display: 'flex', justifyContent: 'space-between',
+              fontSize: '10px', color: 'rgba(255,255,255,0.7)',
+              marginBottom: '6px',
+            }}>
+              <span>Çözülen</span>
+              <span>{answeredCount} / {questions.length}</span>
+            </div>
+            <div style={{
+              height: '6px', background: 'rgba(255,255,255,0.2)',
+              borderRadius: '3px', overflow: 'hidden',
+            }}>
+              <div style={{
+                height: '100%',
+                width: questions.length > 0 ? `${(answeredCount / questions.length) * 100}%` : '0%',
+                background: theme.accent, borderRadius: '3px',
+                transition: 'width 0.5s',
+              }} />
+            </div>
+            {answeredCount > 0 && (
+              <div style={{
+                display: 'flex', justifyContent: 'space-between',
+                fontSize: '10px', color: 'rgba(255,255,255,0.6)',
+                marginTop: '6px',
+              }}>
+                <span style={{ color: '#4ade80' }}>✓ {correctCount} Doğru</span>
+                <span style={{ color: '#f87171' }}>✗ {answeredCount - correctCount} Yanlış</span>
+              </div>
+            )}
+          </div>
+
+          <div style={{
+            fontSize: '10px', color: 'rgba(255,255,255,0.4)',
+            position: 'relative', zIndex: 1,
+          }}>
+            Sayfa {currentPage + 1} / {Math.max(totalPages, 1)}
+          </div>
+        </div>
+
+        {/* ── SAĞ SAYFA (SORULAR) ── */}
+        <div
+          style={{
+            flex: 1,
+            background: '#fafaf8',
+            borderRadius: '0 8px 8px 0',
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden',
+            position: 'relative',
+          }}
+        >
+          <div style={{
+            position: 'absolute', left: '52px', top: 0, bottom: 0,
+            width: '1px', background: 'rgba(255,100,100,0.3)',
+            pointerEvents: 'none', zIndex: 0,
+          }} />
+
+          {/* Başlık */}
+          <div style={{
+            padding: '14px 20px',
+            borderBottom: '2px solid #e2e8f0',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            background: '#fff',
+            flexShrink: 0,
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <div style={{
+                width: '32px', height: '32px', borderRadius: '8px',
+                background: theme.bg,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: '12px', fontWeight: 900, color: theme.accent,
+              }}>
+                {subject.slice(0, 2).toUpperCase()}
+              </div>
+              <div>
+                <div style={{ fontSize: '15px', fontWeight: 800, color: '#1e293b' }}>
+                  {title} — Sorular
+                </div>
+                <div style={{ fontSize: '11px', color: '#94a3b8' }}>
+                  {questions.length} soru bulundu
+                </div>
+              </div>
+            </div>
+            <button
+              onClick={onClose}
+              style={{
+                width: '32px', height: '32px', borderRadius: '8px',
+                background: '#f1f5f9', border: 'none',
+                cursor: 'pointer', fontSize: '16px',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                color: '#64748b',
+              }}
+            >✕</button>
+          </div>
+
+          {/* Sorular */}
+          <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px', position: 'relative', zIndex: 1 }}>
+            {loading ? (
+              <div style={{
+                display: 'flex', flexDirection: 'column',
+                alignItems: 'center', justifyContent: 'center',
+                height: '100%', gap: '12px',
+              }}>
+                <div style={{
+                  width: '40px', height: '40px',
+                  border: '4px solid #e2e8f0',
+                  borderTopColor: theme.spine,
+                  borderRadius: '50%',
+                  animation: 'spin 0.8s linear infinite',
+                }} />
+                <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+                <p style={{ fontSize: '13px', color: '#64748b' }}>Sorular yükleniyor...</p>
+              </div>
+            ) : questions.length === 0 ? (
+              <div style={{
+                display: 'flex', flexDirection: 'column',
+                alignItems: 'center', justifyContent: 'center',
+                height: '100%', gap: '8px',
+              }}>
+                <div style={{ fontSize: '40px' }}>📭</div>
+                <p style={{ fontWeight: 700, color: '#334155' }}>Bu derse ait soru bulunamadı</p>
+                <p style={{ fontSize: '12px', color: '#94a3b8' }}>Yakında eklenecek</p>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                {pageQuestions.map((soru, idx) => {
+                  const result = answerResults[soru.id]
+                  const selected = selectedAnswers[soru.id]
+                  const diff = DIFF_COLORS[soru.difficulty ?? 'medium'] ?? DIFF_COLORS.medium
+                  const qNum = currentPage * questionsPerPage + idx + 1
+
+                  return (
+                    <div key={soru.id} style={{
+                      background: '#fff',
+                      borderRadius: '12px',
+                      border: result
+                        ? result.is_correct ? '2px solid #22c55e' : '2px solid #ef4444'
+                        : '2px solid #e2e8f0',
+                      padding: '16px',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+                    }}>
+                      <div style={{
+                        display: 'flex', alignItems: 'center',
+                        gap: '8px', marginBottom: '12px',
+                      }}>
+                        <div style={{
+                          width: '28px', height: '28px', borderRadius: '8px',
+                          background: theme.spine,
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          fontSize: '12px', fontWeight: 900, color: '#fff',
+                          flexShrink: 0,
+                        }}>{qNum}</div>
+
+                        <div style={{ flex: 1 }}>
+                          {soru.kazanim_code && (
+                            <span style={{
+                              fontSize: '10px', fontWeight: 700,
+                              background: `${theme.spine}18`,
+                              color: theme.spine,
+                              padding: '2px 8px', borderRadius: '4px',
+                              marginRight: '6px',
+                            }}>{soru.kazanim_code}</span>
+                          )}
+                          <span style={{
+                            display: 'inline-flex', alignItems: 'center', gap: '4px',
+                            fontSize: '10px', fontWeight: 600, color: diff.dot,
+                          }}>
+                            <span style={{
+                              width: '6px', height: '6px', borderRadius: '50%',
+                              background: diff.dot, display: 'inline-block',
+                            }} />
+                            {diff.label}
+                          </span>
+                        </div>
+
+                        {result && (
+                          <span style={{
+                            fontSize: '11px', fontWeight: 700,
+                            color: result.is_correct ? '#22c55e' : '#ef4444',
+                          }}>
+                            {result.is_correct ? '✓ Doğru' : '✗ Yanlış'}
+                          </span>
+                        )}
+                      </div>
+
+                      <p style={{
+                        fontSize: '14px', fontWeight: 600,
+                        color: '#1e293b', lineHeight: 1.6,
+                        marginBottom: '14px',
+                      }}>{soru.question_text}</p>
+
+                      <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: '1fr 1fr',
+                        gap: '8px',
+                      }}>
+                        {soru.options?.map((opt) => {
+                          const isSelected = selected === opt.option_letter
+                          const isCorrectOpt = result?.correct_option === opt.option_letter
+                          const isWrong = result && isSelected && !result.is_correct
+
+                          let bg = '#f8fafc', border = '#e2e8f0', color = '#334155'
+                          if (isCorrectOpt && result) { bg = '#f0fdf4'; border = '#22c55e'; color = '#15803d' }
+                          else if (isWrong) { bg = '#fef2f2'; border = '#ef4444'; color = '#dc2626' }
+                          else if (isSelected) { bg = '#f0f9ff'; border = theme.spine; color = '#1e40af' }
+
+                          return (
+                            <button
+                              key={opt.id}
+                              disabled={!!result || answeringId === soru.id}
+                              onClick={() => onAnswer(soru, opt.option_letter)}
+                              style={{
+                                display: 'flex', alignItems: 'center', gap: '8px',
+                                padding: '10px 12px',
+                                background: bg, border: `2px solid ${border}`,
+                                borderRadius: '10px',
+                                cursor: result ? 'default' : 'pointer',
+                                transition: 'all 0.2s',
+                                textAlign: 'left',
+                              }}
+                            >
+                              <span style={{
+                                width: '24px', height: '24px', borderRadius: '6px',
+                                background: isCorrectOpt && result ? '#22c55e' : isWrong ? '#ef4444' : theme.spine,
+                                color: '#fff',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                fontSize: '12px', fontWeight: 800, flexShrink: 0,
+                              }}>{opt.option_letter}</span>
+                              <span style={{ fontSize: '13px', color, fontWeight: 500, lineHeight: 1.3 }}>
+                                {opt.option_text}
+                              </span>
+                              {isCorrectOpt && result && (
+                                <span style={{ marginLeft: 'auto', color: '#22c55e', fontWeight: 700 }}>✓</span>
+                              )}
+                            </button>
+                          )
+                        })}
+                      </div>
+
+                      {result?.explanation && (
+                        <div style={{
+                          marginTop: '12px', padding: '10px 14px',
+                          background: '#fffbeb', border: '1px solid #fde68a',
+                          borderRadius: '8px',
+                        }}>
+                          <p style={{ fontSize: '12px', color: '#92400e', fontWeight: 600 }}>
+                            💡 {result.explanation}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Alt navigasyon */}
+          <div style={{
+            padding: '12px 20px',
+            borderTop: '2px solid #e2e8f0',
+            background: '#fff',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            flexShrink: 0,
+          }}>
+            <button
+              onClick={() => setCurrentPage((p) => Math.max(0, p - 1))}
+              disabled={currentPage === 0}
+              style={{
+                padding: '8px 16px', borderRadius: '10px',
+                background: currentPage === 0 ? '#f1f5f9' : theme.spine,
+                color: currentPage === 0 ? '#94a3b8' : '#fff',
+                border: 'none', cursor: currentPage === 0 ? 'default' : 'pointer',
+                fontSize: '13px', fontWeight: 700,
+              }}
+            >← Önceki</button>
+
+            <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+              {Array.from({ length: Math.min(totalPages, 8) }).map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setCurrentPage(i)}
+                  style={{
+                    width: currentPage === i ? '24px' : '8px',
+                    height: '8px', borderRadius: '4px',
+                    background: currentPage === i ? theme.spine : '#cbd5e1',
+                    border: 'none', cursor: 'pointer',
+                    transition: 'all 0.2s',
+                  }}
+                />
+              ))}
+            </div>
+
+            <button
+              onClick={() => setCurrentPage((p) => Math.min(totalPages - 1, p + 1))}
+              disabled={currentPage >= totalPages - 1}
+              style={{
+                padding: '8px 16px', borderRadius: '10px',
+                background: currentPage >= totalPages - 1 ? '#f1f5f9' : theme.spine,
+                color: currentPage >= totalPages - 1 ? '#94a3b8' : '#fff',
+                border: 'none', cursor: currentPage >= totalPages - 1 ? 'default' : 'pointer',
+                fontSize: '13px', fontWeight: 700,
+              }}
+            >Sonraki →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
 }
 
 
