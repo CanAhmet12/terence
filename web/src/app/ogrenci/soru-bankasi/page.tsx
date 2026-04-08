@@ -8,7 +8,7 @@ const Library3D = dynamic(() => import("@/components/Library3D"), {
     <div className="w-full rounded-2xl flex items-center justify-center" style={{ minHeight: '380px', background: 'linear-gradient(160deg, #0f172a, #1e293b)' }}>
       <div className="text-center text-white">
         <div className="animate-spin w-10 h-10 border-4 border-teal-500 border-t-transparent rounded-full mx-auto mb-3" />
-        <p className="text-sm text-slate-400">Kütüphane yükleniyor...</p>
+        <p className="text-sm text-slate-400">Yukleniyor...</p>
       </div>
     </div>
   ),
