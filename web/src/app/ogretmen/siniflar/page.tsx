@@ -66,18 +66,30 @@ export default function SiniflarPage() {
     setRiskFilter("");
     api.getClassStudents(selectedClassId)
       .then((rawData) => {
-        const data = Array.isArray(rawData) ? rawData : []
-        // ClassStudents API'den User[] dönüyor, TeacherStudent formatına çeviriyoruz
-        setStudents(data.map((u) => ({
-          id: u.id,
-          name: u.name,
-          email: u.email,
-          net_score: undefined,
-          risk_level: undefined,
-          last_active_at: (u as Record<string, unknown>).last_login_at,
-          tasks_completed_today: undefined,
-          study_time_today_seconds: undefined,
-        })));
+        const data = Array.isArray(rawData) ? rawData : [];
+        setStudents(data.map((u) => {
+          const raw = u as Record<string, unknown>;
+          // current_net ile hedef net'i karşılaştırarak risk seviyesini hesapla
+          const currentNet = Number(raw.current_net ?? 0);
+          const targetNet = Number(raw.target_net ?? 50);
+          const daysInactive = raw.last_login_at
+            ? Math.floor((Date.now() - new Date(raw.last_login_at as string).getTime()) / 86400000)
+            : 999;
+          let risk: "green" | "yellow" | "red" = "green";
+          if (daysInactive > 7 || currentNet < targetNet * 0.4) risk = "red";
+          else if (daysInactive > 3 || currentNet < targetNet * 0.7) risk = "yellow";
+
+          return {
+            id: u.id,
+            name: u.name,
+            email: u.email,
+            net_score: currentNet > 0 ? currentNet : undefined,
+            risk_level: risk,
+            last_active_at: raw.last_login_at as string | undefined,
+            tasks_completed_today: raw.tasks_completed_today as number | undefined,
+            study_time_today_seconds: raw.study_time_today_seconds as number | undefined,
+          };
+        }));
       })
       .catch(() => setStudents([]))
       .finally(() => setStudentsLoading(false));
@@ -160,7 +172,7 @@ export default function SiniflarPage() {
                         <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${rConf.dot}`} />
                       </div>
                       {(c as Record<string, unknown>).avg_net !== undefined && (
-                        <div className="ml-13 mt-1.5">
+                        <div className="ml-12 mt-1.5">
                           <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
                             <div className="h-full bg-indigo-400 rounded-full" style={{ width: `${Math.min(((c as Record<string, unknown>).avg_net as number / 100) * 100, 100)}%` }} />
                           </div>

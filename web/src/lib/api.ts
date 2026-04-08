@@ -257,11 +257,15 @@ export interface ExamSession {
 
 export interface PlanTask {
   id: number
+  title?: string
   subject?: string
   topic?: string
   duration_minutes?: number
   is_completed?: boolean
+  completed?: boolean
   order?: number
+  type?: string
+  notes?: string
 }
 
 export interface StudyPlan {
@@ -531,10 +535,16 @@ export interface LiveSession {
   id: number
   title: string
   room_url?: string
+  daily_room_url?: string
+  daily_room_name?: string
   status?: string
   starts_at?: string
+  scheduled_at?: string
   ends_at?: string
   class_id?: number
+  duration_minutes?: number
+  teacher_id?: number
+  class_room?: { id?: number; name?: string; student_count?: number }
 }
 
 export interface TeacherMessage {
@@ -880,6 +890,20 @@ export const studentApi = {
     return response.data
   },
 
+  async getNotificationSettings(_token?: string): Promise<unknown> {
+    try {
+      const response = await api.get<unknown>('/student/notification-settings')
+      return response.data
+    } catch {
+      return {}
+    }
+  },
+
+  async updateNotificationSettings(_token?: string, settings?: Record<string, boolean>): Promise<unknown> {
+    const response = await api.post<unknown>('/student/notification-settings', settings ?? {})
+    return response.data
+  },
+
   async registerPushToken(_tokenOrPushToken?: string, pushTokenOrPlatform?: string, platform?: string): Promise<void> {
     const actualPushToken = platform ? pushTokenOrPlatform : _tokenOrPushToken
     const actualPlatform = platform || pushTokenOrPlatform || 'web'
@@ -1000,9 +1024,14 @@ export const teacherApi = {
     return normalizeArray<TeacherMessage>(response.data)
   },
 
-  async sendMessage(_tokenOrData?: string | { content: string; class_id?: number; recipient_id?: number; recipient_type?: string }, data?: { content: string; class_id?: number; recipient_id?: number; recipient_type?: string }): Promise<TeacherMessage> {
+  async sendMessage(_tokenOrData?: string | { content: string; class_id?: number; recipient_id?: number; receiver_id?: number; recipient_type?: string }, data?: { content: string; class_id?: number; recipient_id?: number; receiver_id?: number; recipient_type?: string }): Promise<TeacherMessage> {
     const actualData = typeof _tokenOrData === 'string' ? data : _tokenOrData
-    const response = await api.post<{ message: TeacherMessage }>('/teacher/messages', actualData)
+    // Backend receiver_id bekliyor; recipient_id de gönderilmişse receiver_id'ye map et
+    const payload = actualData ? {
+      ...actualData,
+      receiver_id: actualData.receiver_id ?? actualData.recipient_id,
+    } : actualData
+    const response = await api.post<{ message: TeacherMessage }>('/teacher/messages', payload)
     return response.data.message ?? (response.data as unknown as TeacherMessage)
   },
 
@@ -1327,6 +1356,8 @@ Object.assign(api, {
   changePassword: userApi.changePassword.bind(userApi),
   uploadProfilePhoto: userApi.uploadProfilePhoto.bind(userApi),
   updateNotificationPreferences: userApi.updateNotificationPreferences.bind(userApi),
+  getNotificationSettings: userApi.getNotificationSettings.bind(userApi),
+  updateNotificationSettings: userApi.updateNotificationSettings.bind(userApi),
   getMe: userApi.getMe.bind(userApi),
   // Plan
   getTodayPlan: planApi.getTodayPlan.bind(planApi),

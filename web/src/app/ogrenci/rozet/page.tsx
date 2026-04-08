@@ -203,18 +203,14 @@ export default function RozetPage() {
     setLoading(true);
     setError(null);
     try {
-      const [badges, board] = await Promise.all([
-        api.getBadges(),
-        api.getLeaderboard(period),
-      ]);
+      const badges = await api.getBadges();
       setBadgeData(badges as BadgeData);
-      setLeaderboard(Array.isArray(board) ? board : []);
     } catch (e) {
       setError((e as Error).message || "Veriler yüklenemedi");
     } finally {
       setLoading(false);
     }
-  }, [period]);
+  }, []);
 
   const loadLeaderboard = useCallback(async () => {
     setLbLoading(true);
@@ -228,8 +224,17 @@ export default function RozetPage() {
   const loadNational = useCallback(async () => {
     setNatLoading(true);
     try {
+      // examFilter ve gradeFilter backend destekliyorsa query olarak gönderilir
       const board = await api.getLeaderboard("monthly");
-      setNationalBoard(Array.isArray(board) ? board : []);
+      // Client-side filtreleme (backend henüz desteklemiyorsa)
+      const filtered = Array.isArray(board)
+        ? board.filter((entry) => {
+            if (examFilter && (entry as Record<string, unknown>).exam_type !== examFilter) return false;
+            if (gradeFilter && String((entry as Record<string, unknown>).grade ?? "") !== gradeFilter) return false;
+            return true;
+          })
+        : [];
+      setNationalBoard(filtered);
     } catch {
       setNationalBoard([]);
     }
@@ -237,10 +242,7 @@ export default function RozetPage() {
   }, [examFilter, gradeFilter]);
 
   useEffect(() => { loadData(); }, [loadData]);
-  useEffect(() => {
-    if (!loading) loadLeaderboard();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [period]);
+  useEffect(() => { loadLeaderboard(); }, [loadLeaderboard]);
   useEffect(() => {
     if (mainTab === "national") loadNational();
   }, [mainTab, loadNational]);

@@ -105,8 +105,8 @@ export default function HedefPage() {
         target_exam: examType,
         target_school: targetSchool || undefined,
         target_department: targetDept || undefined,
-        target_net: targetNet ? parseInt(targetNet) : undefined,
-        current_net: currentNet ? parseInt(currentNet) : undefined,
+        target_net: targetNet ? parseFloat(targetNet) : undefined,
+        current_net: currentNet ? parseFloat(currentNet) : undefined,
         exam_date: examDate || undefined,
       } as Parameters<typeof api.updateGoal>[0]);
       if (user && updatedGoal) {
@@ -123,8 +123,14 @@ export default function HedefPage() {
     }
   };
 
-  const current = Number(analysis?.current_net ?? currentNet ?? 0);
-  const target = Number(analysis?.target_net ?? targetNet ?? 0);
+  const current = (() => {
+    const v = Number(analysis?.current_net ?? currentNet ?? 0);
+    return isNaN(v) ? 0 : v;
+  })();
+  const target = (() => {
+    const v = Number(analysis?.target_net ?? targetNet ?? 0);
+    return isNaN(v) ? 0 : v;
+  })();
   const remaining = target - current;
   const daysRemaining = analysis?.days_remaining ?? 0;
   const weeklyNeeded = analysis?.weekly_net_needed ?? 0;

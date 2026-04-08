@@ -115,8 +115,7 @@ export default function AnalizPage() {
           ? customMsg.replace("{isim}", student.name)
           : `Sayın veli, ${student.name} adlı öğrenciniz son günlerde düşük performans göstermektedir. Lütfen destek olun.`;
         await api.sendMessage({
-          recipient_type: "student",
-          recipient_id: id,
+          receiver_id: id,
           content: msg,
         } as Parameters<typeof api.sendMessage>[0]);
       }

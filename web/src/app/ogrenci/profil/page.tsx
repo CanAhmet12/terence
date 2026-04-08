@@ -135,6 +135,17 @@ export default function OgrenciProfilPage() {
     if (isTeacher) setBrans(user.subject ?? "");
   }, [user, isStudent, isTeacher]);
 
+  // Bildirim ayarlarını API'den yükle
+  useEffect(() => {
+    if (!token) return;
+    api.getNotificationSettings(token).then((res) => {
+      const settings = res as Record<string, unknown>;
+      if (settings.study_reminder !== undefined) setBildirimCalisma(Boolean(settings.study_reminder));
+      if (settings.exam_reminder !== undefined) setBildirimDeneme(Boolean(settings.exam_reminder));
+      if (settings.goal_reminder !== undefined) setBildirimHedef(Boolean(settings.goal_reminder));
+    }).catch(() => { /* defaults kalır */ });
+  }, [token]);
+
   const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -194,10 +205,10 @@ export default function OgrenciProfilPage() {
     e.preventDefault();
     setSaveState("saving"); setSaveError("");
     try {
-      await api.updateNotificationPreferences({
-        daily_reminders: bildirimCalisma,
-        risk_alerts: bildirimHedef,
-        email_notifications: bildirimDeneme,
+      await api.updateNotificationSettings(token ?? undefined, {
+        study_reminder: bildirimCalisma,
+        exam_reminder: bildirimDeneme,
+        goal_reminder: bildirimHedef,
       });
       setSaveState("success");
       setTimeout(() => setSaveState("idle"), 3000);

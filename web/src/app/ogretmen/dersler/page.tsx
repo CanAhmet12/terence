@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
-import { api, Course, Unit } from "@/lib/api";
+import { api, Course, CourseUnit } from "@/lib/api";
 import { BookOpen, ChevronDown, ChevronRight, Play, FileText, RefreshCw, BarChart3, AlertCircle } from "lucide-react";
 
 const PROGRESS_COLOR: Record<string, string> = {
@@ -20,7 +20,7 @@ export default function OgretmenDerslerPage() {
   const { token } = useAuth();
 
   const [courses, setCourses] = useState<Course[]>([]);
-  const [units, setUnits] = useState<Unit[]>([]);
+  const [units, setUnits] = useState<CourseUnit[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [loadingUnits, setLoadingUnits] = useState(false);
@@ -51,8 +51,8 @@ export default function OgretmenDerslerPage() {
     setLoadingUnits(true);
     try {
       const res = await api.getCourseUnits(slug, token ?? undefined);
-      setUnits(res);
-      if (res.length > 0) setOpenUnitId(res[0].id);
+      setUnits(Array.isArray(res) ? res as CourseUnit[] : []);
+      if (res.length > 0) setOpenUnitId((res as CourseUnit[])[0].id);
     } catch {
       setUnits([]);
     }

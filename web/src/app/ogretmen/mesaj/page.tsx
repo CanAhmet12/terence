@@ -167,14 +167,14 @@ export default function MesajPage() {
                   {tip === "sinif" ? "Sınıf Seç" : "Öğrenci Seç"} <span className="text-red-500">*</span>
                 </label>
                 {tip === "sinif" ? (
-                  <select value={seciliSinifId} onChange={(e) => handleClassChange(Number(e.target.value))}
+                  <select value={seciliSinifId} onChange={(e) => { const v = e.target.value; if (v) handleClassChange(Number(v)); }}
                     className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-400 outline-none text-sm transition-all">
                     <option value="">Sınıf seçin</option>
                     {classes.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                   </select>
                 ) : (
                   <div className="space-y-2">
-                    <select value={seciliSinifId} onChange={(e) => handleClassChange(Number(e.target.value))}
+                    <select value={seciliSinifId} onChange={(e) => { const v = e.target.value; if (v) handleClassChange(Number(v)); }}
                       className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-400 outline-none text-sm transition-all">
                       <option value="">Önce sınıf seçin</option>
                       {classes.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}

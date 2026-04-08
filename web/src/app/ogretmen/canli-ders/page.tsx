@@ -79,6 +79,7 @@ export default function CanliDersPage() {
         title: form.title || (classes.find((c) => c.id === Number(form.class_room_id))?.name ?? "Canlı Ders"),
         class_id: form.class_room_id ? Number(form.class_room_id) : undefined,
         starts_at: form.scheduled_at,
+        duration_minutes: form.duration_minutes || undefined,
       } as Parameters<typeof api.createLiveSession>[0]);
       const session = ((res as Record<string, unknown>)?.session ?? res) as LiveSession;
       setCreatedUrl((session as Record<string, unknown>)?.daily_room_url as string ?? "");

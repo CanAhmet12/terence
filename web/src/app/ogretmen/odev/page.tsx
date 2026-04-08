@@ -39,7 +39,7 @@ export default function OdevPage() {
   });
 
   const loadAssignments = useCallback(async () => {
-    if (!token) return;
+    if (!token) { setLoading(false); return; }
     try {
       const res = await api.getTeacherAssignments(token);
       setAssignments(res);
@@ -79,6 +79,8 @@ export default function OdevPage() {
         due_date: form.due_date || undefined,
         description: form.description || undefined,
         class_id: form.class_room_id ? Number(form.class_room_id) : undefined,
+        type: form.type || undefined,
+        target_count: form.target_count ? Number(form.target_count) : undefined,
       } as Parameters<typeof api.createAssignment>[0]);
       const assignment = ((res as Record<string, unknown>)?.assignment ?? res) as Assignment;
       setAssignments((prev) => [assignment, ...prev]);

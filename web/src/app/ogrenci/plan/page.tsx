@@ -588,7 +588,7 @@ export default function GunlukPlanPage() {
               <div className="text-center py-16 bg-white rounded-2xl border border-slate-100">
                 <CalendarDays className="w-10 h-10 text-slate-300 mx-auto mb-3" />
                 <p className="font-semibold text-slate-700">Bu hafta için plan yok</p>
-                <p className="text-sm text-slate-500 mt-1">Bugün sekmenisini kullanarak görev ekle</p>
+                <p className="text-sm text-slate-500 mt-1">Bugün sekmesini kullanarak görev ekle</p>
               </div>
             ) : (
               weeklyPlans.map((dayPlan) => {

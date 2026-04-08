@@ -381,6 +381,11 @@ export default function DenemePage() {
       });
       const session = (res as Record<string, unknown>).session ?? res;
       const sessionId = (session as ExamSession).id;
+      if (!sessionId) {
+        setError("Deneme oturumu oluşturulamadı. Lütfen tekrar deneyin.");
+        setStartingType(null);
+        return;
+      }
       const questions = (res as Record<string, unknown>).questions;
       if (Array.isArray(questions) && questions.length) {
         localStorage.setItem(`exam_questions_${sessionId}`, JSON.stringify({

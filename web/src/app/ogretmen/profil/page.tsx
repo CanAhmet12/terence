@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, type ChangeEvent, type FormEvent } from "react";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import { api } from "@/lib/api";
 import {
   User, Lock, Save, Camera, CheckCircle, AlertCircle,
-  BookOpen, Shield, Bell, ChevronRight, Award, Star,
-  Loader2, Edit3, GraduationCap, Users, BarChart3
+  BookOpen, Shield, Bell, ChevronRight,
+  Loader2, Edit3, GraduationCap
 } from "lucide-react";
 
 const BRANSLAR = [
@@ -66,7 +66,7 @@ export default function OgretmenProfilPage() {
     setPhotoPreview(user.profile_photo_url ?? null);
   }, [user]);
 
-  const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoChange = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setPhotoPreview(URL.createObjectURL(file));
@@ -82,7 +82,7 @@ export default function OgretmenProfilPage() {
     }
   };
 
-  const save = async (e: React.FormEvent) => {
+  const save = async (e: FormEvent) => {
     e.preventDefault();
     setSaveState("saving"); setSaveError("");
     try {
@@ -97,7 +97,7 @@ export default function OgretmenProfilPage() {
     }
   };
 
-  const saveNotifs = async (e: React.FormEvent) => {
+  const saveNotifs = async (e: FormEvent) => {
     e.preventDefault();
     setSaveState("saving"); setSaveError("");
     try {
