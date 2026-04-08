@@ -3,13 +3,6 @@
 import dynamic from "next/dynamic";
 
 const Library3D = dynamic(() => import("@/components/Library3D"), { ssr: false });
-      <div className="text-center text-white">
-        <div className="animate-spin w-12 h-12 border-4 border-teal-500 border-t-transparent rounded-full mx-auto mb-4" />
-        <p className="text-sm font-medium text-slate-300">3D Kütüphane yükleniyor...</p>
-      </div>
-    </div>
-  ),
-});
 
 const DIFFICULTY_CONFIG = {
   easy: { label: "Kolay", cls: "bg-emerald-100 text-emerald-700" },
