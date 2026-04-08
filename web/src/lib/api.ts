@@ -1356,8 +1356,8 @@ Object.assign(api, {
   changePassword: userApi.changePassword.bind(userApi),
   uploadProfilePhoto: userApi.uploadProfilePhoto.bind(userApi),
   updateNotificationPreferences: userApi.updateNotificationPreferences.bind(userApi),
-  getNotificationSettings: userApi.getNotificationSettings.bind(userApi),
-  updateNotificationSettings: userApi.updateNotificationSettings.bind(userApi),
+  getNotificationSettings: studentApi.getNotificationSettings.bind(studentApi),
+  updateNotificationSettings: studentApi.updateNotificationSettings.bind(studentApi),
   getMe: userApi.getMe.bind(userApi),
   // Plan
   getTodayPlan: planApi.getTodayPlan.bind(planApi),
