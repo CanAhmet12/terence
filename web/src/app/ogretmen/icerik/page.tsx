@@ -309,8 +309,8 @@ export default function IcerikYuklemePage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="max-w-5xl mx-auto px-6 py-8">
+    <div className="bg-slate-50 min-h-full">
+      <div className="w-full px-6 py-8">
         <div className="mb-8">
           <div className="flex items-start justify-between gap-4 flex-wrap">
             <div>

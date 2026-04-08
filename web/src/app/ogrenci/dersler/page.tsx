@@ -250,8 +250,8 @@ export default function OgrenciDerslerPage() {
   const inProgressCourse = courses.find((c) => (c.completion_percentage ?? c.progress_percent ?? 0) > 0 && (c.completion_percentage ?? c.progress_percent ?? 0) < 100);
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="max-w-7xl mx-auto px-6 py-8 space-y-8">
+    <div className="bg-slate-50 min-h-full">
+      <div className="w-full px-6 py-8 space-y-8">
 
         {/* ── Başlık ── */}
         <div className="flex items-start justify-between gap-4">

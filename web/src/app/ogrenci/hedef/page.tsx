@@ -142,8 +142,8 @@ export default function HedefPage() {
   const riskStyle = RISK_CONFIG[riskLevel] ?? RISK_CONFIG.green;
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="max-w-6xl mx-auto px-6 py-8 space-y-8">
+    <div className="bg-slate-50 min-h-full">
+      <div className="w-full px-6 py-8 space-y-8">
 
         {/* ── Başlık ── */}
         <div>

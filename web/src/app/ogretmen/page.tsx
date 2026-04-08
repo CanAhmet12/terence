@@ -155,8 +155,8 @@ export default function OgretmenDashboardPage() {
   const warningRisk  = riskStudents.filter((s) => s.risk_level === "yellow").slice(0, 5);
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="max-w-7xl mx-auto px-6 py-8 space-y-8">
+    <div className="bg-slate-50 min-h-full">
+      <div className="w-full px-6 py-8 space-y-8">
 
         {/* ── Hero ── */}
         <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-600 via-indigo-700 to-violet-800 p-8 text-white shadow-xl shadow-indigo-500/20">

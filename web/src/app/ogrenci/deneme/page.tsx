@@ -416,8 +416,8 @@ export default function DenemePage() {
     : "—";
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="max-w-7xl mx-auto px-6 py-8 space-y-10">
+    <div className="bg-slate-50 min-h-full">
+      <div className="w-full px-6 py-8 space-y-10">
 
         {/* ── Başlık ── */}
         <div>

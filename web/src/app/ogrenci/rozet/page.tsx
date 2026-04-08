@@ -257,8 +257,8 @@ export default function RozetPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-900 text-white">
-      <div className="max-w-5xl mx-auto px-6 py-8 space-y-8">
+    <div className="bg-slate-900 min-h-full text-white">
+      <div className="w-full px-6 py-8 space-y-8">
 
         {/* ── Başlık ── */}
         <div className="flex items-start justify-between gap-4">

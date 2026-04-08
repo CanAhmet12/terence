@@ -166,8 +166,8 @@ export default function StudentDashboardPage() {
   const targetNet = user?.target_net ?? (stats as Record<string, unknown>)?.target_net ?? 0;
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="max-w-7xl mx-auto px-6 py-8 space-y-8">
+    <div className="bg-slate-50 min-h-full">
+      <div className="w-full px-6 py-8 space-y-8">
 
         {/* ── Push Banner ── */}
         <PushPermissionBanner />

@@ -150,8 +150,8 @@ export default function RaporPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 print:bg-white">
-      <div className="max-w-7xl mx-auto px-6 py-8 space-y-8 print:px-0 print:py-4">
+    <div className="bg-slate-50 min-h-full print:bg-white">
+      <div className="w-full px-6 py-8 space-y-8 print:px-0 print:py-4">
 
         {/* ── Başlık ── */}
         <div className="flex items-start justify-between gap-4 print:hidden">

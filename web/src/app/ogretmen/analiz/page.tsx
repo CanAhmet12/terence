@@ -146,8 +146,8 @@ export default function AnalizPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="max-w-7xl mx-auto px-6 py-8 space-y-6">
+    <div className="bg-slate-50 min-h-full">
+      <div className="w-full px-6 py-8 space-y-6">
 
         {/* ── Başlık ── */}
         <div className="flex items-start justify-between gap-4">
