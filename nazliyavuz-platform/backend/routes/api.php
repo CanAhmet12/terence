@@ -420,6 +420,8 @@ Route::middleware(['auth:api'])->group(function () {
     Route::post('/progress', [\App\Http\Controllers\Api\CourseController::class, 'updateProgress']);
 
     // â”€â”€ Soru BankasÄ± â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Soru Bankası ─────────────────────────────────────────────────────────
+    Route::get('/questions', [\App\Http\Controllers\Api\QuestionController::class, 'index']);
     Route::post('/questions/answer', [\App\Http\Controllers\Api\QuestionController::class, 'answer']);
     Route::get('/questions/similar', [\App\Http\Controllers\Api\QuestionController::class, 'similar']);
     Route::get('/questions/weak', [\App\Http\Controllers\Api\QuestionController::class, 'weakAchievements']);

@@ -746,7 +746,7 @@ export const examApi = {
 export const questionApi = {
   async getQuestions(_tokenOrParams?: string | { subject?: string; topic?: string; difficulty?: string; page?: number; per_page?: number; exam_type?: string }, params?: { subject?: string; topic?: string; difficulty?: string; page?: number; per_page?: number; exam_type?: string }): Promise<PaginatedResponse<Question>> {
     const actualParams = typeof _tokenOrParams === 'string' ? params : _tokenOrParams
-    const response = await api.get<unknown>('/questions/similar', { params: actualParams })
+    const response = await api.get<unknown>('/questions', { params: actualParams })
     const raw = response.data
     if (Array.isArray(raw)) return { data: raw as Question[], current_page: 1, last_page: 1, per_page: 20, total: (raw as Question[]).length }
     const obj = raw as Record<string, unknown>

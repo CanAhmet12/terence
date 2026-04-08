@@ -89,9 +89,11 @@ class QuestionController extends Controller
     public function answer(Request $request): JsonResponse
     {
         $v = Validator::make($request->all(), [
-            'question_id'       => 'required|integer|exists:questions,id',
-            'selected_option'   => 'nullable|string|size:1',
-            'time_spent_seconds'=> 'sometimes|integer|min:0',
+            'question_id'        => 'required|integer|exists:questions,id',
+            'selected_option'    => 'nullable|string|size:1',
+            'answer'             => 'nullable|string|size:1',
+            'time_spent_seconds' => 'sometimes|integer|min:0',
+            'time_spent'         => 'sometimes|integer|min:0',
         ]);
         if ($v->fails()) {
             return response()->json(['error' => true, 'errors' => $v->errors()], 422);
@@ -100,18 +102,23 @@ class QuestionController extends Controller
         $user     = Auth::user();
         $question = Question::with('options')->findOrFail($request->question_id);
 
+        // 'answer' veya 'selected_option' alanını al
+        $selectedOption = $request->selected_option ?? $request->answer;
+
         $correctOption = $question->options->firstWhere('is_correct', true);
-        $isCorrect = $request->filled('selected_option') &&
+        $isCorrect = $selectedOption &&
                      $correctOption &&
-                     strtoupper($request->selected_option) === strtoupper($correctOption->option_letter);
+                     strtoupper($selectedOption) === strtoupper($correctOption->option_letter);
+
+        $timeSpent = $request->get('time_spent_seconds', $request->get('time_spent', 0));
 
         // Cevabı kaydet
         $answer = QuestionAnswer::create([
             'user_id'            => $user->id,
             'question_id'        => $question->id,
-            'selected_option'    => $request->selected_option ? strtoupper($request->selected_option) : null,
+            'selected_option'    => $selectedOption ? strtoupper($selectedOption) : null,
             'is_correct'         => $isCorrect,
-            'time_spent_seconds' => $request->get('time_spent_seconds', 0),
+            'time_spent_seconds' => $timeSpent,
             'source'             => 'question_bank',
         ]);
 
@@ -130,6 +137,7 @@ class QuestionController extends Controller
         return response()->json([
             'success'        => true,
             'is_correct'     => $isCorrect,
+            'correct'        => $isCorrect,
             'correct_option' => $correctOption?->option_letter,
             'explanation'    => $question->solution_text,
             'solution_video' => $question->solution_video_url,

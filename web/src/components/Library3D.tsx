@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, useRef, useState } from 'react'
+import { Suspense, useRef, useState, useEffect } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
 import { OrbitControls, Html } from '@react-three/drei'
 import * as THREE from 'three'
@@ -171,6 +171,23 @@ function LibraryScene({ books, onBookClick }: Library3DProps) {
 
 // Main Component
 export default function Library3D({ books, onBookClick }: Library3DProps) {
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  if (!mounted) {
+    return (
+      <div className="w-full h-[600px] bg-gradient-to-b from-gray-900 to-black rounded-lg overflow-hidden flex items-center justify-center">
+        <div className="text-center text-white">
+          <div className="animate-spin w-12 h-12 border-4 border-teal-500 border-t-transparent rounded-full mx-auto mb-4" />
+          <p className="text-sm text-slate-300">Kütüphane hazırlanıyor...</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="w-full h-[600px] bg-gradient-to-b from-gray-900 to-black rounded-lg overflow-hidden">
       <Canvas
