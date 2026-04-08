@@ -1,28 +1,18 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { Suspense, Component, ReactNode } from "react";
-
-// 3D kütüphane için hata sınırı — WebGL crash'i tüm sayfayı çökertmesin
-class Library3DErrorBoundary extends Component<
-  { children: ReactNode; fallback: ReactNode },
-  { hasError: boolean }
-> {
-  constructor(props: { children: ReactNode; fallback: ReactNode }) {
-    super(props);
-    this.state = { hasError: false };
-  }
-  static getDerivedStateFromError() { return { hasError: true }; }
-  render() {
-    if (this.state.hasError) return this.props.fallback;
-    return this.props.children;
-  }
-}
 
 const Library3D = dynamic(() => import("@/components/Library3D"), {
   ssr: false,
   loading: () => (
-    <div className="w-full h-[600px] bg-gradient-to-b from-slate-900 to-black rounded-2xl flex items-center justify-center">
+    <div className="w-full rounded-2xl flex items-center justify-center" style={{ minHeight: '380px', background: 'linear-gradient(160deg, #0f172a, #1e293b)' }}>
+      <div className="text-center text-white">
+        <div className="animate-spin w-10 h-10 border-4 border-teal-500 border-t-transparent rounded-full mx-auto mb-3" />
+        <p className="text-sm text-slate-400">Kütüphane yükleniyor...</p>
+      </div>
+    </div>
+  ),
+});
       <div className="text-center text-white">
         <div className="animate-spin w-12 h-12 border-4 border-teal-500 border-t-transparent rounded-full mx-auto mb-4" />
         <p className="text-sm font-medium text-slate-300">3D Kütüphane yükleniyor...</p>
@@ -452,51 +442,11 @@ export default function SoruBankasiPage() {
               </p>
             </div>
           </div>
-          <div className="relative rounded-2xl overflow-hidden border border-slate-200 shadow-xl">
-            <Library3DErrorBoundary
-              fallback={
-                <div className="w-full h-[400px] bg-gradient-to-b from-slate-900 to-slate-800 rounded-2xl flex flex-col items-center justify-center gap-4">
-                  <div className="text-5xl">📚</div>
-                  <p className="text-white font-semibold">3D görünüm bu cihazda desteklenmiyor</p>
-                  <p className="text-slate-400 text-sm">Ders kartlarına aşağıdan ulaşabilirsiniz</p>
-                  <button
-                    onClick={() => setViewMode("list")}
-                    className="mt-2 px-6 py-2.5 bg-teal-600 hover:bg-teal-700 text-white text-sm font-bold rounded-xl transition-colors"
-                  >
-                    Liste Görünümüne Geç
-                  </button>
-                </div>
-              }
-            >
-              <Suspense fallback={
-                <div className="w-full h-[600px] bg-gradient-to-b from-slate-900 to-black rounded-2xl flex items-center justify-center">
-                  <div className="text-center text-white">
-                    <div className="animate-spin w-12 h-12 border-4 border-teal-500 border-t-transparent rounded-full mx-auto mb-4" />
-                    <p className="text-sm font-medium text-slate-300">Yükleniyor...</p>
-                  </div>
-                </div>
-              }>
-                <Library3D
-                  books={libraryBooks}
-                  onBookClick={handleLibraryBookClick}
-                />
-              </Suspense>
-            </Library3DErrorBoundary>
-            {/* Ders etiketleri — 3D canvas altında */}
-            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
-              <div className="flex flex-wrap gap-2 justify-center">
-                {libraryBooks.map((book) => (
-                  <button
-                    key={book.id}
-                    onClick={() => handleLibraryBookClick(book.id)}
-                    className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white transition-all hover:scale-105 hover:brightness-110"
-                    style={{ backgroundColor: book.color + "cc" }}
-                  >
-                    {book.title}
-                  </button>
-                ))}
-              </div>
-            </div>
+          <div className="rounded-2xl overflow-hidden border border-slate-700/50 shadow-xl">
+            <Library3D
+              books={libraryBooks}
+              onBookClick={handleLibraryBookClick}
+            />
           </div>
           {/* Özet istatistikler */}
           <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-4">
