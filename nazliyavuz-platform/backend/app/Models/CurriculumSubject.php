@@ -22,13 +22,14 @@ class CurriculumSubject extends Model
         return $this->hasMany(CurriculumUnit::class, 'subject_id')->orderBy('sort_order');
     }
 
-    // Filtreleme: kullanıcının grade ve exam_type'ına göre dersleri getir
+    /**
+     * Kullanıcının grade ve exam_type'ına göre dersleri filtrele.
+     * DB'de grade STRING ('8') saklanıyor, user.grade INTEGER (8) gelebilir.
+     */
     public function scopeForUser($query, ?string $grade, ?string $examType)
     {
-    public function scopeForUser($query, ?string $grade, ?string $examType)
-    {
-        // grade'i integer string karşılaştırması için normalize et
-        $gradeStr = $grade ? (string)intval($grade) : null;
+        // Her iki formatta da eşleştir: "8" ve 8
+        $gradeStr = $grade ? (string) intval($grade) : null;
 
         return $query->where('is_active', true)
             ->where(function ($q) use ($grade, $gradeStr) {
