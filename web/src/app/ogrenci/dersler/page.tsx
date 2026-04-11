@@ -3,222 +3,262 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
-import { api, CurriculumSubject, CurriculumUnit, CurriculumTopic } from "@/lib/api";
+import { api, CurriculumSubject, CurriculumUnit, CurriculumTopic, CurriculumContentItem } from "@/lib/api";
 import {
   ChevronDown, ChevronRight, Search, Play, FileText,
-  CheckCircle, BookOpen, BarChart3, RefreshCw,
-  Video, FileQuestion, BookMarked, Settings, Layers,
-  Lock, AlertCircle, Loader2, GraduationCap,
+  CheckCircle, BookOpen, RefreshCw, Video,
+  FileQuestion, BookMarked, Settings, Layers,
+  Loader2, GraduationCap, X, ExternalLink,
+  Circle, BarChart2, Lock, Sparkles
 } from "lucide-react";
 
-// ─── Yardımcılar ──────────────────────────────────────────────────────────────
-
-const SUBJECT_BG_COLORS: Record<string, string> = {
-  "Matematik":              "#1565c0",
-  "TYT Matematik":         "#1565c0",
-  "AYT Matematik":         "#0d47a1",
-  "LGS Matematik":         "#00695c",
-  "KPSS Genel Yetenek":    "#4527a0",
-  "KPSS Genel Kültür":     "#6a1b9a",
-  "Fizik":                 "#6a1b9a",
-  "AYT Fizik":             "#4a148c",
-  "Kimya":                 "#e65100",
-  "AYT Kimya":             "#bf360c",
-  "Biyoloji":              "#2e7d32",
-  "AYT Biyoloji":          "#1b5e20",
-  "Türk Dili ve Edebiyatı":"#c62828",
-  "TYT Türkçe":            "#b71c1c",
-  "LGS Türkçe":            "#b71c1c",
-  "Tarih":                 "#4e342e",
-  "Coğrafya":              "#01579b",
-  "TYT Fen Bilimleri":     "#2e7d32",
-  "LGS Fen Bilimleri":     "#558b2f",
-  "TYT Sosyal Bilimler":   "#4e342e",
-  "Fen Bilimleri":         "#2e7d32",
+// ─── Tema Sabitleri ────────────────────────────────────────────────────────────
+const SUBJECT_COLORS: Record<string, string> = {
+  "Matematik": "#2563eb", "TYT Matematik": "#2563eb", "AYT Matematik": "#1d4ed8", "LGS Matematik": "#0891b2",
+  "Fizik": "#7c3aed", "AYT Fizik": "#6d28d9",
+  "Kimya": "#ea580c", "AYT Kimya": "#c2410c",
+  "Biyoloji": "#16a34a", "AYT Biyoloji": "#15803d",
+  "Türk Dili ve Edebiyatı": "#dc2626", "TYT Türkçe": "#b91c1c", "LGS Türkçe": "#991b1b",
+  "Tarih": "#92400e", "Coğrafya": "#0369a1",
+  "TYT Fen Bilimleri": "#059669", "LGS Fen Bilimleri": "#047857",
+  "TYT Sosyal Bilimler": "#7e22ce",
+  "KPSS Genel Yetenek": "#4338ca", "KPSS Genel Kültür": "#5b21b6",
 };
 
-const CONTENT_ICONS: Record<string, { icon: typeof Play; color: string; label: string }> = {
-  video: { icon: Play,         color: "#ef4444", label: "Video" },
-  pdf:   { icon: FileText,     color: "#f59e0b", label: "PDF"   },
-  quiz:  { icon: FileQuestion, color: "#8b5cf6", label: "Test"  },
-  text:  { icon: BookMarked,   color: "#0ea5e9", label: "Metin" },
+const CONTENT_TYPE_CONFIG: Record<string, { label: string; color: string; bg: string; Icon: typeof Play }> = {
+  video: { label: "Video",  color: "#ef4444", bg: "#fef2f2", Icon: Play         },
+  pdf:   { label: "PDF",   color: "#f59e0b", bg: "#fffbeb", Icon: FileText      },
+  quiz:  { label: "Test",  color: "#8b5cf6", bg: "#f5f3ff", Icon: FileQuestion  },
+  text:  { label: "Metin", color: "#0ea5e9", bg: "#f0f9ff", Icon: BookMarked    },
 };
 
-const STATUS_CONFIG = {
-  not_started: { label: "Başlanmadı", color: "text-slate-400", dot: "bg-slate-300"  },
-  in_progress: { label: "Devam Ediyor", color: "text-amber-600", dot: "bg-amber-400" },
-  completed:   { label: "Tamamlandı", color: "text-green-600",  dot: "bg-green-500" },
-};
+// ─── Yardımcı bileşenler ──────────────────────────────────────────────────────
 
-function ProgressRing({ percent, size = 36, color = "#6366f1" }: { percent: number; size?: number; color?: string }) {
-  const r = (size - 4) / 2;
-  const circ = 2 * Math.PI * r;
-  const offset = circ - (percent / 100) * circ;
+function Skeleton({ className }: { className?: string }) {
+  return <div className={`bg-slate-100 rounded-lg animate-pulse ${className ?? ""}`} />;
+}
+
+function ProgressBar({ value, color }: { value: number; color: string }) {
   return (
-    <svg width={size} height={size} className="-rotate-90">
-      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#e2e8f0" strokeWidth={3} />
-      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={color} strokeWidth={3}
-        strokeDasharray={circ} strokeDashoffset={offset} strokeLinecap="round"
-        style={{ transition: "stroke-dashoffset 0.5s" }} />
-    </svg>
+    <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+      <div className="h-full rounded-full transition-all duration-700"
+        style={{ width: `${value}%`, background: color }} />
+    </div>
   );
 }
 
-function Skeleton({ className }: { className?: string }) {
-  return <div className={`bg-slate-100 rounded-xl animate-pulse ${className ?? ""}`} />;
-}
-
-// ─── Konu Satırı ────────────────────────────────────────────────────────────
-
-function TopicRow({ topic, subjectColor, onStatusChange }: {
+// ─── İçerik Paneli ────────────────────────────────────────────────────────────
+function ContentPanel({ topic, subjectColor, onClose }: {
   topic: CurriculumTopic;
   subjectColor: string;
-  onStatusChange: (topicId: number, status: "not_started" | "in_progress" | "completed") => void;
+  onClose: () => void;
+}) {
+  const items = topic.content_items ?? [];
+  const hasContent = items.length > 0;
+
+  return (
+    <div className="h-full flex flex-col bg-white">
+      {/* Başlık */}
+      <div className="flex items-start justify-between gap-3 p-5 border-b border-slate-100">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded"
+              style={{ background: `${subjectColor}15`, color: subjectColor }}>
+              {topic.meb_code ?? "Konu"}
+            </span>
+          </div>
+          <h3 className="text-base font-bold text-slate-900 leading-tight">{topic.title}</h3>
+        </div>
+        <button onClick={onClose}
+          className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors shrink-0">
+          <X className="w-4 h-4" />
+        </button>
+      </div>
+
+      <div className="flex-1 overflow-y-auto p-5 space-y-4">
+        {hasContent ? (
+          <>
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+              İçerikler ({items.length})
+            </p>
+            <div className="space-y-2">
+              {items.map((item) => {
+                const conf = CONTENT_TYPE_CONFIG[item.type] ?? CONTENT_TYPE_CONFIG.text;
+                const Icon = conf.Icon;
+                return (
+                  <a key={item.id} href={item.url ?? "#"} target="_blank" rel="noopener noreferrer"
+                    className="flex items-center gap-3 p-3 rounded-xl border border-slate-100 hover:border-slate-200 hover:shadow-sm transition-all group"
+                    style={{ background: conf.bg }}>
+                    <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
+                      style={{ background: `${conf.color}20` }}>
+                      <Icon className="w-4 h-4" style={{ color: conf.color }} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-slate-800 leading-tight truncate">{item.title}</p>
+                      <p className="text-xs text-slate-400 mt-0.5">{conf.label}
+                        {item.duration_seconds ? ` · ${Math.round(item.duration_seconds / 60)} dk` : ""}
+                        {!item.is_free && <span className="ml-1.5 text-amber-500">Pro</span>}
+                      </p>
+                    </div>
+                    <ExternalLink className="w-3.5 h-3.5 text-slate-300 group-hover:text-slate-500 shrink-0 transition-colors" />
+                  </a>
+                );
+              })}
+            </div>
+          </>
+        ) : (
+          <div className="py-10 text-center">
+            <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4"
+              style={{ background: `${subjectColor}10` }}>
+              <Sparkles className="w-6 h-6" style={{ color: subjectColor }} />
+            </div>
+            <p className="font-semibold text-slate-700 text-sm">İçerik Yakında</p>
+            <p className="text-xs text-slate-400 mt-1 leading-relaxed max-w-[200px] mx-auto">
+              Bu konu için video, PDF ve sorular yakında eklenecek.
+            </p>
+          </div>
+        )}
+
+        {/* Konu anlatımı placeholder */}
+        <div className="mt-4 p-4 rounded-xl border border-dashed border-slate-200">
+          <p className="text-xs font-semibold text-slate-500 mb-2 flex items-center gap-1.5">
+            <BookMarked className="w-3.5 h-3.5" />
+            Soru Bankası
+          </p>
+          <a href={`/ogrenci/soru-bankasi`}
+            className="flex items-center gap-2 text-sm font-semibold transition-colors"
+            style={{ color: subjectColor }}>
+            Bu konunun sorularını çöz
+            <ChevronRight className="w-4 h-4" />
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Konu Satırı ──────────────────────────────────────────────────────────────
+function TopicRow({ topic, subjectColor, isSelected, onSelect, onStatusChange }: {
+  topic: CurriculumTopic;
+  subjectColor: string;
+  isSelected: boolean;
+  onSelect: () => void;
+  onStatusChange: (id: number, s: "not_started" | "in_progress" | "completed") => void;
 }) {
   const [updating, setUpdating] = useState(false);
-  const statusConf = STATUS_CONFIG[topic.status ?? "not_started"];
-  const contentItems = topic.content_items ?? [];
+  const isDone = topic.status === "completed";
 
-  const toggleComplete = async () => {
-    const newStatus = topic.status === "completed" ? "not_started" : "completed";
+  const toggleDone = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const next = isDone ? "not_started" : "completed";
     setUpdating(true);
-    try {
-      await api.updateCurriculumProgress(topic.id, newStatus);
-      onStatusChange(topic.id, newStatus);
-    } catch {}
+    try { await api.updateCurriculumProgress(topic.id, next); onStatusChange(topic.id, next); }
+    catch { /* silent */ }
     setUpdating(false);
   };
 
+  const hasContent = (topic.content_items?.length ?? 0) > 0;
+
   return (
-    <div className={`flex items-center gap-3 p-3 rounded-xl transition-all hover:bg-slate-50 group ${
-      topic.status === "completed" ? "opacity-75" : ""
-    }`}>
+    <button onClick={onSelect}
+      className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all text-left group ${
+        isSelected
+          ? "shadow-sm"
+          : "hover:bg-slate-50"
+      }`}
+      style={isSelected ? { background: `${subjectColor}08`, borderLeft: `3px solid ${subjectColor}` } : {}}
+    >
       {/* Tamamlama butonu */}
-      <button
-        onClick={toggleComplete}
-        disabled={updating}
-        className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${
-          topic.status === "completed"
-            ? "border-green-500 bg-green-500"
-            : "border-slate-300 hover:border-green-400 group-hover:border-slate-400"
-        }`}
-      >
-        {updating ? (
-          <Loader2 className="w-3 h-3 text-white animate-spin" />
-        ) : topic.status === "completed" ? (
-          <CheckCircle className="w-3.5 h-3.5 text-white" />
-        ) : null}
+      <button onClick={toggleDone} disabled={updating}
+        className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${
+          isDone ? "border-emerald-500 bg-emerald-500" : "border-slate-300 group-hover:border-slate-400"
+        }`}>
+        {updating ? <Loader2 className="w-2.5 h-2.5 animate-spin text-white" />
+          : isDone ? <CheckCircle className="w-3 h-3 text-white" /> : null}
       </button>
 
-      {/* Konu başlığı */}
-      <div className="flex-1 min-w-0">
-        <p className={`text-sm font-medium truncate ${
-          topic.status === "completed" ? "line-through text-slate-400" : "text-slate-700"
-        }`}>
-          {topic.title}
-        </p>
-        {topic.meb_code && (
-          <span className="text-xs text-slate-400 font-mono">{topic.meb_code}</span>
-        )}
-      </div>
+      {/* Başlık */}
+      <span className={`flex-1 text-sm leading-tight ${isDone ? "line-through text-slate-400" : isSelected ? "font-semibold text-slate-900" : "text-slate-700"}`}>
+        {topic.title}
+      </span>
 
       {/* İçerik ikonları */}
-      {contentItems.length > 0 && (
-        <div className="flex items-center gap-1">
-          {contentItems.slice(0, 3).map((ci) => {
-            const conf = CONTENT_ICONS[ci.type] ?? CONTENT_ICONS.text;
-            const Icon = conf.icon;
-            return (
-              <div
-                key={ci.id}
-                title={ci.title}
-                className="w-6 h-6 rounded-lg flex items-center justify-center"
-                style={{ background: `${conf.color}18` }}
-              >
-                <Icon className="w-3 h-3" style={{ color: conf.color }} />
-              </div>
-            );
-          })}
-          {contentItems.length > 3 && (
-            <span className="text-xs text-slate-400">+{contentItems.length - 3}</span>
-          )}
-        </div>
-      )}
-
-      {/* Durum badge */}
-      <div className={`flex items-center gap-1 text-xs font-semibold flex-shrink-0 ${statusConf.color}`}>
-        <div className={`w-1.5 h-1.5 rounded-full ${statusConf.dot}`} />
-        <span className="hidden sm:inline">{statusConf.label}</span>
+      <div className="flex items-center gap-1 shrink-0">
+        {hasContent && (topic.content_items ?? []).slice(0, 2).map((ci) => {
+          const conf = CONTENT_TYPE_CONFIG[ci.type] ?? CONTENT_TYPE_CONFIG.text;
+          return (
+            <span key={ci.id} className="w-5 h-5 rounded flex items-center justify-center"
+              style={{ background: conf.bg }}>
+              <conf.Icon className="w-2.5 h-2.5" style={{ color: conf.color }} />
+            </span>
+          );
+        })}
+        <ChevronRight className={`w-3.5 h-3.5 transition-colors ${isSelected ? "" : "text-slate-300 group-hover:text-slate-400"}`}
+          style={isSelected ? { color: subjectColor } : {}} />
       </div>
-    </div>
+    </button>
   );
 }
 
-// ─── Ünite Accordion ────────────────────────────────────────────────────────
-
-function UnitAccordion({ unit, subjectColor, onTopicStatusChange, defaultOpen = false }: {
+// ─── Ünite Accordion ──────────────────────────────────────────────────────────
+function UnitSection({ unit, subjectColor, selectedTopicId, onTopicSelect, onTopicStatusChange, defaultOpen }: {
   unit: CurriculumUnit;
   subjectColor: string;
-  onTopicStatusChange: (topicId: number, status: "not_started" | "in_progress" | "completed") => void;
-  defaultOpen?: boolean;
+  selectedTopicId: number | null;
+  onTopicSelect: (t: CurriculumTopic) => void;
+  onTopicStatusChange: (id: number, s: "not_started" | "in_progress" | "completed") => void;
+  defaultOpen: boolean;
 }) {
   const [open, setOpen] = useState(defaultOpen);
+  const pct = unit.progress_percent ?? 0;
 
   return (
-    <div className="border border-slate-200 rounded-2xl overflow-hidden bg-white shadow-sm">
-      {/* Ünite başlık */}
-      <button
-        onClick={() => setOpen((o) => !o)}
-        className="w-full flex items-center gap-3 p-4 hover:bg-slate-50 transition-colors text-left"
-      >
-        <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-          style={{ background: subjectColor, color: "#fff", fontSize: "12px", fontWeight: 800 }}>
+    <div className="border border-slate-200 rounded-xl overflow-hidden bg-white">
+      <button onClick={() => setOpen(o => !o)}
+        className="w-full flex items-center gap-3 px-4 py-3.5 text-left hover:bg-slate-50/80 transition-colors">
+        {/* Numara */}
+        <div className="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-black text-white shrink-0"
+          style={{ background: subjectColor }}>
           {unit.sort_order}
         </div>
 
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 space-y-1">
           <p className="font-bold text-slate-800 text-sm leading-tight">{unit.title}</p>
-          <p className="text-xs text-slate-500 mt-0.5">
-            {unit.completed_topics}/{unit.total_topics} konu tamamlandı
-          </p>
+          <div className="flex items-center gap-2">
+            <ProgressBar value={pct} color={subjectColor} />
+            <span className="text-[10px] font-semibold text-slate-400 shrink-0">
+              {unit.completed_topics}/{unit.total_topics}
+            </span>
+          </div>
         </div>
 
-        {/* Mini progress ring */}
-        <div className="relative flex-shrink-0">
-          <ProgressRing percent={unit.progress_percent} size={36} color={subjectColor} />
-          <span className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-slate-600">
-            {unit.progress_percent}%
+        {/* Meb kodu */}
+        {unit.meb_code && (
+          <span className="text-[10px] font-mono text-slate-400 shrink-0 hidden sm:block">
+            {unit.meb_code}
           </span>
-        </div>
+        )}
 
-        {/* Chevron */}
-        <div className={`transition-transform ${open ? "rotate-180" : ""}`}>
-          <ChevronDown className="w-4 h-4 text-slate-400" />
-        </div>
+        <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform shrink-0 ${open ? "rotate-180" : ""}`} />
       </button>
 
-      {/* Konular listesi */}
       {open && (
-        <div className="border-t border-slate-100 px-4 pb-2 pt-1 space-y-0.5">
-          {unit.topics.map((topic) => (
-            <TopicRow
-              key={topic.id}
-              topic={topic}
-              subjectColor={subjectColor}
-              onStatusChange={onTopicStatusChange}
-            />
+        <div className="border-t border-slate-100 py-1.5 px-1">
+          {unit.topics.length === 0 ? (
+            <p className="text-xs text-slate-400 py-3 px-3">Konu bulunamadı.</p>
+          ) : unit.topics.map((t) => (
+            <TopicRow key={t.id} topic={t} subjectColor={subjectColor}
+              isSelected={selectedTopicId === t.id}
+              onSelect={() => onTopicSelect(t)}
+              onStatusChange={onTopicStatusChange} />
           ))}
-          {unit.topics.length === 0 && (
-            <p className="text-sm text-slate-400 py-3 text-center">Bu üniteye henüz konu eklenmedi.</p>
-          )}
         </div>
       )}
     </div>
   );
 }
 
-// ─── Ana Sayfa ──────────────────────────────────────────────────────────────
-
+// ─── Ana Sayfa ────────────────────────────────────────────────────────────────
 export default function DerslerimPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
@@ -226,349 +266,273 @@ export default function DerslerimPage() {
   const [subjects, setSubjects] = useState<CurriculumSubject[]>([]);
   const [selectedSlug, setSelectedSlug] = useState<string>("");
   const [units, setUnits] = useState<CurriculumUnit[]>([]);
+  const [selectedTopic, setSelectedTopic] = useState<CurriculumTopic | null>(null);
   const [search, setSearch] = useState("");
   const [loadingList, setLoadingList] = useState(true);
   const [loadingUnits, setLoadingUnits] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // grade değerini string'e çeviren yardımcı
   const gradeStr = user?.grade != null ? String(user.grade) : undefined;
-  const examStr  = user?.target_exam ?? user?.exam_goal ?? undefined;
+  const examStr = user?.target_exam ?? user?.exam_goal ?? undefined;
   const hasGrade = gradeStr != null && gradeStr !== "" && gradeStr !== "null";
 
-  // Ders listesini yükle
+  // Ders listesi
   const loadSubjects = useCallback(async () => {
     if (!user || !hasGrade) return;
-    setLoadingList(true);
-    setError(null);
+    setLoadingList(true); setError(null);
     try {
       const res = await api.getCurriculum(gradeStr, examStr);
       const list = Array.isArray(res?.subjects) ? res.subjects : [];
       setSubjects(list);
-      if (list.length > 0) {
-        setSelectedSlug((prev) => prev || list[0].slug);
-      }
-    } catch (e) {
-      const msg = (e as Error).message || "Dersler yüklenemedi.";
-      setError(msg);
-    } finally {
-      setLoadingList(false);
-    }
+      if (list.length > 0) setSelectedSlug(p => p || list[0].slug);
+    } catch (e) { setError((e as Error).message); }
+    finally { setLoadingList(false); }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.grade, user?.target_exam, user?.exam_goal]);
 
-  useEffect(() => {
-    if (!authLoading) {
-      loadSubjects();
-    }
-  }, [authLoading, loadSubjects]);
+  useEffect(() => { if (!authLoading) loadSubjects(); }, [authLoading, loadSubjects]);
 
-  // Seçili dersin ünitelerini yükle
+  // Ünite listesi
   useEffect(() => {
     if (!selectedSlug) return;
-    setLoadingUnits(true);
-    setUnits([]);
-    api.getCurriculumSubject(selectedSlug).then((res) => {
-      setUnits(Array.isArray(res.units) ? res.units : []);
-    }).catch(() => setUnits([])).finally(() => setLoadingUnits(false));
+    setLoadingUnits(true); setUnits([]); setSelectedTopic(null);
+    api.getCurriculumSubject(selectedSlug)
+      .then(res => setUnits(Array.isArray(res.units) ? res.units : []))
+      .catch(() => setUnits([]))
+      .finally(() => setLoadingUnits(false));
   }, [selectedSlug]);
 
-  const selectedSubject = subjects.find((s) => s.slug === selectedSlug);
+  const selectedSubject = subjects.find(s => s.slug === selectedSlug);
+  const subjectColor = SUBJECT_COLORS[selectedSubject?.name ?? ""] ?? selectedSubject?.color ?? "#6366f1";
 
-  // Konu arama filtrelemesi
-  const filteredUnits = units.map((unit) => ({
-    ...unit,
-    topics: search
-      ? unit.topics.filter((t) => t.title.toLowerCase().includes(search.toLowerCase()))
-      : unit.topics,
-  })).filter((unit) => !search || unit.topics.length > 0);
+  // Arama filtresi
+  const filteredUnits = units.map(u => ({
+    ...u,
+    topics: search ? u.topics.filter(t => t.title.toLowerCase().includes(search.toLowerCase())) : u.topics,
+  })).filter(u => !search || u.topics.length > 0);
 
-  // Konu tamamlama durumu değişince state'i güncelle
+  // Konu durum güncellemesi
   const handleTopicStatusChange = (topicId: number, status: "not_started" | "in_progress" | "completed") => {
-    setUnits((prev) =>
-      prev.map((unit) => ({
-        ...unit,
-        topics: unit.topics.map((t) => t.id === topicId ? { ...t, status } : t),
-        completed_topics: unit.topics.reduce((acc, t) => {
-          const st = t.id === topicId ? status : t.status;
-          return acc + (st === "completed" ? 1 : 0);
-        }, 0),
-        progress_percent: unit.total_topics > 0 ? Math.round(
-          (unit.topics.reduce((acc, t) => {
-            const st = t.id === topicId ? status : t.status;
-            return acc + (st === "completed" ? 1 : 0);
-          }, 0) / unit.total_topics) * 100
-        ) : 0,
-      }))
-    );
+    setUnits(prev => prev.map(u => ({
+      ...u,
+      topics: u.topics.map(t => t.id === topicId ? { ...t, status } : t),
+      completed_topics: u.topics.filter(t => (t.id === topicId ? status : t.status) === "completed").length,
+      progress_percent: u.total_topics > 0
+        ? Math.round((u.topics.filter(t => (t.id === topicId ? status : t.status) === "completed").length / u.total_topics) * 100)
+        : 0,
+    })));
+    if (selectedTopic?.id === topicId) setSelectedTopic(p => p ? { ...p, status } : p);
   };
 
-  // Toplam istatistikler
+  // İstatistikler
   const totalTopics = units.reduce((s, u) => s + u.total_topics, 0);
   const completedTopics = units.reduce((s, u) => s + u.completed_topics, 0);
-  const overallPercent = totalTopics > 0 ? Math.round((completedTopics / totalTopics) * 100) : 0;
-  const subjectColor = SUBJECT_BG_COLORS[selectedSubject?.name ?? ""] ?? selectedSubject?.color ?? "#6366f1";
+  const overallPct = totalTopics > 0 ? Math.round((completedTopics / totalTopics) * 100) : 0;
 
-  // Auth yüklenirken loading göster
-  if (authLoading) {
-    return (
-      <div className="bg-slate-50 min-h-full flex items-center justify-center">
-        <div className="text-center space-y-3">
-          <Loader2 className="w-8 h-8 animate-spin text-indigo-500 mx-auto" />
-          <p className="text-sm text-slate-500">Yükleniyor...</p>
-        </div>
-      </div>
-    );
-  }
+  // Loading/guard durumları
+  if (authLoading) return (
+    <div className="min-h-full flex items-center justify-center bg-slate-50">
+      <Loader2 className="w-6 h-6 animate-spin text-slate-400" />
+    </div>
+  );
 
-  // Grade yoksa onboarding'e yönlendir (bu ayrıca OnboardingGuard tarafından da yapılıyor)
-  if (!hasGrade) {
-    return (
-      <div className="bg-slate-50 min-h-full flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <GraduationCap className="w-12 h-12 text-indigo-400 mx-auto" />
-          <p className="text-slate-600 font-medium">Müfredatını ayarlamak için yönlendiriliyorsun...</p>
-          <button
-            onClick={() => router.push("/ogrenci/onboarding")}
-            className="px-5 py-2.5 bg-indigo-600 text-white font-semibold rounded-xl text-sm"
-          >
-            Müfredatı Ayarla
-          </button>
-        </div>
+  if (!hasGrade) return (
+    <div className="min-h-full flex items-center justify-center bg-slate-50">
+      <div className="text-center space-y-3">
+        <GraduationCap className="w-10 h-10 text-slate-300 mx-auto" />
+        <p className="text-sm text-slate-500">Müfredatın ayarlanmamış.</p>
+        <button onClick={() => router.push("/ogrenci/onboarding")}
+          className="px-4 py-2 bg-indigo-600 text-white text-sm font-semibold rounded-lg">
+          Müfredatı Ayarla
+        </button>
       </div>
-    );
-  }
+    </div>
+  );
 
   return (
     <div className="bg-slate-50 min-h-full">
-      <div className="w-full px-4 sm:px-6 py-6">
+      <div className="w-full h-full flex flex-col">
 
-        {/* Başlık */}
-        <div className="mb-6 flex items-center justify-between gap-4 flex-wrap">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-              <GraduationCap className="w-6 h-6 text-indigo-600" />
-              Derslerim
-            </h1>
-            <div className="flex items-center gap-2 mt-1 flex-wrap">
-              <span className="text-sm text-slate-500">MEB Müfredatı</span>
-              <span className="text-slate-300">·</span>
-              {gradeStr && (
-                <span className="text-xs font-semibold px-2 py-0.5 bg-indigo-100 text-indigo-700 rounded-full">
-                  {gradeStr === "mezun" ? "Mezun" : `${gradeStr}. Sınıf`}
-                </span>
-              )}
-              {(user.target_exam ?? user.exam_goal) && (
-                <span className="text-xs font-semibold px-2 py-0.5 bg-violet-100 text-violet-700 rounded-full">
-                  {user.target_exam ?? user.exam_goal}
-                </span>
-              )}
-            </div>
+        {/* ── Üst başlık çubuğu ── */}
+        <div className="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between gap-4 flex-wrap">
+          <div className="flex items-center gap-3">
+            <GraduationCap className="w-5 h-5 text-slate-500" />
+            <h1 className="text-base font-bold text-slate-800">Derslerim</h1>
+            <span className="text-slate-300">·</span>
+            <span className="text-xs text-slate-500">MEB Müfredatı</span>
+            {gradeStr && (
+              <span className="text-xs font-bold px-2 py-0.5 rounded-full border"
+                style={{ borderColor: `${subjectColor}40`, color: subjectColor, background: `${subjectColor}08` }}>
+                {gradeStr === "mezun" ? "Mezun" : `${gradeStr}. Sınıf`}
+              </span>
+            )}
+            {examStr && (
+              <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
+                {examStr}
+              </span>
+            )}
           </div>
-          <button
-            onClick={() => router.push("/ogrenci/onboarding")}
-            className="flex items-center gap-1.5 px-3 py-2 border border-slate-200 bg-white rounded-xl text-sm text-slate-600 hover:bg-slate-50 transition-colors"
-          >
-            <Settings className="w-4 h-4" />
-            <span className="hidden sm:inline">Müfredatı Değiştir</span>
+          <button onClick={() => router.push("/ogrenci/onboarding")}
+            className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-700 transition-colors">
+            <Settings className="w-3.5 h-3.5" />
+            Müfredatı Değiştir
           </button>
         </div>
 
         {error && (
-          <div className="mb-4 flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
-            <AlertCircle className="w-4 h-4 flex-shrink-0" />
+          <div className="mx-6 mt-4 flex items-center gap-2 p-3 bg-red-50 border border-red-100 rounded-lg text-red-700 text-sm">
             {error}
-            <button onClick={loadSubjects} className="ml-auto text-red-600 hover:text-red-700">
-              <RefreshCw className="w-4 h-4" />
-            </button>
+            <button onClick={loadSubjects} className="ml-auto"><RefreshCw className="w-4 h-4" /></button>
           </div>
         )}
 
-        <div className="flex gap-5">
+        {/* ── Ana layout: 3 panel ── */}
+        <div className="flex flex-1 overflow-hidden" style={{ minHeight: 0 }}>
 
-          {/* ── Sol: Ders Listesi ── */}
-          <aside className="w-56 flex-shrink-0 hidden lg:block">
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-              <div className="px-4 py-3 border-b border-slate-100">
-                <p className="text-xs font-bold text-slate-500 uppercase tracking-wide flex items-center gap-1.5">
-                  <Layers className="w-3.5 h-3.5" />
-                  Dersler
-                </p>
-              </div>
+          {/* Panel 1: Ders listesi */}
+          <div className="w-52 shrink-0 bg-white border-r border-slate-200 flex flex-col hidden lg:flex">
+            <div className="px-4 py-3 border-b border-slate-100">
+              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Dersler</p>
+            </div>
+            <div className="flex-1 overflow-y-auto py-2">
               {loadingList ? (
-                <div className="p-3 space-y-2">
-                  {[1,2,3,4,5].map((i) => <Skeleton key={i} className="h-12" />)}
+                <div className="px-3 space-y-2 pt-1">
+                  {[1,2,3,4,5].map(i => <Skeleton key={i} className="h-11" />)}
                 </div>
-              ) : (
-                <ul className="py-2">
-                  {subjects.map((subject) => {
-                    const color = SUBJECT_BG_COLORS[subject.name] ?? subject.color ?? "#6366f1";
-                    const isActive = subject.slug === selectedSlug;
-                    return (
-                      <li key={subject.slug}>
-                        <button
-                          onClick={() => setSelectedSlug(subject.slug)}
-                          className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-all hover:bg-slate-50 ${
-                            isActive ? "bg-indigo-50" : ""
-                          }`}
-                        >
-                          {/* Renk çubuk */}
-                          <div className="w-1 h-8 rounded-full flex-shrink-0"
-                            style={{ background: isActive ? color : "transparent" }} />
-                          {/* İkon */}
-                          <div className="w-8 h-8 rounded-lg flex items-center justify-center text-base flex-shrink-0"
-                            style={{ background: `${color}18` }}>
-                            {subject.icon}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className={`text-sm font-semibold truncate ${isActive ? "text-indigo-700" : "text-slate-700"}`}>
-                              {subject.name}
-                            </p>
-                            {subject.total_topics != null && (
-                              <div className="flex items-center gap-1 mt-0.5">
-                                <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                                  <div
-                                    className="h-full rounded-full transition-all"
-                                    style={{ width: `${subject.progress_percent ?? 0}%`, background: color }}
-                                  />
-                                </div>
-                                <span className="text-[10px] text-slate-400 font-medium">
-                                  {subject.progress_percent ?? 0}%
-                                </span>
-                              </div>
-                            )}
-                          </div>
-                        </button>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
+              ) : subjects.map(subject => {
+                const color = SUBJECT_COLORS[subject.name] ?? subject.color ?? "#6366f1";
+                const isActive = subject.slug === selectedSlug;
+                return (
+                  <button key={subject.slug} onClick={() => setSelectedSlug(subject.slug)}
+                    className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-all ${isActive ? "bg-slate-50" : "hover:bg-slate-50/60"}`}>
+                    {/* Sol çubuk */}
+                    <div className="w-0.5 h-8 rounded-full shrink-0"
+                      style={{ background: isActive ? color : "transparent" }} />
+                    {/* İkon */}
+                    <div className="w-7 h-7 rounded-lg flex items-center justify-center text-sm shrink-0"
+                      style={{ background: `${color}15` }}>
+                      {subject.icon}
+                    </div>
+                    <div className="flex-1 min-w-0 space-y-1">
+                      <p className={`text-[13px] font-semibold truncate leading-tight ${isActive ? "text-slate-900" : "text-slate-600"}`}>
+                        {subject.name}
+                      </p>
+                      {subject.total_topics != null && (
+                        <ProgressBar value={subject.progress_percent ?? 0} color={color} />
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
             </div>
-          </aside>
+          </div>
 
-          {/* ── Sağ: İçerik Alanı ── */}
-          <div className="flex-1 min-w-0 space-y-4">
+          {/* Mobil ders seçimi */}
+          <div className="lg:hidden px-4 pt-3 bg-white border-b border-slate-200 w-full">
+            <select value={selectedSlug} onChange={e => setSelectedSlug(e.target.value)}
+              className="w-full text-sm px-3 py-2 border border-slate-200 rounded-lg bg-white focus:ring-2 focus:ring-indigo-500 outline-none mb-3">
+              {subjects.map(s => <option key={s.slug} value={s.slug}>{s.icon} {s.name}</option>)}
+            </select>
+          </div>
 
-            {/* Mobilde ders seçimi */}
-            <div className="lg:hidden">
-              <select
-                value={selectedSlug}
-                onChange={(e) => setSelectedSlug(e.target.value)}
-                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-700 focus:ring-2 focus:ring-indigo-500 outline-none"
-              >
-                {subjects.map((s) => (
-                  <option key={s.slug} value={s.slug}>{s.icon} {s.name}</option>
-                ))}
-              </select>
-            </div>
-
-            {/* Seçili ders başlığı + istatistik */}
+          {/* Panel 2: Ünite/Konu listesi */}
+          <div className={`flex flex-col transition-all duration-300 bg-slate-50 border-r border-slate-200 ${selectedTopic ? "w-72 shrink-0" : "flex-1"}`}>
+            {/* Ders başlığı + stats */}
             {selectedSubject && (
-              <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
-                <div className="flex items-center gap-4 flex-wrap">
-                  <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0 shadow-sm"
-                    style={{ background: `${subjectColor}18`, border: `2px solid ${subjectColor}30` }}>
+              <div className="bg-white border-b border-slate-200 p-4">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl shrink-0"
+                    style={{ background: `${subjectColor}12` }}>
                     {selectedSubject.icon}
                   </div>
-                  <div className="flex-1">
-                    <h2 className="text-lg font-bold text-slate-900">{selectedSubject.name}</h2>
-                    <p className="text-sm text-slate-500">
-                      {units.length} ünite • {totalTopics} konu
-                    </p>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold text-slate-900 text-sm leading-tight">{selectedSubject.name}</p>
+                    <p className="text-xs text-slate-500">{units.length} ünite · {totalTopics} konu</p>
                   </div>
                   <div className="text-right">
-                    <div className="text-2xl font-bold" style={{ color: subjectColor }}>
-                      %{overallPercent}
-                    </div>
-                    <div className="text-xs text-slate-500">
-                      {completedTopics}/{totalTopics} tamamlandı
-                    </div>
+                    <p className="text-lg font-black" style={{ color: subjectColor }}>%{overallPct}</p>
                   </div>
                 </div>
-                {/* Genel progress bar */}
-                <div className="mt-4 h-2.5 bg-slate-100 rounded-full overflow-hidden">
-                  <div
-                    className="h-full rounded-full transition-all duration-700"
-                    style={{ width: `${overallPercent}%`, background: subjectColor }}
-                  />
-                </div>
+                <ProgressBar value={overallPct} color={subjectColor} />
               </div>
             )}
 
             {/* Arama */}
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-              <input
-                type="text"
-                placeholder="Konu ara... (örn: İntegral, Hücre, Osmanlı)"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none shadow-sm"
-              />
-              {search && (
-                <button
-                  onClick={() => setSearch("")}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                >✕</button>
-              )}
+            <div className="px-3 py-2.5 bg-white border-b border-slate-200">
+              <div className="relative">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+                <input type="text" placeholder="Konu ara…" value={search}
+                  onChange={e => setSearch(e.target.value)}
+                  className="w-full pl-8 pr-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:ring-1 outline-none"
+                  style={{ '--tw-ring-color': subjectColor } as React.CSSProperties} />
+                {search && (
+                  <button onClick={() => setSearch("")}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* Üniteler */}
-            {loadingUnits ? (
-              <div className="space-y-3">
-                {[1,2,3].map((i) => <Skeleton key={i} className="h-20" />)}
-              </div>
-            ) : filteredUnits.length === 0 ? (
-              <div className="text-center py-16 bg-white rounded-2xl border border-slate-200">
-                {search ? (
-                  <>
-                    <Search className="w-10 h-10 text-slate-300 mx-auto mb-3" />
-                    <p className="font-semibold text-slate-600">"{search}" için konu bulunamadı</p>
-                    <button onClick={() => setSearch("")} className="mt-2 text-sm text-indigo-600 hover:underline">
-                      Aramayı temizle
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <BookOpen className="w-10 h-10 text-slate-300 mx-auto mb-3" />
-                    <p className="font-semibold text-slate-600">Bu ders için henüz içerik yok</p>
-                    <p className="text-sm text-slate-500 mt-1">Yakında eklenecek.</p>
-                  </>
-                )}
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {filteredUnits.map((unit, i) => (
-                  <UnitAccordion
-                    key={unit.id}
-                    unit={unit}
-                    subjectColor={subjectColor}
-                    onTopicStatusChange={handleTopicStatusChange}
-                    defaultOpen={i === 0}
-                  />
-                ))}
-              </div>
-            )}
+            <div className="flex-1 overflow-y-auto p-3 space-y-2">
+              {loadingUnits ? (
+                [1,2,3].map(i => <Skeleton key={i} className="h-16" />)
+              ) : filteredUnits.length === 0 ? (
+                <div className="py-12 text-center">
+                  <BookOpen className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+                  <p className="text-sm text-slate-500">
+                    {search ? `"${search}" bulunamadı` : "Bu ders için henüz içerik yok"}
+                  </p>
+                </div>
+              ) : filteredUnits.map((unit, i) => (
+                <UnitSection key={unit.id} unit={unit} subjectColor={subjectColor}
+                  selectedTopicId={selectedTopic?.id ?? null}
+                  onTopicSelect={setSelectedTopic}
+                  onTopicStatusChange={handleTopicStatusChange}
+                  defaultOpen={i === 0} />
+              ))}
+            </div>
 
-            {/* İstatistik kartları */}
+            {/* Alt istatistikler */}
             {units.length > 0 && (
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
+              <div className="border-t border-slate-200 bg-white px-4 py-3 grid grid-cols-3 gap-2">
                 {[
-                  { label: "Toplam Ünite",   value: units.length,     icon: Layers,      color: "#6366f1", bg: "bg-indigo-50" },
-                  { label: "Toplam Konu",    value: totalTopics,      icon: BookMarked,  color: "#0ea5e9", bg: "bg-sky-50"    },
-                  { label: "Tamamlanan",     value: completedTopics,  icon: CheckCircle, color: "#22c55e", bg: "bg-green-50"  },
-                  { label: "Genel İlerleme", value: `%${overallPercent}`, icon: BarChart3, color: "#f59e0b", bg: "bg-amber-50" },
-                ].map(({ label, value, icon: Icon, color, bg }) => (
-                  <div key={label} className={`${bg} rounded-2xl p-3 border border-white shadow-sm`}>
-                    <Icon className="w-4 h-4 mb-1" style={{ color }} />
-                    <p className="text-xl font-bold" style={{ color }}>{value}</p>
-                    <p className="text-xs text-slate-500">{label}</p>
+                  { label: "Ünite",       value: units.length,     icon: Layers    },
+                  { label: "Konu",        value: totalTopics,      icon: BookOpen  },
+                  { label: "Tamamlanan",  value: completedTopics,  icon: CheckCircle },
+                ].map(({ label, value, icon: Icon }) => (
+                  <div key={label} className="text-center">
+                    <Icon className="w-3.5 h-3.5 mx-auto mb-0.5 text-slate-400" />
+                    <p className="text-sm font-bold text-slate-900">{value}</p>
+                    <p className="text-[10px] text-slate-400">{label}</p>
                   </div>
                 ))}
               </div>
             )}
           </div>
+
+          {/* Panel 3: Konu İçerik Paneli */}
+          {selectedTopic ? (
+            <div className="flex-1 min-w-0 overflow-y-auto">
+              <ContentPanel topic={selectedTopic} subjectColor={subjectColor}
+                onClose={() => setSelectedTopic(null)} />
+            </div>
+          ) : (
+            <div className="flex-1 hidden lg:flex items-center justify-center bg-slate-50/50">
+              <div className="text-center space-y-3 max-w-xs px-4">
+                <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto"
+                  style={{ background: `${subjectColor}10` }}>
+                  <BookOpen className="w-7 h-7" style={{ color: subjectColor }} />
+                </div>
+                <p className="font-semibold text-slate-600 text-sm">Bir konu seçin</p>
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  Sol taraftan bir konuya tıklayarak içerikleri, notları ve soruları görüntüleyebilirsiniz.
+                </p>
+              </div>
+            </div>
+          )}
+
         </div>
       </div>
     </div>
