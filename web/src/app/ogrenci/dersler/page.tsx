@@ -220,7 +220,7 @@ function UnitAccordion({ unit, subjectColor, onTopicStatusChange, defaultOpen = 
 // ─── Ana Sayfa ──────────────────────────────────────────────────────────────
 
 export default function DerslerimPage() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const router = useRouter();
 
   const [subjects, setSubjects] = useState<CurriculumSubject[]>([]);
@@ -231,35 +231,37 @@ export default function DerslerimPage() {
   const [loadingUnits, setLoadingUnits] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Eğer grade yoksa onboarding'e yönlendir
-  useEffect(() => {
-    if (user && !user.grade) {
-      router.push("/ogrenci/onboarding");
-    }
-  }, [user, router]);
+  // grade değerini string'e çeviren yardımcı
+  const gradeStr = user?.grade != null ? String(user.grade) : undefined;
+  const examStr  = user?.target_exam ?? user?.exam_goal ?? undefined;
+  const hasGrade = gradeStr != null && gradeStr !== "" && gradeStr !== "null";
 
   // Ders listesini yükle
   const loadSubjects = useCallback(async () => {
-    if (!user) return;
+    if (!user || !hasGrade) return;
     setLoadingList(true);
     setError(null);
     try {
-      const res = await api.getCurriculum(
-        user.grade ?? undefined,
-        (user.target_exam ?? user.exam_goal) ?? undefined
-      );
-      const list = Array.isArray(res.subjects) ? res.subjects : [];
+      const res = await api.getCurriculum(gradeStr, examStr);
+      const list = Array.isArray(res?.subjects) ? res.subjects : [];
       setSubjects(list);
-      if (list.length > 0 && !selectedSlug) {
-        setSelectedSlug(list[0].slug);
+      if (list.length > 0) {
+        setSelectedSlug((prev) => prev || list[0].slug);
       }
     } catch (e) {
-      setError((e as Error).message || "Dersler yüklenemedi.");
+      const msg = (e as Error).message || "Dersler yüklenemedi.";
+      setError(msg);
+    } finally {
+      setLoadingList(false);
     }
-    setLoadingList(false);
-  }, [user, selectedSlug]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.grade, user?.target_exam, user?.exam_goal]);
 
-  useEffect(() => { loadSubjects(); }, [loadSubjects]);
+  useEffect(() => {
+    if (!authLoading) {
+      loadSubjects();
+    }
+  }, [authLoading, loadSubjects]);
 
   // Seçili dersin ünitelerini yükle
   useEffect(() => {
@@ -307,7 +309,35 @@ export default function DerslerimPage() {
   const overallPercent = totalTopics > 0 ? Math.round((completedTopics / totalTopics) * 100) : 0;
   const subjectColor = SUBJECT_BG_COLORS[selectedSubject?.name ?? ""] ?? selectedSubject?.color ?? "#6366f1";
 
-  if (!user?.grade) return null;
+  // Auth yüklenirken loading göster
+  if (authLoading) {
+    return (
+      <div className="bg-slate-50 min-h-full flex items-center justify-center">
+        <div className="text-center space-y-3">
+          <Loader2 className="w-8 h-8 animate-spin text-indigo-500 mx-auto" />
+          <p className="text-sm text-slate-500">Yükleniyor...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Grade yoksa onboarding'e yönlendir (bu ayrıca OnboardingGuard tarafından da yapılıyor)
+  if (!hasGrade) {
+    return (
+      <div className="bg-slate-50 min-h-full flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <GraduationCap className="w-12 h-12 text-indigo-400 mx-auto" />
+          <p className="text-slate-600 font-medium">Müfredatını ayarlamak için yönlendiriliyorsun...</p>
+          <button
+            onClick={() => router.push("/ogrenci/onboarding")}
+            className="px-5 py-2.5 bg-indigo-600 text-white font-semibold rounded-xl text-sm"
+          >
+            Müfredatı Ayarla
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-slate-50 min-h-full">
@@ -323,9 +353,9 @@ export default function DerslerimPage() {
             <div className="flex items-center gap-2 mt-1 flex-wrap">
               <span className="text-sm text-slate-500">MEB Müfredatı</span>
               <span className="text-slate-300">·</span>
-              {user.grade && (
+              {gradeStr && (
                 <span className="text-xs font-semibold px-2 py-0.5 bg-indigo-100 text-indigo-700 rounded-full">
-                  {user.grade === "mezun" ? "Mezun" : `${user.grade}. Sınıf`}
+                  {gradeStr === "mezun" ? "Mezun" : `${gradeStr}. Sınıf`}
                 </span>
               )}
               {(user.target_exam ?? user.exam_goal) && (

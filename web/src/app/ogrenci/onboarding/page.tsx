@@ -91,21 +91,29 @@ export default function OnboardingPage() {
     setSaving(true);
     setError("");
     try {
+      // Backend grade'i 1-12 arası integer bekliyor, mezun için null
+      const gradeValue = selectedGrade === "mezun" ? null : parseInt(selectedGrade, 10);
+
       await api.updateProfile({
-        grade: selectedGrade,
+        grade: gradeValue as unknown as number,
         target_exam: selectedExam,
       } as Parameters<typeof api.updateProfile>[0]);
 
-      // Kullanıcı objesini güncelle
+      // Kullanıcı objesini API'den güncel haliyle al
       const me = await api.getMe();
       updateUser(me);
 
       setStep(2);
       setTimeout(() => {
         router.push("/ogrenci/dersler");
-      }, 2000);
+      }, 1800);
     } catch (e) {
-      setError((e as Error).message || "Bir hata oluştu, tekrar deneyin.");
+      const msg = (e as Error).message || "";
+      if (msg.includes("422") || msg.includes("validation")) {
+        setError("Bilgiler kaydedilemedi. Lütfen seçimlerinizi kontrol edin.");
+      } else {
+        setError(msg || "Bir hata oluştu, tekrar deneyin.");
+      }
     }
     setSaving(false);
   };

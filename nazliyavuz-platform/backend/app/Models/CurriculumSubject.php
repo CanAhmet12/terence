@@ -25,10 +25,16 @@ class CurriculumSubject extends Model
     // Filtreleme: kullanıcının grade ve exam_type'ına göre dersleri getir
     public function scopeForUser($query, ?string $grade, ?string $examType)
     {
+    public function scopeForUser($query, ?string $grade, ?string $examType)
+    {
+        // grade'i integer string karşılaştırması için normalize et
+        $gradeStr = $grade ? (string)intval($grade) : null;
+
         return $query->where('is_active', true)
-            ->where(function ($q) use ($grade) {
+            ->where(function ($q) use ($grade, $gradeStr) {
                 $q->where('grade', 'all')
-                  ->orWhere('grade', $grade);
+                  ->orWhere('grade', $grade)
+                  ->orWhere('grade', $gradeStr);
             })
             ->where(function ($q) use ($examType) {
                 $q->where('exam_type', 'all')

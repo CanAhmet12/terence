@@ -156,7 +156,7 @@ export interface User {
   profile_photo_url?: string
   avatar?: string
   email_verified_at?: string | null
-  grade?: number
+  grade?: number | string
   target_exam?: string
   exam_goal?: string
   target_school?: string
@@ -1390,12 +1390,26 @@ export const analyticsApi = {
 
 // ─── Curriculum API ───────────────────────────────────────────────────────────
 export const curriculumApi = {
-  async getCurriculum(grade?: string, examType?: string): Promise<{ subjects: CurriculumSubject[]; grade: string; exam_type: string }> {
+  async getCurriculum(grade?: string | number, examType?: string): Promise<{ subjects: CurriculumSubject[]; grade: string; exam_type: string }> {
     const params: Record<string, string> = {}
-    if (grade) params.grade = grade
+    if (grade != null && grade !== "") params.grade = String(grade)
     if (examType) params.exam_type = examType
-    const response = await api.get<{ subjects: CurriculumSubject[]; grade: string; exam_type: string }>('/curriculum', { params })
-    return response.data
+    try {
+      const response = await api.get<{ subjects: CurriculumSubject[]; grade: string; exam_type: string } | CurriculumSubject[]>('/curriculum', { params })
+      const data = response.data
+      // Backend { subjects: [...] } veya doğrudan [] dönebilir
+      if (Array.isArray(data)) {
+        return { subjects: data, grade: String(grade ?? ''), exam_type: examType ?? '' }
+      }
+      return {
+        subjects: Array.isArray((data as Record<string, unknown>).subjects) ? (data as { subjects: CurriculumSubject[] }).subjects : [],
+        grade: String(grade ?? ''),
+        exam_type: examType ?? '',
+      }
+    } catch (e) {
+      console.error('getCurriculum error:', e)
+      return { subjects: [], grade: String(grade ?? ''), exam_type: examType ?? '' }
+    }
   },
 
   async getCurriculumSubject(slug: string): Promise<{ subject: CurriculumSubject; units: CurriculumUnit[] }> {
