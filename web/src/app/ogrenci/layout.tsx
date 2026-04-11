@@ -3,6 +3,7 @@ import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { DashboardWrapper } from "@/components/dashboard/DashboardWrapper";
 import { AuthGuard } from "@/components/auth/AuthGuard";
+import { OnboardingGuard } from "@/components/auth/OnboardingGuard";
 
 export const metadata: Metadata = {
   title: "Öğrenci Paneli",
@@ -17,12 +18,14 @@ export default function StudentLayout({
 }) {
   return (
     <AuthGuard role="student">
-      <DashboardWrapper
-        sidebar={<DashboardSidebar />}
-        header={<DashboardHeader />}
-      >
-        {children}
-      </DashboardWrapper>
+      <OnboardingGuard>
+        <DashboardWrapper
+          sidebar={<DashboardSidebar />}
+          header={<DashboardHeader />}
+        >
+          {children}
+        </DashboardWrapper>
+      </OnboardingGuard>
     </AuthGuard>
   );
 }

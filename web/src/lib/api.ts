@@ -255,6 +255,57 @@ export interface ExamSession {
   questions?: Question[]
 }
 
+// ─── Curriculum (Müfredat) Interfaces ────────────────────────────────────────
+
+export interface CurriculumContentItem {
+  id: number
+  type: 'video' | 'pdf' | 'quiz' | 'text'
+  title: string
+  url?: string
+  is_free?: boolean
+  duration_seconds?: number
+}
+
+export interface CurriculumTopic {
+  id: number
+  unit_id: number
+  title: string
+  description?: string
+  meb_code?: string
+  sort_order: number
+  status: 'not_started' | 'in_progress' | 'completed'
+  linked_topic_id?: number
+  content_items?: CurriculumContentItem[]
+}
+
+export interface CurriculumUnit {
+  id: number
+  subject_id: number
+  title: string
+  description?: string
+  meb_code?: string
+  sort_order: number
+  topics: CurriculumTopic[]
+  total_topics: number
+  completed_topics: number
+  progress_percent: number
+}
+
+export interface CurriculumSubject {
+  id: number
+  name: string
+  slug: string
+  icon: string
+  color: string
+  grade: string
+  exam_type: string
+  sort_order: number
+  total_topics?: number
+  completed_topics?: number
+  progress_percent?: number
+  units?: CurriculumUnit[]
+}
+
 export interface PlanTask {
   id: number
   title?: string
@@ -1337,6 +1388,32 @@ export const analyticsApi = {
   },
 }
 
+// ─── Curriculum API ───────────────────────────────────────────────────────────
+export const curriculumApi = {
+  async getCurriculum(grade?: string, examType?: string): Promise<{ subjects: CurriculumSubject[]; grade: string; exam_type: string }> {
+    const params: Record<string, string> = {}
+    if (grade) params.grade = grade
+    if (examType) params.exam_type = examType
+    const response = await api.get<{ subjects: CurriculumSubject[]; grade: string; exam_type: string }>('/curriculum', { params })
+    return response.data
+  },
+
+  async getCurriculumSubject(slug: string): Promise<{ subject: CurriculumSubject; units: CurriculumUnit[] }> {
+    const response = await api.get<{ subject: CurriculumSubject; units: CurriculumUnit[] }>(`/curriculum/${slug}`)
+    return response.data
+  },
+
+  async updateCurriculumProgress(topicId: number, status: 'not_started' | 'in_progress' | 'completed'): Promise<unknown> {
+    const response = await api.post<unknown>('/curriculum/progress', { topic_id: topicId, status })
+    return response.data
+  },
+
+  async getMyCurriculumProgress(): Promise<{ progress: Array<{ slug: string; name: string; total_topics: number; completed_topics: number; progress_percent: number }> }> {
+    const response = await api.get<{ progress: Array<{ slug: string; name: string; total_topics: number; completed_topics: number; progress_percent: number }> }>('/curriculum/progress')
+    return response.data
+  },
+}
+
 // ─── Unified api object — backwards compatibility ────────────────────────────
 // Tüm modüler API'leri ana api nesnesine bağla
 // Böylece api.getNotifications(...) gibi legacy çağrılar da çalışır
@@ -1464,6 +1541,11 @@ Object.assign(api, {
   // Analytics
   getUserAnalytics: analyticsApi.getUserAnalytics.bind(analyticsApi),
   trackEvent: analyticsApi.trackEvent.bind(analyticsApi),
+  // Curriculum
+  getCurriculum: curriculumApi.getCurriculum.bind(curriculumApi),
+  getCurriculumSubject: curriculumApi.getCurriculumSubject.bind(curriculumApi),
+  updateCurriculumProgress: curriculumApi.updateCurriculumProgress.bind(curriculumApi),
+  getMyCurriculumProgress: curriculumApi.getMyCurriculumProgress.bind(curriculumApi),
 })
 
 export { authApi }

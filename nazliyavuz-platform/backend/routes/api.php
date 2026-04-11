@@ -419,6 +419,12 @@ Route::middleware(['auth:api'])->group(function () {
     Route::get('/courses', [\App\Http\Controllers\Api\CourseController::class, 'index']);
     Route::post('/progress', [\App\Http\Controllers\Api\CourseController::class, 'updateProgress']);
 
+    // ── Müfredat (Curriculum) ────────────────────────────────────────────
+    Route::get('/curriculum/progress', [\App\Http\Controllers\Api\CurriculumController::class, 'myProgress']);
+    Route::post('/curriculum/progress', [\App\Http\Controllers\Api\CurriculumController::class, 'updateProgress']);
+    Route::get('/curriculum/{slug}', [\App\Http\Controllers\Api\CurriculumController::class, 'show']);
+    Route::get('/curriculum', [\App\Http\Controllers\Api\CurriculumController::class, 'index']);
+
     // â”€â”€ Soru BankasÄ± â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     // ── Soru Bankası ─────────────────────────────────────────────────────────
     Route::get('/questions', [\App\Http\Controllers\Api\QuestionController::class, 'index']);
