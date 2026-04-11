@@ -43,6 +43,21 @@ class User extends Authenticatable implements JWTSubject
         'marketing_emails',
         'suspended_reason',
         'suspended_by',
+        // Öğrenci profil alanları
+        'grade',
+        'target_exam',
+        'exam_goal',
+        'target_school',
+        'target_department',
+        'target_net',
+        'current_net',
+        'subject',
+        'xp_points',
+        'level',
+        'streak_days',
+        'daily_reminder_time',
+        'subscription_plan',
+        'subscription_expires_at',
     ];
 
     /**
