@@ -3,13 +3,14 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { Users, BarChart3, Bell, ChevronLeft } from "lucide-react";
+import { Users, BarChart3, Bell, ChevronLeft, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const veliNav = [
   { href: "/veli", icon: Users, label: "Çocuklarım" },
   { href: "/veli/rapor", icon: BarChart3, label: "Raporlar" },
-  { href: "/veli/bildirim", icon: Bell, label: "Bildirimler" },
+  { href: "/veli/bildirimler", icon: Bell, label: "Bildirimler" },
+  { href: "/veli/bildirim", icon: Settings, label: "Bildirim Ayarları" },
 ];
 
 export function VeliSidebar() {

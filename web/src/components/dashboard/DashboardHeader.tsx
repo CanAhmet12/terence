@@ -27,6 +27,7 @@ const PATH_MAP: Record<string, { label: string; icon: React.ElementType }> = {
   "/ogrenci/rozet": { label: "Rozetler", icon: Trophy },
   "/ogrenci/koc": { label: "Dijital Koç", icon: Bot },
   "/ogrenci/forum": { label: "Forum", icon: MessageSquare },
+  "/ogrenci/bildirimler": { label: "Bildirimler", icon: Bell },
   "/ogrenci/profil": { label: "Profil & Ayarlar", icon: UserCircle },
   "/ogretmen": { label: "Ana Panel", icon: LayoutDashboard },
   "/ogretmen/dersler": { label: "Derslerim", icon: BookOpen },
@@ -36,10 +37,12 @@ const PATH_MAP: Record<string, { label: string; icon: React.ElementType }> = {
   "/ogretmen/odev": { label: "Ödev & Test", icon: FileQuestion },
   "/ogretmen/analiz": { label: "Analiz Merkezi", icon: BarChart3 },
   "/ogretmen/mesaj": { label: "Mesaj & Duyuru", icon: MessageSquare },
+  "/ogretmen/bildirimler": { label: "Bildirimler", icon: Bell },
   "/ogretmen/profil": { label: "Profil & Ayarlar", icon: UserCircle },
   "/veli": { label: "Çocuklarım", icon: Users },
   "/veli/rapor": { label: "Raporlar", icon: BarChart3 },
-  "/veli/bildirim": { label: "Bildirimler", icon: Bell },
+  "/veli/bildirim": { label: "Bildirim Ayarları", icon: Settings },
+  "/veli/bildirimler": { label: "Bildirimler", icon: Bell },
   "/admin": { label: "Admin Paneli", icon: LayoutDashboard },
   "/admin/kullanicilar": { label: "Kullanıcılar", icon: Users },
   "/admin/icerik": { label: "İçerik Yönetimi", icon: Upload },
@@ -47,6 +50,7 @@ const PATH_MAP: Record<string, { label: string; icon: React.ElementType }> = {
   "/admin/ayarlar": { label: "Sistem Ayarları", icon: Settings },
   "/admin/ogretmen-onay": { label: "Öğretmen Onay", icon: Users },
   "/admin/kupon": { label: "Kuponlar", icon: FileQuestion },
+  "/admin/bildirimler": { label: "Bildirimler", icon: Bell },
   "/bildirimler": { label: "Bildirimler", icon: Bell },
 };
 
@@ -117,6 +121,15 @@ export function DashboardHeader() {
     .toUpperCase()
     .slice(0, 2);
 
+  const notificationsHref =
+    user.role === "teacher"
+      ? "/ogretmen/bildirimler"
+      : user.role === "parent"
+        ? "/veli/bildirimler"
+        : user.role === "admin"
+          ? "/admin/bildirimler"
+          : "/ogrenci/bildirimler";
+
   // Aktif sayfa bilgisini bul (dinamik alt yollar için de çalışsın)
   const currentPage = PATH_MAP[pathname] ||
     Object.entries(PATH_MAP).find(([key]) => pathname.startsWith(key + "/"))?.[1] ||
@@ -155,7 +168,7 @@ export function DashboardHeader() {
         <div className="flex items-center gap-2 shrink-0">
           {/* Bildirim zili */}
           <Link
-            href="/bildirimler"
+            href={notificationsHref}
             className="relative p-2.5 rounded-xl hover:bg-slate-100 text-slate-600 transition-colors"
             aria-label={`${unreadCount} okunmamış bildirim`}
           >

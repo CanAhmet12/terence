@@ -42,7 +42,7 @@ const teacherNavGroups = [
     items: [
       { href: "/ogretmen/analiz", icon: BarChart3, label: "Analiz Merkezi" },
       { href: "/ogretmen/mesaj", icon: MessageSquare, label: "Mesaj & Duyuru" },
-      { href: "/bildirimler", icon: Bell, label: "Bildirimler" },
+      { href: "/ogretmen/bildirimler", icon: Bell, label: "Bildirimler" },
     ],
   },
   {

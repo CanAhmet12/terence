@@ -257,7 +257,7 @@ export default function VeliRaporPage() {
                 {childName} adlı çocuğunuzun hedefini karşılama ihtimali düşük.
                 Net artışına odaklanması gerekiyor.
               </p>
-              <Link href="/veli/bildirim" className="mt-3 inline-block text-sm font-semibold text-amber-700 hover:text-amber-800 underline transition-colors">
+              <Link href="/veli/bildirimler" className="mt-3 inline-block text-sm font-semibold text-amber-700 hover:text-amber-800 underline transition-colors">
                 Bildirimler Sayfasına Git →
               </Link>
             </div>

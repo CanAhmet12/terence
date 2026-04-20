@@ -64,7 +64,7 @@ const studentNavGroups = [
     label: "İLETİŞİM",
     items: [
       { href: "/ogrenci/forum", icon: MessageSquare, label: "Forum" },
-      { href: "/bildirimler", icon: Bell, label: "Bildirimler" },
+      { href: "/ogrenci/bildirimler", icon: Bell, label: "Bildirimler" },
     ],
   },
   {
@@ -97,7 +97,7 @@ const teacherNavGroups = [
     label: "İLETİŞİM",
     items: [
       { href: "/ogretmen/mesaj", icon: MessageSquare, label: "Mesajlar" },
-      { href: "/bildirimler", icon: Bell, label: "Bildirimler" },
+      { href: "/ogretmen/bildirimler", icon: Bell, label: "Bildirimler" },
     ],
   },
   {
@@ -120,8 +120,8 @@ const parentNavGroups = [
   {
     label: "İLETİŞİM",
     items: [
-      { href: "/veli/bildirim", icon: Bell, label: "Bildirim Ayarları" },
-      { href: "/bildirimler", icon: Bell, label: "Bildirimler" },
+      { href: "/veli/bildirim", icon: Settings, label: "Bildirim Ayarları" },
+      { href: "/veli/bildirimler", icon: Bell, label: "Bildirimler" },
     ],
   },
   {
