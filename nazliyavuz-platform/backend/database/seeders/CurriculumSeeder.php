@@ -57,8 +57,9 @@ class CurriculumSeeder extends Seeder
 
         $this->command->info('CurriculumSeeder: ' . count($curriculum) . ' ders eklendi.');
 
-        // 5. sınıf TYMM müfredatı (ayrı seeder — tam müfredat yenilense de korunur)
+        // 5–6. sınıf TYMM müfredatı (ayrı seeders)
         $this->call(CurriculumGrade5Seeder::class);
+        $this->call(CurriculumGrade6Seeder::class);
     }
 
     private function getCurriculum(): array
