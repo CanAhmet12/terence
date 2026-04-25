@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\DB;
  * 6. Sınıf — MEB Türkiye Yüzyılı Maarif Modeli (TYMM) ortaokul öğretim programları
  * ve TEGM 2025-2026 çerçeve yıllık planları ile uyumlu müfredat ağacı.
  *
- * Kaynak özeti: TYMM (tymm.meb.gov.tr), TEGM 2025-2026 çerçeve planları.
+ * Kaynak özeti: TYMM (tymm.meb.gov.tr) — Türkçe tema başlıkları ve Matematik öğrenme alanları programdaki adlarla eşleştirilmiştir; TEGM 2025-2026 çerçeve planları.
  * Bu seeder yalnızca grade=6 kayıtlarını günceller.
  */
 class CurriculumGrade6Seeder extends Seeder
@@ -145,46 +145,50 @@ class CurriculumGrade6Seeder extends Seeder
                 ],
             ],
 
-            // ─── 2. Matematik — 6 ünite (TYMM ortaokul) ───────────────────────
+            // ─── 2. Matematik — TYMM 6. sınıf öğrenme alanları (7 tema) ─────────
             [
                 'name' => 'Matematik', 'slug' => 'matematik-6',
                 'icon' => '📐', 'color' => '#1565c0', 'sort_order' => 2,
                 'units' => [
-                    ['title' => 'Doğal Sayılar, Çarpan-Katlar ve Kümeler', 'meb_code' => 'MAT.6.1', 'topics' => [
-                        'Çarpan ve kat kavramı; EBOB-EKOK',
-                        'Asal çarpanlar ve asal çarpanlara ayırma',
+                    ['title' => 'Sayılar ve Nicelikler (1)', 'meb_code' => 'MAT.6.1', 'topics' => [
+                        'Çarpan-kat, EBOB-EKOK ve asal çarpanlara ayırma',
                         'Kümeler ve Venn şemaları',
                         'Doğal sayılarda işlemler ve problem çözme',
                     ]],
-                    ['title' => 'Tam Sayılar ve Kesirlerle İşlemler', 'meb_code' => 'MAT.6.2', 'topics' => [
-                        'Tam sayı doğrusu ve işlemler',
+                    ['title' => 'Sayılar ve Nicelikler (2)', 'meb_code' => 'MAT.6.2', 'topics' => [
+                        'Tam sayılar ve sayı doğrusu',
                         'Tam sayılarda dört işlem',
-                        'Kesirlerle çarpma ve bölme',
-                        'Kesir problemleri',
-                    ]],
-                    ['title' => 'Ondalık Gösterim ve Oran', 'meb_code' => 'MAT.6.3', 'topics' => [
+                        'Kesirlerle çarpma ve bölme; kesir problemleri',
                         'Ondalık gösterim ve kesir ilişkisi',
-                        'Ondalık sayılarda dört işlem',
-                        'Oran ve orantı',
-                        'Yüzde ve oran ilişkisi',
                     ]],
-                    ['title' => 'Cebirsel İfadeler ve Veri', 'meb_code' => 'MAT.6.4', 'topics' => [
-                        'Cebirsel ifadeler ve işlemler',
+                    ['title' => 'İşlemlerle Cebirsel Düşünme ve Değişimler', 'meb_code' => 'MAT.6.3', 'topics' => [
+                        'Oran, orantı ve yüzde',
+                        'Cebirsel ifadeler ve özdeşlikler',
                         'Birinci dereceden bir bilinmeyenli denklemler',
-                        'Veri toplama ve düzenleme',
-                        'Merkezi eğilim ve yayılım ölçülerine giriş',
+                        'Örüntü ve değişim ilişkileri',
                     ]],
-                    ['title' => 'Açılar ve Alan Ölçme', 'meb_code' => 'MAT.6.5', 'topics' => [
-                        'Açı türleri ve paralel doğrular',
-                        'Üçgende açı özellikleri',
+                    ['title' => 'Geometrik Şekiller', 'meb_code' => 'MAT.6.4', 'topics' => [
+                        'Açılar ve paralel doğrular',
+                        'Üçgenler ve çokgenler',
+                        'Çember ve daire; temel çizimler',
+                        'Dönüşüm geometrisine giriş (öteleme, basit simetri)',
+                    ]],
+                    ['title' => 'Geometrik Nicelikler', 'meb_code' => 'MAT.6.5', 'topics' => [
                         'Paralelkenar ve üçgende alan',
                         'Birleşik şekillerde alan',
-                    ]],
-                    ['title' => 'Çember, Geometrik Cisimler ve Sıvı Ölçme', 'meb_code' => 'MAT.6.6', 'topics' => [
-                        'Çember ve dairede çevre-alan',
                         'Prizma ve silindire giriş; yüzey ve hacim farkındalığı',
-                        'Sıvı ölçme birimleri ve dönüşüm',
-                        'Gerçek yaşam geometri ve ölçü problemleri',
+                        'Sıvı ölçme ve birim dönüşümü',
+                    ]],
+                    ['title' => 'İstatistiksel Araştırma Süreci', 'meb_code' => 'MAT.6.6', 'topics' => [
+                        'Veri toplama ve düzenleme',
+                        'Grafik ve tablo oluşturma ve yorumlama',
+                        'Merkezi eğilim ve yayılım ölçülerine giriş',
+                        'Araştırma sorusu ve sonuçları sunma',
+                    ]],
+                    ['title' => 'Veriden Olasılığa', 'meb_code' => 'MAT.6.7', 'topics' => [
+                        'Öznel olasılık',
+                        'Eş olası sonuçlar ve basit olaylar',
+                        'Veri ile olasılık ilişkisi',
                     ]],
                 ],
             ],

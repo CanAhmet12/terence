@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\DB;
  * - TEGM çerçeve planları: https://tegm.meb.gov.tr/www/2025-2026-egitim-ogretim-donemi-cerceve-yillik-planlari/
  * - TYMM öğretim programları: https://tymm.meb.gov.tr/ogretim-programlari/
  * - Türkçe: 6 tema (Dinleme/İzleme, Okuma, Konuşma, Yazma öğrenme alanları üzerinden)
- * - Matematik: 6 öğrenme alanı (Sayılar ve Nicelikler 1-2, Cebirsel düşünme, Geometrik şekiller/nicelikler, İstatistik)
+ * - Matematik: 7 öğrenme alanı (TYMM: Sayılar ve Nicelikler 1-2, Cebirsel düşünme, Geometrik şekiller/nicelikler, İstatistiksel araştırma, Veriden olasılığa)
  * - Fen Bilimleri: 7 ünite
  * - Sosyal Bilgiler: 6 öğrenme alanı
  * - İngilizce: 8 tema (TYMM temel eğitim İngilizce)
@@ -202,6 +202,12 @@ class CurriculumGrade5Seeder extends Seeder
                         'Grafik ve tablo yorumlama',
                         'Aritmetik ortalama (ortalama)',
                         'Araştırma sorusu oluşturma ve sonuçları sunma',
+                    ]],
+                    ['title' => 'Veriden Olasılığa', 'meb_code' => 'MAT.5.7', 'topics' => [
+                        'Öznel olasılık ve günlük yaşam örnekleri',
+                        'Basit olayların olasılığı (eş olası sonuçlar)',
+                        'Veri ve grafiklerden olasılık yorumlama',
+                        'Deney ve tahmin ilişkisi',
                     ]],
                 ],
             ],
