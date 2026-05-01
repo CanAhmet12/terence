@@ -32,12 +32,28 @@ class ExamController extends Controller
 
         $user     = Auth::user();
         $examType = $request->exam_type;
+        if ($user && $user->isStudent()) {
+            $scope = $user->learningScope();
+            if ($examType !== 'Mini' && $examType !== $scope['exam_type']) {
+                return response()->json([
+                    'error' => true,
+                    'message' => 'Sınav türü profilinizle uyumlu değil.',
+                ], 422);
+            }
+        }
         $count    = $request->get('question_count', $this->defaultQuestionCount($examType));
         $duration = $request->get('duration_minutes', $this->defaultDuration($examType));
 
         // Sorular seç
         $qQuery = Question::where('is_active', true);
-        if ($examType !== 'Mini') {
+        if ($user && $user->isStudent()) {
+            $scope = $user->learningScope();
+            $qQuery->where('grade', $scope['grade'])
+                ->where(function ($query) use ($scope) {
+                    $query->where('exam_type', $scope['exam_type'])
+                        ->orWhere('exam_type', 'Genel');
+                });
+        } elseif ($examType !== 'Mini') {
             $qQuery->where('exam_type', $examType);
         }
         if ($request->filled('subject')) {

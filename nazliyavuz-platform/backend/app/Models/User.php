@@ -122,6 +122,30 @@ class User extends Authenticatable implements JWTSubject
     }
 
     /**
+     * Scope used to lock student-facing content.
+     *
+     * @return array{grade: string, exam_type: string}
+     */
+    public function learningScope(): array
+    {
+        $grade = $this->grade !== null && $this->grade !== ''
+            ? (string) $this->grade
+            : 'all';
+
+        $examType = $this->target_exam ?: 'all';
+
+        return [
+            'grade' => $grade,
+            'exam_type' => $examType,
+        ];
+    }
+
+    public function hasLearningScope(): bool
+    {
+        return $this->grade !== null && $this->grade !== '';
+    }
+
+    /**
      * Check if user is an admin
      */
     public function isAdmin(): bool

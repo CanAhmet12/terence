@@ -333,7 +333,7 @@ export default function DerslerimPage() {
     if (!user || !hasGrade) return;
     setLoadingList(true);
     try {
-      const res = await api.getCurriculum(gradeStr, examStr);
+      const res = await api.getCurriculum();
       setSubjects(Array.isArray(res?.subjects) ? res.subjects : []);
     } catch { /* silent */ }
     finally { setLoadingList(false); }

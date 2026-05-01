@@ -13,6 +13,95 @@ export const api = axios.create({
   withCredentials: true,
 })
 
+type ApiErrorPayload = {
+  message: string
+  code?: string
+  status?: number
+  fieldErrors?: Record<string, string[]>
+}
+
+function translateApiMessage(raw?: string, code?: string): string {
+  const normalized = (raw ?? '').trim()
+  const map: Record<string, string> = {
+    INVALID_CREDENTIALS: 'E-posta veya sifre hatali.',
+    VALIDATION_ERROR: 'Girdigin bilgileri kontrol et ve tekrar dene.',
+    FORBIDDEN: 'Bu islem icin yetkin bulunmuyor.',
+    UNAUTHORIZED: 'Oturum suresi doldu. Lutfen tekrar giris yap.',
+    ACCOUNT_SUSPENDED: 'Hesabin askiya alinmistir.',
+    REFRESH_TOKEN_INVALID: 'Oturum suresi doldu. Lutfen tekrar giris yap.',
+    REFRESH_TOKEN_MISSING: 'Oturum suresi doldu. Lutfen tekrar giris yap.',
+    GRADE_REQUIRED: 'Ogrenci hesabi icin sinif bilgisi zorunludur.',
+    'The email has already been taken.': 'Bu e-posta adresi zaten kayitli.',
+    'The email has already been taken': 'Bu e-posta adresi zaten kayitli.',
+    'The email field must be a valid email address.': 'Gecerli bir e-posta adresi gir.',
+    'The email field must be a valid email address': 'Gecerli bir e-posta adresi gir.',
+    'The password field must be at least 8 characters.': 'Sifre en az 8 karakter olmalidir.',
+    'The password field must be at least 8 characters': 'Sifre en az 8 karakter olmalidir.',
+  }
+
+  if (code && map[code]) return map[code]
+  if (map[normalized]) return map[normalized]
+  return normalized || 'Bir hata olustu. Lutfen tekrar dene.'
+}
+
+function extractApiError(error: AxiosError): ApiErrorPayload {
+  const status = error.response?.status
+  const data = (error.response?.data ?? {}) as Record<string, unknown>
+  const nestedError = (data.error && typeof data.error === 'object')
+    ? data.error as Record<string, unknown>
+    : null
+  const code = (nestedError?.code as string | undefined) ?? (data.code as string | undefined)
+  const errors = (data.errors && typeof data.errors === 'object')
+    ? data.errors as Record<string, string[]>
+    : undefined
+  const rawMessage = (nestedError?.message as string | undefined)
+    ?? (data.message as string | undefined)
+    ?? error.message
+
+  if (!error.response) {
+    return {
+      message: 'Sunucuya baglanilamadi. Internet baglantini kontrol et.',
+      code,
+      status,
+    }
+  }
+
+  if (status === 422 && errors) {
+    const firstField = Object.keys(errors)[0]
+    const firstMessage = firstField && Array.isArray(errors[firstField]) ? errors[firstField][0] : rawMessage
+    return {
+      message: translateApiMessage(firstMessage, code),
+      code,
+      status,
+      fieldErrors: errors,
+    }
+  }
+
+  if (status === 429) {
+    const retryAfter = error.response.headers?.['retry-after']
+    return {
+      message: `Cok fazla istek gonderildi. ${retryAfter ? `${retryAfter} saniye sonra` : 'Kisa bir sure sonra'} tekrar dene.`,
+      code,
+      status,
+    }
+  }
+
+  if (status === 500) {
+    return {
+      message: 'Sunucuda gecici bir hata olustu. Lutfen biraz sonra tekrar dene.',
+      code,
+      status,
+    }
+  }
+
+  return {
+    message: translateApiMessage(rawMessage, code),
+    code,
+    status,
+    fieldErrors: errors,
+  }
+}
+
 // ─── Request Interceptor ────────────────────────────────────────────────────
 api.interceptors.request.use(
   (config) => {
@@ -58,34 +147,18 @@ api.interceptors.response.use(
       }
     }
 
-    if (error.response?.status === 429) {
-      const retryAfter = error.response.headers['retry-after']
-      toast.error(`Çok fazla istek. ${retryAfter ? `${retryAfter} saniye` : 'Biraz'} bekleyip tekrar deneyin.`)
+    const parsed = extractApiError(error)
+    if (parsed.status && [422, 403, 429, 500].includes(parsed.status)) {
+      toast.error(parsed.message)
     }
 
-    if (error.response?.status === 422) {
-      const data = error.response.data as Record<string, unknown>
-      if (data.errors && typeof data.errors === 'object') {
-        const firstError = Object.values(data.errors as Record<string, string[]>)[0]
-        if (Array.isArray(firstError) && firstError.length > 0) {
-          toast.error(firstError[0])
-        } else {
-          toast.error((data.message as string) || 'Geçersiz veri')
-        }
-      } else {
-        toast.error((data.message as string) || 'Geçersiz veri')
-      }
-    }
+    const normalizedError = new Error(parsed.message) as Error & ApiErrorPayload
+    normalizedError.name = 'ApiError'
+    normalizedError.code = parsed.code
+    normalizedError.status = parsed.status
+    normalizedError.fieldErrors = parsed.fieldErrors
 
-    if (error.response?.status === 403) {
-      toast.error('Bu işlem için yetkiniz yok.')
-    }
-
-    if (error.response?.status === 500) {
-      toast.error('Sunucu hatası. Lütfen daha sonra tekrar deneyin.')
-    }
-
-    return Promise.reject(error)
+    return Promise.reject(normalizedError)
   }
 )
 

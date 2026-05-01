@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Cookie;
+use Illuminate\Validation\Rule;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use Tymon\JWTAuth\Exceptions\JWTException;
 
@@ -41,7 +42,12 @@ class AuthController extends Controller
             'password'              => 'required|string|min:8|confirmed',
             'role'                  => 'required|in:student,teacher,parent',
             'phone'                 => 'nullable|string|max:20',
-            'grade'                 => 'nullable|integer|between:1,12',
+            'grade'                 => [
+                Rule::requiredIf(($data['role'] ?? null) === 'student'),
+                'nullable',
+                'integer',
+                'between:1,12',
+            ],
             'target_exam'           => 'nullable|in:LGS,TYT,AYT,TYT-AYT,KPSS',
             'target_school'         => 'nullable|string|max:255',
             'target_department'     => 'nullable|string|max:255',
@@ -210,6 +216,23 @@ class AuthController extends Controller
             return $this->validationError($v, $request);
         }
 
+        if (
+            $user->isStudent()
+            && $request->has('grade')
+            && $request->input('grade') === null
+        ) {
+            return response()->json([
+                'error' => true,
+                'code' => 'VALIDATION_ERROR',
+                'message' => 'Geçersiz veri',
+                'errors' => [
+                    'grade' => ['Öğrenci profili için sınıf bilgisi zorunludur.'],
+                ],
+                'timestamp' => now()->toISOString(),
+                'path' => $request->path(),
+            ], 422);
+        }
+
         $user->update($v->validated());
 
         return response()->json([
@@ -231,6 +254,23 @@ class AuthController extends Controller
         ]);
         if ($v->fails()) {
             return $this->validationError($v, $request);
+        }
+
+        if (
+            $user->isStudent()
+            && $request->has('grade')
+            && $request->input('grade') === null
+        ) {
+            return response()->json([
+                'error' => true,
+                'code' => 'VALIDATION_ERROR',
+                'message' => 'Geçersiz veri',
+                'errors' => [
+                    'grade' => ['Öğrenci profili için sınıf bilgisi zorunludur.'],
+                ],
+                'timestamp' => now()->toISOString(),
+                'path' => $request->path(),
+            ], 422);
         }
         $data = $v->validated();
         $mapped = [];

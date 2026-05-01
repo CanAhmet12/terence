@@ -184,8 +184,7 @@ export default function OgrenciProfilPage() {
     setSaveState("saving"); setSaveError("");
     try {
       await api.updateGoal({
-        exam_goal: hedefSinav,
-        target_exam: hedefSinav,
+        exam_type: hedefSinav,
         target_school: hedefOkul || undefined,
         target_department: hedefBolum || undefined,
         target_net: hedefNet ? Number(hedefNet) : undefined,

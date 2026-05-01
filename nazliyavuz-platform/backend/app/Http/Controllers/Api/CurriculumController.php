@@ -18,8 +18,14 @@ class CurriculumController extends Controller
     public function index(Request $request): JsonResponse
     {
         $user = $request->user();
-        $grade     = $request->query('grade', $user?->grade ?? 'all');
-        $examType  = $request->query('exam_type', $user?->target_exam ?? 'all');
+        if ($user && $user->isStudent()) {
+            $scope = $user->learningScope();
+            $grade = $scope['grade'];
+            $examType = $scope['exam_type'];
+        } else {
+            $grade = $request->query('grade', $user?->grade ?? 'all');
+            $examType = $request->query('exam_type', $user?->target_exam ?? 'all');
+        }
 
         $subjects = CurriculumSubject::forUser($grade, $examType)
             ->with(['units' => function ($q) {
@@ -88,6 +94,26 @@ class CurriculumController extends Controller
         }]);
 
         $user = $request->user();
+        if ($user && $user->isStudent()) {
+            $scope = $user->learningScope();
+            $scopeExamType = $scope['exam_type'];
+            $subjectExamType = $subject->exam_type ?? 'all';
+
+            $gradeMatch = $subject->grade === $scope['grade'] || $subject->grade === 'all';
+            $examTypeMatch = $subjectExamType === 'all'
+                || $subjectExamType === 'Genel'
+                || $scopeExamType === 'all'
+                || $scopeExamType === $subjectExamType;
+
+            if (!$gradeMatch || !$examTypeMatch) {
+                return response()->json([
+                    'error' => true,
+                    'code' => 'FORBIDDEN_SCOPE',
+                    'message' => 'Bu ders içeriğine erişim yetkiniz yok.',
+                ], 403);
+            }
+        }
+
         $progressMap = [];
         if ($user) {
             $allTopicIds = $subject->units->flatMap(fn($u) => $u->topics->pluck('id'));

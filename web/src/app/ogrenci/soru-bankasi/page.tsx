@@ -202,7 +202,7 @@ function VoiceAssistantModal({ token, onClose }: { token: string | null; onClose
   );
 }
 
-const SUBJECT_OPTIONS = [
+const DEFAULT_SUBJECT_OPTIONS = [
   { value: "", label: "Tüm Dersler" },
   { value: "Matematik", label: "Matematik" },
   { value: "Türkçe", label: "Türkçe" },
@@ -229,6 +229,7 @@ const SUBJECT_COLORS: Record<string, string> = {
 
 export default function SoruBankasiPage() {
   const { token } = useAuth();
+  const [availableSubjects, setAvailableSubjects] = useState<string[]>([]);
 
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(true);
@@ -271,6 +272,29 @@ export default function SoruBankasiPage() {
     }
     setLoading(false);
   }, [token]);
+
+  useEffect(() => {
+    let mounted = true;
+    const loadScopeSubjects = async () => {
+      try {
+        const curriculum = await api.getCurriculum();
+        const names = Array.isArray(curriculum?.subjects)
+          ? curriculum.subjects.map((item) => item.name).filter(Boolean)
+          : [];
+        if (mounted && names.length > 0) {
+          setAvailableSubjects(Array.from(new Set(names)));
+        }
+      } catch {
+        if (mounted) {
+          setAvailableSubjects([]);
+        }
+      }
+    };
+    loadScopeSubjects();
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   // Debounced arama — filtre değişince page'i sıfırla
   useEffect(() => {
@@ -333,7 +357,11 @@ export default function SoruBankasiPage() {
   const answeredCount = Object.keys(answerResults).length;
 
   // 3D Kütüphane için kitap listesi: her ders bir kitap
-  const libraryBooks = SUBJECT_OPTIONS.filter((s) => s.value !== "").map((s, i) => ({
+  const subjectOptions = availableSubjects.length > 0
+    ? [{ value: "", label: "Tüm Dersler" }, ...availableSubjects.map((subjectName) => ({ value: subjectName, label: subjectName }))]
+    : DEFAULT_SUBJECT_OPTIONS;
+
+  const libraryBooks = subjectOptions.filter((s) => s.value !== "").map((s, i) => ({
     id: i + 1,
     title: s.label,
     subject: s.value,
@@ -435,6 +463,7 @@ export default function SoruBankasiPage() {
       {showPersonalTest && (
         <PersonalTestModal
           token={token}
+          subjects={subjectOptions.filter((item) => item.value !== "").map((item) => item.value)}
           onClose={() => setShowPersonalTest(false)}
           onLoad={(qs) => {
             setQuestions(qs);
@@ -466,10 +495,12 @@ export default function SoruBankasiPage() {
 // ─── Bana Özel Test Modal (5.4) ───────────────────────────────────────────────
 function PersonalTestModal({
   token,
+  subjects,
   onClose,
   onLoad,
 }: {
   token: string | null;
+  subjects: string[];
   onClose: () => void;
   onLoad: (questions: Question[]) => void;
 }) {
@@ -529,7 +560,7 @@ function PersonalTestModal({
               className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none"
             >
               <option value="">Tüm Dersler (AI seçsin)</option>
-              {["Matematik", "Fizik", "Kimya", "Biyoloji", "Türkçe", "Edebiyat", "Tarih", "Coğrafya"].map((d) => (
+              {subjects.map((d) => (
                 <option key={d}>{d}</option>
               ))}
             </select>

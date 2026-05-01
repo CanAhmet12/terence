@@ -42,8 +42,8 @@ const EXAM_TYPES: Record<string, Array<{ value: string; label: string; sub: stri
     { value: "TYT-AYT", label: "TYT + AYT", sub: "En kapsamlı hazırlık",          icon: "🏆", color: "#6a1b9a" },
   ],
   "default": [
-    { value: "Genel",   label: "Genel",    sub: "Müfredat odaklı",                icon: "📚", color: "#64748b" },
-    { value: "KPSS",    label: "KPSS",     sub: "Kamu Personeli Seçme Sınavı",   icon: "🎓", color: "#4527a0" },
+    { value: "TYT",     label: "TYT",      sub: "Temel Yeterlilik",               icon: "📐", color: "#1565c0" },
+    { value: "TYT-AYT", label: "TYT + AYT", sub: "Sayısal, Sözel veya EA hedefli", icon: "🎯", color: "#6a1b9a" },
   ],
 };
 
@@ -91,11 +91,10 @@ export default function OnboardingPage() {
     setSaving(true);
     setError("");
     try {
-      // Backend grade'i 1-12 arası integer bekliyor, mezun için null
-      const gradeValue = selectedGrade === "mezun" ? null : parseInt(selectedGrade, 10);
+      const gradeValue = parseInt(selectedGrade, 10);
 
       await api.updateProfile({
-        grade: gradeValue as unknown as number,
+        grade: gradeValue,
         target_exam: selectedExam,
       } as Parameters<typeof api.updateProfile>[0]);
 
@@ -192,28 +191,6 @@ export default function OnboardingPage() {
                   <div className="text-xs text-slate-500 mt-0.5">{g.sub}</div>
                 </button>
               ))}
-            </div>
-
-            {/* KPSS seçeneği */}
-            <div className="border-t border-slate-200 pt-4">
-              <p className="text-xs text-slate-500 text-center mb-3">Lise mezunu musun?</p>
-              <button
-                onClick={() => handleGradeSelect("mezun")}
-                className={`w-full p-4 rounded-2xl border-2 text-left transition-all flex items-center gap-4 ${
-                  selectedGrade === "mezun"
-                    ? "border-indigo-500 bg-indigo-50"
-                    : "border-slate-200 bg-white hover:border-slate-300"
-                }`}
-              >
-                <span className="text-2xl">🎓</span>
-                <div>
-                  <div className="font-bold text-slate-900">Mezun / KPSS Adayı</div>
-                  <div className="text-xs text-slate-500">Üniversite veya KPSS hazırlığı</div>
-                </div>
-                {selectedGrade === "mezun" && (
-                  <CheckCircle className="w-5 h-5 text-indigo-500 ml-auto" />
-                )}
-              </button>
             </div>
 
             <button

@@ -29,8 +29,9 @@ export function OnboardingGuard({ children }: { children: React.ReactNode }) {
     // grade yoksa veya null/undefined ise onboarding'e yönlendir
     const gradeValue = user.grade;
     const hasGrade = gradeValue !== null && gradeValue !== undefined && gradeValue !== "";
+    const hasExam = !!(user.target_exam || user.exam_goal);
 
-    if (!hasGrade) {
+    if (!hasGrade || !hasExam) {
       hasRedirected.current = true;
       router.push("/ogrenci/onboarding");
     }

@@ -18,12 +18,33 @@ class QuestionController extends Controller
     // GET /api/questions — soru listesi (filtreleme + pagination)
     public function index(Request $request): JsonResponse
     {
+        $user = Auth::user();
         $q = Question::with('options:id,question_id,option_letter,option_text,option_image_url,is_correct')
             ->where('is_active', true);
 
         if ($request->filled('subject'))    $q->where('subject', $request->subject);
-        if ($request->filled('grade'))      $q->where('grade', $request->grade);
-        if ($request->filled('exam_type'))  $q->where('exam_type', $request->exam_type);
+        if ($user && $user->isStudent()) {
+            $scope = $user->learningScope();
+            if ($request->filled('grade') && (string) $request->grade !== $scope['grade']) {
+                return response()->json(['error' => true, 'message' => 'Grade filtresi profilinizle uyumlu değil.'], 422);
+            }
+            if (
+                $request->filled('exam_type')
+                && $request->exam_type !== $scope['exam_type']
+                && $request->exam_type !== 'all'
+            ) {
+                return response()->json(['error' => true, 'message' => 'Exam filtresi profilinizle uyumlu değil.'], 422);
+            }
+
+            $q->where('grade', $scope['grade'])
+                ->where(function ($scopeQuery) use ($scope) {
+                    $scopeQuery->where('exam_type', $scope['exam_type'])
+                        ->orWhere('exam_type', 'Genel');
+                });
+        } else {
+            if ($request->filled('grade'))      $q->where('grade', $request->grade);
+            if ($request->filled('exam_type'))  $q->where('exam_type', $request->exam_type);
+        }
         if ($request->filled('difficulty')) $q->where('difficulty', $request->difficulty);
         if ($request->filled('topic_id'))   $q->where('topic_id', $request->topic_id);
         if ($request->filled('kazanim_code')) $q->where('kazanim_code', $request->kazanim_code);
@@ -35,7 +56,6 @@ class QuestionController extends Controller
         $questions = $q->orderBy('id')->paginate($perPage);
 
         // Kullanıcı cevap geçmişini ekle
-        $user = Auth::user();
         if ($user) {
             $answered = QuestionAnswer::where('user_id', $user->id)
                 ->whereIn('question_id', $questions->pluck('id'))
@@ -72,12 +92,32 @@ class QuestionController extends Controller
         }
 
         $source = Question::find($request->question_id);
+        $user = Auth::user();
+        if ($user && $user->isStudent()) {
+            $scope = $user->learningScope();
+            if ((string) $source->grade !== $scope['grade']) {
+                return response()->json(['error' => true, 'message' => 'Soru profil kapsamınız dışında.'], 403);
+            }
+            if (!in_array($source->exam_type, [$scope['exam_type'], 'Genel'], true)) {
+                return response()->json(['error' => true, 'message' => 'Soru profil kapsamınız dışında.'], 403);
+            }
+        }
+
         $similar = Question::where('id', '!=', $source->id)
             ->where('is_active', true)
             ->where(function ($q) use ($source) {
                 $q->where('subject', $source->subject)
                   ->orWhere('kazanim_code', $source->kazanim_code);
-            })
+            });
+        if ($user && $user->isStudent()) {
+            $scope = $user->learningScope();
+            $similar->where('grade', $scope['grade'])
+                ->where(function ($query) use ($scope) {
+                    $query->where('exam_type', $scope['exam_type'])
+                        ->orWhere('exam_type', 'Genel');
+                });
+        }
+        $similar = $similar
             ->inRandomOrder()->limit(5)
             ->with('options:id,question_id,option_letter,option_text,is_correct')
             ->get();

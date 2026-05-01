@@ -101,8 +101,7 @@ export default function HedefPage() {
     setSaveError("");
     try {
       const updatedGoal = await api.updateGoal({
-        exam_goal: examType,
-        target_exam: examType,
+        exam_type: examType,
         target_school: targetSchool || undefined,
         target_department: targetDept || undefined,
         target_net: targetNet ? parseFloat(targetNet) : undefined,

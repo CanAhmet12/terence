@@ -39,12 +39,21 @@ class CourseController extends Controller
             if ($request->filled('subject')) {
                 $q->where('subject', $request->subject);
             }
-            if ($request->filled('exam_type')) {
+            if ($user && $user->isStudent()) {
+                $scope = $user->learningScope();
+                $q->where(function ($query) use ($scope) {
+                    $query->where('exam_type', $scope['exam_type'])
+                        ->orWhere('exam_type', 'Genel');
+                })->where(function ($query) use ($scope) {
+                    $query->where('grade', $scope['grade'])
+                        ->orWhereNull('grade');
+                });
+            } elseif ($request->filled('exam_type')) {
                 $q->where(function ($query) use ($request) {
                     $query->where('exam_type', $request->exam_type)->orWhere('exam_type', 'Genel');
                 });
             }
-            if ($request->filled('grade')) {
+            if ((!$user || !$user->isStudent()) && $request->filled('grade')) {
                 $q->where(function ($query) use ($request) {
                     $query->where('grade', $request->grade)->orWhereNull('grade');
                 });
@@ -91,6 +100,14 @@ class CourseController extends Controller
             ])->where('is_active', true)->findOrFail($id);
 
             if ($user && $user->isStudent()) {
+                $scope = $user->learningScope();
+                if (
+                    ($course->grade !== null && (string) $course->grade !== $scope['grade'])
+                    || !in_array($course->exam_type, [$scope['exam_type'], 'Genel'], true)
+                ) {
+                    abort(403, 'Bu kurs profil kapsamınız dışında.');
+                }
+
                 // Öğrencinin bu kursta hangi içerikleri tamamladığını ekle
                 $progressMap = StudentProgress::where('user_id', $user->id)
                     ->whereHas('contentItem', fn($q) => $q->whereHas('topic', fn($q2) => $q2->whereHas('unit', fn($q3) => $q3->where('course_id', $id))))
@@ -116,6 +133,18 @@ class CourseController extends Controller
     {
         $user = Auth::user();
         $course = Course::where('is_active', true)->findOrFail($id);
+        if ($user && $user->isStudent()) {
+            $scope = $user->learningScope();
+            if (
+                ($course->grade !== null && (string) $course->grade !== $scope['grade'])
+                || !in_array($course->exam_type, [$scope['exam_type'], 'Genel'], true)
+            ) {
+                return response()->json([
+                    'error' => true,
+                    'message' => 'Bu kursa kaydolamazsınız.',
+                ], 403);
+            }
+        }
 
         $enrollment = CourseEnrollment::firstOrCreate(
             ['user_id' => $user->id, 'course_id' => $id],

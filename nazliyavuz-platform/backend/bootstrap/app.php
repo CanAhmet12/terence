@@ -24,6 +24,7 @@ return Application::configure(basePath: dirname(__DIR__))
            $middleware->alias([
                'auth' => \App\Http\Middleware\Authenticate::class,
                'role' => \App\Http\Middleware\RoleMiddleware::class,
+               'student_grade' => \App\Http\Middleware\EnsureStudentGradeSet::class,
                'rate_limit' => \App\Http\Middleware\RateLimitMiddleware::class,
                'auth_rate_limit' => \App\Http\Middleware\AuthRateLimitMiddleware::class,
                'dynamic_rate_limit' => \App\Http\Middleware\DynamicRateLimitMiddleware::class,

@@ -75,7 +75,7 @@ export function useLogin() {
       router.push('/dashboard')
     },
     onError: (error: any) => {
-      const message = error.response?.data?.error?.message || 'Giriş başarısız'
+      const message = error?.message || error.response?.data?.error?.message || 'Giris basarisiz'
       toast.error(message)
     },
   })
@@ -104,7 +104,7 @@ export function useRegister() {
       router.push('/dashboard')
     },
     onError: (error: any) => {
-      const message = error.response?.data?.error?.message || 'Kayıt başarısız'
+      const message = error?.message || error.response?.data?.error?.message || 'Kayit basarisiz'
       toast.error(message)
     },
   })
@@ -181,7 +181,7 @@ export function useChangePassword() {
       toast.success(data.message || 'Şifre değiştirildi')
     },
     onError: (error: any) => {
-      const message = error.response?.data?.error?.message || 'Şifre değiştirme başarısız'
+      const message = error?.message || error.response?.data?.error?.message || 'Sifre degistirme basarisiz'
       toast.error(message)
     },
   })

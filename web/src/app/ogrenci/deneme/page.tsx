@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { api, ExamSession } from "@/lib/api";
@@ -355,6 +355,13 @@ export default function DenemePage() {
   const [loading, setLoading] = useState(true);
   const [startingType, setStartingType] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const profileExamType = user?.target_exam ?? user?.exam_goal;
+  const availableExamTypes = useMemo(() => {
+    if (!profileExamType) {
+      return EXAM_TYPES.filter((item) => item.key === "Mini");
+    }
+    return EXAM_TYPES.filter((item) => item.key === profileExamType || item.key === "Mini");
+  }, [profileExamType]);
 
   const loadHistory = useCallback(async () => {
     setLoading(true);
@@ -479,7 +486,7 @@ export default function DenemePage() {
             Yeni Deneme Başlat
           </h2>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-10">
-            {EXAM_TYPES.map((exam) => (
+            {availableExamTypes.map((exam) => (
               <ExamCard3D
                 key={exam.key}
                 exam={exam}
@@ -531,7 +538,7 @@ export default function DenemePage() {
                   Yukarıdan bir deneme türü seç ve ilk denemenize başla!
                 </p>
                 <div className="flex justify-center gap-3 mt-6">
-                  {EXAM_TYPES.map((e) => (
+                  {availableExamTypes.map((e) => (
                     <button
                       key={e.key}
                       onClick={() => handleStartExam(e)}

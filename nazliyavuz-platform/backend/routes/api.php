@@ -413,31 +413,31 @@ Route::middleware(['auth:api'])->group(function () {
     Route::post('/user/photo', [\App\Http\Controllers\Api\AuthController::class, 'uploadProfilePhoto']);
 
     // â”€â”€ Kurslar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-    Route::post('/courses/{id}/enroll', [\App\Http\Controllers\Api\CourseController::class, 'enroll']);
-    Route::get('/courses/{id}/progress', [\App\Http\Controllers\Api\CourseController::class, 'progress']);
-    Route::get('/courses/{id}', [\App\Http\Controllers\Api\CourseController::class, 'show']);
-    Route::get('/courses', [\App\Http\Controllers\Api\CourseController::class, 'index']);
-    Route::post('/progress', [\App\Http\Controllers\Api\CourseController::class, 'updateProgress']);
+    Route::post('/courses/{id}/enroll', [\App\Http\Controllers\Api\CourseController::class, 'enroll'])->middleware('student_grade');
+    Route::get('/courses/{id}/progress', [\App\Http\Controllers\Api\CourseController::class, 'progress'])->middleware('student_grade');
+    Route::get('/courses/{id}', [\App\Http\Controllers\Api\CourseController::class, 'show'])->middleware('student_grade');
+    Route::get('/courses', [\App\Http\Controllers\Api\CourseController::class, 'index'])->middleware('student_grade');
+    Route::post('/progress', [\App\Http\Controllers\Api\CourseController::class, 'updateProgress'])->middleware('student_grade');
 
     // ── Müfredat (Curriculum) ────────────────────────────────────────────
-    Route::get('/curriculum/progress', [\App\Http\Controllers\Api\CurriculumController::class, 'myProgress']);
-    Route::post('/curriculum/progress', [\App\Http\Controllers\Api\CurriculumController::class, 'updateProgress']);
-    Route::get('/curriculum/{slug}', [\App\Http\Controllers\Api\CurriculumController::class, 'show']);
-    Route::get('/curriculum', [\App\Http\Controllers\Api\CurriculumController::class, 'index']);
+    Route::get('/curriculum/progress', [\App\Http\Controllers\Api\CurriculumController::class, 'myProgress'])->middleware('student_grade');
+    Route::post('/curriculum/progress', [\App\Http\Controllers\Api\CurriculumController::class, 'updateProgress'])->middleware('student_grade');
+    Route::get('/curriculum/{slug}', [\App\Http\Controllers\Api\CurriculumController::class, 'show'])->middleware('student_grade');
+    Route::get('/curriculum', [\App\Http\Controllers\Api\CurriculumController::class, 'index'])->middleware('student_grade');
 
     // â”€â”€ Soru BankasÄ± â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     // ── Soru Bankası ─────────────────────────────────────────────────────────
-    Route::get('/questions', [\App\Http\Controllers\Api\QuestionController::class, 'index']);
-    Route::post('/questions/answer', [\App\Http\Controllers\Api\QuestionController::class, 'answer']);
-    Route::get('/questions/similar', [\App\Http\Controllers\Api\QuestionController::class, 'similar']);
-    Route::get('/questions/weak', [\App\Http\Controllers\Api\QuestionController::class, 'weakAchievements']);
+    Route::get('/questions', [\App\Http\Controllers\Api\QuestionController::class, 'index'])->middleware('student_grade');
+    Route::post('/questions/answer', [\App\Http\Controllers\Api\QuestionController::class, 'answer'])->middleware('student_grade');
+    Route::get('/questions/similar', [\App\Http\Controllers\Api\QuestionController::class, 'similar'])->middleware('student_grade');
+    Route::get('/questions/weak', [\App\Http\Controllers\Api\QuestionController::class, 'weakAchievements'])->middleware('student_grade');
 
     // â”€â”€ Deneme SÄ±navÄ± â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-    Route::post('/exams/start', [\App\Http\Controllers\Api\ExamController::class, 'start']);
-    Route::get('/exams/history', [\App\Http\Controllers\Api\ExamController::class, 'history']);
-    Route::post('/exams/{id}/answer', [\App\Http\Controllers\Api\ExamController::class, 'answer']);
-    Route::post('/exams/{id}/finish', [\App\Http\Controllers\Api\ExamController::class, 'finish']);
-    Route::get('/exams/{id}/result', [\App\Http\Controllers\Api\ExamController::class, 'result']);
+    Route::post('/exams/start', [\App\Http\Controllers\Api\ExamController::class, 'start'])->middleware('student_grade');
+    Route::get('/exams/history', [\App\Http\Controllers\Api\ExamController::class, 'history'])->middleware('student_grade');
+    Route::post('/exams/{id}/answer', [\App\Http\Controllers\Api\ExamController::class, 'answer'])->middleware('student_grade');
+    Route::post('/exams/{id}/finish', [\App\Http\Controllers\Api\ExamController::class, 'finish'])->middleware('student_grade');
+    Route::get('/exams/{id}/result', [\App\Http\Controllers\Api\ExamController::class, 'result'])->middleware('student_grade');
 
     // â”€â”€ GÃ¼nlÃ¼k Plan â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     Route::get('/plan/today', [\App\Http\Controllers\Api\PlanController::class, 'today']);
