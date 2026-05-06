@@ -18,13 +18,16 @@ class CurriculumController extends Controller
     public function index(Request $request): JsonResponse
     {
         $user = $request->user();
+        $responseExamType = null;
         if ($user && $user->isStudent()) {
             $scope = $user->learningScope();
             $grade = $scope['grade'];
-            $examType = $scope['exam_type'];
+            $responseExamType = $scope['exam_type'];
+            $examType = $user->allowedExamTypes();
         } else {
             $grade = $request->query('grade', $user?->grade ?? 'all');
             $examType = $request->query('exam_type', $user?->target_exam ?? 'all');
+            $responseExamType = is_array($examType) ? implode(',', $examType) : $examType;
         }
 
         $subjects = CurriculumSubject::forUser($grade, $examType)
@@ -71,7 +74,7 @@ class CurriculumController extends Controller
         return response()->json([
             'subjects'  => $result,
             'grade'     => $grade,
-            'exam_type' => $examType,
+            'exam_type' => $responseExamType,
         ]);
     }
 
@@ -96,14 +99,10 @@ class CurriculumController extends Controller
         $user = $request->user();
         if ($user && $user->isStudent()) {
             $scope = $user->learningScope();
-            $scopeExamType = $scope['exam_type'];
             $subjectExamType = $subject->exam_type ?? 'all';
 
             $gradeMatch = $subject->grade === $scope['grade'] || $subject->grade === 'all';
-            $examTypeMatch = $subjectExamType === 'all'
-                || $subjectExamType === 'Genel'
-                || $scopeExamType === 'all'
-                || $scopeExamType === $subjectExamType;
+            $examTypeMatch = $user->matchesExamType($subjectExamType);
 
             if (!$gradeMatch || !$examTypeMatch) {
                 return response()->json([
@@ -196,7 +195,9 @@ class CurriculumController extends Controller
     {
         $user = $request->user();
         $grade    = $user?->grade ?? 'all';
-        $examType = $user?->target_exam ?? 'all';
+        $examType = $user && method_exists($user, 'allowedExamTypes')
+            ? $user->allowedExamTypes()
+            : ($user?->target_exam ?? 'all');
 
         $subjects = CurriculumSubject::forUser($grade, $examType)
             ->with('units.topics')

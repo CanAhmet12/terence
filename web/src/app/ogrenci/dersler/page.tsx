@@ -11,6 +11,14 @@ import {
   ExternalLink, Sparkles, BarChart2,
 } from "lucide-react";
 
+const EXAM_TAB_LABELS: Record<string, string> = {
+  TYT: "TYT",
+  AYT: "AYT",
+  LGS: "LGS",
+  KPSS: "KPSS",
+  ORTAK: "Ortak",
+};
+
 // ─── Renkler ──────────────────────────────────────────────────────────────────
 
 const SUBJECT_COLORS: Record<string, string> = {
@@ -317,6 +325,7 @@ export default function DerslerimPage() {
   const [loadingSlug, setLoadingSlug] = useState<string | null>(null);
   const [loadingList, setLoadingList] = useState(true);
   const [search, setSearch] = useState("");
+  const [activeExamTab, setActiveExamTab] = useState<string>("ALL");
 
   // Seçili konu
   const [activeTopic,   setActiveTopic]   = useState<CurriculumTopic | null>(null);
@@ -382,6 +391,30 @@ export default function DerslerimPage() {
   const filteredSubjects = search
     ? subjects.filter(s => s.name.toLowerCase().includes(search.toLowerCase()))
     : subjects;
+  const examTabs = (() => {
+    const targetExam = examStr ?? "";
+    if (targetExam === "TYT-AYT") {
+      return ["TYT", "AYT", "ORTAK"];
+    }
+    const uniqueExamTypes = Array.from(new Set(subjects.map((s) => s.exam_type).filter(Boolean)));
+    if (uniqueExamTypes.length <= 1) {
+      return ["ALL"];
+    }
+    return uniqueExamTypes;
+  })();
+  const scopedSubjects = filteredSubjects.filter((subject) => {
+    if (activeExamTab === "ALL") return true;
+    if (activeExamTab === "ORTAK") {
+      return ["Genel", "all", "TYT-AYT"].includes(subject.exam_type);
+    }
+    return subject.exam_type === activeExamTab;
+  });
+
+  useEffect(() => {
+    if (!examTabs.includes(activeExamTab)) {
+      setActiveExamTab(examTabs[0] ?? "ALL");
+    }
+  }, [activeExamTab, examTabs]);
 
   // Guard
   if (authLoading) return (
@@ -449,6 +482,23 @@ export default function DerslerimPage() {
               </button>
             )}
           </div>
+          {examTabs.length > 1 && (
+            <div className="flex gap-1.5 flex-wrap">
+              {examTabs.map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveExamTab(tab)}
+                  className={`text-[10px] font-semibold px-2 py-1 rounded-full border transition-colors ${
+                    activeExamTab === tab
+                      ? "bg-indigo-600 text-white border-indigo-600"
+                      : "bg-white text-slate-600 border-slate-200 hover:border-slate-300"
+                  }`}
+                >
+                  {EXAM_TAB_LABELS[tab] ?? tab}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Ders listesi */}
@@ -457,11 +507,11 @@ export default function DerslerimPage() {
             <div className="p-3 space-y-2">
               {[1,2,3].map(i => <div key={i} className="h-12 bg-slate-100 rounded-xl animate-pulse" />)}
             </div>
-          ) : filteredSubjects.length === 0 ? (
+          ) : scopedSubjects.length === 0 ? (
             <div className="py-10 text-center px-4">
               <p className="text-xs text-slate-400">Ders bulunamadı.</p>
             </div>
-          ) : filteredSubjects.map(subj => (
+          ) : scopedSubjects.map(subj => (
             <SubjectMenuItem
               key={subj.slug}
               subject={subj}

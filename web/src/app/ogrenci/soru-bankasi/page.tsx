@@ -230,6 +230,9 @@ const SUBJECT_COLORS: Record<string, string> = {
 export default function SoruBankasiPage() {
   const { token } = useAuth();
   const [availableSubjects, setAvailableSubjects] = useState<string[]>([]);
+  const [subjectsByExamType, setSubjectsByExamType] = useState<Record<string, string[]>>({});
+  const [examTabs, setExamTabs] = useState<string[]>(["ALL"]);
+  const [activeExamTab, setActiveExamTab] = useState<string>("ALL");
 
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(true);
@@ -248,7 +251,7 @@ export default function SoruBankasiPage() {
   const [showPersonalTest, setShowPersonalTest] = useState(false);
   const [selectedLibrarySubject, setSelectedLibrarySubject] = useState<string | null>(null);
 
-  const loadQuestions = useCallback(async (kazanim?: string, diff?: string, subj?: string, p = 1) => {
+  const loadQuestions = useCallback(async (kazanim?: string, diff?: string, subj?: string, p = 1, examType?: string) => {
     if (!token) { setLoading(false); return; }
     setLoading(true);
     try {
@@ -256,6 +259,7 @@ export default function SoruBankasiPage() {
       if (kazanim) params.kazanim_code = kazanim;
       if (diff) params.difficulty = diff;
       if (subj) params.subject = subj;
+      if (examType && examType !== "ALL" && examType !== "ORTAK") params.exam_type = examType;
       const res = await api.getQuestions(params as Record<string, unknown>);
       const resData = Array.isArray((res as Record<string, unknown>).data) ? (res as Record<string, unknown>).data as Question[] : Array.isArray(res) ? res as Question[] : [];
       if (p === 1) {
@@ -278,15 +282,35 @@ export default function SoruBankasiPage() {
     const loadScopeSubjects = async () => {
       try {
         const curriculum = await api.getCurriculum();
-        const names = Array.isArray(curriculum?.subjects)
-          ? curriculum.subjects.map((item) => item.name).filter(Boolean)
-          : [];
-        if (mounted && names.length > 0) {
+        const scopeSubjects = Array.isArray(curriculum?.subjects) ? curriculum.subjects : [];
+        const names = scopeSubjects.map((item) => item.name).filter(Boolean);
+        const byExam: Record<string, string[]> = {};
+        scopeSubjects.forEach((item) => {
+          const key = item.exam_type || "ALL";
+          if (!byExam[key]) byExam[key] = [];
+          byExam[key].push(item.name);
+        });
+        Object.keys(byExam).forEach((key) => {
+          byExam[key] = Array.from(new Set(byExam[key]));
+        });
+        const tabs = (() => {
+          const keys = Object.keys(byExam);
+          if (keys.includes("TYT") && keys.includes("AYT")) return ["TYT", "AYT", "ORTAK"];
+          if (keys.length <= 1) return ["ALL"];
+          return keys;
+        })();
+        if (mounted) {
           setAvailableSubjects(Array.from(new Set(names)));
+          setSubjectsByExamType(byExam);
+          setExamTabs(tabs);
+          setActiveExamTab(tabs[0] ?? "ALL");
         }
       } catch {
         if (mounted) {
           setAvailableSubjects([]);
+          setSubjectsByExamType({});
+          setExamTabs(["ALL"]);
+          setActiveExamTab("ALL");
         }
       }
     };
@@ -301,10 +325,10 @@ export default function SoruBankasiPage() {
     setPage(1);
     if (searchTimer.current) clearTimeout(searchTimer.current);
     searchTimer.current = setTimeout(() => {
-      loadQuestions(search, difficulty, subject, 1);
+      loadQuestions(search, difficulty, subject, 1, activeExamTab);
     }, 400);
     return () => { if (searchTimer.current) clearTimeout(searchTimer.current); };
-  }, [search, difficulty, subject, loadQuestions]);
+  }, [search, difficulty, subject, activeExamTab, loadQuestions]);
 
   const handleAnswer = async (question: Question, optionLetter: string) => {
     if (!token) return;
@@ -358,7 +382,12 @@ export default function SoruBankasiPage() {
 
   // 3D Kütüphane için kitap listesi: her ders bir kitap
   const subjectOptions = availableSubjects.length > 0
-    ? [{ value: "", label: "Tüm Dersler" }, ...availableSubjects.map((subjectName) => ({ value: subjectName, label: subjectName }))]
+    ? [{ value: "", label: "Tüm Dersler" }, ...(activeExamTab === "ALL"
+      ? availableSubjects
+      : activeExamTab === "ORTAK"
+        ? Array.from(new Set([...(subjectsByExamType["Genel"] ?? []), ...(subjectsByExamType["all"] ?? []), ...(subjectsByExamType["TYT-AYT"] ?? [])]))
+        : (subjectsByExamType[activeExamTab] ?? [])
+    ).map((subjectName) => ({ value: subjectName, label: subjectName }))]
     : DEFAULT_SUBJECT_OPTIONS;
 
   const libraryBooks = subjectOptions.filter((s) => s.value !== "").map((s, i) => ({
@@ -413,6 +442,27 @@ export default function SoruBankasiPage() {
           </button>
         </div>
       </div>
+      {examTabs.length > 1 && (
+        <div className="mb-4 flex flex-wrap gap-2">
+          {examTabs.map((tab) => (
+            <button
+              key={tab}
+              onClick={() => {
+                setActiveExamTab(tab);
+                setSubject("");
+                setSelectedLibrarySubject(null);
+              }}
+              className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
+                activeExamTab === tab
+                  ? "bg-teal-600 text-white border-teal-600"
+                  : "bg-white text-slate-600 border-slate-200 hover:border-slate-300"
+              }`}
+            >
+              {tab === "ORTAK" ? "Ortak" : tab}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* İstatistik bandı */}
       {answeredCount > 0 && (

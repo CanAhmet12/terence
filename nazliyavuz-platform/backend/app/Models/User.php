@@ -146,6 +146,31 @@ class User extends Authenticatable implements JWTSubject
     }
 
     /**
+     * Expanded exam scope for composite goals.
+     *
+     * @return array<int, string>
+     */
+    public function allowedExamTypes(): array
+    {
+        $examType = $this->target_exam ?: 'all';
+
+        return match ($examType) {
+            'TYT-AYT' => ['TYT', 'AYT', 'TYT-AYT', 'Genel', 'all'],
+            'all' => ['all', 'Genel'],
+            default => [$examType, 'Genel', 'all'],
+        };
+    }
+
+    public function matchesExamType(?string $examType): bool
+    {
+        if (!$examType) {
+            return false;
+        }
+
+        return in_array($examType, $this->allowedExamTypes(), true);
+    }
+
+    /**
      * Check if user is an admin
      */
     public function isAdmin(): bool

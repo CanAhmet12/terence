@@ -33,8 +33,8 @@ class ExamController extends Controller
         $user     = Auth::user();
         $examType = $request->exam_type;
         if ($user && $user->isStudent()) {
-            $scope = $user->learningScope();
-            if ($examType !== 'Mini' && $examType !== $scope['exam_type']) {
+            $allowedExamTypes = $user->allowedExamTypes();
+            if ($examType !== 'Mini' && !in_array($examType, $allowedExamTypes, true)) {
                 return response()->json([
                     'error' => true,
                     'message' => 'Sınav türü profilinizle uyumlu değil.',
@@ -48,9 +48,13 @@ class ExamController extends Controller
         $qQuery = Question::where('is_active', true);
         if ($user && $user->isStudent()) {
             $scope = $user->learningScope();
+            $allowedExamTypes = $user->allowedExamTypes();
+            $requestedExamTypes = $examType === 'Mini'
+                ? $allowedExamTypes
+                : [$examType, 'Genel', 'all'];
             $qQuery->where('grade', $scope['grade'])
-                ->where(function ($query) use ($scope) {
-                    $query->where('exam_type', $scope['exam_type'])
+                ->where(function ($query) use ($allowedExamTypes, $requestedExamTypes) {
+                    $query->whereIn('exam_type', array_values(array_unique(array_merge($allowedExamTypes, $requestedExamTypes))))
                         ->orWhere('exam_type', 'Genel');
                 });
         } elseif ($examType !== 'Mini') {

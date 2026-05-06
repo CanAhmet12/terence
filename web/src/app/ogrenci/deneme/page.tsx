@@ -360,6 +360,9 @@ export default function DenemePage() {
     if (!profileExamType) {
       return EXAM_TYPES.filter((item) => item.key === "Mini");
     }
+    if (profileExamType === "TYT-AYT") {
+      return EXAM_TYPES.filter((item) => ["TYT", "AYT", "Mini"].includes(item.key));
+    }
     return EXAM_TYPES.filter((item) => item.key === profileExamType || item.key === "Mini");
   }, [profileExamType]);
 

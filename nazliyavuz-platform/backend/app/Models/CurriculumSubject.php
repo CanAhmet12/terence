@@ -26,10 +26,12 @@ class CurriculumSubject extends Model
      * Kullanıcının grade ve exam_type'ına göre dersleri filtrele.
      * DB'de grade STRING ('8') saklanıyor, user.grade INTEGER (8) gelebilir.
      */
-    public function scopeForUser($query, ?string $grade, ?string $examType)
+    public function scopeForUser($query, ?string $grade, string|array|null $examType)
     {
         // Her iki formatta da eşleştir: "8" ve 8
         $gradeStr = $grade ? (string) intval($grade) : null;
+        $examTypes = is_array($examType) ? $examType : [$examType];
+        $examTypes = array_values(array_filter($examTypes));
 
         return $query->where('is_active', true)
             ->where(function ($q) use ($grade, $gradeStr) {
@@ -37,10 +39,12 @@ class CurriculumSubject extends Model
                   ->orWhere('grade', $grade)
                   ->orWhere('grade', $gradeStr);
             })
-            ->where(function ($q) use ($examType) {
+            ->where(function ($q) use ($examTypes) {
                 $q->where('exam_type', 'all')
-                  ->orWhere('exam_type', $examType)
                   ->orWhere('exam_type', 'Genel');
+                if (!empty($examTypes)) {
+                    $q->orWhereIn('exam_type', $examTypes);
+                }
             })
             ->orderBy('sort_order');
     }

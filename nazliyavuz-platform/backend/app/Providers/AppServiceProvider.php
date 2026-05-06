@@ -101,6 +101,9 @@ class AppServiceProvider extends ServiceProvider
         // Register Reservation Observer for cache invalidation and auto-calculations
         \App\Models\Reservation::observe(\App\Observers\ReservationObserver::class);
         
+        // Register User Audit Observer for logging critical field changes
+        \App\Models\User::observe(\App\Observers\UserAuditObserver::class);
+        
         // Configure Rate Limiters
         $this->configureRateLimiters();
     }

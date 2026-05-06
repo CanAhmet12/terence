@@ -199,6 +199,18 @@ class AuthController extends Controller
     {
         $user = Auth::user();
 
+        // Students cannot change grade or target_exam after registration
+        // These fields can only be set during onboarding or by admin
+        if ($user->isStudent() && ($request->has('grade') || $request->has('target_exam'))) {
+            return response()->json([
+                'error' => true,
+                'code' => 'FORBIDDEN',
+                'message' => 'Sınıf ve hedef sınav bilgisi değiştirilemez. Lütfen yönetici ile iletişime geçin.',
+                'timestamp' => now()->toISOString(),
+                'path' => $request->path(),
+            ], 403);
+        }
+
         $v = Validator::make($request->all(), [
             'name'               => 'sometimes|string|max:255',
             'phone'              => 'sometimes|nullable|string|max:20',
@@ -216,23 +228,6 @@ class AuthController extends Controller
             return $this->validationError($v, $request);
         }
 
-        if (
-            $user->isStudent()
-            && $request->has('grade')
-            && $request->input('grade') === null
-        ) {
-            return response()->json([
-                'error' => true,
-                'code' => 'VALIDATION_ERROR',
-                'message' => 'Geçersiz veri',
-                'errors' => [
-                    'grade' => ['Öğrenci profili için sınıf bilgisi zorunludur.'],
-                ],
-                'timestamp' => now()->toISOString(),
-                'path' => $request->path(),
-            ], 422);
-        }
-
         $user->update($v->validated());
 
         return response()->json([
@@ -245,6 +240,18 @@ class AuthController extends Controller
     public function updateGoal(Request $request): JsonResponse
     {
         $user = Auth::user();
+        
+        // Students cannot change grade or exam_type after registration
+        if ($user->isStudent() && ($request->has('grade') || $request->has('exam_type'))) {
+            return response()->json([
+                'error' => true,
+                'code' => 'FORBIDDEN',
+                'message' => 'Sınıf ve hedef sınav bilgisi değiştirilemez. Lütfen yönetici ile iletişime geçin.',
+                'timestamp' => now()->toISOString(),
+                'path' => $request->path(),
+            ], 403);
+        }
+        
         $v = Validator::make($request->all(), [
             'exam_type'          => 'sometimes|in:LGS,TYT,AYT,TYT-AYT,KPSS',
             'grade'              => 'sometimes|nullable|integer|between:1,12',
@@ -256,22 +263,6 @@ class AuthController extends Controller
             return $this->validationError($v, $request);
         }
 
-        if (
-            $user->isStudent()
-            && $request->has('grade')
-            && $request->input('grade') === null
-        ) {
-            return response()->json([
-                'error' => true,
-                'code' => 'VALIDATION_ERROR',
-                'message' => 'Geçersiz veri',
-                'errors' => [
-                    'grade' => ['Öğrenci profili için sınıf bilgisi zorunludur.'],
-                ],
-                'timestamp' => now()->toISOString(),
-                'path' => $request->path(),
-            ], 422);
-        }
         $data = $v->validated();
         $mapped = [];
         if (isset($data['exam_type'])) $mapped['target_exam'] = $data['exam_type'];

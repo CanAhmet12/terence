@@ -25,20 +25,21 @@ class QuestionController extends Controller
         if ($request->filled('subject'))    $q->where('subject', $request->subject);
         if ($user && $user->isStudent()) {
             $scope = $user->learningScope();
+            $allowedExamTypes = $user->allowedExamTypes();
             if ($request->filled('grade') && (string) $request->grade !== $scope['grade']) {
                 return response()->json(['error' => true, 'message' => 'Grade filtresi profilinizle uyumlu değil.'], 422);
             }
             if (
                 $request->filled('exam_type')
-                && $request->exam_type !== $scope['exam_type']
+                && !in_array($request->exam_type, $allowedExamTypes, true)
                 && $request->exam_type !== 'all'
             ) {
                 return response()->json(['error' => true, 'message' => 'Exam filtresi profilinizle uyumlu değil.'], 422);
             }
 
             $q->where('grade', $scope['grade'])
-                ->where(function ($scopeQuery) use ($scope) {
-                    $scopeQuery->where('exam_type', $scope['exam_type'])
+                ->where(function ($scopeQuery) use ($allowedExamTypes) {
+                    $scopeQuery->whereIn('exam_type', $allowedExamTypes)
                         ->orWhere('exam_type', 'Genel');
                 });
         } else {
@@ -98,7 +99,7 @@ class QuestionController extends Controller
             if ((string) $source->grade !== $scope['grade']) {
                 return response()->json(['error' => true, 'message' => 'Soru profil kapsamınız dışında.'], 403);
             }
-            if (!in_array($source->exam_type, [$scope['exam_type'], 'Genel'], true)) {
+            if (!$user->matchesExamType($source->exam_type)) {
                 return response()->json(['error' => true, 'message' => 'Soru profil kapsamınız dışında.'], 403);
             }
         }
@@ -111,9 +112,10 @@ class QuestionController extends Controller
             });
         if ($user && $user->isStudent()) {
             $scope = $user->learningScope();
+            $allowedExamTypes = $user->allowedExamTypes();
             $similar->where('grade', $scope['grade'])
-                ->where(function ($query) use ($scope) {
-                    $query->where('exam_type', $scope['exam_type'])
+                ->where(function ($query) use ($allowedExamTypes) {
+                    $query->whereIn('exam_type', $allowedExamTypes)
                         ->orWhere('exam_type', 'Genel');
                 });
         }

@@ -41,8 +41,9 @@ class CourseController extends Controller
             }
             if ($user && $user->isStudent()) {
                 $scope = $user->learningScope();
-                $q->where(function ($query) use ($scope) {
-                    $query->where('exam_type', $scope['exam_type'])
+                $allowedExamTypes = $user->allowedExamTypes();
+                $q->where(function ($query) use ($allowedExamTypes) {
+                    $query->whereIn('exam_type', $allowedExamTypes)
                         ->orWhere('exam_type', 'Genel');
                 })->where(function ($query) use ($scope) {
                     $query->where('grade', $scope['grade'])
@@ -103,7 +104,7 @@ class CourseController extends Controller
                 $scope = $user->learningScope();
                 if (
                     ($course->grade !== null && (string) $course->grade !== $scope['grade'])
-                    || !in_array($course->exam_type, [$scope['exam_type'], 'Genel'], true)
+                    || !$user->matchesExamType($course->exam_type)
                 ) {
                     abort(403, 'Bu kurs profil kapsamınız dışında.');
                 }
@@ -137,7 +138,7 @@ class CourseController extends Controller
             $scope = $user->learningScope();
             if (
                 ($course->grade !== null && (string) $course->grade !== $scope['grade'])
-                || !in_array($course->exam_type, [$scope['exam_type'], 'Genel'], true)
+                || !$user->matchesExamType($course->exam_type)
             ) {
                 return response()->json([
                     'error' => true,
