@@ -62,11 +62,9 @@ export function HeroSection() {
             <h1 className="text-4xl sm:text-5xl lg:text-5xl xl:text-6xl font-extrabold text-slate-900 leading-[1.08] tracking-tight">
               Hedef Okulunu{" "}
               <span className="relative inline-block">
-                {/* OLD: from-teal-600 via-teal-500 to-emerald-500 */}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-navy-700 via-cyan-600 to-cyan-500">
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-slate-900 via-cyan-600 to-cyan-500">
                   Kazanmak
                 </span>
-                {/* OLD: from-teal-500 to-emerald-400 */}
                 <span className="absolute -bottom-1.5 left-0 right-0 h-1.5 bg-gradient-to-r from-cyan-600 to-cyan-400 rounded-full opacity-90" />
               </span>{" "}
               İçin Akıllı Plan
@@ -98,8 +96,7 @@ export function HeroSection() {
                   href={role.href}
                   className="group flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl border-2 border-slate-200 bg-white hover:border-cyan-400 hover:bg-cyan-50/50 font-semibold text-slate-800 hover:text-cyan-800 transition-all duration-300 shadow-sm hover:shadow-lg text-sm"
                 >
-                  {/* OLD: text-teal-600 */}
-                  <role.icon className="w-4 h-4 text-navy-600" />
+                  <role.icon className="w-4 h-4 text-slate-700" />
                   {role.label}
                   <span className="text-slate-400 font-normal">— {role.desc}</span>
                 </Link>
@@ -109,14 +106,14 @@ export function HeroSection() {
             <div className="mt-6 flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
               <Link
                 href="/kayit"
-                className="group inline-flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-navy-600 to-cyan-600 hover:from-navy-700 hover:to-cyan-700 text-white font-bold rounded-2xl transition-all duration-300 shadow-xl shadow-cyan-500/30 hover:shadow-cyan-500/40 hover:-translate-y-0.5 active:scale-95"
+                className="group inline-flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-slate-900 to-cyan-600 hover:from-slate-800 hover:to-cyan-700 text-white font-bold rounded-2xl transition-all duration-300 shadow-xl shadow-cyan-500/30 hover:shadow-cyan-500/40 hover:-translate-y-0.5 active:scale-95"
               >
                 7 Gün Ücretsiz Başla
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </Link>
               <Link
                 href="/#nasil-calisir"
-                className="inline-flex items-center justify-center px-8 py-4 text-navy-700 font-semibold hover:text-navy-800 underline underline-offset-4 decoration-2"
+                className="inline-flex items-center justify-center px-8 py-4 text-slate-700 font-semibold hover:text-slate-900 underline underline-offset-4 decoration-2"
               >
                 Nasıl çalışır?
               </Link>
@@ -167,8 +164,7 @@ export function HeroSection() {
                 <div className="grid grid-cols-3 gap-3">
                   <div className="bg-white rounded-xl p-3 border border-slate-100 shadow-sm">
                     <p className="text-[10px] text-slate-400 font-medium">Bugün Net</p>
-                    {/* OLD: text-teal-600 */}
-                    <p className="text-xl font-extrabold text-navy-600">+6</p>
+                    <p className="text-xl font-extrabold text-cyan-600">+6</p>
                     <div className="flex items-center gap-1 mt-1">
                       <TrendingUp className="w-3 h-3 text-green-500" />
                       <span className="text-[10px] text-green-600 font-semibold">Hedefin %85'i</span>

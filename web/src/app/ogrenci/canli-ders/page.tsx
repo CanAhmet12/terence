@@ -226,7 +226,7 @@ function UpcomingLessonCard({
             )}
           </button>
         ) : (
-          <div className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-700/50 py-3 text-sm font-medium text-slate-400">
+          <div className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-100 py-3 text-sm font-medium text-slate-600 border border-slate-200">
             <Clock className="h-4 w-4" />
             Bekleniyor
           </div>

@@ -33,7 +33,7 @@ export function WhyTerenceSection() {
       {/* OLD: bg-teal-500/10 */}
       <div className="absolute bottom-0 left-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl" />
       {/* OLD: bg-emerald-500/10 */}
-      <div className="absolute top-1/4 right-0 w-80 h-80 bg-navy-500/10 rounded-full blur-3xl" />
+      <div className="absolute top-1/4 right-0 w-80 h-80 bg-cyan-500/10 rounded-full blur-3xl" />
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-3xl mx-auto mb-16">

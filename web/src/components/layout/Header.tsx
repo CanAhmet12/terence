@@ -38,7 +38,7 @@ export function Header() {
             <Image src="/logo.png" alt="Terence Eğitim" width={44} height={44} className="rounded-2xl" />
             <span className="font-bold text-xl tracking-tight">
               TERENCE{" "}
-              <span className="text-teal-600 bg-gradient-to-r from-teal-600 to-teal-500 bg-clip-text text-transparent">
+              <span className="text-cyan-600 bg-gradient-to-r from-cyan-600 to-cyan-500 bg-clip-text text-transparent">
                 EĞİTİM
               </span>
             </span>
@@ -50,7 +50,7 @@ export function Header() {
               <Link
                 key={item.href}
                 href={item.href}
-                className="px-4 py-2.5 text-slate-600 hover:text-teal-700 hover:bg-teal-50/80 font-medium rounded-xl transition-all duration-200 text-[15px]"
+                className="px-4 py-2.5 text-slate-600 hover:text-cyan-700 hover:bg-cyan-50/80 font-medium rounded-xl transition-all duration-200 text-[15px]"
               >
                 {item.label}
               </Link>
@@ -63,13 +63,13 @@ export function Header() {
               <div className="flex items-center gap-2">
                 <Link
                   href="/profil"
-                  className="px-4 py-2.5 text-slate-600 hover:text-teal-700 font-medium transition-colors"
+                  className="px-4 py-2.5 text-slate-600 hover:text-cyan-700 font-medium transition-colors"
                 >
                   Profil
                 </Link>
                 <Link
                   href={dashboardHref}
-                  className="px-6 py-2.5 bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-700 hover:to-teal-600 text-white font-semibold rounded-xl transition-all duration-200 shadow-lg shadow-teal-500/25 hover:shadow-teal-500/35 hover:-translate-y-0.5"
+                  className="px-6 py-2.5 bg-gradient-to-r from-cyan-600 to-cyan-500 hover:from-cyan-700 hover:to-cyan-600 text-white font-semibold rounded-xl transition-all duration-200 shadow-lg shadow-cyan-500/25 hover:shadow-cyan-500/35 hover:-translate-y-0.5"
                 >
                   Panele Git
                 </Link>
@@ -78,13 +78,13 @@ export function Header() {
               <>
                 <Link
                   href="/giris"
-                  className="px-4 py-2.5 text-slate-600 hover:text-teal-700 font-semibold transition-colors"
+                  className="px-4 py-2.5 text-slate-600 hover:text-cyan-700 font-semibold transition-colors"
                 >
                   Giriş Yap
                 </Link>
                 <Link
                   href="/kayit"
-                  className="px-6 py-2.5 bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-700 hover:to-teal-600 text-white font-semibold rounded-xl transition-all duration-200 shadow-lg shadow-teal-500/25 hover:shadow-teal-500/35 hover:-translate-y-0.5"
+                  className="px-6 py-2.5 bg-gradient-to-r from-cyan-600 to-cyan-500 hover:from-cyan-700 hover:to-cyan-600 text-white font-semibold rounded-xl transition-all duration-200 shadow-lg shadow-cyan-500/25 hover:shadow-cyan-500/35 hover:-translate-y-0.5"
                 >
                   Ücretsiz Başla
                 </Link>
@@ -111,7 +111,7 @@ export function Header() {
                   key={item.href}
                   href={item.href}
                   onClick={() => setMobileOpen(false)}
-                  className="py-3.5 px-4 text-slate-700 hover:bg-teal-50 font-medium rounded-xl mx-1 transition-colors"
+                  className="py-3.5 px-4 text-slate-700 hover:bg-cyan-50 font-medium rounded-xl mx-1 transition-colors"
                 >
                   {item.label}
                 </Link>
@@ -121,7 +121,7 @@ export function Header() {
                   <Link
                     href={dashboardHref}
                     onClick={() => setMobileOpen(false)}
-                    className="py-3.5 px-4 text-center bg-gradient-to-r from-teal-600 to-teal-500 text-white font-semibold rounded-xl shadow-lg shadow-teal-500/25"
+                    className="py-3.5 px-4 text-center bg-gradient-to-r from-cyan-600 to-cyan-500 text-white font-semibold rounded-xl shadow-lg shadow-cyan-500/25"
                   >
                     Panele Git
                   </Link>
@@ -137,7 +137,7 @@ export function Header() {
                     <Link
                       href="/kayit"
                       onClick={() => setMobileOpen(false)}
-                      className="py-3.5 px-4 text-center bg-gradient-to-r from-teal-600 to-teal-500 text-white font-semibold rounded-xl shadow-lg shadow-teal-500/25"
+                      className="py-3.5 px-4 text-center bg-gradient-to-r from-cyan-600 to-cyan-500 text-white font-semibold rounded-xl shadow-lg shadow-cyan-500/25"
                     >
                       Ücretsiz Başla
                     </Link>

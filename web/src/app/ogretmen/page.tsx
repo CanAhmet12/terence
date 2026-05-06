@@ -41,27 +41,38 @@ const RISK_CONFIG = {
 };
 
 // Hızlı ödev formu
-function QuickAssignmentForm() {
+function QuickAssignmentForm({ token }: { token: string | null }) {
   const [subject, setSubject] = useState("");
   const [topic, setTopic] = useState("");
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSend = async () => {
-    if (!subject.trim() || !topic.trim()) return;
+    if (!subject.trim() || !topic.trim()) {
+      setError("Ders ve konu alanları zorunludur");
+      return;
+    }
+    if (!token) {
+      setError("Oturum bulunamadı");
+      return;
+    }
     setSending(true);
+    setError(null);
     try {
-      await api.createAssignment({
+      await api.createAssignment(token, {
         title: `${subject} — ${topic}`,
         subject,
         description: topic,
         due_date: new Date(Date.now() + 7 * 24 * 3600 * 1000).toISOString().split("T")[0],
-      } as Parameters<typeof api.createAssignment>[0]);
+      });
       setSent(true);
       setSubject("");
       setTopic("");
       setTimeout(() => setSent(false), 4000);
-    } catch {}
+    } catch (e) {
+      setError((e as Error).message || "Ödev oluşturulurken hata oluştu");
+    }
     setSending(false);
   };
 
@@ -76,6 +87,12 @@ function QuickAssignmentForm() {
 
   return (
     <div className="space-y-3">
+      {error && (
+        <div className="flex items-center gap-2 p-3 bg-red-50 rounded-xl border border-red-100 text-red-700 text-sm">
+          <AlertCircle className="w-4 h-4 shrink-0" />
+          {error}
+        </div>
+      )}
       <div className="grid grid-cols-2 gap-3">
         <input
           type="text"
@@ -106,7 +123,7 @@ function QuickAssignmentForm() {
 }
 
 export default function OgretmenDashboardPage() {
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const [stats, setStats] = useState<TeacherStats | null>(null);
   const [riskStudents, setRiskStudents] = useState<RiskStudent[]>([]);
   const [loading, setLoading] = useState(true);
@@ -291,7 +308,7 @@ export default function OgretmenDashboardPage() {
                 </div>
                 <h3 className="font-bold text-slate-900">Hızlı Ödev Oluştur</h3>
               </div>
-              <QuickAssignmentForm />
+              <QuickAssignmentForm token={token} />
             </div>
 
             {/* Toplu Mesaj CTA */}

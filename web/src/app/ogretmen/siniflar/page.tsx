@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { api, ClassRoom, TeacherStudent } from "@/lib/api";
-import { Search, Circle, Users, TrendingUp, Clock, RefreshCw, AlertCircle } from "lucide-react";
+import { Search, Circle, Users, TrendingUp, Clock, RefreshCw, AlertCircle, Plus, X } from "lucide-react";
 
 const RISK_CONFIG = {
   green: { label: "İyi", dot: "bg-green-500", badge: "bg-green-100 text-green-700" },
@@ -41,6 +41,9 @@ export default function SiniflarPage() {
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [riskFilter, setRiskFilter] = useState<"" | "green" | "yellow" | "red">("");
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [newClassName, setNewClassName] = useState("");
+  const [creating, setCreating] = useState(false);
 
   const loadClasses = useCallback(async () => {
     if (!token) return;
@@ -109,6 +112,27 @@ export default function SiniflarPage() {
 
   const selectedClass = classes.find((c) => c.id === selectedClassId);
 
+  const handleCreateClass = async () => {
+    if (!newClassName.trim()) {
+      setError("Sınıf adı boş olamaz");
+      return;
+    }
+    if (!token) return;
+    
+    setCreating(true);
+    setError(null);
+    try {
+      const res = await api.createClass(token, { name: newClassName.trim() });
+      const newClass = (res as { class?: ClassRoom }).class ?? res;
+      setClasses([...classes, newClass as ClassRoom]);
+      setNewClassName("");
+      setShowCreateModal(false);
+    } catch (e) {
+      setError((e as Error).message);
+    }
+    setCreating(false);
+  };
+
   return (
     <div className="bg-slate-50 min-h-full">
       <div className="w-full px-6 py-8">
@@ -119,10 +143,17 @@ export default function SiniflarPage() {
             <h1 className="text-3xl font-black text-slate-900 tracking-tight">Sınıflarım</h1>
             <p className="text-slate-500 mt-1 font-medium">Öğrenci risk durumları · Günlük aktivite · Net takibi</p>
           </div>
-          <button onClick={loadClasses} disabled={loading}
-            className="p-2.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-400 hover:text-slate-600 transition-all shadow-sm disabled:opacity-50">
-            <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
-          </button>
+          <div className="flex items-center gap-3">
+            <button onClick={() => setShowCreateModal(true)}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold transition-all shadow-sm">
+              <Plus className="w-4 h-4" />
+              Yeni Sınıf
+            </button>
+            <button onClick={loadClasses} disabled={loading}
+              className="p-2.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-400 hover:text-slate-600 transition-all shadow-sm disabled:opacity-50">
+              <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
+            </button>
+          </div>
         </div>
 
         {/* ── Hata ── */}
@@ -148,7 +179,12 @@ export default function SiniflarPage() {
                 <div className="text-center py-12 bg-white rounded-2xl border border-slate-100">
                   <Users className="w-10 h-10 text-slate-300 mx-auto mb-3" />
                   <p className="font-semibold text-slate-500">Henüz sınıf yok</p>
-                  <p className="text-xs text-slate-400 mt-1">Analiz → Sınıf oluştur</p>
+                  <p className="text-xs text-slate-400 mt-2 mb-4">Sağ üstteki "Yeni Sınıf" butonu ile oluştur</p>
+                  <button onClick={() => setShowCreateModal(true)}
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl transition-colors">
+                    <Plus className="w-4 h-4" />
+                    İlk Sınıfı Oluştur
+                  </button>
                 </div>
               ) : (
                 classes.map((c) => {
@@ -311,6 +347,73 @@ export default function SiniflarPage() {
           </div>
         )}
       </div>
+
+      {/* ── Sınıf Oluşturma Modalı ── */}
+      {showCreateModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden">
+            <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center">
+                  <Users className="w-5 h-5 text-indigo-600" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-lg text-slate-900">Yeni Sınıf Oluştur</h3>
+                  <p className="text-xs text-slate-500">Öğrencilerinizi gruplandırın</p>
+                </div>
+              </div>
+              <button onClick={() => { setShowCreateModal(false); setNewClassName(""); setError(null); }}
+                className="w-9 h-9 rounded-xl border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-100 transition-colors">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                  Sınıf Adı <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={newClassName}
+                  onChange={(e) => setNewClassName(e.target.value)}
+                  placeholder="Örn: 10-A Matematik, 8. Sınıf TYT..."
+                  className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                  onKeyDown={(e) => { if (e.key === "Enter") handleCreateClass(); }}
+                  autoFocus
+                />
+              </div>
+
+              {error && (
+                <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-100 rounded-xl">
+                  <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+                  <p className="text-sm text-red-700">{error}</p>
+                </div>
+              )}
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => { setShowCreateModal(false); setNewClassName(""); setError(null); }}
+                  className="flex-1 py-3 border border-slate-200 text-slate-700 hover:bg-slate-50 font-semibold rounded-xl transition-colors"
+                >
+                  İptal
+                </button>
+                <button
+                  onClick={handleCreateClass}
+                  disabled={creating || !newClassName.trim()}
+                  className="flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white font-bold rounded-xl transition-all flex items-center justify-center gap-2"
+                >
+                  {creating ? (
+                    <><RefreshCw className="w-4 h-4 animate-spin" /> Oluşturuluyor...</>
+                  ) : (
+                    <><Plus className="w-4 h-4" /> Sınıf Oluştur</>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

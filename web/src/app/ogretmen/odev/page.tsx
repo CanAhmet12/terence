@@ -200,33 +200,36 @@ export default function OdevPage() {
           </div>
 
           {/* ── Liste ── */}
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center">
-                  <Calendar className="w-5 h-5 text-slate-600" />
+          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+            <div className="px-6 py-5 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-slate-50">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center">
+                    <Calendar className="w-5 h-5 text-slate-600" />
+                  </div>
+                  <h2 className="font-bold text-slate-900">Mevcut Ödevler</h2>
                 </div>
-                <h2 className="font-bold text-slate-900">Mevcut Ödevler</h2>
+                <button onClick={loadAssignments}
+                  className="p-2 rounded-xl hover:bg-slate-100 border border-transparent hover:border-slate-200 transition-all">
+                  <RefreshCw className="w-4 h-4 text-slate-400 hover:text-slate-600" />
+                </button>
               </div>
-              <button onClick={loadAssignments}
-                className="p-2 rounded-xl hover:bg-white border border-transparent hover:border-slate-200 transition-all">
-                <RefreshCw className="w-4 h-4 text-slate-400 hover:text-slate-600" />
-              </button>
             </div>
 
-            {loading ? (
-              <div className="space-y-3">{[1, 2, 3].map((i) => <Skeleton key={i} className="h-24 rounded-2xl" />)}</div>
-            ) : assignments.length === 0 ? (
-              <div className="text-center py-16 bg-white rounded-2xl border border-slate-100 shadow-sm">
-                <div className="w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-3">
-                  <BookOpen className="w-7 h-7 text-slate-300" />
+            <div className="p-6">
+              {loading ? (
+                <div className="space-y-3">{[1, 2, 3].map((i) => <Skeleton key={i} className="h-24 rounded-2xl" />)}</div>
+              ) : assignments.length === 0 ? (
+                <div className="text-center py-16">
+                  <div className="w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-3">
+                    <BookOpen className="w-7 h-7 text-slate-300" />
+                  </div>
+                  <p className="font-semibold text-slate-600">Henüz ödev yok</p>
+                  <p className="text-xs text-slate-400 mt-1">Soldaki formla ilk ödevini oluştur</p>
                 </div>
-                <p className="font-semibold text-slate-600">Henüz ödev yok</p>
-                <p className="text-xs text-slate-400 mt-1">Soldaki formla ilk ödevini oluştur</p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {assignments.map((a) => {
+              ) : (
+                <div className="space-y-3">
+                  {assignments.map((a) => {
                   const studentCount = (a as Record<string, unknown>).class_room
                     ? ((a as Record<string, unknown>).class_room as Record<string, unknown>).student_count as number ?? 1
                     : 1;
@@ -235,7 +238,7 @@ export default function OdevPage() {
                   const overdue = a.due_date ? new Date(a.due_date).getTime() < Date.now() : false;
 
                   return (
-                    <div key={a.id} className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm hover:shadow-md transition-shadow">
+                    <div key={a.id} className="bg-slate-50 rounded-2xl border border-slate-200 p-5 hover:bg-white hover:shadow-sm transition-all">
                       <div className="flex items-start justify-between gap-4 mb-3">
                         <div className="flex-1 min-w-0">
                           <p className="font-bold text-slate-900 text-sm truncate">{a.title}</p>
@@ -271,9 +274,10 @@ export default function OdevPage() {
                       </div>
                     </div>
                   );
-                })}
-              </div>
-            )}
+                  })}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>

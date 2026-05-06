@@ -359,25 +359,49 @@ export default function IcerikYuklemePage() {
         </div>
 
         <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
-          {/* Alan + Sınıf */}
+          {/* Sınıf + Alan */}
           <div className="grid sm:grid-cols-2 gap-4">
             <div>
-              <label className={labelCls}>Alan <span className="text-red-500">*</span></label>
-              <select value={form.alan} onChange={(e) => setForm({ ...form, alan: e.target.value })} className={inputCls}>
-                <option value="">Seçin</option>
-                <option>LGS</option>
-                <option>TYT</option>
-                <option>AYT</option>
-                <option>KPSS</option>
-              </select>
-            </div>
-            <div>
-              <label className={labelCls}>Sınıf (opsiyonel)</label>
-              <select value={form.sinif} onChange={(e) => setForm({ ...form, sinif: e.target.value })} className={inputCls}>
+              <label className={labelCls}>Sınıf <span className="text-red-500">*</span></label>
+              <select value={form.sinif} onChange={(e) => {
+                const sinif = e.target.value;
+                setForm({ ...form, sinif, alan: "" });
+              }} className={inputCls}>
                 <option value="">Seçin</option>
                 {Array.from({ length: 12 }, (_, i) => (
                   <option key={i + 1} value={String(i + 1)}>{i + 1}. Sınıf</option>
                 ))}
+              </select>
+            </div>
+            <div>
+              <label className={labelCls}>Alan <span className="text-red-500">*</span></label>
+              <select value={form.alan} onChange={(e) => setForm({ ...form, alan: e.target.value })} className={inputCls} disabled={!form.sinif}>
+                <option value="">Önce sınıf seçin</option>
+                {form.sinif && (
+                  <>
+                    {parseInt(form.sinif) >= 1 && parseInt(form.sinif) <= 4 && (
+                      <option>İlkokul</option>
+                    )}
+                    {parseInt(form.sinif) >= 5 && parseInt(form.sinif) <= 8 && (
+                      <>
+                        <option>Ortaokul</option>
+                        {parseInt(form.sinif) === 8 && <option>LGS</option>}
+                      </>
+                    )}
+                    {parseInt(form.sinif) >= 9 && parseInt(form.sinif) <= 12 && (
+                      <>
+                        <option>Lise</option>
+                        {parseInt(form.sinif) === 12 && (
+                          <>
+                            <option>TYT</option>
+                            <option>AYT</option>
+                          </>
+                        )}
+                      </>
+                    )}
+                    <option>KPSS</option>
+                  </>
+                )}
               </select>
             </div>
           </div>

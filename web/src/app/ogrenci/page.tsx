@@ -173,20 +173,20 @@ export default function StudentDashboardPage() {
         <PushPermissionBanner />
 
         {/* ── Hero Banner ── */}
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-600 via-indigo-700 to-violet-800 p-8 text-white shadow-xl shadow-indigo-500/25">
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-cyan-600 via-teal-600 to-emerald-700 p-8 text-white shadow-xl shadow-cyan-500/25">
           {/* Dekoratif daireler */}
           <div className="absolute -right-12 -top-12 w-48 h-48 bg-white/5 rounded-full blur-2xl pointer-events-none" />
-          <div className="absolute right-20 bottom-0 w-32 h-32 bg-violet-500/20 rounded-full blur-xl pointer-events-none" />
+          <div className="absolute right-20 bottom-0 w-32 h-32 bg-emerald-500/20 rounded-full blur-xl pointer-events-none" />
           <div className="absolute left-1/2 top-0 w-64 h-1 bg-white/10 rounded-full pointer-events-none" />
 
           <div className="relative z-10 flex flex-col sm:flex-row sm:items-center gap-6">
             {/* Sol: Selamlama */}
             <div className="flex-1">
-              <p className="text-indigo-200 text-sm font-medium capitalize">{getGreeting()},</p>
+              <p className="text-cyan-200 text-sm font-medium capitalize">{getGreeting()},</p>
               <h1 className="text-2xl lg:text-3xl font-black mt-1 leading-tight">
                 {user?.name?.split(" ")[0] ?? "Öğrenci"} 👋
               </h1>
-              <p className="text-indigo-200 text-sm mt-2 font-medium capitalize">{today}</p>
+              <p className="text-cyan-200 text-sm mt-2 font-medium capitalize">{today}</p>
 
               {/* Hedef bilgisi */}
               {user?.target_exam && (
@@ -213,7 +213,7 @@ export default function StudentDashboardPage() {
                   {streak > 0 ? "🔥" : "⭐"}
                 </div>
                 <p className="text-white font-black text-xl mt-1 leading-none">{streak}</p>
-                <p className="text-indigo-200 text-[11px] font-medium mt-0.5">gün seri</p>
+                <p className="text-cyan-200 text-[11px] font-medium mt-0.5">gün seri</p>
               </div>
 
               <div className="w-px h-14 bg-white/20" />
@@ -223,7 +223,7 @@ export default function StudentDashboardPage() {
                 <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center mx-auto">
                   <span className="text-2xl font-black text-white">{level}</span>
                 </div>
-                <p className="text-indigo-200 text-[11px] font-medium mt-1.5">Seviye</p>
+                <p className="text-cyan-200 text-[11px] font-medium mt-1.5">Seviye</p>
                 <p className="text-white text-xs font-bold">{xp.toLocaleString("tr")} XP</p>
               </div>
 
@@ -235,7 +235,7 @@ export default function StudentDashboardPage() {
                   {progress === 100 ? "✅" : progress > 0 ? "📚" : "📋"}
                 </div>
                 <p className="text-white font-black text-xl mt-1 leading-none">{doneCount}/{totalCount}</p>
-                <p className="text-indigo-200 text-[11px] font-medium mt-0.5">görev bugün</p>
+                <p className="text-cyan-200 text-[11px] font-medium mt-0.5">görev bugün</p>
               </div>
             </div>
           </div>
@@ -243,7 +243,7 @@ export default function StudentDashboardPage() {
           {/* Genel ilerleme çubuğu */}
           {totalCount > 0 && (
             <div className="relative z-10 mt-5">
-              <div className="flex items-center justify-between text-xs text-indigo-200 mb-1.5">
+              <div className="flex items-center justify-between text-xs text-cyan-200 mb-1.5">
                 <span>Bugünkü ilerleme</span>
                 <span className="font-bold text-white">%{progress}</span>
               </div>
@@ -522,17 +522,17 @@ export default function StudentDashboardPage() {
                 <h3 className="font-bold text-slate-900">Hızlı Başla</h3>
               </div>
 
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-3 gap-2">
                 {QUICK_LINKS.map((link) => (
                   <Link
                     key={link.href}
                     href={link.href}
-                    className="flex flex-col items-center gap-2 p-3 rounded-xl border border-slate-100 hover:border-indigo-200 hover:bg-indigo-50/50 transition-all group"
+                    className="flex flex-col items-center gap-2 p-2.5 rounded-xl border border-slate-100 hover:border-indigo-200 hover:bg-indigo-50/50 transition-all group"
                   >
-                    <div className={`w-9 h-9 rounded-xl ${link.bg} flex items-center justify-center group-hover:scale-110 transition-transform`}>
-                      <link.icon className={`w-4.5 h-4.5 ${link.color}`} strokeWidth={2} />
+                    <div className={`w-8 h-8 rounded-xl ${link.bg} flex items-center justify-center group-hover:scale-110 transition-transform`}>
+                      <link.icon className={`w-4 h-4 ${link.color}`} strokeWidth={2} />
                     </div>
-                    <span className="text-[11px] font-semibold text-slate-600 group-hover:text-slate-900 text-center leading-tight">
+                    <span className="text-[10px] font-semibold text-slate-600 group-hover:text-slate-900 text-center leading-tight">
                       {link.label}
                     </span>
                   </Link>

@@ -85,8 +85,7 @@ export function PackagesSection() {
           </p>
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-slate-900 leading-tight">
             Hedefine Uygun{" "}
-            {/* OLD: from-teal-600 to-teal-500 */}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-navy-700 to-cyan-600">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-slate-900 to-cyan-600">
               Paket Seç
             </span>
           </h2>
@@ -106,7 +105,7 @@ export function PackagesSection() {
               }`}
             >
               {pkg.popular && (
-                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-5 py-1.5 bg-gradient-to-r from-navy-600 to-cyan-600 text-white text-sm font-bold rounded-full shadow-lg shadow-cyan-500/30">
+                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-5 py-1.5 bg-gradient-to-r from-slate-800 to-cyan-600 text-white text-sm font-bold rounded-full shadow-lg shadow-cyan-500/30">
                   En Popüler
                 </div>
               )}
@@ -145,7 +144,7 @@ export function PackagesSection() {
                 href={pkg.href}
                 className={`block w-full py-4 text-center font-semibold rounded-xl transition-all duration-300 ${
                   pkg.popular
-                    ? "bg-gradient-to-r from-navy-600 to-cyan-600 hover:from-navy-700 hover:to-cyan-700 text-white shadow-lg shadow-cyan-500/25 hover:shadow-cyan-500/35 hover:-translate-y-0.5"
+                    ? "bg-gradient-to-r from-slate-900 to-cyan-600 hover:from-slate-800 hover:to-cyan-700 text-white shadow-lg shadow-cyan-500/25 hover:shadow-cyan-500/35 hover:-translate-y-0.5"
                     : "border-2 border-slate-200 hover:border-cyan-500 text-slate-700 hover:text-cyan-600 hover:bg-cyan-50/50"
                 }`}
               >

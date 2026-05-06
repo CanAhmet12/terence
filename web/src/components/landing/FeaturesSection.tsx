@@ -56,7 +56,7 @@ const features = [
       bars: [
         { label: "Matematik", val: 78, color: "bg-cyan-500" }, // OLD: bg-teal-500
         { label: "Türkçe", val: 65, color: "bg-blue-500" },
-        { label: "Fen Bilimleri", val: 82, color: "bg-navy-500" }, // OLD: bg-emerald-500
+        { label: "Fen Bilimleri", val: 82, color: "bg-emerald-500" },
         { label: "Sosyal Bilgiler", val: 55, color: "bg-amber-500" },
       ],
     },
@@ -140,8 +140,7 @@ export function FeaturesSection() {
           <p className="text-cyan-600 font-semibold text-sm uppercase tracking-widest mb-4">Özellikler</p>
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-slate-900 leading-tight">
             Hedefine Ulaşmak İçin{" "}
-            {/* OLD: from-teal-600 to-teal-500 */}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-navy-700 to-cyan-600">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-slate-900 to-cyan-600">
               İhtiyacın Olan Her Şey
             </span>
           </h2>
@@ -222,8 +221,7 @@ export function FeaturesSection() {
                   <div className="space-y-3">
                     {feat.preview.chat.map((msg, i) => (
                       <div key={i} className={`flex gap-2.5 ${msg.role === "user" ? "flex-row-reverse" : ""}`}>
-                        {/* OLD: from-teal-500 to-teal-600 */}
-                        <div className={`w-7 h-7 rounded-xl flex items-center justify-center shrink-0 text-xs font-bold ${msg.role === "bot" ? "bg-gradient-to-br from-navy-600 to-cyan-600 text-white" : "bg-slate-200 text-slate-600"}`}>
+                        <div className={`w-7 h-7 rounded-xl flex items-center justify-center shrink-0 text-xs font-bold ${msg.role === "bot" ? "bg-gradient-to-br from-slate-700 to-cyan-600 text-white" : "bg-slate-200 text-slate-600"}`}>
                           {msg.role === "bot" ? "AI" : "S"}
                         </div>
                         {/* OLD: bg-teal-600 */}

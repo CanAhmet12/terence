@@ -436,117 +436,207 @@ export default function DerslerimPage() {
   );
 
   return (
-    <div className="flex h-screen overflow-hidden bg-white">
+    <div className="flex flex-col h-screen overflow-hidden bg-slate-50">
 
       {/* ═══════════════════════════════════════════════════════
-          SOL: Accordion Menü
+          ÜST: Yatay Ders Kartları
       ══════════════════════════════════════════════════════════ */}
-      <div className="w-72 shrink-0 flex flex-col border-r border-slate-200 bg-white">
-
-        {/* Menü başlığı */}
-        <div className="px-4 py-4 border-b border-slate-100 space-y-2">
-          <div className="flex items-center gap-2">
-            <GraduationCap className="w-4 h-4 text-slate-500" />
-            <h2 className="text-sm font-bold text-slate-800">Derslerim</h2>
-          </div>
-          {/* Sınıf badge'leri */}
-          <div className="flex gap-1.5 flex-wrap">
-            {gradeStr && (
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-100">
-                {gradeStr === "mezun" ? "Mezun" : `${gradeStr}. Sınıf`}
-              </span>
-            )}
-            {examStr && (
-              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
-                {examStr}
-              </span>
-            )}
-          </div>
-          {/* Arama */}
-          <div className="relative">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
-            <input type="text" placeholder="Ders ara..."
-              value={search} onChange={e => setSearch(e.target.value)}
-              className="w-full pl-8 pr-7 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:ring-1 focus:ring-indigo-400 outline-none" />
-            {search && (
-              <button onClick={() => setSearch("")}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
-                <X className="w-3 h-3" />
-              </button>
-            )}
-          </div>
-          {examTabs.length > 1 && (
-            <div className="flex gap-1.5 flex-wrap">
-              {examTabs.map((tab) => (
-                <button
-                  key={tab}
-                  onClick={() => setActiveExamTab(tab)}
-                  className={`text-[10px] font-semibold px-2 py-1 rounded-full border transition-colors ${
-                    activeExamTab === tab
-                      ? "bg-indigo-600 text-white border-indigo-600"
-                      : "bg-white text-slate-600 border-slate-200 hover:border-slate-300"
-                  }`}
-                >
-                  {EXAM_TAB_LABELS[tab] ?? tab}
-                </button>
-              ))}
+      <div className="border-b border-slate-200 bg-white shadow-sm">
+        {/* Başlık ve filtreler */}
+        <div className="px-6 py-4 border-b border-slate-100">
+          <div className="flex items-center justify-between gap-4 flex-wrap">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center">
+                <GraduationCap className="w-5 h-5 text-indigo-600" />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold text-slate-900">Derslerim</h2>
+                <div className="flex gap-2 items-center mt-0.5">
+                  {gradeStr && (
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-100">
+                      {gradeStr === "mezun" ? "Mezun" : `${gradeStr}. Sınıf`}
+                    </span>
+                  )}
+                  {examStr && (
+                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
+                      {examStr}
+                    </span>
+                  )}
+                </div>
+              </div>
             </div>
-          )}
+            <div className="flex items-center gap-2">
+              {/* Arama */}
+              <div className="relative">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+                <input type="text" placeholder="Ders ara..."
+                  value={search} onChange={e => setSearch(e.target.value)}
+                  className="w-48 pl-8 pr-7 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:ring-1 focus:ring-indigo-400 outline-none" />
+                {search && (
+                  <button onClick={() => setSearch("")}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                    <X className="w-3 h-3" />
+                  </button>
+                )}
+              </div>
+              {/* Sınav Türü Filtreleri */}
+              {examTabs.length > 1 && (
+                <div className="flex gap-1.5">
+                  {examTabs.map((tab) => (
+                    <button
+                      key={tab}
+                      onClick={() => setActiveExamTab(tab)}
+                      className={`text-[10px] font-semibold px-2.5 py-1.5 rounded-lg border transition-colors ${
+                        activeExamTab === tab
+                          ? "bg-indigo-600 text-white border-indigo-600"
+                          : "bg-white text-slate-600 border-slate-200 hover:border-slate-300"
+                      }`}
+                    >
+                      {EXAM_TAB_LABELS[tab] ?? tab}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
-        {/* Ders listesi */}
-        <div className="flex-1 overflow-y-auto">
+        {/* Yatay Ders Kartları */}
+        <div className="px-6 py-4">
           {loadingList ? (
-            <div className="p-3 space-y-2">
-              {[1,2,3].map(i => <div key={i} className="h-12 bg-slate-100 rounded-xl animate-pulse" />)}
+            <div className="flex gap-3 overflow-x-auto pb-2">
+              {[1,2,3,4].map(i => <div key={i} className="w-48 h-32 bg-slate-100 rounded-xl animate-pulse shrink-0" />)}
             </div>
           ) : scopedSubjects.length === 0 ? (
-            <div className="py-10 text-center px-4">
-              <p className="text-xs text-slate-400">Ders bulunamadı.</p>
+            <div className="py-8 text-center">
+              <p className="text-sm text-slate-400">Ders bulunamadı.</p>
             </div>
-          ) : scopedSubjects.map(subj => (
-            <SubjectMenuItem
-              key={subj.slug}
-              subject={subj}
-              units={unitsBySlug[subj.slug] ?? []}
-              loadingUnits={loadingSlug === subj.slug}
-              activeTopicId={activeTopic?.id ?? null}
-              onOpen={() => loadUnits(subj.slug)}
-              onTopicSelect={handleTopicSelect}
-              onTopicStatusChange={(tid, s) => handleTopicStatusChange(subj.slug, tid, s)}
-            />
-          ))}
+          ) : (
+            <div className="flex gap-3 overflow-x-auto pb-2" style={{ scrollbarWidth: 'thin' }}>
+              {scopedSubjects.map(subj => {
+                const color = SUBJECT_COLORS[subj.name] ?? subj.color ?? "#6366f1";
+                const isOpen = !!unitsBySlug[subj.slug];
+                const units = unitsBySlug[subj.slug] ?? [];
+                const totalTopics = units.reduce((sum, u) => sum + u.total_topics, 0);
+                const completedTopics = units.reduce((sum, u) => sum + u.completed_topics, 0);
+                const progress = totalTopics > 0 ? Math.round((completedTopics / totalTopics) * 100) : 0;
+                
+                return (
+                  <button
+                    key={subj.slug}
+                    onClick={() => {
+                      if (!isOpen) loadUnits(subj.slug);
+                      // İlk konuyu seç
+                      if (units.length > 0 && units[0].topics.length > 0) {
+                        handleTopicSelect(units[0].topics[0], units[0], subj);
+                      }
+                    }}
+                    className="w-56 shrink-0 p-4 rounded-2xl border-2 transition-all text-left hover:shadow-md"
+                    style={{
+                      borderColor: activeSubject?.slug === subj.slug ? color : "#e2e8f0",
+                      background: activeSubject?.slug === subj.slug ? `${color}08` : "white"
+                    }}
+                  >
+                    <div className="flex items-center gap-2.5 mb-3">
+                      <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl shrink-0"
+                        style={{ background: `${color}15` }}>
+                        {subj.icon}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-bold text-sm text-slate-900 truncate">{subj.name}</p>
+                        {isOpen && (
+                          <p className="text-[10px] text-slate-400 mt-0.5">
+                            {units.length} ünite · {totalTopics} konu
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    {isOpen && (
+                      <>
+                        <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden mb-2">
+                          <div className="h-full rounded-full transition-all" style={{ width: `${progress}%`, background: color }} />
+                        </div>
+                        <p className="text-[10px] font-semibold" style={{ color }}>
+                          %{progress} tamamlandı
+                        </p>
+                      </>
+                    )}
+                    {loadingSlug === subj.slug && (
+                      <div className="flex items-center gap-2 text-[10px] text-slate-400">
+                        <Loader2 className="w-3 h-3 animate-spin" />
+                        Yükleniyor...
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
 
       {/* ═══════════════════════════════════════════════════════
-          SAĞ: İçerik Alanı (Geniş Ekran)
+          ALT: İçerik Alanı (Üniteler + Seçili Konu Detayı)
       ══════════════════════════════════════════════════════════ */}
-      <div className="flex-1 overflow-y-auto bg-slate-50">
-        {activeTopic && activeUnit && activeSubject ? (
-          <ContentPanel
-            topic={activeTopic}
-            subject={activeSubject}
-            unit={activeUnit}
-            color={activeColor}
-          />
-        ) : (
-          /* Henüz konu seçilmemiş */
-          <div className="h-full flex flex-col items-center justify-center text-center px-8">
-            <div className="w-24 h-24 rounded-3xl flex items-center justify-center mb-6 bg-white border border-slate-200 shadow-sm">
-              <BookOpen className="w-10 h-10 text-slate-300" />
+      <div className="flex-1 overflow-hidden flex">
+        
+        {/* Sol: Ünite ve Konu Listesi (Ders seçiliyse) */}
+        {activeSubject && unitsBySlug[activeSubject.slug] && (
+          <div className="w-80 shrink-0 flex flex-col border-r border-slate-200 bg-white">
+
+            <div className="px-4 py-3 border-b border-slate-100">
+              <p className="text-xs font-bold text-slate-600">Üniteler & Konular</p>
+              <p className="text-[10px] text-slate-400 mt-0.5">{activeSubject.name}</p>
             </div>
-            <h2 className="text-xl font-bold text-slate-700 mb-2">Bir konu seçin</h2>
-            <p className="text-sm text-slate-400 max-w-sm leading-relaxed">
-              Sol menüden bir derse, ardından üniteye ve konuya tıklayın. İçerik burada açılacak.
-            </p>
-            {/* Hızlı başlangıç ipucu */}
-            <div className="mt-8 flex items-center gap-3 px-5 py-3 bg-white border border-slate-200 rounded-2xl shadow-sm text-sm text-slate-500">
-              <span className="text-xl">👈</span>
-              Soldan ders → ünite → konu seçin
+
+            {/* Ünite listesi */}
+            <div className="flex-1 overflow-y-auto p-2">
+              {unitsBySlug[activeSubject.slug].map((unit, i) => (
+                <UnitMenuItem
+                  key={unit.id}
+                  unit={unit}
+                  color={activeColor}
+                  activeTopicId={activeTopic?.id ?? null}
+                  defaultOpen={i === 0}
+                  onTopicSelect={(t) => handleTopicSelect(t, unit, activeSubject)}
+                  onTopicStatusChange={(tid, s) => handleTopicStatusChange(activeSubject.slug, tid, s)}
+                />
+              ))}
             </div>
           </div>
         )}
+
+        {/* Sağ: İçerik Detayı */}
+        <div className="flex-1 overflow-y-auto bg-slate-50">
+          {activeTopic && activeUnit && activeSubject ? (
+            <ContentPanel
+              topic={activeTopic}
+              subject={activeSubject}
+              unit={activeUnit}
+              color={activeColor}
+            />
+          ) : (
+            /* Henüz konu seçilmemiş */}
+            <div className="h-full flex flex-col items-center justify-center text-center px-8">
+              <div className="w-24 h-24 rounded-3xl flex items-center justify-center mb-6 bg-white border border-slate-200 shadow-sm">
+                <BookOpen className="w-10 h-10 text-slate-300" />
+              </div>
+              <h2 className="text-xl font-bold text-slate-700 mb-2">
+                {activeSubject ? "Bir konu seçin" : "Bir ders seçin"}
+              </h2>
+              <p className="text-sm text-slate-400 max-w-sm leading-relaxed">
+                {activeSubject 
+                  ? "Soldan bir konu seçin, içerik burada açılacak." 
+                  : "Üstten bir ders kartına tıklayın."}
+              </p>
+              {/* Hızlı başlangıç ipucu */}
+              <div className="mt-8 flex items-center gap-3 px-5 py-3 bg-white border border-slate-200 rounded-2xl shadow-sm text-sm text-slate-500">
+                <span className="text-xl">{activeSubject ? "👈" : "☝️"}</span>
+                {activeSubject ? "Soldan konu seçin" : "Üstten ders seçin"}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
     </div>

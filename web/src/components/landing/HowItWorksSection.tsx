@@ -38,8 +38,7 @@ export function HowItWorksSection() {
           </p>
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-slate-900 leading-tight">
             4 Adımda{" "}
-            {/* OLD: from-teal-600 to-teal-500 */}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-navy-700 to-cyan-600">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-slate-900 to-cyan-600">
               Hedefine Başla
             </span>
           </h2>
@@ -64,8 +63,7 @@ export function HowItWorksSection() {
                 <div className="inline-flex items-center justify-center w-28 h-28 rounded-3xl bg-cyan-50 border-2 border-cyan-100 mb-6 relative group hover:border-cyan-200 hover:shadow-lg hover:shadow-cyan-500/10 transition-all">
                   {/* OLD: text-teal-600 */}
                   <item.icon className="w-14 h-14 text-cyan-600" strokeWidth={2} />
-                  {/* OLD: from-teal-600 to-teal-500 shadow-teal-500/30 */}
-                  <div className="absolute -top-1 -right-1 w-10 h-10 rounded-xl bg-gradient-to-br from-navy-600 to-cyan-600 text-white font-bold text-sm flex items-center justify-center shadow-lg shadow-cyan-500/30">
+                  <div className="absolute -top-1 -right-1 w-10 h-10 rounded-xl bg-gradient-to-br from-slate-700 to-cyan-600 text-white font-bold text-sm flex items-center justify-center shadow-lg shadow-cyan-500/30">
                     {item.step}
                   </div>
                 </div>

@@ -40,7 +40,7 @@ export function CtaSection() {
             {/* OLD: text-teal-700 */}
             <Link
               href="/kayit"
-              className="shrink-0 inline-flex items-center gap-2 px-10 py-4 bg-white text-navy-700 font-bold rounded-2xl hover:bg-slate-50 transition-all duration-300 shadow-2xl shadow-black/20 hover:shadow-xl hover:-translate-y-1"
+              className="shrink-0 inline-flex items-center gap-2 px-10 py-4 bg-white text-slate-900 font-bold rounded-2xl hover:bg-slate-50 transition-all duration-300 shadow-2xl shadow-black/20 hover:shadow-xl hover:-translate-y-1"
             >
               7 Gün Ücretsiz Başla
               <ArrowRight className="w-5 h-5" />
