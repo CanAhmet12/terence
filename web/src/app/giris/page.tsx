@@ -39,7 +39,8 @@ export default function LoginPage() {
       user.role === "parent" ? "/veli" : "/ogrenci";
     
     router.replace(targetPath);
-  }, [user, loading, router]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, loading]);
 
   // Show loading during auth check
   if (loading) {

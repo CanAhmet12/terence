@@ -345,9 +345,15 @@ class AuthController extends Controller
         }
         
         $response = response()->json(['success' => true, 'message' => 'Çıkış yapıldı']);
-        
-        // Clear refresh token cookie
-        return $response->withCookie(Cookie::forget('refresh_token'));
+
+        // Clear refresh token cookie with same settings used when creating it
+        return $response->withCookie(
+            Cookie::forget(
+                'refresh_token',
+                '/',
+                config('session.domain')
+            )
+        );
     }
 
     public function refresh(Request $request): JsonResponse
