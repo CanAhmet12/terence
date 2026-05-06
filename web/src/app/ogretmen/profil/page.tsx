@@ -56,6 +56,7 @@ export default function OgretmenProfilPage() {
   const [bio, setBio] = useState("");
   const [bildirimCalisma, setBildirimCalisma] = useState(true);
   const [bildirimDeneme, setBildirimDeneme] = useState(true);
+  const [riskAlerts, setRiskAlerts] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -101,7 +102,7 @@ export default function OgretmenProfilPage() {
     e.preventDefault();
     setSaveState("saving"); setSaveError("");
     try {
-      await api.updateNotificationPreferences({ daily_reminders: bildirimCalisma, email_notifications: bildirimDeneme, risk_alerts: false });
+      await api.updateNotificationPreferences({ daily_reminders: bildirimCalisma, email_notifications: bildirimDeneme, risk_alerts: riskAlerts });
       setSaveState("success");
       setTimeout(() => setSaveState("idle"), 3000);
     } catch (err: unknown) {
@@ -306,6 +307,7 @@ export default function OgretmenProfilPage() {
                   {[
                     { label: "Öğrenci Aktivite Bildirimi", desc: "Öğrencileriniz ders çalıştığında bildirim alın", value: bildirimCalisma, onChange: setBildirimCalisma },
                     { label: "E-posta Bildirimleri",        desc: "Önemli güncellemeler için e-posta alın",      value: bildirimDeneme, onChange: setBildirimDeneme },
+                    { label: "Risk Uyarıları",               desc: "Öğrencileriniz hedeften uzaklaştığında uyarı alın", value: riskAlerts, onChange: setRiskAlerts },
                   ].map(({ label, desc, value, onChange }) => (
                     <div key={label} className="flex items-center justify-between p-4 rounded-xl border border-slate-100 hover:bg-slate-50 transition-colors">
                       <div className="flex-1 min-w-0 mr-4">

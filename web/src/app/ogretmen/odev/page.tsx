@@ -69,6 +69,14 @@ export default function OdevPage() {
       setError("Başlık ve ders alanları zorunludur.");
       return;
     }
+    
+    if (!form.class_room_id) {
+      const confirmed = window.confirm(
+        "Sınıf seçilmedi. Ödev tüm öğrencilerinize atanacak. Emin misiniz?"
+      );
+      if (!confirmed) return;
+    }
+    
     setSaving(true);
     setError("");
 

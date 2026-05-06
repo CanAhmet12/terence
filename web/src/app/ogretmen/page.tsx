@@ -130,6 +130,12 @@ export default function OgretmenDashboardPage() {
 
   const handleBulkNotif = async () => {
     if (!notifContent.trim()) return;
+    
+    const confirmed = window.confirm(
+      "Tüm sınıflarınızdaki öğrencilere mesaj gönderilecek. Emin misiniz?"
+    );
+    if (!confirmed) return;
+    
     setSending(true);
     try {
       await api.sendMessage({ recipient_type: "all", content: notifContent } as Parameters<typeof api.sendMessage>[0]);

@@ -83,7 +83,7 @@ export default function SiniflarPage() {
             id: u.id,
             name: u.name,
             email: u.email,
-            net_score: currentNet > 0 ? currentNet : undefined,
+            net_score: currentNet >= 0 ? currentNet : undefined,
             risk_level: risk,
             last_active_at: raw.last_login_at as string | undefined,
             tasks_completed_today: raw.tasks_completed_today as number | undefined,

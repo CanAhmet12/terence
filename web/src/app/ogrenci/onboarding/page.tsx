@@ -20,8 +20,17 @@ const GRADES = [
 ];
 
 const EXAM_TYPES: Record<string, Array<{ value: string; label: string; sub: string; icon: string; color: string }>> = {
+  "5": [
+    { value: "LGS", label: "LGS Hazırlık", sub: "Liselere Giriş Sınavı", icon: "📚", color: "#10b981" },
+  ],
+  "6": [
+    { value: "LGS", label: "LGS Hazırlık", sub: "Liselere Giriş Sınavı", icon: "📚", color: "#3b82f6" },
+  ],
+  "7": [
+    { value: "LGS", label: "LGS Hazırlık", sub: "Liselere Giriş Sınavı", icon: "📝", color: "#6366f1" },
+  ],
   "8": [
-    { value: "LGS", label: "LGS", sub: "Liselere Giriş Sınavı", icon: "📝", color: "#10b981" },
+    { value: "LGS", label: "LGS", sub: "Liselere Giriş Sınavı", icon: "🎯", color: "#f59e0b" },
   ],
   "9":  [
     { value: "TYT",     label: "TYT",      sub: "Temel Yeterlilik (Tüm alanlar)",  icon: "📐", color: "#1565c0" },
@@ -40,10 +49,6 @@ const EXAM_TYPES: Record<string, Array<{ value: string; label: string; sub: stri
     { value: "TYT",     label: "TYT",      sub: "Temel Yeterlilik",               icon: "📐", color: "#1565c0" },
     { value: "AYT",     label: "AYT",      sub: "Alan Yeterlilik",                icon: "🧪", color: "#e65100" },
     { value: "TYT-AYT", label: "TYT + AYT", sub: "En kapsamlı hazırlık",          icon: "🏆", color: "#6a1b9a" },
-  ],
-  "default": [
-    { value: "TYT",     label: "TYT",      sub: "Temel Yeterlilik",               icon: "📐", color: "#1565c0" },
-    { value: "TYT-AYT", label: "TYT + AYT", sub: "Sayısal, Sözel veya EA hedefli", icon: "🎯", color: "#6a1b9a" },
   ],
 };
 

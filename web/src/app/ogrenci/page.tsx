@@ -508,7 +508,7 @@ export default function StudentDashboardPage() {
                 href="/ogrenci/hedef"
                 className="flex items-center gap-1.5 mt-4 text-xs font-semibold text-slate-400 hover:text-indigo-600 transition-colors"
               >
-                Hedefi Güncelle
+                Hedefi Görüntüle
                 <ChevronRight className="w-3.5 h-3.5" />
               </Link>
             </div>

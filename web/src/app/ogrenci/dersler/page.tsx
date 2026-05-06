@@ -445,16 +445,9 @@ export default function DerslerimPage() {
 
         {/* Menü başlığı */}
         <div className="px-4 py-4 border-b border-slate-100 space-y-2">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <GraduationCap className="w-4 h-4 text-slate-500" />
-              <h2 className="text-sm font-bold text-slate-800">Derslerim</h2>
-            </div>
-            <button onClick={() => router.push("/ogrenci/onboarding")}
-              title="Müfredatı Değiştir"
-              className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors">
-              <Settings className="w-3.5 h-3.5" />
-            </button>
+          <div className="flex items-center gap-2">
+            <GraduationCap className="w-4 h-4 text-slate-500" />
+            <h2 className="text-sm font-bold text-slate-800">Derslerim</h2>
           </div>
           {/* Sınıf badge'leri */}
           <div className="flex gap-1.5 flex-wrap">

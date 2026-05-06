@@ -263,13 +263,24 @@ export default function HedefPage() {
                   <Target className="w-5 h-5 text-indigo-600" />
                 </div>
                 <div>
-                  <h2 className="font-bold text-slate-900">Hedef Güncelle</h2>
-                  <p className="text-xs text-slate-500 mt-0.5">Sınav türü, okul ve net hedefini belirle</p>
+                  <h2 className="font-bold text-slate-900">Hedefim</h2>
+                  <p className="text-xs text-slate-500 mt-0.5">Sınav türü, okul ve net hedefin</p>
                 </div>
               </div>
             </div>
 
-            <form onSubmit={handleSave} className="p-6 space-y-5">
+            {/* Uyarı Banner */}
+            <div className="mx-6 mt-6 px-4 py-3 bg-amber-50 border-l-4 border-amber-400 rounded-r-lg">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-semibold text-amber-900">Hedef bilgilerinizi değiştiremezsiniz</p>
+                  <p className="text-xs text-amber-700 mt-1">Sınıf ve hedef sınav bilgilerinizi değiştirmek için lütfen yöneticinizle iletişime geçin.</p>
+                </div>
+              </div>
+            </div>
+
+            <form onSubmit={(e) => e.preventDefault()} className="p-6 space-y-5">
 
               {/* Sınav türü seçimi */}
               <div>
@@ -281,11 +292,11 @@ export default function HedefPage() {
                     <button
                       key={e.key}
                       type="button"
-                      onClick={() => setExamType(e.key)}
-                      className={`flex items-center gap-2.5 p-3.5 rounded-xl border-2 transition-all text-left ${
+                      disabled
+                      className={`flex items-center gap-2.5 p-3.5 rounded-xl border-2 transition-all text-left opacity-60 cursor-not-allowed ${
                         examType === e.key
                           ? `${e.bg} ${e.border} shadow-sm`
-                          : "border-slate-200 hover:border-slate-300"
+                          : "border-slate-200"
                       }`}
                     >
                       <span className="text-xl shrink-0">{e.icon}</span>
@@ -312,11 +323,11 @@ export default function HedefPage() {
                   <input
                     type="number"
                     value={currentNet}
-                    onChange={(e) => setCurrentNet(e.target.value)}
+                    disabled
                     placeholder="Örn: 65"
                     min={0}
                     max={200}
-                    className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 outline-none text-sm transition-all"
+                    className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 outline-none text-sm transition-all bg-slate-50 cursor-not-allowed opacity-60"
                   />
                 </div>
                 <div>
@@ -326,11 +337,11 @@ export default function HedefPage() {
                   <input
                     type="number"
                     value={targetNet}
-                    onChange={(e) => setTargetNet(e.target.value)}
+                    disabled
                     placeholder="Örn: 100"
                     min={0}
                     max={200}
-                    className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 outline-none text-sm transition-all"
+                    className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 outline-none text-sm transition-all bg-slate-50 cursor-not-allowed opacity-60"
                   />
                 </div>
               </div>
@@ -344,9 +355,9 @@ export default function HedefPage() {
                 <input
                   type="text"
                   value={targetSchool}
-                  onChange={(e) => setTargetSchool(e.target.value)}
+                  disabled
                   placeholder="Örn: Boğaziçi Üniversitesi"
-                  className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 outline-none text-sm transition-all"
+                  className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 outline-none text-sm transition-all bg-slate-50 cursor-not-allowed opacity-60"
                 />
               </div>
 
@@ -359,9 +370,9 @@ export default function HedefPage() {
                 <input
                   type="text"
                   value={targetDept}
-                  onChange={(e) => setTargetDept(e.target.value)}
+                  disabled
                   placeholder="Örn: Bilgisayar Mühendisliği"
-                  className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 outline-none text-sm transition-all"
+                  className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 outline-none text-sm transition-all bg-slate-50 cursor-not-allowed opacity-60"
                 />
               </div>
 
@@ -374,33 +385,11 @@ export default function HedefPage() {
                 <input
                   type="date"
                   value={examDate}
-                  onChange={(e) => setExamDate(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 outline-none text-sm transition-all"
+                  disabled
+                  className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 outline-none text-sm transition-all bg-slate-50 cursor-not-allowed opacity-60"
                 />
               </div>
 
-              {/* Hata */}
-              {saveState === "error" && (
-                <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
-                  <AlertCircle className="w-4 h-4 shrink-0" />
-                  {saveError}
-                </div>
-              )}
-
-              {/* Kaydet */}
-              <button
-                type="submit"
-                disabled={saveState === "saving"}
-                className="w-full py-3.5 rounded-xl font-bold text-sm text-white flex items-center justify-center gap-2 transition-all bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 shadow-sm shadow-indigo-500/25 disabled:opacity-70 active:scale-[0.98]"
-              >
-                {saveState === "saving" ? (
-                  <><Loader2 className="w-4 h-4 animate-spin" /> Kaydediliyor...</>
-                ) : saveState === "success" ? (
-                  <><Check className="w-4 h-4" /> Hedef Kaydedildi!</>
-                ) : (
-                  <><Sparkles className="w-4 h-4" /> Hedefi Güncelle</>
-                )}
-              </button>
             </form>
           </div>
         </div>

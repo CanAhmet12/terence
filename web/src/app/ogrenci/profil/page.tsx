@@ -179,26 +179,27 @@ export default function OgrenciProfilPage() {
     }
   };
 
-  const saveGoal = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSaveState("saving"); setSaveError("");
-    try {
-      await api.updateGoal({
-        exam_type: hedefSinav,
-        target_school: hedefOkul || undefined,
-        target_department: hedefBolum || undefined,
-        target_net: hedefNet ? Number(hedefNet) : undefined,
-      } as Parameters<typeof api.updateGoal>[0]);
-      const me = await api.getMe();
-      updateUser(me);
-      setSaveState("success");
-      setTimeout(() => setSaveState("idle"), 3000);
-    } catch (err: unknown) {
-      setSaveError(err instanceof Error ? err.message : "Kayıt başarısız");
-      setSaveState("error");
-      setTimeout(() => setSaveState("idle"), 5000);
-    }
-  };
+  // Hedef güncelleme artık yapılamıyor - read-only
+  // const saveGoal = async (e: React.FormEvent) => {
+  //   e.preventDefault();
+  //   setSaveState("saving"); setSaveError("");
+  //   try {
+  //     await api.updateGoal({
+  //       exam_type: hedefSinav,
+  //       target_school: hedefOkul || undefined,
+  //       target_department: hedefBolum || undefined,
+  //       target_net: hedefNet ? Number(hedefNet) : undefined,
+  //     } as Parameters<typeof api.updateGoal>[0]);
+  //     const me = await api.getMe();
+  //     updateUser(me);
+  //     setSaveState("success");
+  //     setTimeout(() => setSaveState("idle"), 3000);
+  //   } catch (err: unknown) {
+  //     setSaveError(err instanceof Error ? err.message : "Kayıt başarısız");
+  //     setSaveState("error");
+  //     setTimeout(() => setSaveState("idle"), 5000);
+  //   }
+  // };
 
   const saveNotifications = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -428,7 +429,7 @@ export default function OgrenciProfilPage() {
 
               {/* ════ HEDEF SEKMESİ ════ */}
               {activeTab === "hedef" && (
-                <form onSubmit={saveGoal} className="space-y-5">
+                <form onSubmit={(e) => e.preventDefault()} className="space-y-5">
                   <div className="flex items-center gap-3 mb-6 pb-5 border-b border-slate-100">
                     <div className="w-9 h-9 rounded-xl bg-violet-50 flex items-center justify-center">
                       <Target className="w-5 h-5 text-violet-600" />
@@ -438,6 +439,18 @@ export default function OgrenciProfilPage() {
                       <p className="text-xs text-slate-500 mt-0.5">Sınav hedefini ve okul tercihlerin</p>
                     </div>
                   </div>
+
+                  {isStudent && (
+                    <div className="px-4 py-3 bg-amber-50 border-l-4 border-amber-400 rounded-r-lg">
+                      <div className="flex items-start gap-3">
+                        <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                        <div>
+                          <p className="text-sm font-semibold text-amber-900">Bu bilgileri değiştiremezsiniz</p>
+                          <p className="text-xs text-amber-700 mt-1">Hedef ve sınav bilgilerinizi değiştirmek için lütfen yöneticinizle iletişime geçin.</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   <Feedback />
 
@@ -450,11 +463,11 @@ export default function OgrenciProfilPage() {
                             <button
                               key={s.value}
                               type="button"
-                              onClick={() => setHedefSinav(s.value)}
-                              className={`flex flex-col items-start p-3.5 rounded-xl border-2 transition-all text-left ${
+                              disabled
+                              className={`flex flex-col items-start p-3.5 rounded-xl border-2 transition-all text-left opacity-60 cursor-not-allowed ${
                                 hedefSinav === s.value
                                   ? "border-indigo-500 bg-indigo-50"
-                                  : "border-slate-200 hover:border-slate-300"
+                                  : "border-slate-200"
                               }`}
                             >
                               <p className={`font-bold text-sm ${hedefSinav === s.value ? "text-indigo-700" : "text-slate-700"}`}>
@@ -473,17 +486,14 @@ export default function OgrenciProfilPage() {
                           onChange={setHedefNet}
                           type="number"
                           placeholder="Örn: 100"
+                          disabled
                         />
                       </div>
 
-                      <FormInput label="Hedef Üniversite" value={hedefOkul} onChange={setHedefOkul} placeholder="Boğaziçi Üniversitesi" />
-                      <FormInput label="Hedef Bölüm" value={hedefBolum} onChange={setHedefBolum} placeholder="Bilgisayar Mühendisliği" />
+                      <FormInput label="Hedef Üniversite" value={hedefOkul} onChange={setHedefOkul} placeholder="Boğaziçi Üniversitesi" disabled />
+                      <FormInput label="Hedef Bölüm" value={hedefBolum} onChange={setHedefBolum} placeholder="Bilgisayar Mühendisliği" disabled />
                     </>
                   )}
-
-                  <div className="flex justify-end pt-2">
-                    <SaveBtn text="Hedefi Kaydet" />
-                  </div>
                 </form>
               )}
 
