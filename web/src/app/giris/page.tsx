@@ -28,11 +28,13 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
-  // Redirect after successful login
+  // Redirect after successful login - only once
   useEffect(() => {
-    if (!user || loading) return;
+    if (!user || loading || isRedirecting) return;
     
+    setIsRedirecting(true);
     const targetPath = 
       user.role === "admin" ? "/admin" :
       user.role === "teacher" ? "/ogretmen" :
@@ -42,8 +44,8 @@ export default function LoginPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, loading]);
 
-  // Show loading during auth check
-  if (loading) {
+  // Show loading during auth check or redirect
+  if (loading || isRedirecting) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="animate-spin rounded-full h-12 w-12 border-4 border-teal-500 border-t-transparent" />
@@ -51,11 +53,15 @@ export default function LoginPage() {
     );
   }
 
+  // Don't render login form if user is already logged in
+  if (user) return null;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     clearError();
     try {
       await login(email, password);
+      // Redirect will be handled by useEffect above
     } catch {
       // hata auth-context'ten gösteriliyor
     }
