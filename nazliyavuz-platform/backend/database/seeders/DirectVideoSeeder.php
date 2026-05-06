@@ -12,17 +12,15 @@ class DirectVideoSeeder extends Seeder
     {
         $now = Carbon::now();
         
-        // 11. ve 12. sınıf konularını bul
-        $topics = DB::table('curriculum_topics as t')
-            ->join('curriculum_units as u', 't.unit_id', '=', 'u.id')
-            ->join('curriculum_subjects as s', 'u.subject_id', '=', 's.id')
-            ->whereIn('s.grade', [11, 12])
-            ->select('t.id as topic_id', 't.title as topic_title', 'u.id as unit_id', 's.id as subject_id', 's.name as subject_name', 's.slug as subject_slug', 's.grade')
-            ->limit(100)
+        // topics tablosundaki konular (content_items ile ilişkili olan)
+        $topics = DB::table('topics as t')
+            ->join('units as u', 't.unit_id', '=', 'u.id')
+            ->select('t.id as topic_id', 't.title as topic_title', 'u.id as unit_id')
+            ->where('t.is_active', true)
             ->get();
         
         if ($topics->isEmpty()) {
-            $this->command->warn('11-12. sınıf konuları bulunamadı.');
+            $this->command->warn('Konular bulunamadı.');
             return;
         }
         
@@ -31,15 +29,15 @@ class DirectVideoSeeder extends Seeder
         $videoCount = 0;
         
         foreach ($topics as $topic) {
-            // Her konu için 2-3 video oluştur
-            $count = rand(2, 3);
+            // Her konu için 3-5 video oluştur
+            $count = rand(3, 5);
             
             for ($i = 1; $i <= $count; $i++) {
                 // Content item oluştur
                 $contentItemId = DB::table('content_items')->insertGetId([
                     'topic_id' => $topic->topic_id,
                     'type' => 'video',
-                    'title' => "{$topic->topic_title} - Video {$i}",
+                    'title' => "{$topic->topic_title} - Video Ders {$i}",
                     'url' => "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
                     'duration_seconds' => rand(600, 2400),
                     'size_bytes' => rand(50000000, 200000000),
@@ -53,12 +51,12 @@ class DirectVideoSeeder extends Seeder
                 // Video detayı oluştur
                 DB::table('videos')->insert([
                     'content_item_id' => $contentItemId,
-                    'title' => "{$topic->subject_name} - {$topic->topic_title} Ders {$i}",
-                    'description' => "Bu videoda {$topic->topic_title} konusunu detaylı şekilde işleyeceğiz. {$topic->subject_name} dersi {$topic->grade}. sınıf müfredatı.",
-                    'original_file_path' => "/videos/{$topic->subject_slug}/{$topic->unit_id}/{$topic->topic_id}/video_{$i}.mp4",
-                    'cdn_url' => "https://cdn.terenceegitim.com/videos/{$topic->subject_slug}/{$topic->unit_id}/{$topic->topic_id}/video_{$i}.mp4",
+                    'title' => "{$topic->topic_title} - Video Ders {$i}",
+                    'description' => "Bu videoda {$topic->topic_title} konusunu detaylı şekilde işleyeceğiz. TYT/AYT hazırlık için kapsamlı video ders anlatımı.",
+                    'original_file_path' => "/videos/unit-{$topic->unit_id}/topic-{$topic->topic_id}/video_{$i}.mp4",
+                    'cdn_url' => "https://cdn.terenceegitim.com/videos/unit-{$topic->unit_id}/topic-{$topic->topic_id}/video_{$i}.mp4",
                     'duration_seconds' => rand(600, 2400),
-                    'thumbnail_url' => "https://cdn.terenceegitim.com/thumbnails/{$topic->subject_slug}/{$topic->unit_id}/{$topic->topic_id}/thumb_{$i}.jpg",
+                    'thumbnail_url' => "https://cdn.terenceegitim.com/thumbnails/unit-{$topic->unit_id}/topic-{$topic->topic_id}/thumb_{$i}.jpg",
                     'drm_enabled' => true,
                     'is_processed' => true,
                     'available_qualities' => json_encode(['360p', '480p', '720p', '1080p']),
