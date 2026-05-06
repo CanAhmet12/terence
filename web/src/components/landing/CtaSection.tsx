@@ -16,7 +16,8 @@ export function CtaSection() {
           <div className="absolute inset-0 gradient-hero" />
           <div className="absolute inset-0 bg-gradient-to-br from-slate-900/30 via-transparent to-slate-900/20" />
           <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-          <div className="absolute bottom-0 left-0 w-96 h-96 bg-teal-400/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
+          {/* OLD: bg-teal-400/10 */}
+          <div className="absolute bottom-0 left-0 w-96 h-96 bg-cyan-400/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
           
           <div className="relative p-12 lg:p-16 flex flex-col lg:flex-row items-center justify-between gap-10">
             <div className="text-center lg:text-left">
@@ -29,15 +30,17 @@ export function CtaSection() {
               <ul className="mt-6 flex flex-wrap justify-center lg:justify-start gap-4">
                 {benefits.map((b) => (
                   <li key={b} className="flex items-center gap-2 text-white/95 text-sm font-medium">
-                    <Check className="w-5 h-5 text-teal-300 shrink-0" />
+                    {/* OLD: text-teal-300 */}
+                    <Check className="w-5 h-5 text-cyan-300 shrink-0" />
                     {b}
                   </li>
                 ))}
               </ul>
             </div>
+            {/* OLD: text-teal-700 */}
             <Link
               href="/kayit"
-              className="shrink-0 inline-flex items-center gap-2 px-10 py-4 bg-white text-teal-700 font-bold rounded-2xl hover:bg-slate-50 transition-all duration-300 shadow-2xl shadow-black/20 hover:shadow-xl hover:-translate-y-1"
+              className="shrink-0 inline-flex items-center gap-2 px-10 py-4 bg-white text-navy-700 font-bold rounded-2xl hover:bg-slate-50 transition-all duration-300 shadow-2xl shadow-black/20 hover:shadow-xl hover:-translate-y-1"
             >
               7 Gün Ücretsiz Başla
               <ArrowRight className="w-5 h-5" />

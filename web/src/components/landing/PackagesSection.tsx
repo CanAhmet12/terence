@@ -79,12 +79,14 @@ export function PackagesSection() {
       
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-3xl mx-auto mb-20">
-          <p className="text-teal-600 font-semibold text-sm uppercase tracking-wider mb-4">
+          {/* OLD: text-teal-600 */}
+          <p className="text-cyan-600 font-semibold text-sm uppercase tracking-wider mb-4">
             Paketler
           </p>
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-slate-900 leading-tight">
             Hedefine Uygun{" "}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-600 to-teal-500">
+            {/* OLD: from-teal-600 to-teal-500 */}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-navy-700 to-cyan-600">
               Paket Seç
             </span>
           </h2>
@@ -99,12 +101,12 @@ export function PackagesSection() {
               key={pkg.name}
               className={`relative rounded-2xl border-2 p-8 bg-white transition-all duration-300 ${
                 pkg.popular
-                  ? "border-teal-500 shadow-2xl shadow-teal-500/15 scale-[1.02] lg:scale-[1.03] ring-2 ring-teal-500/20"
-                  : "border-slate-200 hover:border-teal-300 hover:shadow-xl"
+                  ? "border-cyan-500 shadow-2xl shadow-cyan-500/15 scale-[1.02] lg:scale-[1.03] ring-2 ring-cyan-500/20"
+                  : "border-slate-200 hover:border-cyan-300 hover:shadow-xl"
               }`}
             >
               {pkg.popular && (
-                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-5 py-1.5 bg-gradient-to-r from-teal-600 to-teal-500 text-white text-sm font-bold rounded-full shadow-lg shadow-teal-500/30">
+                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-5 py-1.5 bg-gradient-to-r from-navy-600 to-cyan-600 text-white text-sm font-bold rounded-full shadow-lg shadow-cyan-500/30">
                   En Popüler
                 </div>
               )}
@@ -112,7 +114,7 @@ export function PackagesSection() {
               <div className="flex items-center gap-4 mb-6">
                 <div
                   className={`w-14 h-14 rounded-2xl flex items-center justify-center ${
-                    pkg.popular ? "bg-teal-100 text-teal-600" : "bg-slate-100 text-slate-600"
+                    pkg.popular ? "bg-cyan-100 text-cyan-600" : "bg-slate-100 text-slate-600"
                   }`}
                 >
                   <pkg.icon className="w-7 h-7" strokeWidth={2} />
@@ -132,7 +134,8 @@ export function PackagesSection() {
               <ul className="space-y-4 mb-8">
                 {pkg.features.map((f) => (
                   <li key={f} className="flex items-start gap-3">
-                    <Check className="w-5 h-5 text-teal-500 shrink-0 mt-0.5" strokeWidth={2.5} />
+                    {/* OLD: text-teal-500 */}
+                    <Check className="w-5 h-5 text-cyan-500 shrink-0 mt-0.5" strokeWidth={2.5} />
                     <span className="text-slate-600 text-[15px]">{f}</span>
                   </li>
                 ))}
@@ -142,8 +145,8 @@ export function PackagesSection() {
                 href={pkg.href}
                 className={`block w-full py-4 text-center font-semibold rounded-xl transition-all duration-300 ${
                   pkg.popular
-                    ? "bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-700 hover:to-teal-600 text-white shadow-lg shadow-teal-500/25 hover:shadow-teal-500/35 hover:-translate-y-0.5"
-                    : "border-2 border-slate-200 hover:border-teal-500 text-slate-700 hover:text-teal-600 hover:bg-teal-50/50"
+                    ? "bg-gradient-to-r from-navy-600 to-cyan-600 hover:from-navy-700 hover:to-cyan-700 text-white shadow-lg shadow-cyan-500/25 hover:shadow-cyan-500/35 hover:-translate-y-0.5"
+                    : "border-2 border-slate-200 hover:border-cyan-500 text-slate-700 hover:text-cyan-600 hover:bg-cyan-50/50"
                 }`}
               >
                 {pkg.cta}

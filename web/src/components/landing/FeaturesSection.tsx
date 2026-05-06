@@ -22,7 +22,7 @@ const features = [
     icon: Target,
     title: "Hedef & Net Motoru",
     desc: "Hedef okul/bölüm seç, sistem gerekli neti hesaplasın. Her 5 günde +1 net planı otomatik oluşsun. Geride kalırsan uyarı + veli bildirimi.",
-    color: "teal",
+    color: "cyan", // OLD: teal
     preview: {
       title: "Hedef Takibi",
       items: [
@@ -54,9 +54,9 @@ const features = [
     preview: {
       title: "Performans Raporu",
       bars: [
-        { label: "Matematik", val: 78, color: "bg-teal-500" },
+        { label: "Matematik", val: 78, color: "bg-cyan-500" }, // OLD: bg-teal-500
         { label: "Türkçe", val: 65, color: "bg-blue-500" },
-        { label: "Fen Bilimleri", val: 82, color: "bg-emerald-500" },
+        { label: "Fen Bilimleri", val: 82, color: "bg-navy-500" }, // OLD: bg-emerald-500
         { label: "Sosyal Bilgiler", val: 55, color: "bg-amber-500" },
       ],
     },
@@ -65,7 +65,7 @@ const features = [
     icon: Calendar,
     title: "Akıllı Günlük Plan",
     desc: "Bugünkü görevler, bitirince tik. Sistem otomatik yeni görev ekler. Çalışmazsa veliye uyarı. Streak sistemi ile motivasyonunu canlı tut.",
-    color: "emerald",
+    color: "cyan", // OLD: emerald
     preview: {
       title: "Bugünkü Plan",
       tasks: [
@@ -106,12 +106,13 @@ const features = [
 ];
 
 const colorMap: Record<string, { bg: string; text: string; border: string; activeBg: string }> = {
-  teal: { bg: "bg-teal-50", text: "text-teal-600", border: "border-teal-200", activeBg: "bg-teal-600" },
+  cyan: { bg: "bg-cyan-50", text: "text-cyan-600", border: "border-cyan-200", activeBg: "bg-cyan-600" }, // OLD: teal
   violet: { bg: "bg-violet-50", text: "text-violet-600", border: "border-violet-200", activeBg: "bg-violet-600" },
   blue: { bg: "bg-blue-50", text: "text-blue-600", border: "border-blue-200", activeBg: "bg-blue-600" },
-  emerald: { bg: "bg-emerald-50", text: "text-emerald-600", border: "border-emerald-200", activeBg: "bg-emerald-600" },
   amber: { bg: "bg-amber-50", text: "text-amber-600", border: "border-amber-200", activeBg: "bg-amber-600" },
   indigo: { bg: "bg-indigo-50", text: "text-indigo-600", border: "border-indigo-200", activeBg: "bg-indigo-600" },
+  teal: { bg: "bg-teal-50", text: "text-teal-600", border: "border-teal-200", activeBg: "bg-teal-600" }, // Fallback kept
+  emerald: { bg: "bg-emerald-50", text: "text-emerald-600", border: "border-emerald-200", activeBg: "bg-emerald-600" }, // Fallback kept
 };
 
 export function FeaturesSection() {
@@ -127,7 +128,7 @@ export function FeaturesSection() {
   }, [isPaused, next]);
 
   const feat = features[active];
-  const c = colorMap[feat.color] || colorMap.teal;
+  const c = colorMap[feat.color] || colorMap.cyan; // OLD: colorMap.teal
 
   return (
     <section id="ozellikler" className="py-20 lg:py-28 bg-slate-50/50 relative">
@@ -135,10 +136,12 @@ export function FeaturesSection() {
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-3xl mx-auto mb-16">
-          <p className="text-teal-600 font-semibold text-sm uppercase tracking-widest mb-4">Özellikler</p>
+          {/* OLD: text-teal-600 */}
+          <p className="text-cyan-600 font-semibold text-sm uppercase tracking-widest mb-4">Özellikler</p>
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-slate-900 leading-tight">
             Hedefine Ulaşmak İçin{" "}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-600 to-teal-500">
+            {/* OLD: from-teal-600 to-teal-500 */}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-navy-700 to-cyan-600">
               İhtiyacın Olan Her Şey
             </span>
           </h2>
@@ -156,7 +159,7 @@ export function FeaturesSection() {
           {/* Sol: özellik listesi */}
           <div className="lg:col-span-2 space-y-2">
             {features.map((f, i) => {
-              const fc = colorMap[f.color] || colorMap.teal;
+              const fc = colorMap[f.color] || colorMap.cyan; // OLD: colorMap.teal
               const isAct = i === active;
               return (
                 <button
@@ -219,16 +222,19 @@ export function FeaturesSection() {
                   <div className="space-y-3">
                     {feat.preview.chat.map((msg, i) => (
                       <div key={i} className={`flex gap-2.5 ${msg.role === "user" ? "flex-row-reverse" : ""}`}>
-                        <div className={`w-7 h-7 rounded-xl flex items-center justify-center shrink-0 text-xs font-bold ${msg.role === "bot" ? "bg-gradient-to-br from-teal-500 to-teal-600 text-white" : "bg-slate-200 text-slate-600"}`}>
+                        {/* OLD: from-teal-500 to-teal-600 */}
+                        <div className={`w-7 h-7 rounded-xl flex items-center justify-center shrink-0 text-xs font-bold ${msg.role === "bot" ? "bg-gradient-to-br from-navy-600 to-cyan-600 text-white" : "bg-slate-200 text-slate-600"}`}>
                           {msg.role === "bot" ? "AI" : "S"}
                         </div>
-                        <div className={`max-w-[80%] px-3.5 py-2.5 rounded-2xl text-xs leading-relaxed ${msg.role === "bot" ? "bg-white border border-slate-100 text-slate-700" : "bg-teal-600 text-white"}`}>
+                        {/* OLD: bg-teal-600 */}
+                        <div className={`max-w-[80%] px-3.5 py-2.5 rounded-2xl text-xs leading-relaxed ${msg.role === "bot" ? "bg-white border border-slate-100 text-slate-700" : "bg-cyan-600 text-white"}`}>
                           {msg.text}
                         </div>
                       </div>
                     ))}
                     <div className="flex items-center gap-1 pl-9">
-                      {[0,1,2].map(i => <div key={i} className="w-2 h-2 rounded-full bg-teal-400 animate-bounce" style={{ animationDelay: `${i * 150}ms` }} />)}
+                      {/* OLD: bg-teal-400 */}
+                      {[0,1,2].map(i => <div key={i} className="w-2 h-2 rounded-full bg-cyan-400 animate-bounce" style={{ animationDelay: `${i * 150}ms` }} />)}
                     </div>
                   </div>
                 )}
@@ -246,9 +252,10 @@ export function FeaturesSection() {
                         </div>
                       </div>
                     ))}
-                    <div className="flex items-center gap-2 mt-4 p-3 bg-teal-50 rounded-xl">
-                      <TrendingUp className="w-4 h-4 text-teal-600" />
-                      <span className="text-xs font-semibold text-teal-700">Ortalama başarı: %70 — Türkiye top %15</span>
+                    {/* OLD: bg-teal-50, text-teal-600, text-teal-700 */}
+                    <div className="flex items-center gap-2 mt-4 p-3 bg-cyan-50 rounded-xl">
+                      <TrendingUp className="w-4 h-4 text-cyan-600" />
+                      <span className="text-xs font-semibold text-cyan-700">Ortalama başarı: %70 — Türkiye top %15</span>
                     </div>
                   </div>
                 )}
@@ -261,8 +268,10 @@ export function FeaturesSection() {
                       <Zap className="w-3.5 h-3.5 text-amber-500" />
                     </div>
                     {feat.preview.tasks.map((task, i) => (
-                      <div key={i} className={`flex items-center gap-3 p-3 rounded-xl border ${task.done ? "bg-teal-50 border-teal-100" : "bg-slate-50 border-slate-100"}`}>
-                        <div className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold ${task.done ? "bg-teal-500 text-white" : "bg-slate-200 text-slate-500"}`}>
+                      {/* OLD: bg-teal-50 border-teal-100 */}
+                      <div key={i} className={`flex items-center gap-3 p-3 rounded-xl border ${task.done ? "bg-cyan-50 border-cyan-100" : "bg-slate-50 border-slate-100"}`}>
+                        {/* OLD: bg-teal-500 */}
+                        <div className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold ${task.done ? "bg-cyan-500 text-white" : "bg-slate-200 text-slate-500"}`}>
                           {task.done ? "✓" : i + 1}
                         </div>
                         <span className={`text-xs ${task.done ? "text-slate-400 line-through" : "text-slate-700 font-medium"}`}>{task.text}</span>
@@ -278,8 +287,10 @@ export function FeaturesSection() {
                     </div>
                     <div className="space-y-2">
                       {feat.preview.options?.map((opt, i) => (
-                        <div key={i} className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all text-xs font-medium ${i === feat.preview.correct ? "bg-teal-50 border-teal-300 text-teal-800" : "bg-white border-slate-200 text-slate-600"}`}>
-                          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${i === feat.preview.correct ? "border-teal-500 bg-teal-500" : "border-slate-300"}`}>
+                        {/* OLD: bg-teal-50 border-teal-300 text-teal-800 */}
+                        <div key={i} className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all text-xs font-medium ${i === feat.preview.correct ? "bg-cyan-50 border-cyan-300 text-cyan-800" : "bg-white border-slate-200 text-slate-600"}`}>
+                          {/* OLD: border-teal-500 bg-teal-500 */}
+                          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${i === feat.preview.correct ? "border-cyan-500 bg-cyan-500" : "border-slate-300"}`}>
                             {i === feat.preview.correct && <span className="text-white text-[10px]">✓</span>}
                           </div>
                           {opt}
@@ -306,11 +317,12 @@ export function FeaturesSection() {
         {/* Mobil: grid kartlar */}
         <div className="lg:hidden grid sm:grid-cols-2 gap-5">
           {features.map((feature) => {
-            const fc = colorMap[feature.color] || colorMap.teal;
+            const fc = colorMap[feature.color] || colorMap.cyan; // OLD: colorMap.teal
             return (
+              {/* OLD: hover:border-teal-200/80 */}
               <div
                 key={feature.title}
-                className="group p-6 rounded-2xl bg-white border border-slate-200/80 shadow-sm hover:shadow-lg hover:border-teal-200/80 transition-all duration-300 hover:-translate-y-0.5"
+                className="group p-6 rounded-2xl bg-white border border-slate-200/80 shadow-sm hover:shadow-lg hover:border-cyan-200/80 transition-all duration-300 hover:-translate-y-0.5"
               >
                 <div className={`w-12 h-12 rounded-2xl ${fc.bg} flex items-center justify-center mb-4`}>
                   <feature.icon className={`w-6 h-6 ${fc.text}`} strokeWidth={2} />

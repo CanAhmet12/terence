@@ -44,7 +44,8 @@ export function HeroSection() {
     <section className="relative pt-28 pb-16 lg:pt-36 lg:pb-24 overflow-hidden">
       {/* Arka plan dekoratörleri */}
       <div className="absolute inset-0 gradient-hero-mesh" />
-      <div className="absolute top-0 right-0 w-[700px] h-[700px] rounded-full bg-teal-300/10 blur-3xl -translate-y-1/3 translate-x-1/4" />
+      {/* OLD: bg-teal-300/10 */}
+      <div className="absolute top-0 right-0 w-[700px] h-[700px] rounded-full bg-cyan-300/10 blur-3xl -translate-y-1/3 translate-x-1/4" />
       <div className="absolute bottom-0 left-0 w-[500px] h-[500px] rounded-full bg-amber-300/8 blur-3xl translate-y-1/3 -translate-x-1/4" />
       <div className="absolute inset-0 pattern-dots opacity-[0.07]" />
 
@@ -53,17 +54,20 @@ export function HeroSection() {
           {/* Sol: Metin içerik */}
           <div className="text-center lg:text-left">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/90 backdrop-blur-sm border border-slate-200/80 text-slate-700 text-sm font-semibold mb-6 shadow-sm">
-              <Sparkles className="w-4 h-4 text-amber-500" />
+              {/* OLD: text-amber-500 */}
+              <Sparkles className="w-4 h-4 text-cyan-500" />
               Hedefine Özel Akıllı Öğrenme Platformu
             </div>
 
             <h1 className="text-4xl sm:text-5xl lg:text-5xl xl:text-6xl font-extrabold text-slate-900 leading-[1.08] tracking-tight">
               Hedef Okulunu{" "}
               <span className="relative inline-block">
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-600 via-teal-500 to-emerald-500">
+                {/* OLD: from-teal-600 via-teal-500 to-emerald-500 */}
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-navy-700 via-cyan-600 to-cyan-500">
                   Kazanmak
                 </span>
-                <span className="absolute -bottom-1.5 left-0 right-0 h-1.5 bg-gradient-to-r from-teal-500 to-emerald-400 rounded-full opacity-90" />
+                {/* OLD: from-teal-500 to-emerald-400 */}
+                <span className="absolute -bottom-1.5 left-0 right-0 h-1.5 bg-gradient-to-r from-cyan-600 to-cyan-400 rounded-full opacity-90" />
               </span>{" "}
               İçin Akıllı Plan
             </h1>
@@ -79,7 +83,7 @@ export function HeroSection() {
                 <Link
                   key={exam.label}
                   href={exam.href}
-                  className="px-4 py-2 rounded-xl bg-white/80 border border-slate-200/80 text-slate-700 font-semibold text-sm shadow-sm hover:bg-teal-50 hover:border-teal-300 hover:text-teal-700 transition-all hover:-translate-y-0.5"
+                  className="px-4 py-2 rounded-xl bg-white/80 border border-slate-200/80 text-slate-700 font-semibold text-sm shadow-sm hover:bg-cyan-50 hover:border-cyan-300 hover:text-cyan-700 transition-all hover:-translate-y-0.5"
                 >
                   {exam.label}
                 </Link>
@@ -92,9 +96,10 @@ export function HeroSection() {
                 <Link
                   key={role.label}
                   href={role.href}
-                  className="group flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl border-2 border-slate-200 bg-white hover:border-teal-400 hover:bg-teal-50/50 font-semibold text-slate-800 hover:text-teal-800 transition-all duration-300 shadow-sm hover:shadow-lg text-sm"
+                  className="group flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl border-2 border-slate-200 bg-white hover:border-cyan-400 hover:bg-cyan-50/50 font-semibold text-slate-800 hover:text-cyan-800 transition-all duration-300 shadow-sm hover:shadow-lg text-sm"
                 >
-                  <role.icon className="w-4 h-4 text-teal-600" />
+                  {/* OLD: text-teal-600 */}
+                  <role.icon className="w-4 h-4 text-navy-600" />
                   {role.label}
                   <span className="text-slate-400 font-normal">— {role.desc}</span>
                 </Link>
@@ -104,14 +109,14 @@ export function HeroSection() {
             <div className="mt-6 flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
               <Link
                 href="/kayit"
-                className="group inline-flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-700 hover:to-teal-600 text-white font-bold rounded-2xl transition-all duration-300 shadow-xl shadow-teal-500/30 hover:shadow-teal-500/40 hover:-translate-y-0.5 active:scale-95"
+                className="group inline-flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-navy-600 to-cyan-600 hover:from-navy-700 hover:to-cyan-700 text-white font-bold rounded-2xl transition-all duration-300 shadow-xl shadow-cyan-500/30 hover:shadow-cyan-500/40 hover:-translate-y-0.5 active:scale-95"
               >
                 7 Gün Ücretsiz Başla
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </Link>
               <Link
                 href="/#nasil-calisir"
-                className="inline-flex items-center justify-center px-8 py-4 text-teal-700 font-semibold hover:text-teal-800 underline underline-offset-4 decoration-2"
+                className="inline-flex items-center justify-center px-8 py-4 text-navy-700 font-semibold hover:text-navy-800 underline underline-offset-4 decoration-2"
               >
                 Nasıl çalışır?
               </Link>
@@ -128,7 +133,7 @@ export function HeroSection() {
                 {["AK", "MK", "EY", "ZÖ", "BT"].map((initials, i) => (
                   <div
                     key={i}
-                    className="w-8 h-8 rounded-full border-2 border-white bg-gradient-to-br from-teal-400 to-emerald-500 flex items-center justify-center text-white text-[10px] font-bold"
+                    className="w-8 h-8 rounded-full border-2 border-white bg-gradient-to-br from-cyan-500 to-cyan-400 flex items-center justify-center text-white text-[10px] font-bold"
                   >
                     {initials}
                   </div>
@@ -162,7 +167,8 @@ export function HeroSection() {
                 <div className="grid grid-cols-3 gap-3">
                   <div className="bg-white rounded-xl p-3 border border-slate-100 shadow-sm">
                     <p className="text-[10px] text-slate-400 font-medium">Bugün Net</p>
-                    <p className="text-xl font-extrabold text-teal-600">+6</p>
+                    {/* OLD: text-teal-600 */}
+                    <p className="text-xl font-extrabold text-navy-600">+6</p>
                     <div className="flex items-center gap-1 mt-1">
                       <TrendingUp className="w-3 h-3 text-green-500" />
                       <span className="text-[10px] text-green-600 font-semibold">Hedefin %85'i</span>
@@ -186,10 +192,12 @@ export function HeroSection() {
                 <div className="bg-white rounded-xl p-3 border border-slate-100 shadow-sm">
                   <div className="flex items-center justify-between mb-2">
                     <p className="text-xs font-bold text-slate-800">Günlük Plan</p>
-                    <span className="text-[10px] font-semibold text-teal-600 bg-teal-50 px-2 py-0.5 rounded-full">2/4 tamamlandı</span>
+                    {/* OLD: text-teal-600 bg-teal-50 */}
+                    <span className="text-[10px] font-semibold text-cyan-600 bg-cyan-50 px-2 py-0.5 rounded-full">2/4 tamamlandı</span>
                   </div>
                   <div className="w-full bg-slate-100 rounded-full h-1.5 mb-2">
-                    <div className="bg-teal-500 h-1.5 rounded-full w-1/2" />
+                    {/* OLD: bg-teal-500 */}
+                    <div className="bg-cyan-500 h-1.5 rounded-full w-1/2" />
                   </div>
                   <div className="space-y-1.5">
                     {[
@@ -198,7 +206,8 @@ export function HeroSection() {
                       { text: "TYT Deneme (40 soru)", done: false },
                     ].map((task, i) => (
                       <div key={i} className="flex items-center gap-2">
-                        <div className={`w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold ${task.done ? 'bg-teal-500 text-white' : 'bg-slate-200 text-slate-500'}`}>
+                        {/* OLD: bg-teal-500 */}
+                        <div className={`w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold ${task.done ? 'bg-cyan-500 text-white' : 'bg-slate-200 text-slate-500'}`}>
                           {task.done ? '✓' : i + 1}
                         </div>
                         <span className={`text-[11px] ${task.done ? 'text-slate-400 line-through' : 'text-slate-700 font-medium'}`}>{task.text}</span>
@@ -212,7 +221,8 @@ export function HeroSection() {
                   <div className="flex items-end gap-1.5 h-12">
                     {[4, 6, 3, 7, 8, 6, 5].map((h, i) => (
                       <div key={i} className="flex-1 flex flex-col items-center gap-0.5">
-                        <div className="w-full rounded-sm bg-teal-500" style={{ height: `${(h / 8) * 100}%` }} />
+                        {/* OLD: bg-teal-500 */}
+                        <div className="w-full rounded-sm bg-cyan-500" style={{ height: `${(h / 8) * 100}%` }} />
                       </div>
                     ))}
                   </div>
