@@ -65,9 +65,10 @@ class CourseController extends Controller
             // Öğrenci için ilerleme bilgisi ekle
             if ($user && $user->isStudent()) {
                 $enrollments = CourseEnrollment::where('user_id', $user->id)
-                    ->pluck('completion_percentage', 'course_id');
+                    ->pluck('progress_percentage', 'course_id');
                 $courses = $courses->map(function ($c) use ($enrollments) {
                     $c->completion_percentage = $enrollments[$c->id] ?? 0;
+                    $c->progress_percent = $enrollments[$c->id] ?? 0; // Alias
                     $c->is_enrolled = isset($enrollments[$c->id]);
                     return $c;
                 });
