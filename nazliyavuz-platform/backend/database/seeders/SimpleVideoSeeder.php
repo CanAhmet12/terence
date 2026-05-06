@@ -78,64 +78,43 @@ class SimpleVideoSeeder extends Seeder
             return;
         }
         
-        // 11. ve 12. sınıf dersleri
-        $subjects = DB::table('curriculum_subjects')
-            ->whereIn('grade', [11, 12])
-            ->get();
-        
         $sessionCount = 0;
         
-        foreach ($subjects as $subject) {
-            // Her ders için 2 geçmiş, 1 gelecek ders
+        // Basit canlı dersler - 10 geçmiş, 5 gelecek
+        for ($i = 1; $i <= 10; $i++) {
+            $teacher = $teachers->random();
+            $sessionDate = $now->copy()->subDays(rand(1, 30));
             
-            // Geçmiş dersler (kayıtlı)
-            for ($i = 1; $i <= 2; $i++) {
-                $teacher = $teachers->random();
-                $sessionDate = $now->copy()->subDays(rand(1, 20));
-                
-                DB::table('live_sessions')->insert([
-                    'title' => "{$subject->name} - Canlı Ders Kaydı {$i}",
-                    'description' => "{$subject->name} konularının detaylı anlatımı. Soru-cevap bölümü ile interaktif ders kaydı.",
-                    'teacher_id' => $teacher->id,
-                    'subject_id' => $subject->id,
-                    'scheduled_at' => $sessionDate,
-                    'duration_minutes' => rand(60, 90),
-                    'meeting_url' => "https://meet.terenceegitim.com/live-" . \Illuminate\Support\Str::random(10),
-                    'recording_url' => "https://cdn.terenceegitim.com/recordings/session-" . \Illuminate\Support\Str::random(16) . ".mp4",
-                    'status' => 'completed',
-                    'max_participants' => rand(50, 150),
-                    'is_recorded' => true,
-                    'is_public' => true,
-                    'grade' => $subject->grade,
-                    'exam_type' => 'TYT-AYT',
-                    'thumbnail_url' => "https://cdn.terenceegitim.com/thumbnails/live-{$subject->slug}-{$i}.jpg",
-                    'created_at' => $sessionDate->copy()->subHours(24),
-                    'updated_at' => $sessionDate->copy()->addHours(2),
-                ]);
-                
-                $sessionCount++;
-            }
+            DB::table('live_sessions')->insert([
+                'teacher_id' => $teacher->id,
+                'class_room_id' => null,
+                'title' => "TYT/AYT Canlı Ders - Kayıt {$i}",
+                'daily_room_url' => "https://meet.terenceegitim.com/live-" . \Illuminate\Support\Str::random(10),
+                'daily_room_name' => "live-session-" . \Illuminate\Support\Str::random(8),
+                'scheduled_at' => $sessionDate,
+                'duration_minutes' => rand(60, 90),
+                'status' => 'ended',
+                'created_at' => $sessionDate->copy()->subHours(24),
+                'updated_at' => $sessionDate->copy()->addHours(2),
+            ]);
             
-            // Gelecek ders (planlanmış)
+            $sessionCount++;
+        }
+        
+        // Gelecek dersler
+        for ($i = 1; $i <= 5; $i++) {
             $teacher = $teachers->random();
             $sessionDate = $now->copy()->addDays(rand(1, 10));
             
             DB::table('live_sessions')->insert([
-                'title' => "{$subject->name} - Canlı Ders",
-                'description' => "{$subject->name} konularının interaktif anlatımı. Öğrencilerle soru-cevap ve problem çözümü.",
                 'teacher_id' => $teacher->id,
-                'subject_id' => $subject->id,
+                'class_room_id' => null,
+                'title' => "TYT/AYT Canlı Ders - Yaklaşan {$i}",
+                'daily_room_url' => "https://meet.terenceegitim.com/live-" . \Illuminate\Support\Str::random(10),
+                'daily_room_name' => "live-session-" . \Illuminate\Support\Str::random(8),
                 'scheduled_at' => $sessionDate,
                 'duration_minutes' => rand(60, 90),
-                'meeting_url' => "https://meet.terenceegitim.com/live-" . \Illuminate\Support\Str::random(10),
-                'recording_url' => null,
                 'status' => 'scheduled',
-                'max_participants' => rand(50, 150),
-                'is_recorded' => true,
-                'is_public' => true,
-                'grade' => $subject->grade,
-                'exam_type' => 'TYT-AYT',
-                'thumbnail_url' => "https://cdn.terenceegitim.com/thumbnails/live-{$subject->slug}-upcoming.jpg",
                 'created_at' => $now,
                 'updated_at' => $now,
             ]);
