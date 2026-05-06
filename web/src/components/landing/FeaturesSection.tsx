@@ -315,7 +315,6 @@ export function FeaturesSection() {
           {features.map((feature) => {
             const fc = colorMap[feature.color] || colorMap.cyan; // OLD: colorMap.teal
             return (
-              {/* OLD: hover:border-teal-200/80 */}
               <div
                 key={feature.title}
                 className="group p-6 rounded-2xl bg-white border border-slate-200/80 shadow-sm hover:shadow-lg hover:border-cyan-200/80 transition-all duration-300 hover:-translate-y-0.5"
