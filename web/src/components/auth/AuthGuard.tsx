@@ -29,17 +29,17 @@ export function AuthGuard({
       console.error("Redirect loop detected");
       sessionStorage.removeItem(REDIRECT_COUNTER_KEY);
       // Show error page instead of continuing redirect loop
-      if (pathname !== "/giris") {
-        router.replace("/giris?error=redirect_loop");
+      if (pathname !== "/") {
+        router.replace("/?error=redirect_loop");
       }
       return;
     }
     
     if (!user) {
-      // Don't redirect if already on login page
-      if (pathname !== "/giris") {
+      // Don't redirect if already on home or login page
+      if (pathname !== "/" && pathname !== "/giris") {
         sessionStorage.setItem(REDIRECT_COUNTER_KEY, (redirectCount + 1).toString());
-        router.replace("/giris");
+        router.replace("/");
       }
       return;
     }

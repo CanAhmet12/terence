@@ -91,7 +91,7 @@ export function DashboardHeader() {
   const handleLogout = async () => {
     setDropdownOpen(false);
     await logout();
-    router.push("/giris");
+    router.push("/");
   };
 
   if (!user) return null;

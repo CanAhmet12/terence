@@ -29,7 +29,8 @@ export function middleware(request: NextRequest) {
   }
   
   // Redirect authenticated users away from login/register pages
-  if ((pathname === '/giris' || pathname === '/kayit') && refreshToken) {
+  // Only redirect if we have a valid refresh token
+  if ((pathname === '/giris' || pathname === '/kayit') && refreshToken && refreshToken.value) {
     // Can't decode JWT here without JWT_SECRET, so redirect to a default
     // Client-side will handle routing to correct dashboard based on role
     return NextResponse.redirect(new URL('/ogrenci', request.url));

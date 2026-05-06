@@ -29,15 +29,26 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
+  // Redirect after successful login
   useEffect(() => {
-    if (!user) return;
-    if (user.role === "admin") router.replace("/admin");
-    else if (user.role === "teacher") router.replace("/ogretmen");
-    else if (user.role === "parent") router.replace("/veli");
-    else router.replace("/ogrenci");
-  }, [user, router]);
+    if (!user || loading) return;
+    
+    const targetPath = 
+      user.role === "admin" ? "/admin" :
+      user.role === "teacher" ? "/ogretmen" :
+      user.role === "parent" ? "/veli" : "/ogrenci";
+    
+    router.replace(targetPath);
+  }, [user, loading, router]);
 
-  if (user) return null;
+  // Show loading during auth check
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <div className="animate-spin rounded-full h-12 w-12 border-4 border-teal-500 border-t-transparent" />
+      </div>
+    );
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
