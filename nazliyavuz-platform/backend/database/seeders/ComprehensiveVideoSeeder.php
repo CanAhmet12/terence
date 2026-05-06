@@ -135,9 +135,7 @@ class ComprehensiveVideoSeeder extends Seeder
                 'Çağdaş Türk Tarihi'
             ];
         }
-        // Coğrafya konular
-
-ı
+        // Coğrafya konuları
         elseif (str_contains(strtolower($subject->name), 'coğrafya')) {
             $topicNames = [
                 'Fiziki Coğrafya',
