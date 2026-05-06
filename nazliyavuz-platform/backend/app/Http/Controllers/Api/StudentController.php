@@ -194,6 +194,11 @@ class StudentController extends Controller
     public function report(): JsonResponse
     {
         $user = Auth::user();
+        
+        // Get student's learning scope for filtering
+        $scope = $user->learningScope();
+        $grade = $scope['grade'];
+        $allowedExamTypes = $user->allowedExamTypes();
 
         // Weekly net scores for the last 8 weeks
         $weeklyNets = collect(range(7, 0))->map(function ($weeksAgo) use ($user) {
@@ -210,10 +215,22 @@ class StudentController extends Controller
             return ['label' => $label, 'net' => round((float)$netScore, 1)];
         })->values();
 
-        // Subject performance
+        // Subject performance - FILTERED by student's grade and exam types
         $subjectPerf = QuestionAnswer::where('question_answers.user_id', $user->id)
             ->join('questions', 'question_answers.question_id', '=', 'questions.id')
             ->whereNotNull('questions.subject')
+            // Add grade filtering
+            ->where(function($q) use ($grade) {
+                $q->where('questions.grade', $grade)
+                  ->orWhere('questions.grade', 'all')
+                  ->orWhereNull('questions.grade');
+            })
+            // Add exam type filtering
+            ->where(function($q) use ($allowedExamTypes) {
+                $q->whereIn('questions.exam_type', $allowedExamTypes)
+                  ->orWhere('questions.exam_type', 'Genel')
+                  ->orWhereNull('questions.exam_type');
+            })
             ->select(
                 'questions.subject',
                 DB::raw('COUNT(*) as total'),
@@ -229,11 +246,23 @@ class StudentController extends Controller
                 'accuracy' => $r->total > 0 ? round(($r->correct / $r->total) * 100, 1) : 0,
             ])->values();
 
-        // Weak achievements
+        // Weak achievements - FILTERED by student's grade and exam types
         $weakAchievements = QuestionAnswer::where('question_answers.user_id', $user->id)
             ->where('question_answers.is_correct', false)
             ->join('questions', 'question_answers.question_id', '=', 'questions.id')
             ->whereNotNull('questions.kazanim_kodu')
+            // Add grade filtering
+            ->where(function($q) use ($grade) {
+                $q->where('questions.grade', $grade)
+                  ->orWhere('questions.grade', 'all')
+                  ->orWhereNull('questions.grade');
+            })
+            // Add exam type filtering
+            ->where(function($q) use ($allowedExamTypes) {
+                $q->whereIn('questions.exam_type', $allowedExamTypes)
+                  ->orWhere('questions.exam_type', 'Genel')
+                  ->orWhereNull('questions.exam_type');
+            })
             ->select(
                 'questions.kazanim_kodu',
                 'questions.subject',
