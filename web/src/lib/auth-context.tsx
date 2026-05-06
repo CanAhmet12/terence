@@ -36,8 +36,10 @@ type AuthContextType = AuthState & {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-const TOKEN_KEY = "terence_token";
-const USER_KEY  = "terence_user";
+// SECURITY FIX: Tokens no longer stored in localStorage (XSS protection)
+// Access token stored in memory only (lost on refresh)
+// Refresh token stored in HttpOnly cookie (immune to XSS)
+const LOGOUT_EVENT_KEY = "logout_event";
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<AuthState>({
@@ -47,45 +49,45 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     error: null,
   });
 
+  // Initialize auth on mount using refresh token (HttpOnly cookie)
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    const token = localStorage.getItem(TOKEN_KEY);
-    if (!token) {
-      setState((s) => ({ ...s, loading: false }));
-      return;
-    }
+    const initAuth = async () => {
+      try {
+        // Try to refresh token using HttpOnly cookie
+        const refreshed = await authApi.refresh();
+        const newToken = refreshed.token.access_token;
+        
+        // Set in axios headers and state (memory only)
+        api.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
+        setAccessToken(newToken);
+        
+        // Fetch user from server
+        const user = await authApi.getMe();
+        setState({ user, token: newToken, loading: false, error: null });
+      } catch {
+        // No valid refresh token or refresh failed - user not logged in
+        setState({ user: null, token: null, loading: false, error: null });
+      }
+    };
 
-    // Axios header'ını hemen set et
-    api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    initAuth();
+  }, []);
 
-    authApi
-      .getMe()
-      .then((user) => {
-        localStorage.setItem(USER_KEY, JSON.stringify(user));
-        setState({ user, token, loading: false, error: null });
-      })
-      .catch(async () => {
-        // Token geçersiz olabilir — refresh dene
-        try {
-          const refreshed = await authApi.refresh();
-          const newToken = refreshed.token.access_token;
-          api.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
-          // Her iki anahtarı da güncelle
-          localStorage.setItem(TOKEN_KEY, newToken);
-          setAccessToken(newToken);
-          const user = await authApi.getMe();
-          localStorage.setItem(USER_KEY, JSON.stringify(user));
-          setState({ user, token: newToken, loading: false, error: null });
-        } catch {
-          // Refresh da başarısız → oturumu kapat
-          localStorage.removeItem(TOKEN_KEY);
-          localStorage.removeItem(USER_KEY);
-          clearTokens();
-          delete api.defaults.headers.common['Authorization'];
-          setState({ user: null, token: null, loading: false, error: null });
-        }
-      });
+  // Listen for logout events in other tabs
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === LOGOUT_EVENT_KEY) {
+        // Another tab logged out - clear state here too
+        delete api.defaults.headers.common['Authorization'];
+        clearTokens();
+        setState({ user: null, token: null, loading: false, error: null });
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
   const login = useCallback(async (email: string, password: string) => {
@@ -95,12 +97,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const user = res.user as User;
       const token = res.token.access_token;
       
-      // Her iki localStorage anahtarını da güncelle (axios interceptor + auth-context)
-      localStorage.setItem(TOKEN_KEY, token);
-      localStorage.setItem(USER_KEY, JSON.stringify(user));
+      // SECURITY FIX: Store token in memory only (no localStorage)
       setAccessToken(token);
-      
-      // Axios header'ını hemen set et
       api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       
       setState({ user, token, loading: false, error: null });
@@ -134,12 +132,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (res.token && res.user) {
           const token = res.token.access_token;
           
-          // Her iki localStorage anahtarını da güncelle
-          localStorage.setItem(TOKEN_KEY, token);
-          localStorage.setItem(USER_KEY, JSON.stringify(res.user));
+          // SECURITY FIX: Store token in memory only (no localStorage)
           setAccessToken(token);
-          
-          // Axios header'ını hemen set et
           api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
           
           setState({ user: res.user, token, loading: false, error: null });
@@ -157,13 +151,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = useCallback(async () => {
     try { 
-      await authApi.logout(); 
-    } catch {}
-    localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem(USER_KEY);
+      await authApi.logout(); // Clears HttpOnly refresh token cookie
+    } catch (e) {
+      console.error('Logout API call failed:', e);
+    }
+    
+    // Clear axios headers
     clearTokens();
     delete api.defaults.headers.common['Authorization'];
+    
+    // Clear state
     setState({ user: null, token: null, loading: false, error: null });
+    
+    // Clear any sessionStorage
+    sessionStorage.clear();
+    
+    // Broadcast logout event to other tabs
+    localStorage.setItem(LOGOUT_EVENT_KEY, Date.now().toString());
   }, []);
 
   const forgotPassword = useCallback(async (email: string) => {
@@ -171,7 +175,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const updateUser = useCallback((user: User) => {
-    localStorage.setItem(USER_KEY, JSON.stringify(user));
+    // SECURITY FIX: Never store user in localStorage (client-side manipulation risk)
+    // Only update in-memory state
     setState((s) => ({ ...s, user }));
   }, []);
 
