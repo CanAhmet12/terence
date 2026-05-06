@@ -417,6 +417,7 @@ Route::middleware(['auth:api'])->group(function () {
     Route::get('/courses/{id}/progress', [\App\Http\Controllers\Api\CourseController::class, 'progress']);
     Route::get('/courses/{id}', [\App\Http\Controllers\Api\CourseController::class, 'show']);
     Route::get('/courses', [\App\Http\Controllers\Api\CourseController::class, 'index']);
+    Route::get('/courses/topic/{id}', [\App\Http\Controllers\Api\CourseController::class, 'getTopicContent']);
     Route::post('/progress', [\App\Http\Controllers\Api\CourseController::class, 'updateProgress'])->middleware('student_grade');
 
     // ── Müfredat (Curriculum) ────────────────────────────────────────────

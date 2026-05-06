@@ -228,6 +228,50 @@ class CourseController extends Controller
         return response()->json(array_merge(['success' => true], $result));
     }
 
+    /**
+     * Get content items for a specific topic
+     */
+    public function getTopicContent(int $id): JsonResponse
+    {
+        $topic = \App\Models\Topic::findOrFail($id);
+        
+        $contentItems = ContentItem::where('topic_id', $id)
+            ->where('is_active', true)
+            ->orderBy('sort_order', 'asc')
+            ->with(['video'])
+            ->get();
+
+        $data = $contentItems->map(function($item) {
+            $result = [
+                'id' => $item->id,
+                'type' => $item->type,
+                'title' => $item->title,
+                'description' => $item->description,
+                'sort_order' => $item->sort_order,
+                'is_active' => $item->is_active,
+            ];
+
+            if ($item->type === 'video' && $item->video) {
+                $result['video'] = [
+                    'id' => $item->video->id,
+                    'title' => $item->video->title,
+                    'description' => $item->video->description,
+                    'cdn_url' => $item->video->cdn_url,
+                    'duration_seconds' => $item->video->duration_seconds,
+                    'thumbnail_url' => $item->video->thumbnail_url,
+                ];
+            }
+
+
+            return $result;
+        });
+
+        return response()->json([
+            'success' => true,
+            'data' => $data
+        ]);
+    }
+
     // -------------------------------------------------------
     private function recalculateCourseCompletion(int $userId, int $courseId): void
     {
