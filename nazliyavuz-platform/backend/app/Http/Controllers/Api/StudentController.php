@@ -109,11 +109,15 @@ class StudentController extends Controller
         $user     = Auth::user();
         $classIds = DB::table('class_students')->where('student_id', $user->id)->pluck('class_room_id');
 
-        $sessions = \App\Models\LiveSession::whereIn('class_room_id', $classIds)
-            ->where('status', 'scheduled')
-            ->where('scheduled_at', '>=', now())
+        // Hem sınıfa özel hem de genel (class_room_id = null) canlı dersleri getir
+        $sessions = \App\Models\LiveSession::where(function($q) use ($classIds) {
+                $q->whereIn('class_room_id', $classIds)
+                  ->orWhereNull('class_room_id'); // Genel canlı dersler
+            })
+            ->whereIn('status', ['scheduled', 'live']) // Hem planlanan hem de canlı olanlar
             ->orderBy('scheduled_at')
-            ->limit(10)
+            ->limit(20)
+            ->with('teacher:id,name,email') // Öğretmen bilgisi
             ->get();
 
         return response()->json(['success' => true, 'data' => $sessions]);
