@@ -616,7 +616,6 @@ export default function DerslerimPage() {
               color={activeColor}
             />
           ) : (
-            /* Henüz konu seçilmemiş */}
             <div className="h-full flex flex-col items-center justify-center text-center px-8">
               <div className="w-24 h-24 rounded-3xl flex items-center justify-center mb-6 bg-white border border-slate-200 shadow-sm">
                 <BookOpen className="w-10 h-10 text-slate-300" />
