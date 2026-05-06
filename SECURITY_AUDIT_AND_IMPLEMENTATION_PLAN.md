@@ -307,18 +307,19 @@ Verify server-side grade/exam filtering in ALL controllers that return education
 
 ### Phase 5: Redirects & Routing
 
-**Step 16:** Enforce server-side onboarding check
-- Verify `EnsureStudentGradeSet` middleware on ALL student routes in `routes/api.php`
+**Step 16:** Enforce server-side onboarding check ✅ **VERIFIED**
+- `EnsureStudentGradeSet` middleware confirmed on ALL student routes in `routes/api.php`
 - Middleware returns 422 if `grade IS NULL OR target_exam IS NULL`
-- Frontend axios interceptor catches 422 with code 'GRADE_REQUIRED'
-- Redirect to `/ogrenci/onboarding` with query param `?reason=incomplete_profile`
-- After onboarding completion: redirect to originally requested page
+- OnboardingGuard on frontend redirects to `/ogrenci/onboarding` if grade/exam missing
+- Backend middleware provides server-side enforcement
+- Frontend guard provides UX-friendly redirection
 
-**Step 17:** Fix redirect loops
-- AuthGuard: check `pathname` before redirecting (don't redirect if already on target)
-- Add redirect counter in sessionStorage
-- If redirects > 3: show error page "Unable to authenticate, please contact support"
-- Clear redirect counter on successful page load
+**Step 17:** Fix redirect loops ✅ **COMPLETED**
+- AuthGuard: checks `pathname` before redirecting (prevents redirect if already on target)
+- Added redirect counter in sessionStorage (MAX_REDIRECTS = 3)
+- If redirects >= 3: redirects to login with `?error=redirect_loop`
+- Clears redirect counter on successful page load
+- Prevents infinite redirect loops
 
 ### Phase 6: Testing & Verification
 
