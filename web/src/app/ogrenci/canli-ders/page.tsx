@@ -133,19 +133,19 @@ function UpcomingLessonCard({
 
   return (
     <div
-      className={`group relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800 p-6 shadow-xl transition-all hover:scale-[1.02] ${
+      className={`group relative overflow-hidden rounded-xl bg-white border border-slate-200 shadow-sm transition-all hover:shadow-md ${
         live ? "ring-2 ring-emerald-500" : ""
       }`}
     >
       {/* Background Gradient Overlay */}
-      <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/10 via-purple-600/10 to-pink-600/10 opacity-50" />
+      <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/50 via-purple-50/50 to-pink-50/50" />
 
       {/* Content */}
-      <div className="relative">
+      <div className="relative p-4">
         {/* Top Badges */}
-        <div className="mb-4 flex items-center justify-between">
+        <div className="mb-3 flex items-center justify-between">
           {/* Date Badge */}
-          <div className="flex items-center gap-1.5 rounded-full bg-slate-800/80 px-3 py-1 text-xs font-semibold text-slate-300 backdrop-blur-sm">
+          <div className="flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
             <Calendar className="h-3 w-3" />
             {new Date(lesson.starts_at ?? lesson.scheduled_at ?? "").toLocaleDateString("tr-TR", {
               day: "numeric",
@@ -165,14 +165,14 @@ function UpcomingLessonCard({
               Az Kaldı
             </div>
           ) : (
-            <div className="rounded-full bg-slate-700 px-3 py-1 text-xs font-semibold text-slate-300">
+            <div className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
               Yaklaşan
             </div>
           )}
         </div>
 
         {/* Thumbnail */}
-        <div className="mb-4">
+        <div className="mb-3">
           <GradientThumbnail
             courseId={lesson.class_room?.id}
             videoId={lesson.id}
@@ -182,23 +182,23 @@ function UpcomingLessonCard({
         </div>
 
         {/* Title & Info */}
-        <h3 className="mb-2 line-clamp-2 text-lg font-bold text-white">
+        <h3 className="mb-2 line-clamp-2 text-base font-bold text-slate-900">
           {lesson.title || lesson.class_room?.name || "Canlı Ders"}
         </h3>
 
-        <div className="mb-4 space-y-1 text-sm text-slate-400">
+        <div className="mb-3 space-y-1 text-xs text-slate-600">
           <div className="flex items-center gap-2">
-            <Clock className="h-4 w-4" />
+            <Clock className="h-3.5 w-3.5" />
             <span>{fmtDate(lesson.starts_at ?? lesson.scheduled_at ?? "")}</span>
           </div>
           {lesson.duration_minutes && (
             <div className="flex items-center gap-2">
-              <Video className="h-4 w-4" />
+              <Video className="h-3.5 w-3.5" />
               <span>{lesson.duration_minutes} dakika</span>
             </div>
           )}
           {!live && (
-            <div className="mt-2 text-xs font-semibold text-indigo-400">
+            <div className="mt-2 text-xs font-semibold text-indigo-600">
               {timeUntil(lesson.starts_at ?? lesson.scheduled_at ?? "")}
             </div>
           )}
@@ -302,18 +302,18 @@ export default function OgrenciCanliDersPage() {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-white">
+      <div className="mx-auto max-w-[1800px] px-6 py-8 lg:px-12">
         {/* Header */}
         <div className="mb-8 flex items-center justify-between">
           <div>
-            <h1 className="mb-2 text-4xl font-black tracking-tight text-white">Canlı Dersler</h1>
-            <p className="text-slate-400">Öğretmenlerinizle canlı derse katılın</p>
+            <h1 className="mb-2 text-3xl font-bold tracking-tight text-slate-900">Canlı Dersler</h1>
+            <p className="text-slate-600">Öğretmenlerinizle canlı derse katılın</p>
           </div>
           <button
             onClick={loadLessons}
             disabled={loading}
-            className="rounded-xl bg-slate-800/50 p-3 text-slate-400 transition-all hover:bg-slate-700/50 hover:text-white disabled:opacity-50"
+            className="rounded-xl bg-slate-100 p-3 text-slate-600 transition-all hover:bg-slate-200 hover:text-slate-900 disabled:opacity-50"
           >
             <RefreshCw className={`h-5 w-5 ${loading ? "animate-spin" : ""}`} />
           </button>
@@ -349,11 +349,11 @@ export default function OgrenciCanliDersPage() {
           </div>
         ) : upcoming.length === 0 && past.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 text-center">
-            <div className="mb-6 flex h-24 w-24 items-center justify-center rounded-3xl bg-indigo-950/50">
+            <div className="mb-6 flex h-24 w-24 items-center justify-center rounded-3xl bg-indigo-50">
               <Video className="h-12 w-12 text-indigo-500" />
             </div>
-            <h3 className="mb-2 text-2xl font-bold text-white">Henüz canlı ders yok</h3>
-            <p className="max-w-md text-slate-400">
+            <h3 className="mb-2 text-2xl font-bold text-slate-900">Henüz canlı ders yok</h3>
+            <p className="max-w-md text-slate-600">
               Öğretmeniniz ders oluşturduğunda burada görünür
             </p>
           </div>
@@ -363,12 +363,12 @@ export default function OgrenciCanliDersPage() {
             {upcoming.length > 0 && (
               <div>
                 <div className="mb-6 flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-950/50">
-                    <Wifi className="h-5 w-5 text-indigo-400" />
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50">
+                    <Wifi className="h-5 w-5 text-indigo-600" />
                   </div>
                   <div>
-                    <h2 className="text-2xl font-bold text-white">Yaklaşan Dersler</h2>
-                    <p className="text-sm text-slate-400">{upcoming.length} ders planlandı</p>
+                    <h2 className="text-2xl font-bold text-slate-900">Yaklaşan Dersler</h2>
+                    <p className="text-sm text-slate-600">{upcoming.length} ders planlandı</p>
                   </div>
                 </div>
                 <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -388,21 +388,21 @@ export default function OgrenciCanliDersPage() {
             {past.length > 0 && (
               <div>
                 <div className="mb-6 flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-950/50">
-                    <Play className="h-5 w-5 text-emerald-400" />
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50">
+                    <Play className="h-5 w-5 text-emerald-600" />
                   </div>
                   <div>
-                    <h2 className="text-2xl font-bold text-white">Ders Kayıtları</h2>
-                    <p className="text-sm text-slate-400">
+                    <h2 className="text-2xl font-bold text-slate-900">Ders Kayıtları</h2>
+                    <p className="text-sm text-slate-600">
                       Geçmiş dersleri tekrar izleyin
                     </p>
                   </div>
                 </div>
-                <div className="scrollbar-hide flex gap-4 overflow-x-auto scroll-smooth pb-4">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
                   {past.slice(0, 10).map((lesson) => {
                     const recording_url = lesson.recording_url || lesson.daily_room_url;
                     return (
-                      <div key={lesson.id} className="w-64 flex-shrink-0 md:w-80">
+                      <div key={lesson.id}>
                         <VideoCard
                           id={lesson.id}
                           title={lesson.title || lesson.class_room?.name || "Canlı Ders"}

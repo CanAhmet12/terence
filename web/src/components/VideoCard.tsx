@@ -87,8 +87,8 @@ export function VideoCard({
     >
       {/* Main Card Container */}
       <div
-        className={`relative overflow-hidden rounded-lg bg-slate-900 shadow-lg transition-all duration-200 ${
-          isHovered && !locked ? "scale-105 shadow-2xl ring-2 ring-white/20" : ""
+        className={`relative overflow-hidden rounded-xl bg-white shadow-sm transition-all duration-200 ${
+          isHovered && !locked ? "shadow-lg" : ""
         }`}
       >
         {/* Thumbnail Container - 16:9 aspect ratio */}
@@ -111,8 +111,8 @@ export function VideoCard({
 
           {/* Gradient Overlay */}
           <div
-            className={`absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent transition-opacity duration-200 ${
-              isHovered ? "opacity-100" : "opacity-60"
+            className={`absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent transition-opacity duration-200 ${
+              isHovered ? "opacity-100" : "opacity-40"
             }`}
           />
 
@@ -216,23 +216,19 @@ export function VideoCard({
         {/* Card Info - Always Visible */}
         <div className="p-3">
           {/* Title */}
-          <h3
-            className={`mb-1 line-clamp-2 text-sm font-semibold leading-snug text-white transition-colors ${
-              isHovered ? "text-white" : "text-slate-200"
-            }`}
-          >
+          <h3 className="mb-1 line-clamp-2 text-sm font-semibold leading-snug text-slate-900">
             {title}
           </h3>
 
           {/* Metadata */}
-          <div className="flex items-center gap-2 text-xs text-slate-400">
+          <div className="flex items-center gap-2 text-xs text-slate-600">
             {instructor && <span>{instructor}</span>}
             {instructor && date && <span>•</span>}
             {date && <span>{date}</span>}
             {progress > 0 && (
               <>
                 <span>•</span>
-                <span className="font-semibold text-red-500">{Math.round(progress)}% izlendi</span>
+                <span className="font-semibold text-indigo-600">{Math.round(progress)}% izlendi</span>
               </>
             )}
           </div>

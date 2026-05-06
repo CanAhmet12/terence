@@ -230,15 +230,15 @@ function VideoSection({
     return (
       <div className="py-8 text-center text-slate-400">
         <Film className="mx-auto mb-2 h-12 w-12 text-slate-300" />
-        <p>{emptyMessage}</p>
+        <p className="text-slate-600">{emptyMessage}</p>
       </div>
     );
   }
 
   return (
-    <div className="group/section relative">
+    <div className="group/section relative mb-2">
       {/* Section Header */}
-      <h2 className="mb-4 text-xl font-bold text-white">{title}</h2>
+      <h2 className="mb-4 text-xl font-bold text-slate-900">{title}</h2>
 
       {/* Scroll Buttons */}
       {canScrollLeft && (
@@ -261,11 +261,8 @@ function VideoSection({
         </button>
       )}
 
-      {/* Video Cards */}
-      <div
-        ref={scrollRef}
-        className="scrollbar-hide flex gap-4 overflow-x-auto scroll-smooth pb-4"
-      >
+      {/* Video Cards - Grid Layout */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
         {videos.map((video) => {
           const thumbnail = getVideoThumbnail(video.url, video.video?.thumbnail_url);
           const progress =
@@ -276,7 +273,7 @@ function VideoSection({
           const progressPercent = duration > 0 ? (progress / duration) * 100 : 0;
 
           return (
-            <div key={video.id} className="w-64 flex-shrink-0 md:w-80">
+            <div key={video.id}>
               {thumbnail ? (
                 <VideoCard
                   id={video.id}
@@ -297,11 +294,11 @@ function VideoSection({
                     title={video.title}
                     duration={duration}
                   />
-                  <div className="mt-2 px-1">
-                    <h3 className="line-clamp-2 text-sm font-semibold text-white">
+                  <div className="mt-2">
+                    <h3 className="line-clamp-2 text-sm font-semibold text-slate-900">
                       {video.title}
                     </h3>
-                    <p className="mt-1 text-xs text-slate-400">{video.course_title}</p>
+                    <p className="mt-1 text-xs text-slate-600">{video.course_title}</p>
                   </div>
                 </div>
               )}
@@ -473,20 +470,20 @@ export default function VideoPage() {
         <VideoPlayerModal video={activeVideo} token={token} onClose={() => setActiveVideo(null)} />
       )}
 
-      <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
-        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <div className="min-h-screen bg-white">
+        <div className="mx-auto max-w-[1800px] px-6 py-8 lg:px-12">
           {/* Header */}
           <div className="mb-8">
-            <h1 className="mb-2 text-4xl font-black tracking-tight text-white">
-              Video Kütüphanesi
+            <h1 className="mb-2 text-3xl font-bold tracking-tight text-slate-900">
+              Video & PDF
             </h1>
-            <p className="text-slate-400">
+            <p className="text-slate-600">
               Tüm derslerinizi istediğiniz hızda izleyin, kaldığınız yerden devam edin
             </p>
           </div>
 
           {/* Search & Filters */}
-          <div className="mb-8 flex flex-wrap gap-3">
+          <div className="mb-6 flex flex-wrap gap-3">
             {/* Search */}
             <div className="relative flex-1 min-w-[250px]">
               <Search className="absolute left-4 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-slate-400" />
@@ -495,7 +492,7 @@ export default function VideoPage() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Video ara..."
-                className="w-full rounded-lg border border-slate-700 bg-slate-800/50 py-3 pl-11 pr-4 text-sm text-white placeholder-slate-400 backdrop-blur-sm transition-all focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-500/20"
+                className="w-full rounded-lg border border-slate-200 bg-white py-2.5 pl-11 pr-4 text-sm text-slate-900 placeholder-slate-400 shadow-sm transition-all focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
               />
             </div>
 
@@ -504,7 +501,7 @@ export default function VideoPage() {
           </div>
 
           {/* Quick Filters */}
-          <div className="mb-8 flex gap-3">
+          <div className="mb-8 flex gap-2">
             {[
               { value: "all", label: "Tümü" },
               { value: "continue", label: "İzlemeye Devam Et" },
@@ -516,8 +513,8 @@ export default function VideoPage() {
                 onClick={() => setQuickFilter(value as typeof quickFilter)}
                 className={`rounded-lg px-4 py-2 text-sm font-semibold transition-all ${
                   quickFilter === value
-                    ? "bg-red-600 text-white shadow-lg shadow-red-500/25"
-                    : "bg-slate-800/50 text-slate-300 hover:bg-slate-700/50"
+                    ? "bg-indigo-600 text-white shadow-sm"
+                    : "bg-slate-100 text-slate-700 hover:bg-slate-200"
                 }`}
               >
                 {label}
@@ -541,9 +538,9 @@ export default function VideoPage() {
             </div>
           ) : filteredVideos.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-24 text-center">
-              <Film className="mb-4 h-20 w-20 text-slate-700" />
-              <h3 className="mb-2 text-xl font-bold text-white">Video bulunamadı</h3>
-              <p className="text-slate-400">
+              <Film className="mb-4 h-20 w-20 text-slate-300" />
+              <h3 className="mb-2 text-xl font-bold text-slate-900">Video bulunamadı</h3>
+              <p className="text-slate-600">
                 Filtrelerinizi değiştirmeyi deneyin veya daha sonra tekrar kontrol edin
               </p>
             </div>
