@@ -142,7 +142,8 @@ api.interceptors.response.use(
         return api(originalRequest)
       } catch {
         clearTokens()
-        window.location.href = '/giris'
+        // Don't force page reload - let the auth context handle redirect
+        // window.location.href will cause infinite refresh loops
         return Promise.reject(error)
       }
     }
