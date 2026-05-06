@@ -1636,5 +1636,76 @@ Object.assign(api, {
   getMyCurriculumProgress: curriculumApi.getMyCurriculumProgress.bind(curriculumApi),
 })
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// Video Utilities
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Extract YouTube video ID from URL
+ */
+export function extractYouTubeId(url: string): string | null {
+  const patterns = [
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/,
+    /youtube\.com\/watch\?.*v=([a-zA-Z0-9_-]{11})/,
+  ];
+  
+  for (const pattern of patterns) {
+    const match = url.match(pattern);
+    if (match && match[1]) return match[1];
+  }
+  
+  return null;
+}
+
+/**
+ * Extract Vimeo video ID from URL
+ */
+export function extractVimeoId(url: string): string | null {
+  const pattern = /vimeo\.com\/(\d+)/;
+  const match = url.match(pattern);
+  return match?.[1] || null;
+}
+
+/**
+ * Get video thumbnail URL (YouTube, Vimeo, or fallback)
+ */
+export function getVideoThumbnail(url: string | null, thumbnailUrl?: string | null): string | null {
+  // 1. Use provided thumbnail if available
+  if (thumbnailUrl) return thumbnailUrl;
+  
+  // 2. No URL provided
+  if (!url) return null;
+  
+  // 3. Extract YouTube thumbnail
+  if (url.includes('youtube.com') || url.includes('youtu.be')) {
+    const id = extractYouTubeId(url);
+    if (id) {
+      // Try maxresdefault first (1920x1080), fallback to hqdefault (480x360)
+      return `https://img.youtube.com/vi/${id}/maxresdefault.jpg`;
+    }
+  }
+  
+  // 4. Extract Vimeo thumbnail (requires API call, return null for now)
+  if (url.includes('vimeo.com')) {
+    const id = extractVimeoId(url);
+    if (id) {
+      // Vimeo thumbnails require API call, use placeholder
+      return `https://vumbnail.com/${id}.jpg`;
+    }
+  }
+  
+  return null;
+}
+
+/**
+ * Check if URL is a video streaming service
+ */
+export function isStreamingVideo(url: string | null): boolean {
+  if (!url) return false;
+  return url.includes('youtube.com') || 
+         url.includes('youtu.be') || 
+         url.includes('vimeo.com');
+}
+
 export { authApi }
 export default api
