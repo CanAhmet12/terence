@@ -407,10 +407,10 @@ Route::middleware(['auth:api'])->group(function () {
 
     // â”€â”€ Auth (Education) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     Route::get('/auth/me', [\App\Http\Controllers\Api\AuthController::class, 'me']);
-    Route::patch('/user/profile', [\App\Http\Controllers\Api\AuthController::class, 'updateProfile']);
-    Route::post('/user/goal', [\App\Http\Controllers\Api\AuthController::class, 'updateGoal']);
-    Route::post('/user/change-password', [\App\Http\Controllers\Api\AuthController::class, 'changePassword']);
-    Route::post('/user/photo', [\App\Http\Controllers\Api\AuthController::class, 'uploadProfilePhoto']);
+    Route::patch('/user/profile', [\App\Http\Controllers\Api\AuthController::class, 'updateProfile'])->middleware('throttle:10,1');
+    Route::post('/user/goal', [\App\Http\Controllers\Api\AuthController::class, 'updateGoal'])->middleware('throttle:10,1');
+    Route::post('/user/change-password', [\App\Http\Controllers\Api\AuthController::class, 'changePassword'])->middleware('throttle:5,1');
+    Route::post('/user/photo', [\App\Http\Controllers\Api\AuthController::class, 'uploadProfilePhoto'])->middleware('throttle:10,1');
 
     // â”€â”€ Kurslar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     Route::post('/courses/{id}/enroll', [\App\Http\Controllers\Api\CourseController::class, 'enroll'])->middleware('student_grade');
