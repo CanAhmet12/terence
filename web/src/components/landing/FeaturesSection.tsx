@@ -268,9 +268,7 @@ export function FeaturesSection() {
                       <Zap className="w-3.5 h-3.5 text-amber-500" />
                     </div>
                     {feat.preview.tasks.map((task, i) => (
-                      {/* OLD: bg-teal-50 border-teal-100 */}
                       <div key={i} className={`flex items-center gap-3 p-3 rounded-xl border ${task.done ? "bg-cyan-50 border-cyan-100" : "bg-slate-50 border-slate-100"}`}>
-                        {/* OLD: bg-teal-500 */}
                         <div className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold ${task.done ? "bg-cyan-500 text-white" : "bg-slate-200 text-slate-500"}`}>
                           {task.done ? "✓" : i + 1}
                         </div>
@@ -287,9 +285,7 @@ export function FeaturesSection() {
                     </div>
                     <div className="space-y-2">
                       {feat.preview.options?.map((opt, i) => (
-                        {/* OLD: bg-teal-50 border-teal-300 text-teal-800 */}
                         <div key={i} className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all text-xs font-medium ${i === feat.preview.correct ? "bg-cyan-50 border-cyan-300 text-cyan-800" : "bg-white border-slate-200 text-slate-600"}`}>
-                          {/* OLD: border-teal-500 bg-teal-500 */}
                           <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${i === feat.preview.correct ? "border-cyan-500 bg-cyan-500" : "border-slate-300"}`}>
                             {i === feat.preview.correct && <span className="text-white text-[10px]">✓</span>}
                           </div>
