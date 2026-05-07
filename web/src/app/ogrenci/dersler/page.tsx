@@ -228,25 +228,9 @@ export default function DerslerimPage() {
     }
   };
 
-  // Filtered subjects - by default show user's exam type
+  // Filtered subjects - by default show ALL subjects since backend already filters
   const filteredSubjects = subjects.filter((s) => {
     const matchesSearch = search ? s.name.toLowerCase().includes(search.toLowerCase()) : true;
-    
-    // If filter is set, use it
-    if (examFilter && examFilter !== "ALL") {
-      return matchesSearch && s.exam_type === examFilter;
-    }
-    
-    // Otherwise, show subjects matching user's target exam
-    if (examStr && examStr !== "ALL") {
-      const userExamTypes = examStr.split("-"); // Handle "TYT-AYT"
-      return matchesSearch && (
-        userExamTypes.some(et => s.exam_type?.includes(et)) ||
-        s.exam_type === "Genel" ||
-        s.exam_type === "all"
-      );
-    }
-    
     return matchesSearch;
   });
 
@@ -347,120 +331,142 @@ export default function DerslerimPage() {
 
       {/* ═══ SIDEBAR ═══ */}
       <aside
-        className={`fixed left-0 top-16 z-40 h-[calc(100vh-4rem)] w-72 overflow-y-auto border-r border-slate-200 bg-white shadow-lg transition-all duration-300 ease-in-out ${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        } lg:translate-x-0 lg:shadow-none`}
+        className={`fixed left-0 top-16 z-40 h-[calc(100vh-4rem)] w-80 overflow-y-auto border-r border-slate-200 bg-white transition-all duration-300 ease-in-out lg:block ${
+          sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+        }`}
       >
-        <div className="p-4">
-          <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-sm font-bold text-slate-700">Dersler</h3>
-            <button
-              onClick={() => setSidebarOpen(false)}
-              className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 lg:hidden"
-            >
-              <X className="h-4 w-4" />
-            </button>
+        <div className="flex h-full flex-col">
+          {/* Sidebar Header */}
+          <div className="border-b border-slate-100 bg-gradient-to-r from-cyan-50 to-teal-50 p-6">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <BookOpen className="h-5 w-5 text-cyan-600" />
+                <h2 className="text-lg font-bold text-slate-900">Derslerim</h2>
+              </div>
+              <button
+                onClick={() => setSidebarOpen(false)}
+                className="rounded-lg p-2 text-slate-400 hover:bg-white/80 lg:hidden"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            {gradeStr && examStr && (
+              <div className="flex items-center gap-2">
+                <div className="rounded-lg bg-white/80 px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm">
+                  {gradeStr === "mezun" ? "Mezun" : `${gradeStr}. Sınıf`}
+                </div>
+                <div className="rounded-lg bg-cyan-100 px-3 py-1.5 text-xs font-semibold text-cyan-700 shadow-sm">
+                  {examStr}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Search */}
+          <div className="border-b border-slate-100 p-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Ders ara..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full rounded-lg border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm outline-none transition-all focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100"
+              />
+            </div>
           </div>
 
           {/* Subject List */}
-          {loadingList ? (
-            <div className="space-y-2">
-              {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="h-16 animate-pulse rounded-xl bg-slate-100" />
-              ))}
-            </div>
-          ) : filteredSubjects.length === 0 ? (
-            <p className="py-8 text-center text-sm text-slate-400">Ders bulunamadı</p>
-          ) : (
-            <div className="space-y-1">
-              {filteredSubjects.map((subject) => {
-                const color = SUBJECT_COLORS[subject.name] ?? subject.color ?? "#6366f1";
-                const isActive = activeSubject?.slug === subject.slug;
-                const units = unitsBySlug[subject.slug] ?? [];
-                const totalTopics = units.reduce((sum, u) => sum + u.total_topics, 0);
-                const completedTopics = units.reduce((sum, u) => sum + u.completed_topics, 0);
-                const progress = totalTopics > 0 ? Math.round((completedTopics / totalTopics) * 100) : 0;
+          <div className="flex-1 overflow-y-auto p-4">
+            {loadingList ? (
+              <div className="space-y-3">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="h-20 animate-pulse rounded-xl bg-slate-100" />
+                ))}
+              </div>
+            ) : filteredSubjects.length === 0 ? (
+              <div className="py-12 text-center">
+                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100">
+                  <BookOpen className="h-8 w-8 text-slate-400" />
+                </div>
+                <p className="mb-2 text-sm font-semibold text-slate-700">Henüz ders eklenmemiş</p>
+                <p className="text-xs text-slate-500">
+                  {gradeStr}. Sınıf {examStr} için<br />dersler yakında eklenecek
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {filteredSubjects.map((subject) => {
+                  const color = SUBJECT_COLORS[subject.name] ?? subject.color ?? "#6366f1";
+                  const isActive = activeSubject?.slug === subject.slug;
+                  const units = unitsBySlug[subject.slug] ?? [];
+                  const totalTopics = units.reduce((sum, u) => sum + u.total_topics, 0);
+                  const completedTopics = units.reduce((sum, u) => sum + u.completed_topics, 0);
+                  const progress = totalTopics > 0 ? Math.round((completedTopics / totalTopics) * 100) : 0;
 
-                return (
-                  <div key={subject.slug} className="rounded-xl border border-slate-100">
-                    <button
-                      onClick={() => handleSubjectSelect(subject)}
-                      className={`flex w-full items-center gap-3 rounded-xl p-3 text-left transition-all ${
-                        isActive ? "bg-slate-50" : "hover:bg-slate-50"
-                      }`}
-                    >
-                      <div
-                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-lg"
-                        style={{ background: `${color}15` }}
+                  return (
+                    <div key={subject.slug} className={`rounded-xl border-2 transition-all ${
+                      isActive ? "border-cyan-200 bg-cyan-50/30 shadow-sm" : "border-slate-100 hover:border-slate-200 hover:bg-slate-50"
+                    }`}>
+                      <button
+                        onClick={() => handleSubjectSelect(subject)}
+                        className="flex w-full items-center gap-3 p-4 text-left"
                       >
-                        {subject.icon}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-bold text-slate-900">{subject.name}</p>
-                        {units.length > 0 && (
-                          <p className="text-xs text-slate-400">
-                            {completedTopics}/{totalTopics} konu
-                          </p>
-                        )}
-                      </div>
-                      {units.length > 0 && (
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center">
-                          <svg className="h-10 w-10 -rotate-90 transform">
-                            <circle
-                              cx="20"
-                              cy="20"
-                              r="16"
-                              stroke="currentColor"
-                              strokeWidth="3"
-                              fill="none"
-                              className="text-slate-100"
+                        <div
+                          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-xl font-semibold shadow-sm"
+                          style={{ 
+                            background: `linear-gradient(135deg, ${color}20, ${color}10)`,
+                            color: color
+                          }}
+                        >
+                          {subject.icon || subject.name.charAt(0)}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="mb-0.5 truncate text-sm font-bold text-slate-900">{subject.name}</p>
+                          {units.length > 0 ? (
+                            <div className="flex items-center gap-2">
+                              <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-slate-100">
+                                <div
+                                  className="h-full rounded-full transition-all duration-500"
+                                  style={{ width: `${progress}%`, backgroundColor: color }}
+                                />
+                              </div>
+                              <span className="text-xs font-semibold text-slate-500">{progress}%</span>
+                            </div>
+                          ) : (
+                            <p className="text-xs text-slate-400">İçerik yükleniyor...</p>
+                          )}
+                        </div>
+                        <ChevronRight className={`h-5 w-5 text-slate-400 transition-transform ${
+                          isActive ? "rotate-90" : ""
+                        }`} />
+                      </button>
+
+                      {/* Units & Topics */}
+                      {isActive && units.length > 0 && (
+                        <div className="border-t border-slate-100 bg-white/50 p-2">
+                          {units.map((unit) => (
+                            <UnitAccordion
+                              key={unit.id}
+                              unit={unit}
+                              color={color}
+                              activeTopic={activeTopic}
+                              onTopicSelect={(topic) => handleTopicSelect(topic, unit)}
                             />
-                            <circle
-                              cx="20"
-                              cy="20"
-                              r="16"
-                              stroke={color}
-                              strokeWidth="3"
-                              fill="none"
-                              strokeDasharray={`${2 * Math.PI * 16}`}
-                              strokeDashoffset={`${2 * Math.PI * 16 * (1 - progress / 100)}`}
-                              className="transition-all duration-500"
-                            />
-                          </svg>
-                          <span className="absolute text-xs font-bold" style={{ color }}>
-                            {progress}
-                          </span>
+                          ))}
                         </div>
                       )}
-                      {loadingSlug === subject.slug && (
-                        <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
-                      )}
-                    </button>
-
-                    {/* Units & Topics */}
-                    {isActive && units.length > 0 && (
-                      <div className="border-t border-slate-100 p-2">
-                        {units.map((unit) => (
-                          <UnitAccordion
-                            key={unit.id}
-                            unit={unit}
-                            color={color}
-                            activeTopic={activeTopic}
-                            onTopicSelect={(topic) => handleTopicSelect(topic, unit)}
-                          />
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
       </aside>
 
       {/* ═══ MAIN CONTENT ═══ */}
-      <main className="ml-0 mt-16 flex-1 overflow-y-auto lg:ml-72">
+      <main className="ml-0 mt-16 flex-1 overflow-y-auto bg-slate-50 lg:ml-80">
         {activeTopic ? (
           <div className="container mx-auto max-w-7xl p-4 md:p-6">
             {/* Video/PDF Player Section */}
@@ -669,18 +675,30 @@ export default function DerslerimPage() {
           </div>
         ) : (
           <div className="flex h-full items-center justify-center p-6">
-            <div className="text-center">
-              <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-2xl bg-slate-100">
-                <BookOpen className="h-10 w-10 text-slate-300" />
+            <div className="max-w-md text-center">
+              <div className="relative mx-auto mb-6">
+                <div className="absolute inset-0 animate-pulse rounded-3xl bg-gradient-to-br from-cyan-100 to-teal-100 blur-2xl opacity-50" />
+                <div className="relative mx-auto flex h-24 w-24 items-center justify-center rounded-3xl bg-gradient-to-br from-cyan-500 to-teal-500 shadow-xl">
+                  <BookOpen className="h-12 w-12 text-white" />
+                </div>
               </div>
-              <h2 className="mb-2 text-xl font-bold text-slate-700">
-                {activeSubject ? "Bir konu seçin" : "Bir ders seçin"}
+              <h2 className="mb-3 text-2xl font-bold text-slate-900">
+                {activeSubject ? "Konu Seçin" : "Ders Seçin"}
               </h2>
-              <p className="text-slate-500">
+              <p className="mb-6 text-slate-600">
                 {activeSubject
-                  ? "Soldan bir konu seçin, içerik burada açılacak"
-                  : "Soldaki menüden bir ders seçin"}
+                  ? "Sol menüden bir konu seçerek video dersler ve PDF notlara ulaşabilirsiniz"
+                  : "Sol menüden başlamak istediğiniz dersi seçin"}
               </p>
+              {!activeSubject && (
+                <button
+                  onClick={() => setSidebarOpen(true)}
+                  className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-cyan-600 to-teal-600 px-6 py-3 font-semibold text-white shadow-lg shadow-cyan-500/25 transition-all hover:shadow-xl hover:shadow-cyan-500/30 lg:hidden"
+                >
+                  <Menu className="h-5 w-5" />
+                  Dersleri Göster
+                </button>
+              )}
             </div>
           </div>
         )}
