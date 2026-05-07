@@ -8,10 +8,12 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (Schema::hasColumn('users', 'exam_date')) {
+            return;
+        }
+        // Prod şemada `streak_days` her zaman yok; `after()` MySQL hatasına yol açıyor.
         Schema::table('users', function (Blueprint $table) {
-            if (!Schema::hasColumn('users', 'exam_date')) {
-                $table->date('exam_date')->nullable()->after('streak_days');
-            }
+            $table->date('exam_date')->nullable();
         });
     }
 
