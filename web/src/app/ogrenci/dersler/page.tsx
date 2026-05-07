@@ -65,8 +65,8 @@ export default function DerslerimPage() {
   const [loadingSlug, setLoadingSlug] = useState<string | null>(null);
   const [loadingList, setLoadingList] = useState(true);
   const [search, setSearch] = useState("");
-  const [examFilter, setExamFilter] = useState<string>("ALL");
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [examFilter, setExamFilter] = useState<string>("");
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   // Active selection
   const [activeSubject, setActiveSubject] = useState<CurriculumSubject | null>(null);
@@ -98,6 +98,18 @@ export default function DerslerimPage() {
     if (!authLoading) loadSubjects();
   }, [authLoading, loadSubjects]);
 
+  // Set exam filter based on user's target exam
+  useEffect(() => {
+    if (examStr && !examFilter) {
+      // Map target_exam to filter
+      if (examStr.includes("TYT")) setExamFilter("TYT");
+      else if (examStr.includes("AYT")) setExamFilter("AYT");
+      else if (examStr.includes("LGS")) setExamFilter("LGS");
+      else if (examStr.includes("KPSS")) setExamFilter("KPSS");
+      else setExamFilter("ALL");
+    }
+  }, [examStr, examFilter]);
+
   // Load units for subject
   const loadUnits = useCallback(
     async (slug: string) => {
@@ -118,7 +130,10 @@ export default function DerslerimPage() {
   // Handle subject selection
   const handleSubjectSelect = async (subject: CurriculumSubject) => {
     setActiveSubject(subject);
-    setSidebarOpen(true);
+    // Close sidebar on mobile after selection
+    if (window.innerWidth < 1024) {
+      setSidebarOpen(false);
+    }
 
     if (!unitsBySlug[subject.slug]) {
       await loadUnits(subject.slug);
@@ -213,11 +228,26 @@ export default function DerslerimPage() {
     }
   };
 
-  // Filtered subjects
+  // Filtered subjects - by default show user's exam type
   const filteredSubjects = subjects.filter((s) => {
     const matchesSearch = search ? s.name.toLowerCase().includes(search.toLowerCase()) : true;
-    const matchesExam = examFilter === "ALL" ? true : s.exam_type === examFilter;
-    return matchesSearch && matchesExam;
+    
+    // If filter is set, use it
+    if (examFilter && examFilter !== "ALL") {
+      return matchesSearch && s.exam_type === examFilter;
+    }
+    
+    // Otherwise, show subjects matching user's target exam
+    if (examStr && examStr !== "ALL") {
+      const userExamTypes = examStr.split("-"); // Handle "TYT-AYT"
+      return matchesSearch && (
+        userExamTypes.some(et => s.exam_type?.includes(et)) ||
+        s.exam_type === "Genel" ||
+        s.exam_type === "all"
+      );
+    }
+    
+    return matchesSearch;
   });
 
   // Guards
@@ -300,26 +330,18 @@ export default function DerslerimPage() {
           </div>
         </div>
 
-        {/* Right: Filters */}
+        {/* Right: User info */}
         <div className="flex items-center gap-2">
-          <div className="hidden items-center gap-1 sm:flex">
-            {Object.entries(EXAM_FILTERS).map(([key, label]) => (
-              <button
-                key={key}
-                onClick={() => setExamFilter(key)}
-                className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
-                  examFilter === key
-                    ? "bg-indigo-600 text-white"
-                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                }`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-          <button className="rounded-lg p-2 text-slate-600 hover:bg-slate-100 sm:hidden">
-            <Filter className="h-5 w-5" />
-          </button>
+          {gradeStr && examStr && (
+            <div className="hidden items-center gap-2 sm:flex">
+              <div className="rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700">
+                {gradeStr === "mezun" ? "Mezun" : `${gradeStr}. Sınıf`}
+              </div>
+              <div className="rounded-lg bg-indigo-100 px-3 py-1.5 text-xs font-semibold text-indigo-700">
+                {examStr}
+              </div>
+            </div>
+          )}
         </div>
       </header>
 
