@@ -35,8 +35,11 @@ function StatCard({
   bgColor: string;
   loading?: boolean;
 }) {
+  const borderColor = color.replace('text-', 'border-');
+  
   return (
-    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 hover:shadow-md transition-shadow">
+    <div className={`bg-white rounded-2xl border border-slate-100 shadow-sm p-5 hover:shadow-md transition-shadow relative overflow-hidden`}>
+      <div className={`absolute bottom-0 left-0 right-0 h-1 ${borderColor.replace('border-', 'bg-')}`} />
       <div className="flex items-center justify-between mb-3">
         <div className={`w-10 h-10 rounded-xl ${bgColor} flex items-center justify-center shrink-0`}>
           <Icon className={`w-5 h-5 ${color}`} strokeWidth={2} />

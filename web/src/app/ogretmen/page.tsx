@@ -210,24 +210,28 @@ export default function OgretmenDashboardPage() {
 
         {/* ── KPI Kartları ── */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {KPI_CARDS.map(({ label, value, icon: Icon, color, bg }) => (
-            <div key={label} className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 hover:shadow-md transition-shadow">
-              <div className={`w-10 h-10 rounded-xl ${bg} flex items-center justify-center mb-4`}>
-                <Icon className={`w-5 h-5 ${color}`} strokeWidth={2} />
+          {KPI_CARDS.map(({ label, value, icon: Icon, color, bg }) => {
+            const borderColor = color.replace('text-', 'bg-');
+            return (
+              <div key={label} className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 hover:shadow-md transition-shadow relative overflow-hidden">
+                <div className={`absolute bottom-0 left-0 right-0 h-1 ${borderColor}`} />
+                <div className={`w-10 h-10 rounded-xl ${bg} flex items-center justify-center mb-4`}>
+                  <Icon className={`w-5 h-5 ${color}`} strokeWidth={2} />
+                </div>
+                {loading ? (
+                  <>
+                    <Skeleton className="h-7 w-16 mb-1" />
+                    <Skeleton className="h-4 w-24" />
+                  </>
+                ) : (
+                  <>
+                    <p className="text-2xl font-black text-slate-900 leading-none">{value}</p>
+                    <p className="text-xs text-slate-500 font-medium mt-1">{label}</p>
+                  </>
+                )}
               </div>
-              {loading ? (
-                <>
-                  <Skeleton className="h-7 w-16 mb-1" />
-                  <Skeleton className="h-4 w-24" />
-                </>
-              ) : (
-                <>
-                  <p className="text-2xl font-black text-slate-900 leading-none">{value}</p>
-                  <p className="text-xs text-slate-500 font-medium mt-1">{label}</p>
-                </>
-              )}
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* ── Ana Grid ── */}
