@@ -3,23 +3,22 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
-import { api, CurriculumSubject, CurriculumUnit, CurriculumTopic } from "@/lib/api";
+import { 
+  api, 
+  CurriculumSubject, 
+  CurriculumUnit, 
+  CurriculumTopic,
+  extractYouTubeId,
+  extractVimeoId,
+  getVideoThumbnail
+} from "@/lib/api";
 import {
-  ChevronDown, ChevronRight, Search, CheckCircle,
-  BookOpen, Settings, Loader2, GraduationCap,
-  X, Play, FileText, FileQuestion, BookMarked,
-  ExternalLink, Sparkles, BarChart2,
+  ChevronDown, ChevronRight, Search, CheckCircle, Circle,
+  BookOpen, Loader2, GraduationCap, Play, FileText,
+  Menu, X, Filter, Home, ExternalLink, Clock
 } from "lucide-react";
 
-const EXAM_TAB_LABELS: Record<string, string> = {
-  TYT: "TYT",
-  AYT: "AYT",
-  LGS: "LGS",
-  KPSS: "KPSS",
-  ORTAK: "Ortak",
-};
-
-// ─── Renkler ──────────────────────────────────────────────────────────────────
+// ─── Constants ────────────────────────────────────────────────────────────────
 
 const SUBJECT_COLORS: Record<string, string> = {
   "Matematik": "#2563eb", "TYT Matematik": "#2563eb", "AYT Matematik": "#1d4ed8", "LGS Matematik": "#0891b2",
@@ -33,611 +32,804 @@ const SUBJECT_COLORS: Record<string, string> = {
   "KPSS Genel Yetenek": "#4338ca", "KPSS Genel Kültür": "#5b21b6",
 };
 
-const CONTENT_ICONS: Record<string, { Icon: typeof Play; color: string; label: string }> = {
-  video: { Icon: Play,         color: "#ef4444", label: "Video" },
-  pdf:   { Icon: FileText,     color: "#f59e0b", label: "PDF"   },
-  quiz:  { Icon: FileQuestion, color: "#8b5cf6", label: "Test"  },
-  text:  { Icon: BookMarked,   color: "#0ea5e9", label: "Metin" },
+const EXAM_FILTERS: Record<string, string> = {
+  ALL: "Tümü",
+  TYT: "TYT",
+  AYT: "AYT",
+  LGS: "LGS",
+  KPSS: "KPSS",
 };
 
-// ─── Sağ Taraf: Seçili Konu İçerik Paneli ─────────────────────────────────────
+// ─── Types ────────────────────────────────────────────────────────────────────
 
-function ContentPanel({ topic, subject, unit, color }: {
-  topic: CurriculumTopic;
-  subject: CurriculumSubject;
-  unit: CurriculumUnit;
-  color: string;
-}) {
-  const items = topic.content_items ?? [];
+type ContentItem = {
+  id: number;
+  type: "video" | "pdf" | "quiz" | "text";
+  title: string;
+  url?: string;
+  duration_seconds?: number;
+  thumbnail_url?: string;
+  is_free?: boolean;
+  description?: string;
+};
 
-  return (
-    <div className="flex flex-col h-full">
-      {/* Üst başlık */}
-      <div className="px-8 py-6 border-b border-slate-200 bg-white">
-        <div className="flex items-center gap-2 text-sm text-slate-400 mb-2">
-          <span>{subject.icon} {subject.name}</span>
-          <ChevronRight className="w-3 h-3" />
-          <span>{unit.title}</span>
-        </div>
-        <h1 className="text-2xl font-bold text-slate-900">{topic.title}</h1>
-        {topic.meb_code && (
-          <span className="inline-block mt-2 text-xs font-bold px-2.5 py-1 rounded-lg"
-            style={{ background: `${color}12`, color }}>
-            {topic.meb_code}
-          </span>
-        )}
-      </div>
-
-      {/* İçerik alanı */}
-      <div className="flex-1 overflow-y-auto px-8 py-7 space-y-8 bg-slate-50">
-
-        {/* İçerikler varsa göster */}
-        {items.length > 0 ? (
-          <div>
-            <h2 className="text-base font-bold text-slate-700 mb-4 flex items-center gap-2">
-              <BookMarked className="w-4 h-4" style={{ color }} />
-              İçerikler
-            </h2>
-            <div className="grid gap-3 sm:grid-cols-2">
-              {items.map(ci => {
-                const conf = CONTENT_ICONS[ci.type] ?? CONTENT_ICONS.text;
-                const Icon = conf.Icon;
-                return (
-                  <a key={ci.id} href={ci.url ?? "#"} target="_blank" rel="noopener noreferrer"
-                    className="flex items-center gap-4 p-4 bg-white rounded-2xl border border-slate-200 hover:border-slate-300 hover:shadow-md transition-all group">
-                    <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
-                      style={{ background: `${conf.color}15` }}>
-                      <Icon className="w-6 h-6" style={{ color: conf.color }} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-slate-800 leading-tight">{ci.title}</p>
-                      <p className="text-sm text-slate-400 mt-0.5">
-                        {conf.label}
-                        {ci.duration_seconds ? ` · ${Math.round(ci.duration_seconds / 60)} dk` : ""}
-                        {!ci.is_free && (
-                          <span className="ml-2 text-xs font-bold text-amber-500 bg-amber-50 px-1.5 py-0.5 rounded">Pro</span>
-                        )}
-                      </p>
-                    </div>
-                    <ExternalLink className="w-4 h-4 text-slate-300 group-hover:text-slate-500 shrink-0" />
-                  </a>
-                );
-              })}
-            </div>
-          </div>
-        ) : (
-          /* İçerik yoksa */
-          <div className="flex flex-col items-center justify-center py-16 text-center">
-            <div className="w-20 h-20 rounded-3xl flex items-center justify-center mb-5"
-              style={{ background: `${color}10` }}>
-              <Sparkles className="w-9 h-9" style={{ color }} />
-            </div>
-            <h3 className="text-lg font-bold text-slate-700">İçerik Yakında Eklenecek</h3>
-            <p className="text-sm text-slate-400 mt-2 max-w-sm leading-relaxed">
-              Bu konu için video dersler, PDF notlar ve çözümlü sorular hazırlanıyor.
-            </p>
-          </div>
-        )}
-
-        {/* Soru Bankası kartı */}
-        <div className="bg-white rounded-2xl border border-slate-200 p-6">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center"
-              style={{ background: `${color}12` }}>
-              <FileQuestion className="w-5 h-5" style={{ color }} />
-            </div>
-            <div>
-              <p className="font-bold text-slate-800">Soru Bankası</p>
-              <p className="text-sm text-slate-400">Bu konudan soru çöz</p>
-            </div>
-          </div>
-          <a href="/ogrenci/soru-bankasi"
-            className="flex items-center justify-center gap-2 w-full py-3 rounded-xl font-semibold text-white transition-all hover:opacity-90"
-            style={{ background: color }}>
-            Soruları Gör
-            <ChevronRight className="w-4 h-4" />
-          </a>
-        </div>
-
-        {/* Ünite ilerleme özeti */}
-        <div className="bg-white rounded-2xl border border-slate-200 p-6">
-          <h3 className="font-bold text-slate-800 mb-1">{unit.title}</h3>
-          <p className="text-sm text-slate-400 mb-3">
-            {unit.completed_topics}/{unit.total_topics} konu tamamlandı
-          </p>
-          <div className="h-2.5 bg-slate-100 rounded-full overflow-hidden">
-            <div className="h-full rounded-full transition-all"
-              style={{ width: `${unit.progress_percent}%`, background: color }} />
-          </div>
-          <p className="text-sm font-bold mt-2" style={{ color }}>%{unit.progress_percent}</p>
-        </div>
-
-      </div>
-    </div>
-  );
-}
-
-// ─── Sol Menü: Konu satırı ────────────────────────────────────────────────────
-
-function TopicMenuItem({ topic, color, isActive, onSelect, onStatusChange }: {
-  topic: CurriculumTopic;
-  color: string;
-  isActive: boolean;
-  onSelect: () => void;
-  onStatusChange: (id: number, s: "not_started" | "in_progress" | "completed") => void;
-}) {
-  const [updating, setUpdating] = useState(false);
-  const done = topic.status === "completed";
-
-  const toggleDone = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    const next = done ? "not_started" : "completed";
-    setUpdating(true);
-    try { await api.updateCurriculumProgress(topic.id, next); onStatusChange(topic.id, next); }
-    catch { /* silent */ } finally { setUpdating(false); }
-  };
-
-  return (
-    <div
-      onClick={onSelect}
-      className={`flex items-center gap-2.5 px-3 py-2 rounded-lg cursor-pointer transition-all ${
-        isActive
-          ? "text-white shadow-sm"
-          : "hover:bg-slate-100 text-slate-600"
-      }`}
-      style={isActive ? { background: color } : {}}
-    >
-      {/* Tamamlama */}
-      <button
-        onClick={toggleDone} disabled={updating}
-        className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${
-          done
-            ? isActive ? "border-white bg-white" : "border-emerald-500 bg-emerald-500"
-            : isActive ? "border-white/60" : "border-slate-300"
-        }`}
-      >
-        {updating
-          ? <Loader2 className="w-2 h-2 animate-spin" style={{ color: isActive ? color : "white" }} />
-          : done ? <CheckCircle className="w-2.5 h-2.5" style={{ color: isActive ? color : "white" }} /> : null
-        }
-      </button>
-
-      {/* Başlık */}
-      <span className={`flex-1 text-xs leading-snug ${done && !isActive ? "line-through opacity-50" : ""}`}>
-        {topic.title}
-      </span>
-    </div>
-  );
-}
-
-// ─── Sol Menü: Ünite satırı ───────────────────────────────────────────────────
-
-function UnitMenuItem({ unit, color, activeTopicId, onTopicSelect, onTopicStatusChange, defaultOpen }: {
-  unit: CurriculumUnit;
-  color: string;
-  activeTopicId: number | null;
-  onTopicSelect: (t: CurriculumTopic) => void;
-  onTopicStatusChange: (id: number, s: "not_started" | "in_progress" | "completed") => void;
-  defaultOpen: boolean;
-}) {
-  const [open, setOpen] = useState(defaultOpen);
-
-  return (
-    <div>
-      <div
-        onClick={() => setOpen(o => !o)}
-        className="flex items-center gap-2 px-2 py-2 rounded-lg cursor-pointer hover:bg-slate-100 transition-colors"
-      >
-        <div className="w-5 h-5 rounded-md flex items-center justify-center text-[9px] font-black text-white shrink-0"
-          style={{ background: color }}>
-          {unit.sort_order}
-        </div>
-        <span className="flex-1 text-xs font-bold text-slate-700 leading-tight">{unit.title}</span>
-        <span className="text-[10px] text-slate-400 shrink-0">{unit.completed_topics}/{unit.total_topics}</span>
-        <ChevronDown className={`w-3 h-3 text-slate-400 shrink-0 transition-transform ${open ? "rotate-180" : ""}`} />
-      </div>
-
-      {open && (
-        <div className="ml-2 mt-0.5 mb-1 space-y-0.5 border-l-2 pl-2" style={{ borderColor: `${color}25` }}>
-          {unit.topics.map(t => (
-            <TopicMenuItem
-              key={t.id} topic={t} color={color}
-              isActive={activeTopicId === t.id}
-              onSelect={() => onTopicSelect(t)}
-              onStatusChange={onTopicStatusChange}
-            />
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ─── Sol Menü: Ders satırı ────────────────────────────────────────────────────
-
-function SubjectMenuItem({ subject, units, loadingUnits, activeTopicId, onOpen, onTopicSelect, onTopicStatusChange }: {
-  subject: CurriculumSubject;
-  units: CurriculumUnit[];
-  loadingUnits: boolean;
-  activeTopicId: number | null;
-  onOpen: () => void;
-  onTopicSelect: (t: CurriculumTopic, u: CurriculumUnit, s: CurriculumSubject) => void;
-  onTopicStatusChange: (id: number, s: "not_started" | "in_progress" | "completed") => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const color = SUBJECT_COLORS[subject.name] ?? subject.color ?? "#6366f1";
-
-  const handleToggle = () => {
-    const next = !open;
-    setOpen(next);
-    if (next) onOpen();
-  };
-
-  return (
-    <div className="border-b border-slate-100 last:border-0">
-      {/* Ders başlık */}
-      <div
-        onClick={handleToggle}
-        className={`flex items-center gap-2.5 px-3 py-3 cursor-pointer select-none transition-colors ${
-          open ? "bg-slate-50" : "hover:bg-slate-50/70"
-        }`}
-      >
-        <div className="w-0.5 h-6 rounded-full shrink-0" style={{ background: open ? color : "transparent" }} />
-        <span className="text-lg">{subject.icon}</span>
-        <span className={`flex-1 text-sm leading-tight ${open ? "font-bold text-slate-900" : "font-semibold text-slate-700"}`}>
-          {subject.name}
-        </span>
-        <ChevronDown className={`w-3.5 h-3.5 text-slate-400 shrink-0 transition-transform ${open ? "rotate-180" : ""}`} />
-      </div>
-
-      {/* Üniteler */}
-      {open && (
-        <div className="px-2 pb-2 bg-slate-50/50 space-y-0.5">
-          {loadingUnits ? (
-            <div className="space-y-1.5 py-2">
-              {[1,2,3].map(i => <div key={i} className="h-8 bg-slate-200 rounded-lg animate-pulse" />)}
-            </div>
-          ) : units.length === 0 ? (
-            <p className="text-xs text-slate-400 py-3 px-2 text-center">İçerik yakında eklenecek.</p>
-          ) : units.map((unit, i) => (
-            <UnitMenuItem
-              key={unit.id} unit={unit} color={color}
-              activeTopicId={activeTopicId}
-              defaultOpen={i === 0}
-              onTopicSelect={(t) => onTopicSelect(t, unit, subject)}
-              onTopicStatusChange={onTopicStatusChange}
-            />
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ─── Ana Sayfa ────────────────────────────────────────────────────────────────
+// ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function DerslerimPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
 
+  // State
   const [subjects, setSubjects] = useState<CurriculumSubject[]>([]);
   const [unitsBySlug, setUnitsBySlug] = useState<Record<string, CurriculumUnit[]>>({});
   const [loadingSlug, setLoadingSlug] = useState<string | null>(null);
   const [loadingList, setLoadingList] = useState(true);
   const [search, setSearch] = useState("");
-  const [activeExamTab, setActiveExamTab] = useState<string>("ALL");
+  const [examFilter, setExamFilter] = useState<string>("ALL");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // Seçili konu
-  const [activeTopic,   setActiveTopic]   = useState<CurriculumTopic | null>(null);
-  const [activeUnit,    setActiveUnit]    = useState<CurriculumUnit | null>(null);
+  // Active selection
   const [activeSubject, setActiveSubject] = useState<CurriculumSubject | null>(null);
+  const [activeUnit, setActiveUnit] = useState<CurriculumUnit | null>(null);
+  const [activeTopic, setActiveTopic] = useState<CurriculumTopic | null>(null);
+  const [activeContent, setActiveContent] = useState<ContentItem | null>(null);
+  const [contentItems, setContentItems] = useState<ContentItem[]>([]);
 
   const gradeStr = user?.grade != null ? String(user.grade) : undefined;
-  const examStr  = user?.target_exam ?? user?.exam_goal ?? undefined;
+  const examStr = user?.target_exam ?? user?.exam_goal ?? undefined;
   const hasGrade = !!gradeStr && gradeStr !== "null" && gradeStr !== "";
   const activeColor = SUBJECT_COLORS[activeSubject?.name ?? ""] ?? activeSubject?.color ?? "#6366f1";
 
-  // Ders listesi
+  // Load subjects
   const loadSubjects = useCallback(async () => {
     if (!user || !hasGrade) return;
     setLoadingList(true);
     try {
       const res = await api.getCurriculum();
       setSubjects(Array.isArray(res?.subjects) ? res.subjects : []);
-    } catch { /* silent */ }
-    finally { setLoadingList(false); }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.grade, user?.target_exam, user?.exam_goal]);
-
-  useEffect(() => { if (!authLoading) loadSubjects(); }, [authLoading, loadSubjects]);
-
-  // Ders açılınca lazy yükle
-  const loadUnits = useCallback(async (slug: string) => {
-    if (unitsBySlug[slug]) return;
-    setLoadingSlug(slug);
-    try {
-      const res = await api.getCurriculumSubject(slug);
-      setUnitsBySlug(p => ({ ...p, [slug]: Array.isArray(res.units) ? res.units : [] }));
     } catch {
-      setUnitsBySlug(p => ({ ...p, [slug]: [] }));
-    } finally { setLoadingSlug(null); }
-  }, [unitsBySlug]);
-
-  // Konu tamamlama
-  const handleTopicStatusChange = useCallback((slug: string, topicId: number, status: "not_started" | "in_progress" | "completed") => {
-    setUnitsBySlug(prev => {
-      const units = prev[slug] ?? [];
-      return {
-        ...prev,
-        [slug]: units.map(u => ({
-          ...u,
-          topics: u.topics.map(t => t.id === topicId ? { ...t, status } : t),
-          completed_topics: u.topics.filter(t => (t.id === topicId ? status : t.status) === "completed").length,
-          progress_percent: u.total_topics > 0
-            ? Math.round(u.topics.filter(t => (t.id === topicId ? status : t.status) === "completed").length / u.total_topics * 100)
-            : 0,
-        })),
-      };
-    });
-    if (activeTopic?.id === topicId) setActiveTopic(p => p ? { ...p, status } : p);
-  }, [activeTopic]);
-
-  const handleTopicSelect = (t: CurriculumTopic, u: CurriculumUnit, s: CurriculumSubject) => {
-    setActiveTopic(t);
-    setActiveUnit(u);
-    setActiveSubject(s);
-  };
-
-  const filteredSubjects = search
-    ? subjects.filter(s => s.name.toLowerCase().includes(search.toLowerCase()))
-    : subjects;
-  const examTabs = (() => {
-    const targetExam = examStr ?? "";
-    if (targetExam === "TYT-AYT") {
-      return ["TYT", "AYT", "ORTAK"];
+      /* silent */
+    } finally {
+      setLoadingList(false);
     }
-    const uniqueExamTypes = Array.from(new Set(subjects.map((s) => s.exam_type).filter(Boolean)));
-    if (uniqueExamTypes.length <= 1) {
-      return ["ALL"];
-    }
-    return uniqueExamTypes;
-  })();
-  const scopedSubjects = filteredSubjects.filter((subject) => {
-    if (activeExamTab === "ALL") return true;
-    if (activeExamTab === "ORTAK") {
-      return ["Genel", "all", "TYT-AYT"].includes(subject.exam_type);
-    }
-    return subject.exam_type === activeExamTab;
-  });
+  }, [user?.grade, user?.target_exam, user?.exam_goal, hasGrade, user]);
 
   useEffect(() => {
-    if (!examTabs.includes(activeExamTab)) {
-      setActiveExamTab(examTabs[0] ?? "ALL");
-    }
-  }, [activeExamTab, examTabs]);
+    if (!authLoading) loadSubjects();
+  }, [authLoading, loadSubjects]);
 
-  // Guard
-  if (authLoading) return (
-    <div className="min-h-full flex items-center justify-center">
-      <Loader2 className="w-6 h-6 animate-spin text-slate-400" />
-    </div>
+  // Load units for subject
+  const loadUnits = useCallback(
+    async (slug: string) => {
+      if (unitsBySlug[slug]) return;
+      setLoadingSlug(slug);
+      try {
+        const res = await api.getCurriculumSubject(slug);
+        setUnitsBySlug((p) => ({ ...p, [slug]: Array.isArray(res.units) ? res.units : [] }));
+      } catch {
+        setUnitsBySlug((p) => ({ ...p, [slug]: [] }));
+      } finally {
+        setLoadingSlug(null);
+      }
+    },
+    [unitsBySlug]
   );
-  if (!hasGrade) return (
-    <div className="min-h-full flex items-center justify-center">
-      <div className="text-center space-y-3">
-        <GraduationCap className="w-10 h-10 text-slate-300 mx-auto" />
-        <p className="text-sm text-slate-500">Müfredatın ayarlanmamış.</p>
-        <button onClick={() => router.push("/ogrenci/onboarding")}
-          className="px-4 py-2 bg-indigo-600 text-white text-sm font-semibold rounded-xl">
-          Müfredatı Ayarla
-        </button>
+
+  // Handle subject selection
+  const handleSubjectSelect = async (subject: CurriculumSubject) => {
+    setActiveSubject(subject);
+    setSidebarOpen(true);
+
+    if (!unitsBySlug[subject.slug]) {
+      await loadUnits(subject.slug);
+    }
+
+    // Auto-select first unit and topic
+    const units = unitsBySlug[subject.slug];
+    if (units && units.length > 0) {
+      const firstUnit = units[0];
+      setActiveUnit(firstUnit);
+      if (firstUnit.topics && firstUnit.topics.length > 0) {
+        handleTopicSelect(firstUnit.topics[0], firstUnit);
+      }
+    }
+  };
+
+  // Handle topic selection
+  const handleTopicSelect = (topic: CurriculumTopic, unit: CurriculumUnit) => {
+    setActiveTopic(topic);
+    setActiveUnit(unit);
+    
+    // Load content items
+    const items = topic.content_items ?? [];
+    setContentItems(items);
+    if (items.length > 0) {
+      setActiveContent(items[0] as ContentItem);
+    } else {
+      setActiveContent(null);
+    }
+  };
+
+  // Handle topic completion
+  const handleTopicComplete = async () => {
+    if (!activeTopic || !activeSubject) return;
+
+    try {
+      await api.updateCurriculumProgress(activeTopic.id, "completed");
+      
+      // Update local state
+      setUnitsBySlug((prev) => {
+        const units = prev[activeSubject.slug] ?? [];
+        return {
+          ...prev,
+          [activeSubject.slug]: units.map((u) => ({
+            ...u,
+            topics: u.topics.map((t) =>
+              t.id === activeTopic.id ? { ...t, status: "completed" as const } : t
+            ),
+            completed_topics:
+              u.id === activeUnit?.id
+                ? u.topics.filter((t) =>
+                    t.id === activeTopic.id ? true : t.status === "completed"
+                  ).length
+                : u.completed_topics,
+            progress_percent:
+              u.id === activeUnit?.id
+                ? Math.round(
+                    (u.topics.filter((t) =>
+                      t.id === activeTopic.id ? true : t.status === "completed"
+                    ).length /
+                      u.total_topics) *
+                      100
+                  )
+                : u.progress_percent,
+          })),
+        };
+      });
+
+      // Update active topic
+      setActiveTopic((prev) => (prev ? { ...prev, status: "completed" as const } : prev));
+
+      // Auto-navigate to next topic
+      if (activeUnit) {
+        const currentIndex = activeUnit.topics.findIndex((t) => t.id === activeTopic.id);
+        if (currentIndex < activeUnit.topics.length - 1) {
+          const nextTopic = activeUnit.topics[currentIndex + 1];
+          handleTopicSelect(nextTopic, activeUnit);
+        } else {
+          // Find next unit
+          const units = unitsBySlug[activeSubject.slug] ?? [];
+          const unitIndex = units.findIndex((u) => u.id === activeUnit.id);
+          if (unitIndex < units.length - 1) {
+            const nextUnit = units[unitIndex + 1];
+            if (nextUnit.topics.length > 0) {
+              handleTopicSelect(nextUnit.topics[0], nextUnit);
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Failed to complete topic:", error);
+    }
+  };
+
+  // Filtered subjects
+  const filteredSubjects = subjects.filter((s) => {
+    const matchesSearch = search ? s.name.toLowerCase().includes(search.toLowerCase()) : true;
+    const matchesExam = examFilter === "ALL" ? true : s.exam_type === examFilter;
+    return matchesSearch && matchesExam;
+  });
+
+  // Guards
+  if (authLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
       </div>
-    </div>
-  );
+    );
+  }
+
+  if (!hasGrade) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="space-y-4 text-center">
+          <GraduationCap className="mx-auto h-12 w-12 text-slate-300" />
+          <p className="text-slate-500">Müfredatın ayarlanmamış.</p>
+          <button
+            onClick={() => router.push("/ogrenci/onboarding")}
+            className="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
+          >
+            Müfredatı Ayarla
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden bg-slate-50">
-
-      {/* ═══════════════════════════════════════════════════════
-          ÜST: Yatay Ders Kartları
-      ══════════════════════════════════════════════════════════ */}
-      <div className="border-b border-slate-200 bg-white shadow-sm">
-        {/* Başlık ve filtreler */}
-        <div className="px-6 py-4 border-b border-slate-100">
-          <div className="flex items-center justify-between gap-4 flex-wrap">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center">
-                <GraduationCap className="w-5 h-5 text-indigo-600" />
-              </div>
-              <div>
-                <h2 className="text-lg font-bold text-slate-900">Derslerim</h2>
-                <div className="flex gap-2 items-center mt-0.5">
-                  {gradeStr && (
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-100">
-                      {gradeStr === "mezun" ? "Mezun" : `${gradeStr}. Sınıf`}
-                    </span>
-                  )}
-                  {examStr && (
-                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
-                      {examStr}
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              {/* Arama */}
-              <div className="relative">
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
-                <input type="text" placeholder="Ders ara..."
-                  value={search} onChange={e => setSearch(e.target.value)}
-                  className="w-48 pl-8 pr-7 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:ring-1 focus:ring-indigo-400 outline-none" />
-                {search && (
-                  <button onClick={() => setSearch("")}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
-                    <X className="w-3 h-3" />
-                  </button>
-                )}
-              </div>
-              {/* Sınav Türü Filtreleri */}
-              {examTabs.length > 1 && (
-                <div className="flex gap-1.5">
-                  {examTabs.map((tab) => (
-                    <button
-                      key={tab}
-                      onClick={() => setActiveExamTab(tab)}
-                      className={`text-[10px] font-semibold px-2.5 py-1.5 rounded-lg border transition-colors ${
-                        activeExamTab === tab
-                          ? "bg-indigo-600 text-white border-indigo-600"
-                          : "bg-white text-slate-600 border-slate-200 hover:border-slate-300"
-                      }`}
-                    >
-                      {EXAM_TAB_LABELS[tab] ?? tab}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
+    <div className="flex h-screen flex-col overflow-hidden bg-slate-50">
+      {/* ═══ TOP BAR ═══ */}
+      <header className="fixed left-0 right-0 top-0 z-50 flex h-16 items-center justify-between border-b border-slate-200 bg-white px-6 shadow-sm">
+        {/* Left: Breadcrumb */}
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="rounded-lg p-2 text-slate-600 hover:bg-slate-100 lg:hidden"
+          >
+            <Menu className="h-5 w-5" />
+          </button>
+          
+          <div className="flex items-center gap-2 text-sm text-slate-600">
+            <Home className="h-4 w-4" />
+            <ChevronRight className="h-3 w-3 text-slate-400" />
+            <span className="font-semibold text-slate-900">Derslerim</span>
+            {activeSubject && (
+              <>
+                <ChevronRight className="h-3 w-3 text-slate-400" />
+                <span className="hidden sm:inline">{activeSubject.name}</span>
+              </>
+            )}
+            {activeTopic && (
+              <>
+                <ChevronRight className="h-3 w-3 text-slate-400" />
+                <span className="hidden md:inline truncate max-w-xs">{activeTopic.title}</span>
+              </>
+            )}
           </div>
         </div>
 
-        {/* Yatay Ders Kartları */}
-        <div className="px-6 py-4">
+        {/* Center: Search */}
+        <div className="mx-4 hidden flex-1 max-w-md md:block">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Ders veya konu ara..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 pl-10 pr-4 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+            />
+            {search && (
+              <button
+                onClick={() => setSearch("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Right: Filters */}
+        <div className="flex items-center gap-2">
+          <div className="hidden items-center gap-1 sm:flex">
+            {Object.entries(EXAM_FILTERS).map(([key, label]) => (
+              <button
+                key={key}
+                onClick={() => setExamFilter(key)}
+                className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
+                  examFilter === key
+                    ? "bg-indigo-600 text-white"
+                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          <button className="rounded-lg p-2 text-slate-600 hover:bg-slate-100 sm:hidden">
+            <Filter className="h-5 w-5" />
+          </button>
+        </div>
+      </header>
+
+      {/* ═══ SIDEBAR ═══ */}
+      <aside
+        className={`fixed left-0 top-16 z-40 h-[calc(100vh-4rem)] w-72 overflow-y-auto border-r border-slate-200 bg-white shadow-lg transition-all duration-300 ease-in-out ${
+          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        } lg:translate-x-0 lg:shadow-none`}
+      >
+        <div className="p-4">
+          <div className="mb-4 flex items-center justify-between">
+            <h3 className="text-sm font-bold text-slate-700">Dersler</h3>
+            <button
+              onClick={() => setSidebarOpen(false)}
+              className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 lg:hidden"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+
+          {/* Subject List */}
           {loadingList ? (
-            <div className="flex gap-3 overflow-x-auto pb-2">
-              {[1,2,3,4].map(i => <div key={i} className="w-48 h-32 bg-slate-100 rounded-xl animate-pulse shrink-0" />)}
+            <div className="space-y-2">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="h-16 animate-pulse rounded-xl bg-slate-100" />
+              ))}
             </div>
-          ) : scopedSubjects.length === 0 ? (
-            <div className="py-8 text-center">
-              <p className="text-sm text-slate-400">Ders bulunamadı.</p>
-            </div>
+          ) : filteredSubjects.length === 0 ? (
+            <p className="py-8 text-center text-sm text-slate-400">Ders bulunamadı</p>
           ) : (
-            <div className="flex gap-3 overflow-x-auto pb-2" style={{ scrollbarWidth: 'thin' }}>
-              {scopedSubjects.map(subj => {
-                const color = SUBJECT_COLORS[subj.name] ?? subj.color ?? "#6366f1";
-                const isOpen = !!unitsBySlug[subj.slug];
-                const units = unitsBySlug[subj.slug] ?? [];
+            <div className="space-y-1">
+              {filteredSubjects.map((subject) => {
+                const color = SUBJECT_COLORS[subject.name] ?? subject.color ?? "#6366f1";
+                const isActive = activeSubject?.slug === subject.slug;
+                const units = unitsBySlug[subject.slug] ?? [];
                 const totalTopics = units.reduce((sum, u) => sum + u.total_topics, 0);
                 const completedTopics = units.reduce((sum, u) => sum + u.completed_topics, 0);
                 const progress = totalTopics > 0 ? Math.round((completedTopics / totalTopics) * 100) : 0;
-                
+
                 return (
-                  <button
-                    key={subj.slug}
-                    onClick={() => {
-                      if (!isOpen) loadUnits(subj.slug);
-                      // İlk konuyu seç
-                      if (units.length > 0 && units[0].topics.length > 0) {
-                        handleTopicSelect(units[0].topics[0], units[0], subj);
-                      }
-                    }}
-                    className="w-56 shrink-0 p-4 rounded-2xl border-2 transition-all text-left hover:shadow-md"
-                    style={{
-                      borderColor: activeSubject?.slug === subj.slug ? color : "#e2e8f0",
-                      background: activeSubject?.slug === subj.slug ? `${color}08` : "white"
-                    }}
-                  >
-                    <div className="flex items-center gap-2.5 mb-3">
-                      <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl shrink-0"
-                        style={{ background: `${color}15` }}>
-                        {subj.icon}
+                  <div key={subject.slug} className="rounded-xl border border-slate-100">
+                    <button
+                      onClick={() => handleSubjectSelect(subject)}
+                      className={`flex w-full items-center gap-3 rounded-xl p-3 text-left transition-all ${
+                        isActive ? "bg-slate-50" : "hover:bg-slate-50"
+                      }`}
+                    >
+                      <div
+                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-lg"
+                        style={{ background: `${color}15` }}
+                      >
+                        {subject.icon}
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-bold text-sm text-slate-900 truncate">{subj.name}</p>
-                        {isOpen && (
-                          <p className="text-[10px] text-slate-400 mt-0.5">
-                            {units.length} ünite · {totalTopics} konu
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-bold text-slate-900">{subject.name}</p>
+                        {units.length > 0 && (
+                          <p className="text-xs text-slate-400">
+                            {completedTopics}/{totalTopics} konu
                           </p>
                         )}
                       </div>
-                    </div>
-                    {isOpen && (
-                      <>
-                        <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden mb-2">
-                          <div className="h-full rounded-full transition-all" style={{ width: `${progress}%`, background: color }} />
+                      {units.length > 0 && (
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center">
+                          <svg className="h-10 w-10 -rotate-90 transform">
+                            <circle
+                              cx="20"
+                              cy="20"
+                              r="16"
+                              stroke="currentColor"
+                              strokeWidth="3"
+                              fill="none"
+                              className="text-slate-100"
+                            />
+                            <circle
+                              cx="20"
+                              cy="20"
+                              r="16"
+                              stroke={color}
+                              strokeWidth="3"
+                              fill="none"
+                              strokeDasharray={`${2 * Math.PI * 16}`}
+                              strokeDashoffset={`${2 * Math.PI * 16 * (1 - progress / 100)}`}
+                              className="transition-all duration-500"
+                            />
+                          </svg>
+                          <span className="absolute text-xs font-bold" style={{ color }}>
+                            {progress}
+                          </span>
                         </div>
-                        <p className="text-[10px] font-semibold" style={{ color }}>
-                          %{progress} tamamlandı
-                        </p>
-                      </>
-                    )}
-                    {loadingSlug === subj.slug && (
-                      <div className="flex items-center gap-2 text-[10px] text-slate-400">
-                        <Loader2 className="w-3 h-3 animate-spin" />
-                        Yükleniyor...
+                      )}
+                      {loadingSlug === subject.slug && (
+                        <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
+                      )}
+                    </button>
+
+                    {/* Units & Topics */}
+                    {isActive && units.length > 0 && (
+                      <div className="border-t border-slate-100 p-2">
+                        {units.map((unit) => (
+                          <UnitAccordion
+                            key={unit.id}
+                            unit={unit}
+                            color={color}
+                            activeTopic={activeTopic}
+                            onTopicSelect={(topic) => handleTopicSelect(topic, unit)}
+                          />
+                        ))}
                       </div>
                     )}
-                  </button>
+                  </div>
                 );
               })}
             </div>
           )}
         </div>
-      </div>
+      </aside>
 
-      {/* ═══════════════════════════════════════════════════════
-          ALT: İçerik Alanı (Üniteler + Seçili Konu Detayı)
-      ══════════════════════════════════════════════════════════ */}
-      <div className="flex-1 overflow-hidden flex">
-        
-        {/* Sol: Ünite ve Konu Listesi (Ders seçiliyse) */}
-        {activeSubject && unitsBySlug[activeSubject.slug] && (
-          <div className="w-80 shrink-0 flex flex-col border-r border-slate-200 bg-white">
+      {/* ═══ MAIN CONTENT ═══ */}
+      <main className="ml-0 mt-16 flex-1 overflow-y-auto lg:ml-72">
+        {activeTopic ? (
+          <div className="container mx-auto max-w-7xl p-4 md:p-6">
+            {/* Video/PDF Player Section */}
+            <div className="mb-6 overflow-hidden rounded-2xl bg-white shadow-lg">
+              {/* Player Area */}
+              <div className="relative aspect-video bg-slate-900">
+                {activeContent ? (
+                  activeContent.type === "video" && activeContent.url ? (
+                    <VideoPlayer url={activeContent.url} />
+                  ) : activeContent.type === "pdf" && activeContent.url ? (
+                    <PDFViewer url={activeContent.url} />
+                  ) : (
+                    <div className="flex h-full flex-col items-center justify-center text-white">
+                      <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-white/10">
+                        {activeContent.type === "video" ? (
+                          <Play className="h-10 w-10" />
+                        ) : (
+                          <FileText className="h-10 w-10" />
+                        )}
+                      </div>
+                      <p className="text-sm">İçerik URL'si bulunamadı</p>
+                    </div>
+                  )
+                ) : contentItems.length === 0 ? (
+                  <div className="flex h-full flex-col items-center justify-center text-white">
+                    <BookOpen className="mb-4 h-16 w-16 opacity-50" />
+                    <p>İçerik yakında eklenecek</p>
+                  </div>
+                ) : (
+                  <div className="flex h-full flex-col items-center justify-center text-white">
+                    <p className="text-sm">Bir içerik seçin</p>
+                  </div>
+                )}
+              </div>
 
-            <div className="px-4 py-3 border-b border-slate-100">
-              <p className="text-xs font-bold text-slate-600">Üniteler & Konular</p>
-              <p className="text-[10px] text-slate-400 mt-0.5">{activeSubject.name}</p>
+              {/* Content Info */}
+              <div className="p-6">
+                <div className="mb-4 flex items-start justify-between gap-4">
+                  <div className="flex-1">
+                    <h1 className="mb-2 text-xl font-bold text-slate-900 md:text-2xl">
+                      {activeContent?.title || activeTopic.title}
+                    </h1>
+                    <div className="flex flex-wrap items-center gap-2 text-sm text-slate-500">
+                      <span>{activeUnit?.title}</span>
+                      <span>·</span>
+                      <span>{activeSubject?.name}</span>
+                      {activeContent?.duration_seconds && (
+                        <>
+                          <span>·</span>
+                          <div className="flex items-center gap-1">
+                            <Clock className="h-3.5 w-3.5" />
+                            <span>{Math.round(activeContent.duration_seconds / 60)} dakika</span>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  {activeTopic.status !== "completed" ? (
+                    <button
+                      onClick={handleTopicComplete}
+                      className="flex shrink-0 items-center gap-2 rounded-xl px-6 py-3 font-semibold text-white transition-all hover:opacity-90"
+                      style={{ background: activeColor }}
+                    >
+                      <CheckCircle className="h-4 w-4" />
+                      <span className="hidden sm:inline">Konuyu Tamamla</span>
+                      <span className="sm:hidden">Tamamla</span>
+                    </button>
+                  ) : (
+                    <div className="flex shrink-0 items-center gap-2 rounded-xl bg-emerald-500 px-6 py-3 font-semibold text-white">
+                      <CheckCircle className="h-4 w-4" />
+                      <span>Tamamlandı</span>
+                    </div>
+                  )}
+                </div>
+
+                {activeContent?.description && (
+                  <p className="text-slate-600">{activeContent.description}</p>
+                )}
+              </div>
             </div>
 
-            {/* Ünite listesi */}
-            <div className="flex-1 overflow-y-auto p-2">
-              {unitsBySlug[activeSubject.slug].map((unit, i) => (
-                <UnitMenuItem
-                  key={unit.id}
-                  unit={unit}
-                  color={activeColor}
-                  activeTopicId={activeTopic?.id ?? null}
-                  defaultOpen={i === 0}
-                  onTopicSelect={(t) => handleTopicSelect(t, unit, activeSubject)}
-                  onTopicStatusChange={(tid, s) => handleTopicStatusChange(activeSubject.slug, tid, s)}
-                />
-              ))}
+            {/* Content Grid */}
+            <div>
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="text-lg font-bold text-slate-900">
+                  {contentItems.length > 0 ? `İçerikler (${contentItems.length})` : "İçerikler"}
+                </h2>
+                {contentItems.length > 0 && (
+                  <div className="flex gap-2">
+                    <button
+                      className="rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-200"
+                    >
+                      Tümü
+                    </button>
+                    <button
+                      className="rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-200"
+                    >
+                      Video
+                    </button>
+                    <button
+                      className="rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-200"
+                    >
+                      PDF
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {contentItems.length > 0 ? (
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                  {contentItems.map((item) => {
+                    const isActive = activeContent?.id === item.id;
+                    const thumbnail = item.thumbnail_url || (item.type === "video" && item.url ? getVideoThumbnail(item.url) : null);
+
+                    return (
+                      <button
+                        key={item.id}
+                        onClick={() => setActiveContent(item)}
+                        className={`group overflow-hidden rounded-xl border-2 bg-white text-left transition-all hover:shadow-lg ${
+                          isActive ? "ring-2 ring-offset-2" : "border-slate-200"
+                        }`}
+                        style={isActive ? { borderColor: activeColor, ringColor: activeColor } : {}}
+                      >
+                        {/* Thumbnail */}
+                        <div className="relative aspect-video overflow-hidden bg-slate-100">
+                          {thumbnail ? (
+                            <img
+                              src={thumbnail}
+                              alt={item.title}
+                              className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                            />
+                          ) : (
+                            <div className="flex h-full items-center justify-center">
+                              {item.type === "video" ? (
+                                <Play className="h-12 w-12 text-slate-400" />
+                              ) : (
+                                <FileText className="h-12 w-12 text-slate-400" />
+                              )}
+                            </div>
+                          )}
+
+                          {/* Type badge */}
+                          <div
+                            className="absolute bottom-2 left-2 flex items-center gap-1 rounded-full px-2 py-1 text-xs font-bold text-white"
+                            style={{
+                              background: item.type === "video" ? "#ef4444" : "#f59e0b",
+                            }}
+                          >
+                            {item.type === "video" ? <Play className="h-3 w-3" /> : <FileText className="h-3 w-3" />}
+                            {item.type === "video" ? "Video" : "PDF"}
+                          </div>
+
+                          {/* Duration */}
+                          {item.duration_seconds && (
+                            <div className="absolute bottom-2 right-2 rounded-full bg-black/70 px-2 py-1 text-xs font-semibold text-white">
+                              {Math.round(item.duration_seconds / 60)} dk
+                            </div>
+                          )}
+
+                          {/* Play overlay */}
+                          {isActive && (
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/90">
+                                <Play className="h-6 w-6" style={{ color: activeColor }} />
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Info */}
+                        <div className="p-3">
+                          <p className="mb-1 line-clamp-2 text-sm font-semibold text-slate-900">
+                            {item.title}
+                          </p>
+                          <div className="flex items-center gap-2 text-xs text-slate-500">
+                            {item.duration_seconds && (
+                              <span>{Math.round(item.duration_seconds / 60)} dakika</span>
+                            )}
+                            {!item.is_free && (
+                              <span className="rounded bg-amber-100 px-1.5 py-0.5 font-bold text-amber-700">
+                                Pro
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="rounded-2xl bg-white p-12 text-center shadow-sm">
+                  <div
+                    className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl"
+                    style={{ background: `${activeColor}15` }}
+                  >
+                    <BookOpen className="h-8 w-8" style={{ color: activeColor }} />
+                  </div>
+                  <p className="mb-2 font-bold text-slate-700">İçerik Yakında Eklenecek</p>
+                  <p className="text-sm text-slate-500">
+                    Bu konu için video dersler ve PDF notlar hazırlanıyor.
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div className="flex h-full items-center justify-center p-6">
+            <div className="text-center">
+              <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-2xl bg-slate-100">
+                <BookOpen className="h-10 w-10 text-slate-300" />
+              </div>
+              <h2 className="mb-2 text-xl font-bold text-slate-700">
+                {activeSubject ? "Bir konu seçin" : "Bir ders seçin"}
+              </h2>
+              <p className="text-slate-500">
+                {activeSubject
+                  ? "Soldan bir konu seçin, içerik burada açılacak"
+                  : "Soldaki menüden bir ders seçin"}
+              </p>
             </div>
           </div>
         )}
+      </main>
 
-        {/* Sağ: İçerik Detayı */}
-        <div className="flex-1 overflow-y-auto bg-slate-50">
-          {activeTopic && activeUnit && activeSubject ? (
-            <ContentPanel
-              topic={activeTopic}
-              subject={activeSubject}
-              unit={activeUnit}
-              color={activeColor}
-            />
-          ) : (
-            <div className="h-full flex flex-col items-center justify-center text-center px-8">
-              <div className="w-24 h-24 rounded-3xl flex items-center justify-center mb-6 bg-white border border-slate-200 shadow-sm">
-                <BookOpen className="w-10 h-10 text-slate-300" />
-              </div>
-              <h2 className="text-xl font-bold text-slate-700 mb-2">
-                {activeSubject ? "Bir konu seçin" : "Bir ders seçin"}
-              </h2>
-              <p className="text-sm text-slate-400 max-w-sm leading-relaxed">
-                {activeSubject 
-                  ? "Soldan bir konu seçin, içerik burada açılacak." 
-                  : "Üstten bir ders kartına tıklayın."}
-              </p>
-              {/* Hızlı başlangıç ipucu */}
-              <div className="mt-8 flex items-center gap-3 px-5 py-3 bg-white border border-slate-200 rounded-2xl shadow-sm text-sm text-slate-500">
-                <span className="text-xl">{activeSubject ? "👈" : "☝️"}</span>
-                {activeSubject ? "Soldan konu seçin" : "Üstten ders seçin"}
-              </div>
-            </div>
-          )}
-        </div>
+      {/* Overlay for mobile */}
+      {sidebarOpen && (
+        <div
+          onClick={() => setSidebarOpen(false)}
+          className="fixed inset-0 z-30 animate-in fade-in bg-black/50 duration-300 lg:hidden"
+        />
+      )}
+    </div>
+  );
+}
+
+// ─── Video Player Component ───────────────────────────────────────────────────
+
+function VideoPlayer({ url }: { url: string }) {
+  const youtubeId = extractYouTubeId(url);
+  const vimeoId = extractVimeoId(url);
+
+  if (youtubeId) {
+    return (
+      <iframe
+        src={`https://www.youtube.com/embed/${youtubeId}?rel=0&modestbranding=1`}
+        className="h-full w-full"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowFullScreen
+        title="Video Player"
+      />
+    );
+  }
+
+  if (vimeoId) {
+    return (
+      <iframe
+        src={`https://player.vimeo.com/video/${vimeoId}`}
+        className="h-full w-full"
+        allow="autoplay; fullscreen; picture-in-picture"
+        allowFullScreen
+        title="Video Player"
+      />
+    );
+  }
+
+  // Direct video URL
+  if (url.match(/\.(mp4|webm|ogg)$/i)) {
+    return (
+      <video
+        src={url}
+        controls
+        className="h-full w-full"
+        controlsList="nodownload"
+      />
+    );
+  }
+
+  return (
+    <div className="flex h-full items-center justify-center text-white">
+      <div className="text-center">
+        <ExternalLink className="mx-auto mb-2 h-12 w-12 opacity-50" />
+        <p className="mb-4 text-sm">Video formatı desteklenmiyor</p>
+        <a
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-2 rounded-lg bg-white/10 px-4 py-2 text-sm font-semibold hover:bg-white/20"
+        >
+          <ExternalLink className="h-4 w-4" />
+          Yeni sekmede aç
+        </a>
       </div>
+    </div>
+  );
+}
 
+// ─── PDF Viewer Component ─────────────────────────────────────────────────────
+
+function PDFViewer({ url }: { url: string }) {
+  return (
+    <div className="h-full w-full">
+      <embed
+        src={url}
+        type="application/pdf"
+        className="h-full w-full"
+        title="PDF Viewer"
+      />
+    </div>
+  );
+}
+
+// ─── Unit Accordion Component ─────────────────────────────────────────────────
+
+function UnitAccordion({
+  unit,
+  color,
+  activeTopic,
+  onTopicSelect,
+}: {
+  unit: CurriculumUnit;
+  color: string;
+  activeTopic: CurriculumTopic | null;
+  onTopicSelect: (topic: CurriculumTopic) => void;
+}) {
+  const [open, setOpen] = useState(true);
+
+  return (
+    <div className="mb-2">
+      <button
+        onClick={() => setOpen(!open)}
+        className="flex w-full items-center gap-2 rounded-lg p-2 text-left transition-colors hover:bg-slate-50"
+      >
+        <div
+          className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-xs font-bold text-white"
+          style={{ background: color }}
+        >
+          {unit.sort_order}
+        </div>
+        <span className="flex-1 text-xs font-bold text-slate-700">{unit.title}</span>
+        <span className="text-xs text-slate-400">
+          {unit.completed_topics}/{unit.total_topics}
+        </span>
+        <ChevronDown
+          className={`h-3 w-3 text-slate-400 transition-transform ${open ? "rotate-180" : ""}`}
+        />
+      </button>
+
+      {open && (
+        <div className="ml-8 mt-1 space-y-1">
+          {unit.topics.map((topic) => {
+            const isActive = activeTopic?.id === topic.id;
+            const isDone = topic.status === "completed";
+
+            return (
+              <button
+                key={topic.id}
+                onClick={() => onTopicSelect(topic)}
+                className={`flex w-full items-center gap-2 rounded-lg p-2 text-left text-xs transition-all ${
+                  isActive
+                    ? "text-white"
+                    : "text-slate-600 hover:bg-slate-50"
+                }`}
+                style={isActive ? { background: color } : {}}
+              >
+                <div
+                  className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 ${
+                    isDone
+                      ? isActive
+                        ? "border-white bg-white"
+                        : "border-emerald-500 bg-emerald-500"
+                      : isActive
+                      ? "border-white/60"
+                      : "border-slate-300"
+                  }`}
+                >
+                  {isDone && (
+                    <CheckCircle
+                      className="h-2.5 w-2.5"
+                      style={{ color: isActive ? color : "white" }}
+                    />
+                  )}
+                </div>
+                <span className={`flex-1 ${isDone && !isActive ? "line-through opacity-50" : ""}`}>
+                  {topic.title}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
