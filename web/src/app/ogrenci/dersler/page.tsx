@@ -15,8 +15,9 @@ import {
 import {
   ChevronDown, ChevronRight, Search, CheckCircle, Circle,
   BookOpen, Loader2, GraduationCap, Play, FileText,
-  Menu, X, Filter, Home, ExternalLink, Clock
+  Menu, X, Home, ExternalLink, Clock
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -30,14 +31,6 @@ const SUBJECT_COLORS: Record<string, string> = {
   "TYT Fen Bilimleri": "#059669", "LGS Fen Bilimleri": "#047857",
   "TYT Sosyal Bilimler": "#7e22ce",
   "KPSS Genel Yetenek": "#4338ca", "KPSS Genel Kültür": "#5b21b6",
-};
-
-const EXAM_FILTERS: Record<string, string> = {
-  ALL: "Tümü",
-  TYT: "TYT",
-  AYT: "AYT",
-  LGS: "LGS",
-  KPSS: "KPSS",
 };
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -110,38 +103,35 @@ export default function DerslerimPage() {
     }
   }, [examStr, examFilter]);
 
-  // Load units for subject
-  const loadUnits = useCallback(
-    async (slug: string) => {
-      if (unitsBySlug[slug]) return;
-      setLoadingSlug(slug);
-      try {
-        const res = await api.getCurriculumSubject(slug);
-        setUnitsBySlug((p) => ({ ...p, [slug]: Array.isArray(res.units) ? res.units : [] }));
-      } catch {
-        setUnitsBySlug((p) => ({ ...p, [slug]: [] }));
-      } finally {
-        setLoadingSlug(null);
-      }
-    },
-    [unitsBySlug]
-  );
+  // Load units for subject — returns fresh list so callers are not blocked by async setState
+  const loadUnits = useCallback(async (slug: string): Promise<CurriculumUnit[]> => {
+    if (slug in unitsBySlug) {
+      return unitsBySlug[slug] ?? [];
+    }
+    setLoadingSlug(slug);
+    try {
+      const res = await api.getCurriculumSubject(slug);
+      const list = Array.isArray(res.units) ? res.units : [];
+      setUnitsBySlug((p) => ({ ...p, [slug]: list }));
+      return list;
+    } catch {
+      setUnitsBySlug((p) => ({ ...p, [slug]: [] }));
+      return [];
+    } finally {
+      setLoadingSlug(null);
+    }
+  }, [unitsBySlug]);
 
   // Handle subject selection
   const handleSubjectSelect = async (subject: CurriculumSubject) => {
     setActiveSubject(subject);
-    // Close sidebar on mobile after selection
+    // Close curriculum drawer on mobile after selection
     if (window.innerWidth < 1024) {
       setSidebarOpen(false);
     }
 
-    if (!unitsBySlug[subject.slug]) {
-      await loadUnits(subject.slug);
-    }
-
-    // Auto-select first unit and topic
-    const units = unitsBySlug[subject.slug];
-    if (units && units.length > 0) {
+    const units = await loadUnits(subject.slug);
+    if (units.length > 0) {
       const firstUnit = units[0];
       setActiveUnit(firstUnit);
       if (firstUnit.topics && firstUnit.topics.length > 0) {
@@ -261,9 +251,9 @@ export default function DerslerimPage() {
   }
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-slate-50">
-      {/* ═══ TOP BAR ═══ */}
-      <header className="fixed left-0 right-0 top-0 z-50 flex h-16 items-center justify-between border-b border-slate-200 bg-white px-6 shadow-sm">
+    <div className="flex w-full flex-col bg-slate-50 lg:max-h-[calc(100dvh-7rem)] lg:min-h-0 lg:overflow-hidden">
+      {/* Toolbar — sticky inside dashboard main so global öğrenci sidebar stays visible (no viewport-fixed overlay) */}
+      <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center justify-between border-b border-slate-200 bg-white/95 px-4 shadow-sm backdrop-blur-sm sm:h-16 sm:px-6">
         {/* Left: Breadcrumb */}
         <div className="flex items-center gap-3">
           <button
@@ -329,11 +319,14 @@ export default function DerslerimPage() {
         </div>
       </header>
 
-      {/* ═══ SIDEBAR ═══ */}
+      <div className="flex min-h-0 flex-1 flex-col lg:flex-row lg:overflow-hidden">
+      {/* ═══ CURRICULUM SIDEBAR (desktop: column in layout; mobile: slide-over) ═══ */}
       <aside
-        className={`fixed left-0 top-16 z-40 h-[calc(100vh-4rem)] w-80 overflow-y-auto border-r border-slate-200 bg-white transition-all duration-300 ease-in-out lg:block ${
+        className={cn(
+          "flex w-80 max-w-[min(100vw-1.5rem,20rem)] shrink-0 flex-col overflow-hidden border-r border-slate-200 bg-white transition-transform duration-300 ease-in-out",
+          "fixed inset-y-0 left-0 z-40 shadow-xl lg:static lg:z-0 lg:h-auto lg:max-h-[calc(100dvh-8rem)] lg:shadow-none",
           sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
-        }`}
+        )}
       >
         <div className="flex h-full flex-col">
           {/* Sidebar Header */}
@@ -399,6 +392,7 @@ export default function DerslerimPage() {
                 {filteredSubjects.map((subject) => {
                   const color = SUBJECT_COLORS[subject.name] ?? subject.color ?? "#6366f1";
                   const isActive = activeSubject?.slug === subject.slug;
+                  const unitsLoaded = subject.slug in unitsBySlug;
                   const units = unitsBySlug[subject.slug] ?? [];
                   const totalTopics = units.reduce((sum, u) => sum + u.total_topics, 0);
                   const completedTopics = units.reduce((sum, u) => sum + u.completed_topics, 0);
@@ -423,7 +417,16 @@ export default function DerslerimPage() {
                         </div>
                         <div className="min-w-0 flex-1">
                           <p className="mb-0.5 truncate text-sm font-bold text-slate-900">{subject.name}</p>
-                          {units.length > 0 ? (
+                          {loadingSlug === subject.slug ? (
+                            <p className="flex items-center gap-1 text-xs text-slate-500">
+                              <Loader2 className="h-3 w-3 animate-spin shrink-0" />
+                              Üniteler yükleniyor…
+                            </p>
+                          ) : !unitsLoaded ? (
+                            <p className="text-xs text-slate-400">Konular için dokunun</p>
+                          ) : units.length === 0 ? (
+                            <p className="text-xs text-amber-700">Bu derste henüz ünite yok</p>
+                          ) : (
                             <div className="flex items-center gap-2">
                               <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-slate-100">
                                 <div
@@ -433,8 +436,6 @@ export default function DerslerimPage() {
                               </div>
                               <span className="text-xs font-semibold text-slate-500">{progress}%</span>
                             </div>
-                          ) : (
-                            <p className="text-xs text-slate-400">İçerik yükleniyor...</p>
                           )}
                         </div>
                         <ChevronRight className={`h-5 w-5 text-slate-400 transition-transform ${
@@ -466,7 +467,7 @@ export default function DerslerimPage() {
       </aside>
 
       {/* ═══ MAIN CONTENT ═══ */}
-      <main className="ml-0 mt-16 flex-1 overflow-y-auto bg-slate-50 lg:ml-80">
+      <main className="min-h-0 flex-1 overflow-y-auto bg-slate-50 lg:min-h-0">
         {activeTopic ? (
           <div className="container mx-auto max-w-7xl p-4 md:p-6">
             {/* Video/PDF Player Section */}
@@ -703,8 +704,9 @@ export default function DerslerimPage() {
           </div>
         )}
       </main>
+      </div>
 
-      {/* Overlay for mobile */}
+      {/* Overlay for mobile curriculum drawer */}
       {sidebarOpen && (
         <div
           onClick={() => setSidebarOpen(false)}
