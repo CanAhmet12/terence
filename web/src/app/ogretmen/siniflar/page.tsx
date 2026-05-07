@@ -3,12 +3,20 @@
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { api, ClassRoom, TeacherStudent } from "@/lib/api";
-import { Search, Circle, Users, TrendingUp, Clock, RefreshCw, AlertCircle, Plus, X } from "lucide-react";
+import type { StudentGoalDashboard, RiskTier } from "@/lib/goal-dashboard";
+import { goalTemplateLabel } from "@/lib/goal-dashboard";
+import { Search, Users, Clock, RefreshCw, AlertCircle, Plus, X, Target, Loader2 } from "lucide-react";
 
 const RISK_CONFIG = {
   green: { label: "İyi", dot: "bg-green-500", badge: "bg-green-100 text-green-700" },
   yellow: { label: "Riskli", dot: "bg-amber-500", badge: "bg-amber-100 text-amber-700" },
   red: { label: "Çok Riskli", dot: "bg-red-500", badge: "bg-red-100 text-red-700" },
+};
+
+const DASH_RISK: Record<RiskTier, { label: string; badge: string; dot: string }> = {
+  on_track: { label: "Hedefte", badge: "bg-emerald-100 text-emerald-800", dot: "bg-emerald-500" },
+  at_risk: { label: "Dikkat", badge: "bg-amber-100 text-amber-800", dot: "bg-amber-500" },
+  critical: { label: "Kritik", badge: "bg-red-100 text-red-800", dot: "bg-red-500" },
 };
 
 function Skeleton({ className }: { className?: string }) {
@@ -44,6 +52,11 @@ export default function SiniflarPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newClassName, setNewClassName] = useState("");
   const [creating, setCreating] = useState(false);
+
+  const [goalStudent, setGoalStudent] = useState<TeacherStudent | null>(null);
+  const [goalDash, setGoalDash] = useState<StudentGoalDashboard | null>(null);
+  const [goalLoading, setGoalLoading] = useState(false);
+  const [goalErr, setGoalErr] = useState<string | null>(null);
 
   const loadClasses = useCallback(async () => {
     if (!token) return;
@@ -111,6 +124,24 @@ export default function SiniflarPage() {
   };
 
   const selectedClass = classes.find((c) => c.id === selectedClassId);
+
+  useEffect(() => {
+    if (!goalStudent) return;
+    setGoalLoading(true);
+    setGoalErr(null);
+    setGoalDash(null);
+    api
+      .getTeacherStudentGoalDashboard(goalStudent.id)
+      .then(setGoalDash)
+      .catch((e) => setGoalErr((e as Error).message || "Hedef verisi alınamadı"))
+      .finally(() => setGoalLoading(false));
+  }, [goalStudent]);
+
+  const closeGoalModal = () => {
+    setGoalStudent(null);
+    setGoalDash(null);
+    setGoalErr(null);
+  };
 
   const handleCreateClass = async () => {
     if (!newClassName.trim()) {
@@ -275,12 +306,13 @@ export default function SiniflarPage() {
                               <th className="text-right px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wide hidden sm:table-cell">Çalışma</th>
                               <th className="text-right px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wide hidden md:table-cell">Son Aktif</th>
                               <th className="text-left px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wide">Durum</th>
+                              <th className="text-right px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wide w-[1%] whitespace-nowrap">Hedef</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-slate-50">
                             {filteredStudents.length === 0 ? (
                               <tr>
-                                <td colSpan={5} className="px-5 py-12 text-center">
+                                <td colSpan={6} className="px-5 py-12 text-center">
                                   <Users className="w-8 h-8 text-slate-300 mx-auto mb-2" />
                                   <p className="text-slate-400 text-sm">{students.length === 0 ? "Bu sınıfta öğrenci yok" : "Öğrenci bulunamadı"}</p>
                                 </td>
@@ -319,6 +351,18 @@ export default function SiniflarPage() {
                                         {rc.label}
                                       </span>
                                     </td>
+                                    <td className="px-4 py-4 text-right">
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          setGoalStudent(s);
+                                        }}
+                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-indigo-200 bg-indigo-50 text-indigo-700 text-xs font-bold hover:bg-indigo-100 transition-colors"
+                                      >
+                                        <Target className="w-3.5 h-3.5" />
+                                        Özet
+                                      </button>
+                                    </td>
                                   </tr>
                                 );
                               })
@@ -347,6 +391,157 @@ export default function SiniflarPage() {
           </div>
         )}
       </div>
+
+      {/* ── Öğrenci hedef özeti (salt okunur, öğrenci ile aynı DTO) ── */}
+      {goalStudent && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 shrink-0">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center shrink-0">
+                  <Target className="w-5 h-5 text-indigo-600" />
+                </div>
+                <div className="min-w-0">
+                  <h3 className="font-bold text-slate-900 truncate">{goalStudent.name}</h3>
+                  <p className="text-[11px] text-slate-500 truncate">Hedef ve Net · salt okunur</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={closeGoalModal}
+                className="w-9 h-9 rounded-xl border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-100 transition-colors shrink-0"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="p-5 overflow-y-auto flex-1 space-y-4">
+              {goalLoading && (
+                <div className="flex flex-col items-center justify-center py-12 gap-3 text-slate-500">
+                  <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
+                  <p className="text-sm font-medium">Öğrenci hedef verisi yükleniyor…</p>
+                </div>
+              )}
+
+              {!goalLoading && goalErr && (
+                <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-100 rounded-xl text-sm text-red-700">
+                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                  {goalErr}
+                </div>
+              )}
+
+              {!goalLoading && goalDash && (
+                <>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Mod</span>
+                    <span className="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-800 text-xs font-bold">
+                      {goalTemplateLabel(goalDash.template)}
+                    </span>
+                    {(() => {
+                      const rt = goalDash.insights?.risk_tier ?? "on_track";
+                      const dr = DASH_RISK[rt] ?? DASH_RISK.on_track;
+                      return (
+                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold ${dr.badge}`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${dr.dot}`} />
+                          {dr.label}
+                        </span>
+                      );
+                    })()}
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="p-3 rounded-xl border border-slate-100 bg-slate-50/80">
+                      <p className="text-[10px] font-bold uppercase text-slate-400">Mevcut net</p>
+                      <p className="text-lg font-black text-slate-900 mt-0.5">
+                        {goalDash.insights?.display_current_net ?? goalDash.user_snapshot?.current_net ?? "—"}
+                      </p>
+                    </div>
+                    <div className="p-3 rounded-xl border border-slate-100 bg-slate-50/80">
+                      <p className="text-[10px] font-bold uppercase text-slate-400">Hedef net</p>
+                      <p className="text-lg font-black text-slate-900 mt-0.5">
+                        {goalDash.user_snapshot?.target_net != null
+                          ? goalDash.user_snapshot.target_net
+                          : "—"}
+                      </p>
+                    </div>
+                    <div className="p-3 rounded-xl border border-slate-100 bg-slate-50/80">
+                      <p className="text-[10px] font-bold uppercase text-slate-400">Kalan gün</p>
+                      <p className="text-lg font-black text-slate-900 mt-0.5">
+                        {goalDash.insights?.days_remaining != null ? goalDash.insights.days_remaining : "—"}
+                      </p>
+                    </div>
+                    <div className="p-3 rounded-xl border border-slate-100 bg-slate-50/80">
+                      <p className="text-[10px] font-bold uppercase text-slate-400">Haftalık net (tahmini)</p>
+                      <p className="text-lg font-black text-slate-900 mt-0.5">
+                        {goalDash.insights?.weekly_net_needed != null
+                          ? Number(goalDash.insights.weekly_net_needed).toFixed(1)
+                          : "—"}
+                      </p>
+                    </div>
+                  </div>
+
+                  {goalDash.template !== "school_primary" && goalDash.exam_metrics && (
+                    <div className="p-3 rounded-xl border border-indigo-100 bg-indigo-50/50 text-xs text-slate-700 space-y-1">
+                      <p className="font-bold text-indigo-900">Deneme</p>
+                      <p>
+                        Tamamlanan: <strong>{goalDash.exam_metrics.completed_exams_count ?? 0}</strong>
+                        {goalDash.exam_metrics.in_progress_exams_count != null &&
+                          goalDash.exam_metrics.in_progress_exams_count > 0 && (
+                            <span className="text-amber-800">
+                              {" "}
+                              · Devam eden: <strong>{goalDash.exam_metrics.in_progress_exams_count}</strong>
+                            </span>
+                          )}
+                      </p>
+                      {goalDash.exam_metrics.last_completed_exam_title && (
+                        <p className="text-slate-600 truncate">
+                          Son: {goalDash.exam_metrics.last_completed_exam_title}
+                          {goalDash.exam_metrics.last_completed_exam_net != null &&
+                            ` (${goalDash.exam_metrics.last_completed_exam_net} net)`}
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {goalDash.template === "school_primary" && goalDash.school_metrics && (
+                    <div className="p-3 rounded-xl border border-teal-100 bg-teal-50/40 text-xs text-slate-700 space-y-1">
+                      <p className="font-bold text-teal-900">Plan / okul</p>
+                      <p>
+                        Bu hafta görev:{" "}
+                        <strong>
+                          {goalDash.school_metrics.tasks_done_week ?? 0}/{goalDash.school_metrics.tasks_total_week ?? 0}
+                        </strong>
+                      </p>
+                      {goalDash.school_metrics.curriculum_topics_completed != null && (
+                        <p>
+                          Müfredat tamamlanan konu:{" "}
+                          <strong>{goalDash.school_metrics.curriculum_topics_completed}</strong>
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {goalDash.data_completeness?.missing && goalDash.data_completeness.missing.length > 0 && (
+                    <div>
+                      <p className="text-[10px] font-bold uppercase text-slate-400 mb-1.5">Eksik veri</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {goalDash.data_completeness.missing.map((m) => (
+                          <span
+                            key={m}
+                            className="px-2 py-0.5 rounded-md bg-amber-50 text-amber-900 text-[11px] font-semibold border border-amber-100"
+                          >
+                            {m}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Sınıf Oluşturma Modalı ── */}
       {showCreateModal && (

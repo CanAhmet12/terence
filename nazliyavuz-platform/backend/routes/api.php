@@ -472,6 +472,7 @@ Route::middleware(['auth:api'])->group(function () {
 
     // -- Student Goal Engine
     Route::get('/student/goal-engine', [\App\Http\Controllers\Api\StudentController::class, 'goalEngine']);
+    Route::get('/student/goal-dashboard', [\App\Http\Controllers\Api\StudentController::class, 'goalDashboard'])->middleware('role:student');
     Route::get('/student/report', [\App\Http\Controllers\Api\StudentController::class, 'report']);
 
     // -- AI Endpoints
@@ -492,6 +493,7 @@ Route::middleware(['auth:api'])->group(function () {
         Route::get('/teacher/classes', [\App\Http\Controllers\Api\TeacherController::class, 'classes']);
         Route::post('/teacher/classes', [\App\Http\Controllers\Api\TeacherController::class, 'createClass']);
         Route::get('/teacher/classes/{id}/students', [\App\Http\Controllers\Api\TeacherController::class, 'classStudents']);
+        Route::get('/teacher/students/{studentId}/goal-dashboard', [\App\Http\Controllers\Api\TeacherController::class, 'studentGoalDashboard']);
         Route::get('/teacher/students/risk', [\App\Http\Controllers\Api\TeacherController::class, 'riskStudents']);
         Route::get('/teacher/assignments', [\App\Http\Controllers\Api\TeacherController::class, 'assignments']);
         Route::post('/teacher/assignments', [\App\Http\Controllers\Api\TeacherController::class, 'createAssignment']);

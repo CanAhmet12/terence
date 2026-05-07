@@ -4,7 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { api } from "@/lib/api";
-import { CheckCircle, ChevronRight, GraduationCap, Target, Sparkles } from "lucide-react";
+import { resolveGoalTemplateFromUser } from "@/lib/goal-dashboard";
+import { CheckCircle, ChevronRight, GraduationCap, Target, Sparkles, Calendar } from "lucide-react";
 
 // ─── Konfigürasyonlar ─────────────────────────────────────────────────────────
 
@@ -70,13 +71,23 @@ function StepIndicator({ step, total }: { step: number; total: number }) {
   );
 }
 
+function needsExamGoalStep(grade: string, targetExam: string): boolean {
+  if (!grade || !targetExam) return false;
+  const g = parseInt(grade, 10);
+  const tpl = resolveGoalTemplateFromUser({ grade: g, target_exam: targetExam });
+  return tpl !== "school_primary";
+}
+
 export default function OnboardingPage() {
   const router = useRouter();
   const { user, updateUser } = useAuth();
 
-  const [step, setStep] = useState(0); // 0: sınıf, 1: sınav tipi, 2: tamamlandı
+  /** 0: sınıf, 1: sınav tipi, 2: isteğe bağlı hedef net / sınav tarihi (sınav şablonu), 3: tamamlandı */
+  const [step, setStep] = useState(0);
   const [selectedGrade, setSelectedGrade] = useState<string>("");
   const [selectedExam, setSelectedExam] = useState<string>("");
+  const [optionalTargetNet, setOptionalTargetNet] = useState("");
+  const [optionalExamDate, setOptionalExamDate] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -98,16 +109,31 @@ export default function OnboardingPage() {
     try {
       const gradeValue = parseInt(selectedGrade, 10);
 
-      await api.updateProfile({
+      const payload: Record<string, unknown> = {
         grade: gradeValue,
         target_exam: selectedExam,
-      } as Parameters<typeof api.updateProfile>[0]);
+      };
+      if (needsExamGoalStep(selectedGrade, selectedExam)) {
+        if (optionalTargetNet.trim() !== "") {
+          const n = parseFloat(optionalTargetNet.replace(",", "."));
+          if (!Number.isFinite(n) || n < 0 || n > 200) {
+            setError("Hedef net için 0–200 arası geçerli bir sayı girin veya alanı boş bırakın.");
+            setSaving(false);
+            return;
+          }
+          payload.target_net = n;
+        }
+        if (optionalExamDate.trim() !== "") {
+          payload.exam_date = optionalExamDate.trim();
+        }
+      }
 
-      // Kullanıcı objesini API'den güncel haliyle al
+      await api.updateProfile(payload as Parameters<typeof api.updateProfile>[0]);
+
       const me = await api.getMe();
       updateUser(me);
 
-      setStep(2);
+      setStep(3);
       setTimeout(() => {
         router.push("/ogrenci/dersler");
       }, 1800);
@@ -122,10 +148,21 @@ export default function OnboardingPage() {
     setSaving(false);
   };
 
+  const handleExamStepContinue = () => {
+    if (!selectedExam) return;
+    if (needsExamGoalStep(selectedGrade, selectedExam)) {
+      setStep(2);
+      return;
+    }
+    void handleFinish();
+  };
+
   const examOptions = getExamOptions(selectedGrade);
+  const stepTotal = needsExamGoalStep(selectedGrade, selectedExam) ? 3 : 2;
+  const stepIndexForBar = step >= 3 ? stepTotal : Math.min(step, stepTotal - 1);
 
   // ─── Tamamlandı ekranı ────────────────────────────────────────────────────
-  if (step === 2) {
+  if (step === 3) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-violet-50 flex items-center justify-center p-4">
         <div className="text-center space-y-6 max-w-sm">
@@ -160,7 +197,7 @@ export default function OnboardingPage() {
             Sana özel müfredat hazırlayabilmem için birkaç soruyu cevaplamanı istiyorum.
           </p>
           <div className="mt-4 flex justify-center">
-            <StepIndicator step={step} total={2} />
+            <StepIndicator step={stepIndexForBar} total={stepTotal} />
           </div>
         </div>
 
@@ -168,7 +205,7 @@ export default function OnboardingPage() {
         {step === 0 && (
           <div className="space-y-6">
             <div className="text-center">
-              <p className="text-sm font-semibold text-indigo-600 uppercase tracking-wide mb-1">Adım 1 / 2</p>
+              <p className="text-sm font-semibold text-indigo-600 uppercase tracking-wide mb-1">Adım 1 / {stepTotal}</p>
               <h2 className="text-xl font-bold text-slate-800 flex items-center justify-center gap-2">
                 <Target className="w-5 h-5 text-indigo-500" />
                 Hangi sınıftasın?
@@ -213,7 +250,7 @@ export default function OnboardingPage() {
         {step === 1 && (
           <div className="space-y-6">
             <div className="text-center">
-              <p className="text-sm font-semibold text-indigo-600 uppercase tracking-wide mb-1">Adım 2 / 2</p>
+              <p className="text-sm font-semibold text-indigo-600 uppercase tracking-wide mb-1">Adım 2 / {stepTotal}</p>
               <h2 className="text-xl font-bold text-slate-800 flex items-center justify-center gap-2">
                 <Sparkles className="w-5 h-5 text-violet-500" />
                 Hedef sınavın hangisi?
@@ -265,12 +302,14 @@ export default function OnboardingPage() {
                 Geri
               </button>
               <button
-                onClick={handleFinish}
+                onClick={handleExamStepContinue}
                 disabled={!selectedExam || saving}
                 className="flex-2 flex-grow-[2] py-4 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold rounded-2xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-indigo-500/25"
               >
                 {saving ? (
                   <><div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Kaydediliyor...</>
+                ) : needsExamGoalStep(selectedGrade, selectedExam) ? (
+                  <><ChevronRight className="w-5 h-5" /> Devam</>
                 ) : (
                   <><Sparkles className="w-5 h-5" /> Müfredatımı Hazırla</>
                 )}
@@ -279,9 +318,80 @@ export default function OnboardingPage() {
           </div>
         )}
 
+        {/* Adım 3: İsteğe bağlı hedef net & sınav tarihi (yalnızca sınav şablonu) */}
+        {step === 2 && (
+          <div className="space-y-6">
+            <div className="text-center">
+              <p className="text-sm font-semibold text-indigo-600 uppercase tracking-wide mb-1">Adım 3 / 3</p>
+              <h2 className="text-xl font-bold text-slate-800 flex items-center justify-center gap-2">
+                <Target className="w-5 h-5 text-indigo-500" />
+                Hedef net ve sınav tarihi
+              </h2>
+              <p className="text-sm text-slate-500 mt-1 max-w-md mx-auto">
+                Bu alanlar isteğe bağlıdır. Boş bırakırsan &quot;Hedef ve Net&quot; ekranında dilediğin zaman ekleyebilirsin; müfredatın yine hazırlanır.
+              </p>
+            </div>
+
+            <div className="space-y-4 bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Hedef net</label>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={optionalTargetNet}
+                  onChange={(e) => setOptionalTargetNet(e.target.value)}
+                  placeholder="Örn: 85 (boş bırakılabilir)"
+                  className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5 flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-slate-400" />
+                  Sınav tarihi
+                </label>
+                <input
+                  type="date"
+                  value={optionalExamDate}
+                  onChange={(e) => setOptionalExamDate(e.target.value)}
+                  className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
+                />
+              </div>
+            </div>
+
+            {error && (
+              <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl text-sm">
+                {error}
+              </div>
+            )}
+
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setStep(1)}
+                disabled={saving}
+                className="flex-1 py-4 border-2 border-slate-200 text-slate-600 font-bold rounded-2xl hover:bg-slate-50 transition-colors disabled:opacity-50"
+              >
+                Geri
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleFinish()}
+                disabled={saving}
+                className="flex-[2] py-4 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold rounded-2xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-indigo-500/25"
+              >
+                {saving ? (
+                  <><div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Kaydediliyor...</>
+                ) : (
+                  <><Sparkles className="w-5 h-5" /> Müfredatımı hazırla</>
+                )}
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Alt not */}
         <p className="text-center text-xs text-slate-400 mt-8">
-          Bu seçimini daha sonra Profil &gt; Hedef sayfasından değiştirebilirsin.
+          Bu seçimini daha sonra &quot;Hedef ve Net&quot; sayfasından güncelleyebilirsin.
         </p>
       </div>
     </div>

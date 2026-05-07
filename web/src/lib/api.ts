@@ -1,5 +1,6 @@
 import axios, { AxiosError, AxiosRequestConfig, AxiosResponse } from 'axios'
 import toast from 'react-hot-toast'
+import type { StudentGoalDashboard, RiskTier } from './goal-dashboard'
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'
 
@@ -564,6 +565,32 @@ export interface GoalAnalysis {
   exam_type?: string
 }
 
+function riskTierToGoalAnalysisLevel(t: RiskTier): 'green' | 'yellow' | 'red' {
+  if (t === 'critical') return 'red'
+  if (t === 'at_risk') return 'yellow'
+  return 'green'
+}
+
+export function mapDashboardToLegacyGoalAnalysis(d: StudentGoalDashboard): GoalAnalysis {
+  const ins = d.insights
+  const snap = d.user_snapshot
+  const current =
+    ins.display_current_net ??
+    (typeof snap.current_net === 'number' ? snap.current_net : Number(snap.current_net ?? 0))
+  const targetRaw = ins.display_target_net ?? snap.target_net
+  const target = targetRaw !== null && targetRaw !== undefined ? Number(targetRaw) : 0
+  return {
+    target_net: target,
+    current_net: Number(current),
+    days_remaining: ins.days_remaining ?? 0,
+    weekly_net_needed: ins.weekly_net_needed ?? 0,
+    risk_level: riskTierToGoalAnalysisLevel(ins.risk_tier),
+    exam_date: snap.exam_date ?? undefined,
+    exam_type: snap.target_exam ?? snap.exam_goal ?? undefined,
+    predicted_net: undefined,
+  }
+}
+
 export interface BadgeData {
   badges: (Badge & { emoji?: string; progress?: number; required?: number; earned_at?: string })[]
   xp: number
@@ -769,8 +796,9 @@ export const userApi = {
 
   async updateGoal(_tokenOrData?: string | Record<string, unknown>, data?: Record<string, unknown>): Promise<User> {
     const actualData = typeof _tokenOrData === 'string' ? data : _tokenOrData
-    const response = await api.post<{ user: User; success: boolean }>('/user/goal', actualData)
-    return response.data.user ?? (response.data as unknown as User)
+    const response = await api.post<{ user?: User; success: boolean }>('/user/goal', actualData)
+    if (response.data.user) return response.data.user
+    return userApi.getMe()
   },
 
   async changePassword(_tokenOrData?: string | { current_password: string; password: string; password_confirmation: string }, data?: { current_password: string; password: string; password_confirmation: string }): Promise<void> {
@@ -1010,6 +1038,11 @@ export const studentApi = {
     return response.data
   },
 
+  async getStudentGoalDashboard(_token?: string): Promise<StudentGoalDashboard> {
+    const response = await api.get<StudentGoalDashboard>('/student/goal-dashboard')
+    return response.data
+  },
+
   async getReport(_token?: string): Promise<unknown> {
     const response = await api.get<unknown>('/student/report')
     return response.data
@@ -1070,8 +1103,8 @@ export const aiApi = {
   },
 
   async getGoalAnalysis(_token?: string): Promise<GoalAnalysis> {
-    const response = await api.get<GoalAnalysis>('/student/goal-engine')
-    return response.data
+    const dash = await studentApi.getStudentGoalDashboard()
+    return mapDashboardToLegacyGoalAnalysis(dash)
   },
 }
 
@@ -1097,6 +1130,13 @@ export const teacherApi = {
     const actualId = typeof _tokenOrId === 'number' ? _tokenOrId : classId
     const response = await api.get<unknown>(`/teacher/classes/${actualId}/students`)
     return normalizeArray<User>(response.data)
+  },
+
+  async getTeacherStudentGoalDashboard(_tokenOrId?: string | number, studentId?: number): Promise<StudentGoalDashboard> {
+    const actualId = typeof _tokenOrId === 'number' ? _tokenOrId : studentId
+    if (actualId === undefined) throw new Error('Öğrenci ID gerekli')
+    const response = await api.get<StudentGoalDashboard>(`/teacher/students/${actualId}/goal-dashboard`)
+    return response.data
   },
 
   async getRiskStudents(_token?: string): Promise<User[]> {
@@ -1559,6 +1599,7 @@ Object.assign(api, {
   getStudentUpcomingLessons: studentApi.getStudentUpcomingLessons.bind(studentApi),
   generateParentCode: studentApi.generateParentCode.bind(studentApi),
   getGoalEngine: studentApi.getGoalEngine.bind(studentApi),
+  getStudentGoalDashboard: studentApi.getStudentGoalDashboard.bind(studentApi),
   getStudentReport: studentApi.getReport.bind(studentApi),
   // AI
   askCoach: aiApi.askCoach.bind(aiApi),
@@ -1572,6 +1613,7 @@ Object.assign(api, {
   getTeacherClasses: teacherApi.getTeacherClasses.bind(teacherApi),
   createClass: teacherApi.createClass.bind(teacherApi),
   getClassStudents: teacherApi.getClassStudents.bind(teacherApi),
+  getTeacherStudentGoalDashboard: teacherApi.getTeacherStudentGoalDashboard.bind(teacherApi),
   getRiskStudents: teacherApi.getRiskStudents.bind(teacherApi),
   getTeacherAssignments: teacherApi.getTeacherAssignments.bind(teacherApi),
   createAssignment: teacherApi.createAssignment.bind(teacherApi),

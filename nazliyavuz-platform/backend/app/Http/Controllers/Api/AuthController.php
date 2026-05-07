@@ -220,6 +220,7 @@ class AuthController extends Controller
             'target_school'      => 'sometimes|nullable|string|max:255',
             'target_department'  => 'sometimes|nullable|string|max:255',
             'target_net'         => 'sometimes|nullable|numeric|min:0|max:200',
+            'exam_date'          => 'sometimes|nullable|date',
             'daily_reminder_time'=> 'sometimes|nullable|date_format:H:i',
             'profile_photo_url'  => 'sometimes|nullable|string',
         ]);
@@ -258,6 +259,7 @@ class AuthController extends Controller
             'target_school'      => 'sometimes|nullable|string|max:255',
             'target_department'  => 'sometimes|nullable|string|max:255',
             'target_net'         => 'sometimes|nullable|numeric',
+            'exam_date'          => 'sometimes|nullable|date',
         ]);
         if ($v->fails()) {
             return $this->validationError($v, $request);
@@ -270,6 +272,7 @@ class AuthController extends Controller
         if (array_key_exists('target_school', $data)) $mapped['target_school'] = $data['target_school'];
         if (array_key_exists('target_department', $data)) $mapped['target_department'] = $data['target_department'];
         if (array_key_exists('target_net', $data)) $mapped['target_net'] = $data['target_net'];
+        if (array_key_exists('exam_date', $data)) $mapped['exam_date'] = $data['exam_date'];
         $user->update($mapped);
 
         return response()->json([
@@ -281,7 +284,9 @@ class AuthController extends Controller
                 'target_school'      => $user->target_school,
                 'target_department'  => $user->target_department,
                 'target_net'         => $user->target_net,
+                'exam_date'          => $user->fresh()->exam_date?->format('Y-m-d'),
             ],
+            'user' => $user->fresh()->toApiArray(),
         ]);
     }
 

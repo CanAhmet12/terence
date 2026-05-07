@@ -1,414 +1,462 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
-import { api, GoalAnalysis } from "@/lib/api";
+import { api } from "@/lib/api";
+import type { StudentGoalDashboard, GoalTemplate, RiskTier } from "@/lib/goal-dashboard";
+import { goalTemplateLabel, resolveGoalTemplateFromUser } from "@/lib/goal-dashboard";
 import {
-  Target, TrendingUp, TrendingDown, Calendar, Brain,
-  ChevronRight, ChevronLeft, Check, Loader2, AlertTriangle,
-  AlertCircle, Sparkles, School, BookOpen, Zap, ArrowRight
+  Target,
+  TrendingUp,
+  Calendar,
+  Loader2,
+  AlertTriangle,
+  AlertCircle,
+  School,
+  BookOpen,
+  Zap,
+  ArrowRight,
+  RefreshCw,
+  Check,
 } from "lucide-react";
 
 function Skeleton({ className }: { className?: string }) {
   return <div className={`bg-slate-100 rounded-xl animate-pulse ${className ?? ""}`} />;
 }
 
-// Dairesel progress ring
-function CircularGoalProgress({ current, target, size = 140 }: {
-  current: number; target: number; size?: number;
-}) {
+function CircularProgress({ current, target, size = 120 }: { current: number; target: number; size?: number }) {
   const pct = target > 0 ? Math.min((current / target) * 100, 100) : 0;
-  const stroke = 12;
+  const stroke = 10;
   const r = (size - stroke * 2) / 2;
   const circ = 2 * Math.PI * r;
   const offset = circ - (pct / 100) * circ;
-
   const color = pct >= 80 ? "#22c55e" : pct >= 50 ? "#f59e0b" : "#ef4444";
 
   return (
-    <div className="relative" style={{ width: size, height: size }}>
+    <div className="relative shrink-0" style={{ width: size, height: size }}>
       <svg width={size} height={size} className="-rotate-90">
-        <circle cx={size/2} cy={size/2} r={r} stroke="#e2e8f0" strokeWidth={stroke} fill="none" />
+        <circle cx={size / 2} cy={size / 2} r={r} stroke="#e2e8f0" strokeWidth={stroke} fill="none" />
         <circle
-          cx={size/2} cy={size/2} r={r}
-          stroke={color} strokeWidth={stroke} fill="none"
-          strokeDasharray={circ} strokeDashoffset={offset}
+          cx={size / 2}
+          cy={size / 2}
+          r={r}
+          stroke={color}
+          strokeWidth={stroke}
+          fill="none"
+          strokeDasharray={circ}
+          strokeDashoffset={offset}
           strokeLinecap="round"
-          style={{ transition: "stroke-dashoffset 1s ease, stroke 0.5s ease" }}
+          style={{ transition: "stroke-dashoffset 0.8s ease, stroke 0.4s ease" }}
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-3xl font-black text-slate-900 leading-none">{Math.round(pct)}%</span>
-        <span className="text-xs text-slate-500 font-medium mt-1">hedefe doğru</span>
+        <span className="text-2xl font-black text-slate-900 leading-none">{Math.round(pct)}%</span>
+        <span className="text-[10px] text-slate-500 font-medium mt-0.5">hedefe</span>
       </div>
     </div>
   );
 }
 
-const EXAM_TYPES = [
-  { key: "TYT-AYT", label: "TYT + AYT", desc: "Üniversite (4 yıllık)", color: "text-indigo-600", bg: "bg-indigo-50", border: "border-indigo-300", icon: "🎓" },
-  { key: "TYT",     label: "TYT",        desc: "Üniversite (2 yıllık)", color: "text-violet-600", bg: "bg-violet-50", border: "border-violet-300", icon: "📚" },
-  { key: "LGS",     label: "LGS",        desc: "Lise geçiş sınavı",    color: "text-emerald-600",bg: "bg-emerald-50",border: "border-emerald-300",icon: "📖" },
-  { key: "KPSS",    label: "KPSS",       desc: "Kamu personel seçme",  color: "text-amber-600",  bg: "bg-amber-50",  border: "border-amber-300",  icon: "🏛️" },
-];
-
-const RISK_CONFIG = {
-  green:  { bg: "bg-emerald-50",  border: "border-emerald-200", text: "text-emerald-800", icon: "text-emerald-500", label: "Hedefe Ulaşabilirsin",    badge: "bg-emerald-100 text-emerald-700" },
-  yellow: { bg: "bg-amber-50",    border: "border-amber-200",   text: "text-amber-800",   icon: "text-amber-500",   label: "Dikkat: Sınır Durumda",  badge: "bg-amber-100 text-amber-700"   },
-  red:    { bg: "bg-red-50",      border: "border-red-200",     text: "text-red-800",     icon: "text-red-500",     label: "Yüksek Risk",            badge: "bg-red-100 text-red-700"       },
+const RISK_UI: Record<RiskTier, { label: string; badge: string; border: string; text: string }> = {
+  on_track: {
+    label: "İyi gidiyor",
+    badge: "bg-emerald-100 text-emerald-800",
+    border: "border-emerald-200",
+    text: "text-emerald-800",
+  },
+  at_risk: {
+    label: "Dikkat",
+    badge: "bg-amber-100 text-amber-800",
+    border: "border-amber-200",
+    text: "text-amber-800",
+  },
+  critical: {
+    label: "Yüksek risk",
+    badge: "bg-red-100 text-red-800",
+    border: "border-red-200",
+    text: "text-red-800",
+  },
 };
+
+function KpiCard({
+  label,
+  value,
+  sub,
+  icon: Icon,
+  color,
+  bg,
+}: {
+  label: string;
+  value: string | number;
+  sub?: string;
+  icon: React.ElementType;
+  color: string;
+  bg: string;
+}) {
+  return (
+    <div className="bg-white rounded-xl border border-slate-100 p-4 shadow-sm">
+      <div className={`w-8 h-8 rounded-lg ${bg} flex items-center justify-center mb-2`}>
+        <Icon className={`w-4 h-4 ${color}`} strokeWidth={2} />
+      </div>
+      <p className="text-lg font-black text-slate-900 leading-tight">{value}</p>
+      <p className="text-[11px] font-semibold text-slate-500 mt-0.5">{label}</p>
+      {sub && <p className="text-[10px] text-slate-400 mt-1">{sub}</p>}
+    </div>
+  );
+}
 
 export default function HedefPage() {
   const { user, updateUser } = useAuth();
-  const router = useRouter();
-  const [analysis, setAnalysis] = useState<GoalAnalysis | null>(null);
+  const [dash, setDash] = useState<StudentGoalDashboard | null>(null);
   const [loading, setLoading] = useState(true);
-  const [saveState, setSaveState] = useState<"idle" | "saving" | "success" | "error">("idle");
-  const [saveError, setSaveError] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [saveState, setSaveState] = useState<"idle" | "saving" | "ok" | "err">("idle");
+  const [saveErr, setSaveErr] = useState("");
 
-  // Form state
-  const [examType, setExamType] = useState(user?.target_exam ?? user?.exam_goal ?? "TYT-AYT");
-  const [targetSchool, setTargetSchool] = useState(user?.target_school ?? "");
-  const [targetDept, setTargetDept] = useState(user?.target_department ?? "");
-  const [targetNet, setTargetNet] = useState(String(user?.target_net ?? ""));
-  const [currentNet, setCurrentNet] = useState(String(user?.current_net ?? ""));
-  const [examDate, setExamDate] = useState(user?.exam_date ?? "");
+  const [targetNet, setTargetNet] = useState("");
+  const [examDate, setExamDate] = useState("");
+  const [targetSchool, setTargetSchool] = useState("");
+  const [targetDept, setTargetDept] = useState("");
 
-  const loadAnalysis = useCallback(async () => {
+  const load = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
-      const res = await api.getGoalAnalysis();
-      setAnalysis(res as GoalAnalysis);
-    } catch {}
+      const d = await api.getStudentGoalDashboard();
+      setDash(d);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Veri yüklenemedi");
+      setDash(null);
+    }
     setLoading(false);
   }, []);
 
   useEffect(() => {
-    loadAnalysis();
-    if (user?.goal) {
-      setExamType((user.goal as Record<string, unknown>).exam_type as string ?? user.target_exam ?? "TYT-AYT");
-      setTargetSchool((user.goal as Record<string, unknown>).target_school as string ?? "");
-      setTargetDept((user.goal as Record<string, unknown>).target_department as string ?? "");
-      setTargetNet(String((user.goal as Record<string, unknown>).target_net ?? user.target_net ?? ""));
-      setCurrentNet(String(user.current_net ?? ""));
-    }
-  }, [loadAnalysis, user]);
+    void load();
+  }, [load]);
 
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault();
+  useEffect(() => {
+    if (!user) return;
+    setTargetNet(user.target_net != null ? String(user.target_net) : "");
+    setExamDate(user.exam_date?.slice(0, 10) ?? "");
+    setTargetSchool(user.target_school ?? "");
+    setTargetDept(user.target_department ?? "");
+  }, [user]);
+
+  const handleSave = async () => {
+    if (!user) return;
     setSaveState("saving");
-    setSaveError("");
+    setSaveErr("");
     try {
-      const updatedGoal = await api.updateGoal({
-        exam_type: examType,
-        target_school: targetSchool || undefined,
-        target_department: targetDept || undefined,
-        target_net: targetNet ? parseFloat(targetNet) : undefined,
-        current_net: currentNet ? parseFloat(currentNet) : undefined,
-        exam_date: examDate || undefined,
-      } as Parameters<typeof api.updateGoal>[0]);
-      if (user && updatedGoal) {
-        updateUser({ ...user, ...(updatedGoal as Record<string, unknown>) });
-      }
-      const newAnalysis = await api.getGoalAnalysis();
-      setAnalysis(newAnalysis as GoalAnalysis);
-      setSaveState("success");
-      setTimeout(() => setSaveState("idle"), 3000);
-    } catch (err: unknown) {
-      setSaveError(err instanceof Error ? err.message : "Kayıt başarısız");
-      setSaveState("error");
-      setTimeout(() => setSaveState("idle"), 5000);
+      const payload: Record<string, unknown> = {
+        target_school: targetSchool || null,
+        target_department: targetDept || null,
+      };
+      if (targetNet.trim() !== "") payload.target_net = parseFloat(targetNet);
+      else payload.target_net = null;
+      if (examDate) payload.exam_date = examDate;
+      else payload.exam_date = null;
+      await api.updateProfile(payload as Parameters<typeof api.updateProfile>[0]);
+      const me = await api.getMe();
+      updateUser(me);
+      await load();
+      setSaveState("ok");
+      setTimeout(() => setSaveState("idle"), 2500);
+    } catch (e) {
+      setSaveErr(e instanceof Error ? e.message : "Kayıt başarısız");
+      setSaveState("err");
+      setTimeout(() => setSaveState("idle"), 4000);
     }
   };
 
-  const current = (() => {
-    const v = Number(analysis?.current_net ?? currentNet ?? 0);
-    return isNaN(v) ? 0 : v;
-  })();
-  const target = (() => {
-    const v = Number(analysis?.target_net ?? targetNet ?? 0);
-    return isNaN(v) ? 0 : v;
-  })();
-  const remaining = target - current;
-  const daysRemaining = analysis?.days_remaining ?? 0;
-  const weeklyNeeded = analysis?.weekly_net_needed ?? 0;
+  const template: GoalTemplate = dash?.template ?? resolveGoalTemplateFromUser(user ?? undefined);
+  const snap = dash?.user_snapshot;
+  const ins = dash?.insights;
+  const exam = dash?.exam_metrics;
+  const school = dash?.school_metrics;
+  const missing = dash?.data_completeness?.missing ?? [];
 
-  const riskLevel = analysis?.risk_level ?? (
-    target > 0 && current >= target * 0.8 ? "green" :
-    target > 0 && current >= target * 0.5 ? "yellow" : "red"
-  ) as keyof typeof RISK_CONFIG;
-  const riskStyle = RISK_CONFIG[riskLevel] ?? RISK_CONFIG.green;
+  const currentNet = ins?.display_current_net ?? snap?.current_net ?? 0;
+  const targetNetNum = ins?.display_target_net ?? snap?.target_net ?? 0;
+  const risk = ins?.risk_tier ?? "on_track";
+  const riskStyle = RISK_UI[risk] ?? RISK_UI.on_track;
 
   return (
     <div className="bg-slate-50 min-h-full">
-      <div className="w-full px-6 py-8 space-y-8">
+      <div className="max-w-5xl mx-auto w-full px-4 sm:px-6 py-8 space-y-6">
 
-        {/* ── Başlık ── */}
-        <div>
-          <h1 className="text-3xl font-black text-slate-900 tracking-tight">Hedef & Net</h1>
-          <p className="text-slate-500 mt-1 font-medium">Sınav hedefini belirle, ilerleni takip et</p>
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">Hedef ve Net</h1>
+            <p className="text-slate-500 mt-1 text-sm font-medium max-w-xl">
+              {template === "school_primary"
+                ? "Günlük plan, müfredat ve çalışma alışkanlıklarınızı takip edin."
+                : "Sınav hedefiniz ve deneme performansınız tek ekranda; tüm veriler sunucudan canlı gelir."}
+            </p>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Mod</span>
+            <span className="px-3 py-1 rounded-lg bg-indigo-100 text-indigo-800 text-xs font-bold">{goalTemplateLabel(template)}</span>
+            <button
+              type="button"
+              onClick={() => void load()}
+              disabled={loading}
+              className="p-2 rounded-lg border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 disabled:opacity-50"
+              aria-label="Yenile"
+            >
+              <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
+            </button>
+          </div>
         </div>
 
-        {/* ── Ana Grid ── */}
-        <div className="grid lg:grid-cols-2 gap-8">
-
-          {/* ─ Sol: Durum Kartı ─ */}
-          <div className="space-y-5">
-
-            {/* Hedef özeti + progress */}
-            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
-              {loading ? (
-                <div className="space-y-4">
-                  <Skeleton className="h-8 w-40" />
-                  <Skeleton className="h-36 w-36 rounded-full mx-auto" />
-                </div>
-              ) : (
-                <>
-                  <div className="flex items-start justify-between mb-6">
-                    <div>
-                      <h2 className="font-bold text-slate-900 text-lg">Mevcut Durumum</h2>
-                      <div className="flex items-center gap-2 mt-1.5">
-                        {examType && (
-                          <span className="px-2.5 py-1 bg-indigo-100 text-indigo-700 text-xs font-bold rounded-lg">
-                            {examType}
-                          </span>
-                        )}
-                        {targetSchool && (
-                          <span className="text-xs text-slate-500 truncate max-w-[150px]">{targetSchool}</span>
-                        )}
-                      </div>
-                    </div>
-                    <div className={`px-2.5 py-1 rounded-lg text-xs font-semibold ${riskStyle.badge}`}>
-                      {riskStyle.label}
-                    </div>
-                  </div>
-
-                  {/* Dairesel progress */}
-                  {target > 0 && (
-                    <div className="flex items-center gap-8">
-                      <CircularGoalProgress current={current} target={target} size={130} />
-                      <div className="flex-1 space-y-3">
-                        {[
-                          { label: "Mevcut Net", value: current, color: "text-slate-900" },
-                          { label: "Hedef Net",  value: target,  color: "text-indigo-600" },
-                          { label: "Fark",       value: remaining > 0 ? `+${remaining}` : remaining, color: remaining > 0 ? "text-amber-600" : "text-emerald-600" },
-                        ].map(({ label, value, color }) => (
-                          <div key={label} className="flex justify-between items-center px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-100">
-                            <span className="text-xs text-slate-500 font-medium">{label}</span>
-                            <span className={`text-base font-black ${color}`}>{value}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {target === 0 && (
-                    <div className="text-center py-4">
-                      <Target className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-                      <p className="text-slate-500 font-medium">Henüz hedef belirlenmemiş</p>
-                      <p className="text-sm text-slate-400 mt-1">Sağdaki formu doldurun</p>
-                    </div>
-                  )}
-                </>
-              )}
+        {error && (
+          <div className="flex items-start gap-3 p-4 rounded-xl border border-red-200 bg-red-50 text-sm text-red-800">
+            <AlertCircle className="w-5 h-5 shrink-0" />
+            <div>
+              <p className="font-bold">Yüklenemedi</p>
+              <p className="mt-0.5 opacity-90">{error}</p>
             </div>
-
-            {/* İstatistik kartları */}
-            {!loading && analysis && (
-              <div className="grid grid-cols-2 gap-4">
-                {[
-                  { label: "Kalan Gün", value: daysRemaining, icon: Calendar, color: "text-violet-600", bg: "bg-violet-50" },
-                  { label: "Haftalık Gerekli Net", value: weeklyNeeded > 0 ? `+${weeklyNeeded}` : "—", icon: TrendingUp, color: "text-teal-600", bg: "bg-teal-50" },
-                ].map(({ label, value, icon: Icon, color, bg }) => (
-                  <div key={label} className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
-                    <div className={`w-9 h-9 rounded-xl ${bg} flex items-center justify-center mb-3`}>
-                      <Icon className={`w-5 h-5 ${color}`} strokeWidth={2} />
-                    </div>
-                    <p className="text-2xl font-black text-slate-900 leading-none">{value}</p>
-                    <p className="text-xs text-slate-500 font-medium mt-1">{label}</p>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Risk uyarısı */}
-            {!loading && analysis && riskLevel !== "green" && (
-              <div className={`flex items-start gap-4 p-5 rounded-2xl border ${riskStyle.bg} ${riskStyle.border}`}>
-                <AlertTriangle className={`w-5 h-5 shrink-0 mt-0.5 ${riskStyle.icon}`} />
-                <div>
-                  <p className={`font-bold text-sm ${riskStyle.text}`}>{riskStyle.label}</p>
-                  <p className={`text-xs mt-1 ${riskStyle.text} opacity-80`}>
-                    {riskLevel === "red"
-                      ? "Hedefe ulaşmak için çalışma temponuzu önemli ölçüde artırmanız gerekiyor."
-                      : "Hedef net için çalışma planınızı gözden geçirmeniz önerilir."
-                    }
-                  </p>
-                  <button
-                    onClick={() => router.push("/ogrenci/koc")}
-                    className={`flex items-center gap-1 mt-2.5 text-xs font-bold ${riskStyle.text} hover:underline`}
-                  >
-                    Koça Danış <ChevronRight className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              </div>
-            )}
           </div>
+        )}
 
-          {/* ─ Sağ: Form ─ */}
-          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-            <div className="px-6 py-5 border-b border-slate-100 bg-gradient-to-r from-indigo-50 to-violet-50">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-indigo-100 flex items-center justify-center">
-                  <Target className="w-5 h-5 text-indigo-600" />
+        {missing.length > 0 && dash && (
+          <div className="flex flex-wrap gap-2 items-center text-xs">
+            <span className="font-semibold text-slate-500">Eksik bilgi:</span>
+            {missing.map((m) => (
+              <span key={m} className="px-2 py-0.5 rounded-md bg-amber-100 text-amber-900 font-medium">
+                {m === "target_net" ? "Hedef net" : m === "exam_date" ? "Sınav tarihi" : m}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {loading && !dash ? (
+          <div className="grid lg:grid-cols-2 gap-6">
+            <Skeleton className="h-64 rounded-2xl" />
+            <Skeleton className="h-64 rounded-2xl" />
+          </div>
+        ) : dash ? (
+          <div className="grid lg:grid-cols-2 gap-6 items-start">
+            {/* Sol: durum */}
+            <div className="space-y-4">
+              <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 sm:p-6">
+                <div className="flex items-start justify-between gap-3 mb-5">
+                  <div>
+                    <h2 className="font-bold text-slate-900 text-base">Özet</h2>
+                    <p className="text-xs text-slate-500 mt-0.5">Sunucu hesaplaması · {riskStyle.label}</p>
+                  </div>
+                  <span className={`text-xs font-bold px-2.5 py-1 rounded-lg shrink-0 ${riskStyle.badge}`}>{riskStyle.label}</span>
                 </div>
-                <div>
-                  <h2 className="font-bold text-slate-900">Hedefim</h2>
-                  <p className="text-xs text-slate-500 mt-0.5">Sınav türü, okul ve net hedefin</p>
-                </div>
-              </div>
-            </div>
 
-            {/* Uyarı Banner */}
-            <div className="mx-6 mt-6 px-4 py-3 bg-amber-50 border-l-4 border-amber-400 rounded-r-lg">
-              <div className="flex items-start gap-3">
-                <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-sm font-semibold text-amber-900">Hedef bilgilerinizi değiştiremezsiniz</p>
-                  <p className="text-xs text-amber-700 mt-1">Sınıf ve hedef sınav bilgilerinizi değiştirmek için lütfen yöneticinizle iletişime geçin.</p>
-                </div>
-              </div>
-            </div>
-
-            <form onSubmit={(e) => e.preventDefault()} className="p-6 space-y-5">
-
-              {/* Sınav türü seçimi */}
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-3">
-                  Hedef Sınav
-                </label>
-                <div className="grid grid-cols-2 gap-2">
-                  {EXAM_TYPES.map((e) => (
-                    <button
-                      key={e.key}
-                      type="button"
-                      disabled
-                      className={`flex items-center gap-2.5 p-3.5 rounded-xl border-2 transition-all text-left opacity-60 cursor-not-allowed ${
-                        examType === e.key
-                          ? `${e.bg} ${e.border} shadow-sm`
-                          : "border-slate-200"
-                      }`}
+                {template === "school_primary" && school ? (
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-3">
+                      <KpiCard
+                        label="Bugün görev"
+                        value={`${school.tasks_done_today ?? 0}/${Math.max(school.tasks_total_today ?? 0, 1)}`}
+                        sub="Tamamlanan / planlanan"
+                        icon={Target}
+                        color="text-indigo-600"
+                        bg="bg-indigo-50"
+                      />
+                      <KpiCard
+                        label="Haftalık çalışma"
+                        value={`${Math.round((school.study_time_weekly_seconds ?? 0) / 60)} dk`}
+                        icon={Zap}
+                        color="text-teal-600"
+                        bg="bg-teal-50"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <KpiCard
+                        label="Müfredat tamam"
+                        value={school.curriculum_topics_completed ?? 0}
+                        icon={BookOpen}
+                        color="text-violet-600"
+                        bg="bg-violet-50"
+                      />
+                      <KpiCard
+                        label="Müfredatta devam"
+                        value={school.curriculum_topics_in_progress ?? 0}
+                        icon={TrendingUp}
+                        color="text-amber-600"
+                        bg="bg-amber-50"
+                      />
+                    </div>
+                    <Link
+                      href="/ogrenci/plan"
+                      className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold transition-colors"
                     >
-                      <span className="text-xl shrink-0">{e.icon}</span>
-                      <div>
-                        <p className={`text-sm font-bold ${examType === e.key ? e.color : "text-slate-700"}`}>
-                          {e.label}
-                        </p>
-                        <p className="text-[11px] text-slate-400">{e.desc}</p>
+                      Plana git <ArrowRight className="w-4 h-4" />
+                    </Link>
+                  </div>
+                ) : (
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-6">
+                    {targetNetNum > 0 && (
+                      <CircularProgress current={Number(currentNet)} target={Number(targetNetNum)} size={120} />
+                    )}
+                    <div className="flex-1 space-y-2 min-w-0">
+                      <div className="flex justify-between gap-2 text-sm border border-slate-100 rounded-xl px-3 py-2 bg-slate-50">
+                        <span className="text-slate-500 font-medium">Son kayıtlı net</span>
+                        <span className="font-black text-slate-900">{Number(currentNet).toFixed(1)}</span>
                       </div>
-                      {examType === e.key && (
-                        <Check className={`w-4 h-4 ml-auto shrink-0 ${e.color}`} />
+                      <div className="flex justify-between gap-2 text-sm border border-slate-100 rounded-xl px-3 py-2 bg-slate-50">
+                        <span className="text-slate-500 font-medium">Hedef net</span>
+                        <span className="font-black text-indigo-700">{targetNetNum > 0 ? targetNetNum.toFixed(1) : "—"}</span>
+                      </div>
+                      {exam && (
+                        <div className="flex justify-between gap-2 text-xs text-slate-500 px-1">
+                          <span>Tamamlanan deneme: {exam.completed_exams_count ?? 0}</span>
+                          <span>Devam eden: {exam.in_progress_exams_count ?? 0}</span>
+                        </div>
                       )}
-                    </button>
-                  ))}
+                    </div>
+                  </div>
+                )}
+
+                {template !== "school_primary" && ins?.days_remaining != null && (
+                  <div className="grid grid-cols-2 gap-3 mt-5">
+                    <KpiCard
+                      label="Kalan gün"
+                      value={ins.days_remaining}
+                      icon={Calendar}
+                      color="text-violet-600"
+                      bg="bg-violet-50"
+                    />
+                    <KpiCard
+                      label="Haftalık net ihtiyacı"
+                      value={ins.weekly_net_needed != null ? `+${ins.weekly_net_needed}` : "—"}
+                      sub={ins.weekly_net_needed == null ? "Tarih veya hedef eksik" : undefined}
+                      icon={TrendingUp}
+                      color="text-teal-600"
+                      bg="bg-teal-50"
+                    />
+                  </div>
+                )}
+
+                {template !== "school_primary" && ins?.days_remaining == null && (
+                  <div className="mt-4 p-3 rounded-xl border border-amber-200 bg-amber-50 text-xs text-amber-900">
+                    Sınav tarihi girilmediği için kalan gün hesaplanmıyor. Sağdaki formdan ekleyebilirsiniz.
+                  </div>
+                )}
+
+                {risk !== "on_track" && (
+                  <div className={`mt-4 flex gap-3 p-3 rounded-xl border ${riskStyle.border} bg-white`}>
+                    <AlertTriangle className={`w-5 h-5 shrink-0 ${riskStyle.text}`} />
+                    <p className={`text-xs font-medium ${riskStyle.text}`}>
+                      {risk === "critical"
+                        ? "Hedefe yetişmek için tempoyu artırmanız veya hedefi gözden geçirmeniz önerilir."
+                        : "Planınızı ve deneme sıklığınızı gözden geçirmeniz faydalı olur."}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Sağ: hedef formu */}
+            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+              <div className="px-5 py-4 border-b border-slate-100 bg-gradient-to-r from-indigo-50 to-violet-50">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center">
+                    <Target className="w-4 h-4 text-indigo-600" />
+                  </div>
+                  <div>
+                    <h2 className="font-bold text-slate-900 text-sm">Hedef bilgilerim</h2>
+                    <p className="text-[11px] text-slate-500">Kayıt sunucuya yazılır · Sınıf/sınav türü kısıtlıysa değişmez</p>
+                  </div>
                 </div>
               </div>
 
-              {/* Net değerleri */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                    Mevcut Net
-                  </label>
-                  <input
-                    type="number"
-                    value={currentNet}
-                    disabled
-                    placeholder="Örn: 65"
-                    min={0}
-                    max={200}
-                    className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 outline-none text-sm transition-all bg-slate-50 cursor-not-allowed opacity-60"
-                  />
+              <div className="p-5 sm:p-6 space-y-4">
+                {template === "school_primary" ? (
+                  <p className="text-sm text-slate-600 leading-relaxed">
+                    Bu kademede odak günlük görev ve müfredat ilerlemesidir. Sınav neti zorunlu değildir. Günlük plan ve dersler sayfalarını kullanın.
+                  </p>
+                ) : (
+                  <>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-600 mb-1">Hedef net</label>
+                        <input
+                          type="number"
+                          min={0}
+                          max={200}
+                          step={0.5}
+                          value={targetNet}
+                          onChange={(e) => setTargetNet(e.target.value)}
+                          className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-600 mb-1">Sınav tarihi</label>
+                        <input
+                          type="date"
+                          value={examDate}
+                          onChange={(e) => setExamDate(e.target.value)}
+                          className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-600 mb-1 flex items-center gap-1">
+                        <School className="w-3 h-3" /> Hedef okul
+                      </label>
+                      <input
+                        type="text"
+                        value={targetSchool}
+                        onChange={(e) => setTargetSchool(e.target.value)}
+                        className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-600 mb-1 flex items-center gap-1">
+                        <BookOpen className="w-3 h-3" /> Hedef bölüm
+                      </label>
+                      <input
+                        type="text"
+                        value={targetDept}
+                        onChange={(e) => setTargetDept(e.target.value)}
+                        className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                      />
+                    </div>
+                  </>
+                )}
+
+                <div className="flex flex-col sm:flex-row gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => void handleSave()}
+                    disabled={saveState === "saving"}
+                    className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white text-sm font-bold transition-colors"
+                  >
+                    {saveState === "saving" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                    Kaydet
+                  </button>
+                  <Link
+                    href="/ogrenci/deneme"
+                    className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border border-slate-200 text-slate-700 text-sm font-bold hover:bg-slate-50"
+                  >
+                    Denemeler <ArrowRight className="w-4 h-4" />
+                  </Link>
                 </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                    Hedef Net
-                  </label>
-                  <input
-                    type="number"
-                    value={targetNet}
-                    disabled
-                    placeholder="Örn: 100"
-                    min={0}
-                    max={200}
-                    className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 outline-none text-sm transition-all bg-slate-50 cursor-not-allowed opacity-60"
-                  />
-                </div>
-              </div>
 
-              {/* Hedef okul */}
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center gap-1.5">
-                  <School className="w-3.5 h-3.5" />
-                  Hedef Üniversite / Okul
-                </label>
-                <input
-                  type="text"
-                  value={targetSchool}
-                  disabled
-                  placeholder="Örn: Boğaziçi Üniversitesi"
-                  className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 outline-none text-sm transition-all bg-slate-50 cursor-not-allowed opacity-60"
-                />
+                {saveState === "ok" && <p className="text-xs font-semibold text-emerald-600 text-center">Kaydedildi</p>}
+                {saveState === "err" && saveErr && <p className="text-xs font-semibold text-red-600 text-center">{saveErr}</p>}
               </div>
-
-              {/* Bölüm */}
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center gap-1.5">
-                  <BookOpen className="w-3.5 h-3.5" />
-                  Hedef Bölüm
-                </label>
-                <input
-                  type="text"
-                  value={targetDept}
-                  disabled
-                  placeholder="Örn: Bilgisayar Mühendisliği"
-                  className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 outline-none text-sm transition-all bg-slate-50 cursor-not-allowed opacity-60"
-                />
-              </div>
-
-              {/* Sınav tarihi */}
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center gap-1.5">
-                  <Calendar className="w-3.5 h-3.5" />
-                  Tahmini Sınav Tarihi
-                </label>
-                <input
-                  type="date"
-                  value={examDate}
-                  disabled
-                  className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 outline-none text-sm transition-all bg-slate-50 cursor-not-allowed opacity-60"
-                />
-              </div>
-
-            </form>
+            </div>
           </div>
-        </div>
+        ) : null}
 
-        {/* ── Alt: Motivasyon kartı ── */}
-        <div className="flex items-center gap-4 p-5 rounded-2xl bg-gradient-to-r from-indigo-50 to-violet-50 border border-indigo-100">
-          <div className="w-12 h-12 rounded-2xl bg-indigo-100 flex items-center justify-center shrink-0">
-            <Zap className="w-6 h-6 text-indigo-600" />
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 p-4 rounded-2xl bg-gradient-to-r from-indigo-50 to-violet-50 border border-indigo-100">
+          <Zap className="w-6 h-6 text-indigo-600 shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="font-bold text-indigo-900 text-sm">Koç ve plan</p>
+            <p className="text-xs text-indigo-700/90">Kişisel analiz için dijital koça veya günlük plana geçin.</p>
           </div>
-          <div className="flex-1">
-            <p className="font-bold text-indigo-800">Hedefe ulaşmak için koçunla çalış</p>
-            <p className="text-sm text-indigo-600 mt-0.5">Kişisel analiz ve öğrenme planı için AI Koçuna danış</p>
-          </div>
-          <button
-            onClick={() => router.push("/ogrenci/koc")}
-            className="shrink-0 flex items-center gap-1.5 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl transition-colors"
-          >
-            Koça Git <ArrowRight className="w-4 h-4" />
-          </button>
+          <Link href="/ogrenci/koc" className="shrink-0 text-sm font-bold text-indigo-700 hover:underline">
+            Koça git
+          </Link>
         </div>
       </div>
     </div>

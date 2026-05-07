@@ -9,6 +9,7 @@ use App\Models\StudySession;
 use App\Models\XpLog;
 use App\Models\ExamSession;
 use App\Models\QuestionAnswer;
+use App\Services\GoalDashboardService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
@@ -301,5 +302,15 @@ class StudentController extends Controller
             'current_net'       => (float) ($user->current_net ?? 0),
             'target_net'        => (float) ($user->target_net ?? 80),
         ]);
+    }
+
+    /**
+     * GET /api/student/goal-dashboard — öğrenci hedef/ilerleme (tek DTO, mock yok).
+     */
+    public function goalDashboard(): JsonResponse
+    {
+        $user = Auth::user();
+
+        return response()->json(app(GoalDashboardService::class)->forUser($user));
     }
 }

@@ -14,6 +14,7 @@ use App\Models\ExamAnswer;
 use App\Models\StudySession;
 use App\Models\PlanTask;
 use App\Models\Message;
+use App\Services\GoalDashboardService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
@@ -59,7 +60,19 @@ class TeacherController extends Controller
     {
         $teacher = Auth::user();
         $class   = ClassRoom::where('teacher_id', $teacher->id)->findOrFail($classId);
-        $students = $class->students()->get(['users.id','users.name','users.email','users.grade','users.current_net','users.xp_points','users.subscription_plan','users.last_login_at']);
+        $students = $class->students()->get([
+            'users.id',
+            'users.name',
+            'users.email',
+            'users.grade',
+            'users.target_exam',
+            'users.exam_goal',
+            'users.target_net',
+            'users.current_net',
+            'users.xp_points',
+            'users.subscription_plan',
+            'users.last_login_at',
+        ]);
         return response()->json(['success' => true, 'data' => $students]);
     }
 
@@ -385,5 +398,28 @@ class TeacherController extends Controller
         ];
 
         return response()->json(['success' => true, 'message' => $msg], 201);
+    }
+
+    /**
+     * GET /api/teacher/students/{studentId}/goal-dashboard — sınıftaki öğrenci ile aynı DTO.
+     */
+    public function studentGoalDashboard(int $studentId): JsonResponse
+    {
+        $teacher = Auth::user();
+        $classIds = ClassRoom::where('teacher_id', $teacher->id)->pluck('id');
+        $inClass = ClassStudent::where('student_id', $studentId)
+            ->whereIn('class_room_id', $classIds)
+            ->exists();
+        if (!$inClass) {
+            return response()->json([
+                'error' => true,
+                'code' => 'FORBIDDEN',
+                'message' => 'Bu öğrenci sınıflarınızda kayıtlı değil.',
+            ], 403);
+        }
+
+        $student = User::where('role', 'student')->findOrFail($studentId);
+
+        return response()->json(app(GoalDashboardService::class)->forUser($student));
     }
 }
