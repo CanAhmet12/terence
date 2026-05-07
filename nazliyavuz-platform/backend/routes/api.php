@@ -440,15 +440,18 @@ Route::middleware(['auth:api'])->group(function () {
     Route::post('/exams/{id}/finish', [\App\Http\Controllers\Api\ExamController::class, 'finish'])->middleware('student_grade');
     Route::get('/exams/{id}/result', [\App\Http\Controllers\Api\ExamController::class, 'result'])->middleware('student_grade');
 
-    // â”€â”€ GÃ¼nlÃ¼k Plan â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-    Route::get('/plan/today', [\App\Http\Controllers\Api\PlanController::class, 'today']);
-    Route::get('/plan', [\App\Http\Controllers\Api\PlanController::class, 'index']);
-    Route::get('/plan/stats', [\App\Http\Controllers\Api\PlanController::class, 'stats']);
-    Route::post('/plan/tasks', [\App\Http\Controllers\Api\PlanController::class, 'addTask']);
-    Route::patch('/plan/tasks/{id}/complete', [\App\Http\Controllers\Api\PlanController::class, 'completeTask']);
-    Route::delete('/plan/tasks/{id}', [\App\Http\Controllers\Api\PlanController::class, 'deleteTask']);
-    Route::post('/plan/study-session/start', [\App\Http\Controllers\Api\PlanController::class, 'startStudySession']);
-    Route::post('/plan/study-session/{id}/end', [\App\Http\Controllers\Api\PlanController::class, 'endStudySession']);
+    // Günlük plan (öğrenci)
+    Route::middleware('role:student')->group(function () {
+        Route::get('/plan/today', [\App\Http\Controllers\Api\PlanController::class, 'today']);
+        Route::get('/plan', [\App\Http\Controllers\Api\PlanController::class, 'index']);
+        Route::get('/plan/stats', [\App\Http\Controllers\Api\PlanController::class, 'stats']);
+        Route::get('/plan/templates', [\App\Http\Controllers\Api\PlanController::class, 'templates']);
+        Route::post('/plan/tasks', [\App\Http\Controllers\Api\PlanController::class, 'addTask']);
+        Route::patch('/plan/tasks/{id}/complete', [\App\Http\Controllers\Api\PlanController::class, 'completeTask']);
+        Route::delete('/plan/tasks/{id}', [\App\Http\Controllers\Api\PlanController::class, 'deleteTask']);
+        Route::post('/plan/study-session/start', [\App\Http\Controllers\Api\PlanController::class, 'startStudySession']);
+        Route::post('/plan/study-session/{id}/end', [\App\Http\Controllers\Api\PlanController::class, 'endStudySession']);
+    });
 
     // â”€â”€ Abonelik / Ã–deme â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     Route::post('/payment/initiate', [\App\Http\Controllers\Api\PaymentController::class, 'initiate']);
@@ -493,6 +496,7 @@ Route::middleware(['auth:api'])->group(function () {
         Route::get('/teacher/classes', [\App\Http\Controllers\Api\TeacherController::class, 'classes']);
         Route::post('/teacher/classes', [\App\Http\Controllers\Api\TeacherController::class, 'createClass']);
         Route::get('/teacher/classes/{id}/students', [\App\Http\Controllers\Api\TeacherController::class, 'classStudents']);
+        Route::post('/teacher/classes/{id}/plan-tasks', [\App\Http\Controllers\Api\TeacherPlanController::class, 'assignClassPlanTasks']);
         Route::get('/teacher/students/{studentId}/goal-dashboard', [\App\Http\Controllers\Api\TeacherController::class, 'studentGoalDashboard']);
         Route::get('/teacher/students/risk', [\App\Http\Controllers\Api\TeacherController::class, 'riskStudents']);
         Route::get('/teacher/assignments', [\App\Http\Controllers\Api\TeacherController::class, 'assignments']);

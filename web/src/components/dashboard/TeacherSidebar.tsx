@@ -17,6 +17,7 @@ import {
   UserCircle,
   Bell,
   Sparkles,
+  CalendarDays,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -27,6 +28,7 @@ const teacherNavGroups = [
       { href: "/ogretmen", icon: LayoutDashboard, label: "Ana Panel" },
       { href: "/ogretmen/dersler", icon: BookOpen, label: "Derslerim" },
       { href: "/ogretmen/siniflar", icon: Users, label: "Sınıflarım" },
+      { href: "/ogretmen/plan-atama", icon: CalendarDays, label: "Günlük plan" },
       { href: "/ogretmen/canli-ders", icon: Video, label: "Canlı Ders" },
     ],
   },

@@ -163,11 +163,13 @@ class GoalDashboardService
         $weekEnd = Carbon::now()->endOfWeek();
 
         $tasksDoneWeek = PlanTask::where('user_id', $user->id)
+            ->whereNull('cancelled_at')
             ->where('is_completed', true)
             ->whereBetween('completed_at', [$weekStart, $weekEnd])
             ->count();
 
         $tasksTotalWeekRaw = PlanTask::where('user_id', $user->id)
+            ->whereNull('cancelled_at')
             ->whereBetween('created_at', [$weekStart, $weekEnd])
             ->count();
 

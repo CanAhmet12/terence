@@ -1,11 +1,12 @@
 "use client";
 
+import Link from "next/link";
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { api, ClassRoom, TeacherStudent } from "@/lib/api";
 import type { StudentGoalDashboard, RiskTier } from "@/lib/goal-dashboard";
 import { goalTemplateLabel } from "@/lib/goal-dashboard";
-import { Search, Users, Clock, RefreshCw, AlertCircle, Plus, X, Target, Loader2 } from "lucide-react";
+import { Search, Users, Clock, RefreshCw, AlertCircle, Plus, X, Target, Loader2, CalendarDays } from "lucide-react";
 
 const RISK_CONFIG = {
   green: { label: "İyi", dot: "bg-green-500", badge: "bg-green-100 text-green-700" },
@@ -284,12 +285,21 @@ export default function SiniflarPage() {
                     </div>
                   )}
 
-                  {/* Arama */}
-                  <div className="relative">
-                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-400" />
-                    <input type="text" value={search} onChange={(e) => setSearch(e.target.value)}
-                      placeholder="Öğrenci ara..."
-                      className="w-full pl-11 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-400 outline-none transition-all shadow-sm" />
+                  {/* Arama + plan gönder */}
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                    <div className="relative flex-1">
+                      <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-400" />
+                      <input type="text" value={search} onChange={(e) => setSearch(e.target.value)}
+                        placeholder="Öğrenci ara..."
+                        className="w-full pl-11 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-400 outline-none transition-all shadow-sm" />
+                    </div>
+                    <Link
+                      href={`/ogretmen/plan-atama?class_id=${selectedClass.id}`}
+                      className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-teal-200 bg-teal-50 px-4 py-3 text-sm font-semibold text-teal-800 transition-colors hover:bg-teal-100"
+                    >
+                      <CalendarDays className="h-4 w-4" />
+                      Günlük plan gönder
+                    </Link>
                   </div>
 
                   {/* Tablo */}

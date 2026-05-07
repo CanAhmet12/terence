@@ -176,6 +176,10 @@ class ParentController extends Controller
         $today = Carbon::today()->toDateString();
 
         $todayPlan = DailyPlan::where('user_id', $student->id)->where('plan_date', $today)->first();
+        if ($todayPlan) {
+            $todayPlan->syncTaskCounts();
+            $todayPlan->refresh();
+        }
         $todayStudy = \App\Models\StudySession::where('user_id', $student->id)
             ->whereDate('started_at', $today)->sum('duration_seconds');
 
@@ -239,6 +243,7 @@ class ParentController extends Controller
 
         // Tasks done this week
         $tasksDoneThisWeek = \App\Models\PlanTask::where('user_id', $student->id)
+            ->whereNull('cancelled_at')
             ->where('is_completed', true)
             ->whereBetween('completed_at', [$weekStart, $weekEnd])
             ->count();

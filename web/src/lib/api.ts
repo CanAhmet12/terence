@@ -381,17 +381,44 @@ export interface CurriculumSubject {
   units?: CurriculumUnit[]
 }
 
+export type PlanTaskSource = 'student' | 'teacher' | 'system'
+
 export interface PlanTask {
   id: number
   title?: string
   subject?: string
   topic?: string
+  /** API alanı; UI'da süre için öncelikli */
+  planned_minutes?: number
+  /** Eski istemciler */
   duration_minutes?: number
   is_completed?: boolean
   completed?: boolean
   order?: number
   type?: string
   notes?: string
+  source?: PlanTaskSource
+  assigned_by_user_id?: number | null
+  class_room_id?: number | null
+  teacher_batch_id?: string | null
+  student_editable?: boolean
+  requirement?: string
+  cancelled_at?: string | null
+  priority?: string
+  sort_order?: number
+}
+
+export interface PlanTemplatePack {
+  key: string
+  label: string
+  description: string
+  tasks: Array<{
+    title: string
+    type?: string
+    subject?: string
+    planned_minutes?: number
+    priority?: string
+  }>
 }
 
 export interface StudyPlan {
@@ -844,9 +871,19 @@ export const planApi = {
     return response.data
   },
 
-  async addPlanTask(_tokenOrData?: string | { subject?: string; topic?: string; duration_minutes?: number; date?: string; title?: string; type?: string }, data?: { subject?: string; topic?: string; duration_minutes?: number; date?: string; title?: string; type?: string }): Promise<PlanTask> {
-    const actualData = typeof _tokenOrData === 'string' ? data : _tokenOrData
-    const response = await api.post<{ task: PlanTask; data: PlanTask }>('/plan/tasks', actualData)
+  async getPlanTemplates(_token?: string): Promise<PlanTemplatePack[]> {
+    const response = await api.get<{ success?: boolean; templates?: PlanTemplatePack[] }>('/plan/templates')
+    return response.data.templates ?? []
+  },
+
+  async addPlanTask(_tokenOrData?: string | Record<string, unknown>, data?: Record<string, unknown>): Promise<PlanTask> {
+    const actualData = (typeof _tokenOrData === 'string' ? data : _tokenOrData) as Record<string, unknown>
+    const payload = { ...actualData }
+    if (payload.planned_minutes == null && payload.duration_minutes != null) {
+      payload.planned_minutes = payload.duration_minutes
+      delete payload.duration_minutes
+    }
+    const response = await api.post<{ task: PlanTask; data: PlanTask }>('/plan/tasks', payload)
     return response.data.task ?? response.data.data ?? (response.data as unknown as PlanTask)
   },
 
@@ -860,7 +897,7 @@ export const planApi = {
     await api.delete(`/plan/tasks/${actualId}`)
   },
 
-  async startStudySession(_tokenOrData?: string | { task_id?: number; subject?: string }, data?: { task_id?: number; subject?: string }): Promise<{ session_id: number }> {
+  async startStudySession(_tokenOrData?: string | { plan_task_id?: number; subject?: string }, data?: { plan_task_id?: number; subject?: string }): Promise<{ session_id: number }> {
     const actualData = typeof _tokenOrData === 'string' ? data : _tokenOrData
     const response = await api.post<{ session_id: number }>('/plan/study-session/start', actualData)
     return response.data
@@ -1130,6 +1167,29 @@ export const teacherApi = {
     const actualId = typeof _tokenOrId === 'number' ? _tokenOrId : classId
     const response = await api.get<unknown>(`/teacher/classes/${actualId}/students`)
     return normalizeArray<User>(response.data)
+  },
+
+  async assignClassPlanTasks(
+    classId: number,
+    body: {
+      plan_date: string
+      tasks: Array<{
+        title: string
+        type?: string
+        subject?: string
+        planned_minutes?: number
+        priority?: string
+        kazanim_code?: string
+      }>
+      student_ids?: number[]
+      client_batch_id?: string
+    },
+  ): Promise<{ teacher_batch_id: string; students_affected: number; tasks_created: number }> {
+    const response = await api.post<{ success: boolean; teacher_batch_id: string; students_affected: number; tasks_created: number }>(
+      `/teacher/classes/${classId}/plan-tasks`,
+      body,
+    )
+    return response.data
   },
 
   async getTeacherStudentGoalDashboard(_tokenOrId?: string | number, studentId?: number): Promise<StudentGoalDashboard> {
@@ -1568,6 +1628,7 @@ Object.assign(api, {
   getTodayPlan: planApi.getTodayPlan.bind(planApi),
   getWeeklyPlans: planApi.getWeeklyPlans.bind(planApi),
   getPlanStats: planApi.getPlanStats.bind(planApi),
+  getPlanTemplates: planApi.getPlanTemplates.bind(planApi),
   addPlanTask: planApi.addPlanTask.bind(planApi),
   completeTask: planApi.completeTask.bind(planApi),
   deleteTask: planApi.deleteTask.bind(planApi),
@@ -1613,6 +1674,7 @@ Object.assign(api, {
   getTeacherClasses: teacherApi.getTeacherClasses.bind(teacherApi),
   createClass: teacherApi.createClass.bind(teacherApi),
   getClassStudents: teacherApi.getClassStudents.bind(teacherApi),
+  assignClassPlanTasks: teacherApi.assignClassPlanTasks.bind(teacherApi),
   getTeacherStudentGoalDashboard: teacherApi.getTeacherStudentGoalDashboard.bind(teacherApi),
   getRiskStudents: teacherApi.getRiskStudents.bind(teacherApi),
   getTeacherAssignments: teacherApi.getTeacherAssignments.bind(teacherApi),

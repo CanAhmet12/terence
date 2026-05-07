@@ -4,15 +4,16 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\DailyPlan;
+use App\Models\ExamSession;
 use App\Models\PlanTask;
 use App\Models\StudySession;
 use App\Models\XpLog;
-use Illuminate\Http\Request;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
-use Carbon\Carbon;
 
 class PlanController extends Controller
 {
@@ -22,89 +23,126 @@ class PlanController extends Controller
         $user = Auth::user();
         $today = Carbon::today()->toDateString();
 
-        $plan = DailyPlan::with(['tasks' => function ($q) {
-            $q->orderBy('priority', 'desc')->orderBy('sort_order');
-        }])->firstOrCreate(
+        $plan = DailyPlan::firstOrCreate(
             ['user_id' => $user->id, 'plan_date' => $today],
             ['status' => 'active']
         );
+        $plan->syncTaskCounts();
+        $plan->load(['tasks' => function ($q) {
+            $q->whereNull('cancelled_at')
+                ->orderByRaw("CASE source WHEN 'teacher' THEN 0 WHEN 'system' THEN 1 ELSE 2 END")
+                ->orderBy('priority', 'desc')
+                ->orderBy('sort_order');
+        }]);
 
         return response()->json(['success' => true, 'plan' => $plan]);
+    }
+
+    /**
+     * GET /api/plan/templates — öğrenci profiline göre hazır şablon listesi.
+     */
+    public function templates(): JsonResponse
+    {
+        $user = Auth::user();
+        $list = \App\Support\PlanTemplatePresets::forUser($user);
+
+        return response()->json(['success' => true, 'templates' => $list]);
     }
 
     // GET /api/plan — plan listesi (tarih aralığı)
     public function index(Request $request): JsonResponse
     {
-        $user  = Auth::user();
-        $from  = $request->get('from', Carbon::now()->startOfWeek()->toDateString());
-        $to    = $request->get('to', Carbon::now()->endOfWeek()->toDateString());
+        $user = Auth::user();
+        $from = $request->get('from', Carbon::now()->startOfWeek()->toDateString());
+        $to = $request->get('to', Carbon::now()->endOfWeek()->toDateString());
 
-        $plans = DailyPlan::with('tasks')
+        $plans = DailyPlan::with(['tasks' => function ($q) {
+            $q->whereNull('cancelled_at')
+                ->orderByRaw("CASE source WHEN 'teacher' THEN 0 WHEN 'system' THEN 1 ELSE 2 END")
+                ->orderBy('priority', 'desc')
+                ->orderBy('sort_order');
+        }])
             ->where('user_id', $user->id)
             ->whereBetween('plan_date', [$from, $to])
             ->orderBy('plan_date')
             ->get();
 
+        foreach ($plans as $plan) {
+            $plan->syncTaskCounts();
+        }
+        $plans->load(['tasks' => function ($q) {
+            $q->whereNull('cancelled_at')
+                ->orderByRaw("CASE source WHEN 'teacher' THEN 0 WHEN 'system' THEN 1 ELSE 2 END")
+                ->orderBy('priority', 'desc')
+                ->orderBy('sort_order');
+        }]);
+
         return response()->json(['success' => true, 'data' => $plans]);
     }
 
-    // POST /api/plan/tasks — görev ekle
+    // POST /api/plan/tasks — görev ekle (yalnızca öğrenci kaynaklı)
     public function addTask(Request $request): JsonResponse
     {
         $v = Validator::make($request->all(), [
-            'title'           => 'required|string|max:255',
-            'type'            => 'sometimes|in:video,question,exam,read,repeat,custom',
-            'subject'         => 'sometimes|nullable|string',
-            'kazanim_code'    => 'sometimes|nullable|string|max:30',
-            'target_count'    => 'sometimes|nullable|integer|min:1',
+            'title' => 'required|string|max:255',
+            'type' => 'sometimes|in:video,question,exam,read,repeat,custom',
+            'subject' => 'sometimes|nullable|string',
+            'kazanim_code' => 'sometimes|nullable|string|max:30',
+            'target_count' => 'sometimes|nullable|integer|min:1',
             'planned_minutes' => 'sometimes|integer|min:5|max:480',
-            'priority'        => 'sometimes|in:low,normal,high',
-            'plan_date'       => 'sometimes|date',
+            'priority' => 'sometimes|in:low,normal,high',
+            'plan_date' => 'sometimes|date',
         ]);
         if ($v->fails()) {
             return response()->json(['error' => true, 'errors' => $v->errors()], 422);
         }
 
-        $user  = Auth::user();
-        $date  = $request->get('plan_date', Carbon::today()->toDateString());
-        $plan  = DailyPlan::firstOrCreate(
+        $user = Auth::user();
+        $date = $request->get('plan_date', Carbon::today()->toDateString());
+        $plan = DailyPlan::firstOrCreate(
             ['user_id' => $user->id, 'plan_date' => $date],
             ['status' => 'active']
         );
 
+        $maxOrder = (int) PlanTask::where('daily_plan_id', $plan->id)->whereNull('cancelled_at')->max('sort_order');
+
         $task = PlanTask::create(array_merge($v->validated(), [
             'daily_plan_id' => $plan->id,
-            'user_id'       => $user->id,
+            'user_id' => $user->id,
+            'source' => 'student',
+            'student_editable' => true,
+            'requirement' => 'optional',
+            'sort_order' => $maxOrder + 1,
         ]));
 
-        // toplam görev sayısını güncelle
-        $plan->increment('total_tasks');
+        $plan->syncTaskCounts();
 
-        return response()->json(['success' => true, 'task' => $task], 201);
+        return response()->json(['success' => true, 'task' => $task->fresh()], 201);
     }
 
     // PATCH /api/plan/tasks/{id}/complete — görevi tamamla
     public function completeTask(int $taskId): JsonResponse
     {
         $user = Auth::user();
-        $task = PlanTask::where('user_id', $user->id)->findOrFail($taskId);
+        $task = PlanTask::where('user_id', $user->id)->whereNull('cancelled_at')->findOrFail($taskId);
 
         if ($task->is_completed) {
             return response()->json(['success' => true, 'message' => 'Zaten tamamlandı', 'task' => $task]);
         }
+
+        $plan = $task->dailyPlan;
+        $completedBefore = $plan->completed_tasks;
 
         $task->update([
             'is_completed' => true,
             'completed_at' => now(),
         ]);
 
-        $plan = $task->dailyPlan;
-        $plan->increment('completed_tasks');
+        $plan->syncTaskCounts();
+        $plan->refresh();
 
-        // Tüm görevler bittiyse planı tamamla
-        if ($plan->completed_tasks >= $plan->total_tasks) {
+        if ($plan->total_tasks > 0 && $plan->completed_tasks >= $plan->total_tasks && $completedBefore < $plan->total_tasks) {
             $plan->update(['status' => 'completed']);
-            // XP ödülü
             $xp = 20;
             XpLog::create(['user_id' => $user->id, 'amount' => $xp, 'reason' => 'daily_plan',
                 'sourceable_type' => 'daily_plans', 'sourceable_id' => $plan->id]);
@@ -118,10 +156,20 @@ class PlanController extends Controller
     public function deleteTask(int $taskId): JsonResponse
     {
         $user = Auth::user();
-        $task = PlanTask::where('user_id', $user->id)->findOrFail($taskId);
+        $task = PlanTask::where('user_id', $user->id)->whereNull('cancelled_at')->findOrFail($taskId);
+
+        if ($task->source === 'teacher' || ! $task->student_editable) {
+            return response()->json([
+                'error' => true,
+                'code' => 'FORBIDDEN',
+                'message' => 'Öğretmen görevlerini silemezsiniz.',
+            ], 403);
+        }
+
         $plan = $task->dailyPlan;
         $task->delete();
-        $plan->decrement('total_tasks');
+        $plan->syncTaskCounts();
+
         return response()->json(['success' => true, 'message' => 'Görev silindi']);
     }
 
@@ -129,7 +177,7 @@ class PlanController extends Controller
     public function startStudySession(Request $request): JsonResponse
     {
         $v = Validator::make($request->all(), [
-            'subject'      => 'sometimes|nullable|string',
+            'subject' => 'sometimes|nullable|string',
             'plan_task_id' => 'sometimes|nullable|integer|exists:plan_tasks,id',
         ]);
         if ($v->fails()) {
@@ -137,8 +185,16 @@ class PlanController extends Controller
         }
 
         $user = Auth::user();
-        $session = StudySession::create(array_merge($v->validated(), [
-            'user_id'    => $user->id,
+        $data = $v->validated();
+        if (! empty($data['plan_task_id'])) {
+            $owns = PlanTask::where('id', $data['plan_task_id'])->where('user_id', $user->id)->whereNull('cancelled_at')->exists();
+            if (! $owns) {
+                return response()->json(['error' => true, 'message' => 'Geçersiz görev.'], 422);
+            }
+        }
+
+        $session = StudySession::create(array_merge($data, [
+            'user_id' => $user->id,
             'started_at' => now(),
         ]));
 
@@ -148,12 +204,11 @@ class PlanController extends Controller
     // POST /api/plan/study-session/{id}/end
     public function endStudySession(int $id): JsonResponse
     {
-        $user    = Auth::user();
+        $user = Auth::user();
         $session = StudySession::where('user_id', $user->id)->findOrFail($id);
         $seconds = now()->diffInSeconds($session->started_at);
         $session->update(['ended_at' => now(), 'duration_seconds' => $seconds]);
 
-        // Bugünün planına gerçek süreyi ekle
         $plan = DailyPlan::firstOrCreate(
             ['user_id' => $user->id, 'plan_date' => Carbon::today()->toDateString()],
             ['status' => 'active']
@@ -166,17 +221,21 @@ class PlanController extends Controller
     // GET /api/plan/stats — öğrenci özeti
     public function stats(): JsonResponse
     {
-        $user  = Auth::user();
+        $user = Auth::user();
         $today = Carbon::today()->toDateString();
 
         $todayPlan = DailyPlan::where('user_id', $user->id)->where('plan_date', $today)->first();
+        if ($todayPlan) {
+            $todayPlan->syncTaskCounts();
+            $todayPlan->refresh();
+        }
 
-        $weekStart   = Carbon::now()->startOfWeek()->toDateString();
+        $weekStart = Carbon::now()->startOfWeek()->toDateString();
         $weeklyStudy = StudySession::where('user_id', $user->id)
             ->where('started_at', '>=', $weekStart)
             ->sum('duration_seconds');
 
-        $weeklyNets  = ExamSession::where('user_id', $user->id)
+        $weeklyNets = ExamSession::where('user_id', $user->id)
             ->where('status', 'completed')
             ->where('started_at', '>=', Carbon::now()->subWeeks(6))
             ->selectRaw('YEAR(started_at) y, WEEK(started_at) w, AVG(net_score) net')
@@ -184,24 +243,21 @@ class PlanController extends Controller
             ->orderByRaw('y, w')
             ->limit(6)
             ->pluck('net')
-            ->map(fn($n) => round((float)$n, 1))
+            ->map(fn ($n) => round((float) $n, 1))
             ->values()
             ->toArray();
 
         return response()->json([
-            'success'                    => true,
-            'tasks_done_today'           => $todayPlan?->completed_tasks ?? 0,
-            'tasks_total_today'          => $todayPlan?->total_tasks ?? 0,
-            'study_time_today_seconds'   => ($todayPlan?->study_minutes_actual ?? 0) * 60,
-            'study_time_weekly_seconds'  => (int) $weeklyStudy,
-            'xp_points'                  => $user->xp_points,
-            'level'                      => $user->level,
-            'current_net'                => $user->current_net,
-            'target_net'                 => $user->target_net,
-            'weekly_nets'                => $weeklyNets,
+            'success' => true,
+            'tasks_done_today' => $todayPlan?->completed_tasks ?? 0,
+            'tasks_total_today' => $todayPlan?->total_tasks ?? 0,
+            'study_time_today_seconds' => ($todayPlan?->study_minutes_actual ?? 0) * 60,
+            'study_time_weekly_seconds' => (int) $weeklyStudy,
+            'xp_points' => $user->xp_points,
+            'level' => $user->level,
+            'current_net' => $user->current_net,
+            'target_net' => $user->target_net,
+            'weekly_nets' => $weeklyNets,
         ]);
     }
 }
-
-// ExamSession için use
-use App\Models\ExamSession;

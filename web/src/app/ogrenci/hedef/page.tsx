@@ -183,8 +183,8 @@ export default function HedefPage() {
   const riskStyle = RISK_UI[risk] ?? RISK_UI.on_track;
 
   return (
-    <div className="bg-slate-50 min-h-full">
-      <div className="max-w-5xl mx-auto w-full px-4 sm:px-6 py-8 space-y-6">
+    <div className="bg-slate-50 min-h-full w-full">
+      <div className="w-full max-w-none px-3 sm:px-5 lg:px-6 xl:px-8 py-6 sm:py-8 space-y-6">
 
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
           <div>
@@ -232,16 +232,16 @@ export default function HedefPage() {
         )}
 
         {loading && !dash ? (
-          <div className="grid lg:grid-cols-2 gap-6">
-            <Skeleton className="h-64 rounded-2xl" />
-            <Skeleton className="h-64 rounded-2xl" />
+          <div className="grid w-full grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 lg:items-stretch">
+            <Skeleton className="h-72 lg:h-auto lg:min-h-[22rem] rounded-2xl" />
+            <Skeleton className="h-72 lg:h-auto lg:min-h-[22rem] rounded-2xl" />
           </div>
         ) : dash ? (
-          <div className="grid lg:grid-cols-2 gap-6 items-start">
-            {/* Sol: durum */}
-            <div className="space-y-4">
-              <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 sm:p-6">
-                <div className="flex items-start justify-between gap-3 mb-5">
+          <div className="grid w-full grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 lg:items-stretch">
+            {/* Sol: durum — grid hücresi tam yükseklik, kartlar eşit */}
+            <div className="flex min-h-0 h-full flex-col self-stretch">
+              <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 sm:p-6 flex flex-1 flex-col w-full min-h-[280px] lg:min-h-0 lg:h-full">
+                <div className="flex items-start justify-between gap-3 mb-5 shrink-0">
                   <div>
                     <h2 className="font-bold text-slate-900 text-base">Özet</h2>
                     <p className="text-xs text-slate-500 mt-0.5">Sunucu hesaplaması · {riskStyle.label}</p>
@@ -250,7 +250,7 @@ export default function HedefPage() {
                 </div>
 
                 {template === "school_primary" && school ? (
-                  <div className="space-y-4">
+                  <div className="space-y-4 flex-1 flex flex-col min-h-0">
                     <div className="grid grid-cols-2 gap-3">
                       <KpiCard
                         label="Bugün görev"
@@ -286,13 +286,13 @@ export default function HedefPage() {
                     </div>
                     <Link
                       href="/ogrenci/plan"
-                      className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold transition-colors"
+                      className="mt-auto flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold transition-colors"
                     >
                       Plana git <ArrowRight className="w-4 h-4" />
                     </Link>
                   </div>
                 ) : (
-                  <div className="flex flex-col sm:flex-row sm:items-center gap-6">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-6 flex-1 min-h-0">
                     {targetNetNum > 0 && (
                       <CircularProgress current={Number(currentNet)} target={Number(targetNetNum)} size={120} />
                     )}
@@ -354,9 +354,10 @@ export default function HedefPage() {
               </div>
             </div>
 
-            {/* Sağ: hedef formu */}
-            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-              <div className="px-5 py-4 border-b border-slate-100 bg-gradient-to-r from-indigo-50 to-violet-50">
+            {/* Sağ: hedef formu — sol ile aynı yükseklik */}
+            <div className="flex min-h-0 h-full flex-col self-stretch">
+              <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden flex flex-1 flex-col w-full min-h-[280px] lg:min-h-0 lg:h-full">
+              <div className="px-5 py-4 border-b border-slate-100 bg-gradient-to-r from-indigo-50 to-violet-50 shrink-0">
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center">
                     <Target className="w-4 h-4 text-indigo-600" />
@@ -368,13 +369,13 @@ export default function HedefPage() {
                 </div>
               </div>
 
-              <div className="p-5 sm:p-6 space-y-4">
+              <div className="p-5 sm:p-6 flex flex-1 flex-col gap-4 min-h-0">
                 {template === "school_primary" ? (
-                  <p className="text-sm text-slate-600 leading-relaxed">
+                  <p className="text-sm text-slate-600 leading-relaxed flex-1">
                     Bu kademede odak günlük görev ve müfredat ilerlemesidir. Sınav neti zorunlu değildir. Günlük plan ve dersler sayfalarını kullanın.
                   </p>
                 ) : (
-                  <>
+                  <div className="flex flex-1 flex-col gap-4 min-h-0">
                     <div className="grid grid-cols-2 gap-3">
                       <div>
                         <label className="block text-[11px] font-bold text-slate-600 mb-1">Hedef net</label>
@@ -420,10 +421,10 @@ export default function HedefPage() {
                         className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
                       />
                     </div>
-                  </>
+                  </div>
                 )}
 
-                <div className="flex flex-col sm:flex-row gap-2 pt-2">
+                <div className="flex flex-col sm:flex-row gap-2 pt-2 mt-auto shrink-0">
                   <button
                     type="button"
                     onClick={() => void handleSave()}
@@ -441,9 +442,10 @@ export default function HedefPage() {
                   </Link>
                 </div>
 
-                {saveState === "ok" && <p className="text-xs font-semibold text-emerald-600 text-center">Kaydedildi</p>}
-                {saveState === "err" && saveErr && <p className="text-xs font-semibold text-red-600 text-center">{saveErr}</p>}
+                {saveState === "ok" && <p className="text-xs font-semibold text-emerald-600 text-center shrink-0">Kaydedildi</p>}
+                {saveState === "err" && saveErr && <p className="text-xs font-semibold text-red-600 text-center shrink-0">{saveErr}</p>}
               </div>
+            </div>
             </div>
           </div>
         ) : null}
