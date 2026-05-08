@@ -12,6 +12,20 @@ use Illuminate\Http\JsonResponse;
 class CurriculumController extends Controller
 {
     /**
+     * content_items.type alanındaki varyasyonları (Video, LINK, url vb.) katalog için video|pdf|text'e indirger.
+     */
+    private function normalizeMediaCatalogContentType(string $raw): ?string
+    {
+        $t = strtolower(trim($raw));
+
+        return match ($t) {
+            'video', 'pdf', 'text' => $t,
+            'link', 'url', 'external', 'embed', 'html' => 'text',
+            default => null,
+        };
+    }
+
+    /**
      * Kullanıcının grade ve exam_type'ına göre ders listesini döner.
      * GET /curriculum
      */
@@ -220,14 +234,15 @@ class CurriculumController extends Controller
                     }
                     $topicStatus = ($progRows[$topic->id] ?? null)?->status ?? 'not_started';
                     foreach ($linked->contentItems as $ci) {
-                        if (! in_array($ci->type, ['video', 'pdf', 'text'], true)) {
+                        $canonicalType = $this->normalizeMediaCatalogContentType((string) $ci->type);
+                        if ($canonicalType === null) {
                             continue;
                         }
                         $countsBySlug[$subject->slug]++;
                         $items[] = [
                             'key'                   => 'cur-'.$topic->id.'-'.$ci->id,
                             'source'                => 'curriculum',
-                            'content_type'          => $ci->type,
+                            'content_type'          => $canonicalType,
                             'id'                    => (int) $ci->id,
                             'title'                 => $ci->title,
                             'url'                   => $ci->url,

@@ -14,7 +14,10 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
     return <>{children}</>;
   }
 
-  const hideGlobalHeader = pathname === "/ogrenci/dersler" || pathname?.startsWith("/ogrenci/dersler/");
+  const hideGlobalHeader =
+    pathname === "/ogrenci/dersler" ||
+    pathname?.startsWith("/ogrenci/dersler/") ||
+    pathname === "/ogrenci/video";
 
   return (
     <OnboardingGuard>

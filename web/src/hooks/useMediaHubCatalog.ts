@@ -14,6 +14,13 @@ import api, {
 import type { MediaHubSubjectSummary, UnifiedMediaItem } from "@/components/ogrenci/video-pdf/types";
 import { normalizeMediaUrl } from "@/components/ogrenci/video-pdf/utils";
 
+function normalizeCatalogContentType(raw: string): "video" | "pdf" | "text" | null {
+  const t = (raw || "").toLowerCase().trim();
+  if (t === "video" || t === "pdf" || t === "text") return t;
+  if (t === "link" || t === "url" || t === "external" || t === "embed" || t === "html") return "text";
+  return null;
+}
+
 function mapCatalogRow(row: MediaCatalogItem): UnifiedMediaItem {
   const ct = row.content_type;
   const url = row.url ?? null;
@@ -50,8 +57,14 @@ function mapCourseContentItem(
   item: ContentItem
 ): UnifiedMediaItem | null {
   const rawType = (item.type || "video").toLowerCase();
-  if (rawType !== "video" && rawType !== "pdf" && rawType !== "text") return null;
-  const contentType = rawType as UnifiedMediaItem["contentType"];
+  let contentType: UnifiedMediaItem["contentType"];
+  if (rawType === "video" || rawType === "pdf" || rawType === "text") {
+    contentType = rawType;
+  } else if (rawType === "link" || rawType === "url" || rawType === "external" || rawType === "embed" || rawType === "html") {
+    contentType = "text";
+  } else {
+    return null;
+  }
   const playbackUrl =
     contentType === "video" ? item.video?.cdn_url || item.url || null : item.url || null;
   const durationSeconds =
@@ -193,7 +206,13 @@ export function useMediaHubCatalog(options: { includeCourseArchive?: boolean; to
 
   const curriculumItems = useMemo(() => {
     if (!catalog?.items?.length) return [] as UnifiedMediaItem[];
-    return catalog.items.map(mapCatalogRow);
+    const out: UnifiedMediaItem[] = [];
+    for (const row of catalog.items) {
+      const ct = normalizeCatalogContentType(row.content_type);
+      if (!ct) continue;
+      out.push(mapCatalogRow({ ...row, content_type: ct }));
+    }
+    return out;
   }, [catalog]);
 
   const curriculumUrlSet = useMemo(() => {

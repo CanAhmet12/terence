@@ -1,5 +1,6 @@
 "use client";
 
+import { ListFilter } from "lucide-react";
 import type { MediaHubSort } from "./types";
 
 const OPTIONS: { value: MediaHubSort; label: string }[] = [
@@ -16,10 +17,11 @@ type Props = {
 
 export function MediaSortSelect({ value, onChange }: Props) {
   return (
-    <label className="flex items-center gap-2 text-sm text-slate-600">
-      <span className="hidden font-medium sm:inline">Sırala</span>
+    <label className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm">
+      <ListFilter className="h-4 w-4 shrink-0 text-violet-600" aria-hidden />
+      <span className="hidden font-semibold sm:inline">Sıralama</span>
       <select
-        className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm"
+        className="max-w-[11rem] cursor-pointer border-0 bg-transparent py-0.5 text-sm font-bold text-slate-900 focus:ring-0 sm:max-w-none"
         value={value}
         onChange={(e) => onChange(e.target.value as MediaHubSort)}
       >

@@ -31,8 +31,8 @@ export function MediaTypeFilter({ value, onChange }: Props) {
             aria-selected={selected}
             className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
               selected
-                ? "border-indigo-600 bg-indigo-600 text-white"
-                : "border-slate-200 bg-white text-slate-600 hover:border-indigo-300"
+                ? "border-violet-600 bg-violet-600 text-white shadow-md shadow-violet-500/20"
+                : "border-slate-200 bg-white text-slate-600 hover:border-violet-300 hover:bg-violet-50/60"
             }`}
             onClick={() => onChange(t.id)}
           >

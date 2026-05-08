@@ -1,8 +1,16 @@
 "use client";
 
-import { FileText, Gauge, Play, Video } from "lucide-react";
+import { CheckCircle2, Clock, FileText, TrendingUp, Video } from "lucide-react";
 import type { MediaHubSubjectSummary, UnifiedMediaItem } from "./types";
 import { getStoredSeconds, videoProgressRatio } from "./utils";
+
+function formatWatchTotal(seconds: number): string {
+  if (seconds <= 0) return "0dk";
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  if (h > 0) return `${h}sa ${m}dk`;
+  return `${m}dk`;
+}
 
 type Props = {
   items: UnifiedMediaItem[];
@@ -12,11 +20,27 @@ type Props = {
 export function MediaKpiStrip({ items, subjectsSummary }: Props) {
   const videoCount = items.filter((i) => i.contentType === "video").length;
   const pdfCount = items.filter((i) => i.contentType === "pdf").length;
-  const startedVideos = items.filter(
-    (i) => i.contentType === "video" && getStoredSeconds(i) > 5
-  ).length;
+  const textCount = items.filter((i) => i.contentType === "text").length;
+  const startedVideos = items.filter((i) => i.contentType === "video" && getStoredSeconds(i) > 5).length;
+
+  const watchedSeconds = items
+    .filter((i) => i.contentType === "video")
+    .reduce((acc, i) => acc + getStoredSeconds(i), 0);
+
   const completedTopics = subjectsSummary.reduce((a, s) => a + (s.completed_topics ?? 0), 0);
   const totalTopics = subjectsSummary.reduce((a, s) => a + (s.total_topics ?? 0), 0);
+
+  const completedVideos = items.filter(
+    (i) => i.contentType === "video" && i.durationSeconds > 0 && videoProgressRatio(i) >= 0.92
+  ).length;
+
+  const curriculumSubjects = subjectsSummary.filter((s) => !s.isCourseArchive);
+  const subjectAvg =
+    curriculumSubjects.length > 0
+      ? Math.round(
+          curriculumSubjects.reduce((a, s) => a + (s.progress_percent ?? 0), 0) / curriculumSubjects.length
+        )
+      : 0;
 
   const videoRatios = items
     .filter((i) => i.contentType === "video" && i.durationSeconds > 0)
@@ -25,44 +49,69 @@ export function MediaKpiStrip({ items, subjectsSummary }: Props) {
     videoRatios.length > 0
       ? Math.round((videoRatios.reduce((a, b) => a + b, 0) / videoRatios.length) * 100)
       : 0;
-  const curriculumSubjects = subjectsSummary.filter((s) => !s.isCourseArchive);
-  const subjectAvg =
-    curriculumSubjects.length > 0
-      ? Math.round(
-          curriculumSubjects.reduce((a, s) => a + (s.progress_percent ?? 0), 0) /
-            curriculumSubjects.length
-        )
-      : 0;
   const blendedProgress =
-    curriculumSubjects.length === 0
-      ? localVideoAvg
-      : Math.round((localVideoAvg + subjectAvg) / 2);
+    curriculumSubjects.length === 0 ? localVideoAvg : Math.round((localVideoAvg + subjectAvg) / 2);
 
   const tiles = [
-    { label: "Video", value: videoCount, icon: Video },
-    { label: "PDF", value: pdfCount, icon: FileText },
-    { label: "İzlemeye başlanan", value: startedVideos, icon: Play },
     {
-      label: "Tamamlanan konu",
-      value: totalTopics > 0 ? `${completedTopics}/${totalTopics}` : "—",
-      icon: Gauge,
+      key: "v",
+      title: "Toplam video",
+      value: String(videoCount),
+      sub: "İçerik",
+      Icon: Video,
+      wrap: "from-violet-500 to-indigo-600 text-white shadow-violet-500/30",
     },
-    { label: "Ortalama ilerleme", value: `${blendedProgress}%`, icon: Gauge },
+    {
+      key: "p",
+      title: "Toplam PDF",
+      value: String(pdfCount + textCount),
+      sub: "İçerik",
+      Icon: FileText,
+      wrap: "from-rose-500 to-red-600 text-white shadow-rose-500/25",
+    },
+    {
+      key: "w",
+      title: "İzlenen süre",
+      value: formatWatchTotal(watchedSeconds),
+      sub: "Toplam",
+      Icon: Clock,
+      wrap: "from-emerald-500 to-teal-600 text-white shadow-emerald-500/25",
+    },
+    {
+      key: "c",
+      title: "Tamamlanan",
+      value: String(completedVideos + completedTopics),
+      sub: totalTopics > 0 ? `Konu ${completedTopics}/${totalTopics}` : "İçerik / konu",
+      Icon: CheckCircle2,
+      wrap: "from-green-500 to-emerald-600 text-white shadow-green-500/20",
+    },
+    {
+      key: "a",
+      title: "Ortalama ilerleme",
+      value: `${startedVideos > 0 ? blendedProgress : subjectAvg}%`,
+      sub: "Genel",
+      Icon: TrendingUp,
+      wrap: "from-amber-500 to-orange-600 text-white shadow-amber-500/25",
+    },
   ];
 
   return (
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-      {tiles.map(({ label, value, icon: Icon }) => (
+      {tiles.map(({ key, title, value, sub, Icon, wrap }) => (
         <div
-          key={label}
-          className="flex items-center gap-3 rounded-2xl border border-indigo-500/15 bg-white px-4 py-3 shadow-sm"
+          key={key}
+          className="flex items-start gap-3 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm shadow-slate-200/40 ring-1 ring-slate-900/[0.03]"
         >
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-600 text-white shadow-inner">
-            <Icon className="h-5 w-5 shrink-0" aria-hidden />
+          <div
+            className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br shadow-md ${wrap}`}
+            aria-hidden
+          >
+            <Icon className="h-5 w-5" strokeWidth={2} />
           </div>
           <div className="min-w-0">
-            <p className="text-xs font-medium text-slate-500">{label}</p>
-            <p className="truncate text-lg font-bold text-slate-900">{value}</p>
+            <p className="text-2xl font-black leading-none tracking-tight text-slate-900">{value}</p>
+            <p className="mt-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500">{title}</p>
+            <p className="mt-0.5 truncate text-xs text-slate-400">{sub}</p>
           </div>
         </div>
       ))}

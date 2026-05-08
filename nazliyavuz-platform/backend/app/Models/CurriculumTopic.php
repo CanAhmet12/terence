@@ -54,9 +54,16 @@ class CurriculumTopic extends Model
             $lt = $this->linkedTopic;
             if ($lt->relationLoaded('contentItems')) {
                 $data['content_items'] = $lt->contentItems->map(function ($ci) {
+                    $raw = strtolower(trim((string) $ci->type));
+                    $type = match ($raw) {
+                        'video', 'pdf', 'text', 'quiz' => $raw,
+                        'link', 'url', 'external', 'embed', 'html' => 'text',
+                        default => $raw !== '' ? $raw : 'text',
+                    };
+
                     return [
                         'id'    => $ci->id,
-                        'type'  => $ci->type,
+                        'type'  => $type,
                         'title' => $ci->title,
                         'url'   => $ci->url,
                         'is_free' => $ci->is_free,
