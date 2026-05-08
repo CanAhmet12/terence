@@ -59,7 +59,7 @@ export function TopicContentList({
     <section className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm md:p-6" aria-labelledby="topic-content-list-heading">
       <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h2 id="topic-content-list-heading" className="text-lg font-bold text-slate-900 md:text-xl">
-          {items.length > 0 ? `Konu içeriği (${visible.length})` : "Konu içeriği"}
+          {items.length > 0 ? `Konu İçeriği (${visible.length})` : "Konu İçeriği"}
         </h2>
         {items.length > 0 && (
           <div className="flex flex-wrap gap-2" role="group" aria-label="İçerik türü">

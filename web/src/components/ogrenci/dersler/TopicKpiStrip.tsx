@@ -20,13 +20,13 @@ export function TopicKpiStrip({ items }: { items: ContentListItem[] }) {
   const cards = [
     {
       key: "lecture",
-      title: "Konu anlatımı",
+      title: "Konu Anlatımı",
       subtitle: videoMin > 0 ? `${videoMin} dk video` : "Video henüz yok",
       icon: BookOpen,
     },
     {
       key: "example",
-      title: "Örnek sorular",
+      title: "Örnek Sorular",
       subtitle: pdf > 0 ? `${pdf} PDF` : "—",
       icon: ClipboardList,
     },
@@ -38,7 +38,7 @@ export function TopicKpiStrip({ items }: { items: ContentListItem[] }) {
     },
     {
       key: "test",
-      title: "Konu testi",
+      title: "Konu Testi",
       subtitle: quiz > 0 ? `${quiz} etkinlik` : "—",
       icon: ListChecks,
     },
@@ -50,11 +50,11 @@ export function TopicKpiStrip({ items }: { items: ContentListItem[] }) {
         {cards.map(({ key, title, subtitle, icon: Icon }) => (
           <div
             key={key}
-            className="rounded-2xl border border-slate-100/80 bg-white p-4 shadow-lg shadow-slate-200/60 ring-1 ring-slate-900/[0.03] md:p-5"
+            className="rounded-2xl border border-slate-100/90 bg-white p-4 shadow-md shadow-slate-200/50 ring-1 ring-slate-900/[0.025] md:p-5"
           >
-            <div className="mb-3 flex items-center gap-2 text-violet-600">
+            <div className="mb-2 flex items-center gap-2 text-violet-600">
               <Icon className="h-4 w-4 shrink-0" aria-hidden />
-              <span className="text-xs font-bold text-slate-800">{title}</span>
+              <span className="text-[11px] font-bold uppercase tracking-wide text-slate-800">{title}</span>
             </div>
             <p className="text-sm font-semibold text-slate-600">{subtitle}</p>
           </div>

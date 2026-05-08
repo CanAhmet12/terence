@@ -196,13 +196,13 @@ const ROLE_THEMES = {
     activeDot: "bg-rose-500",
   },
   student: {
-    dot: "bg-teal-500",
-    badge: "bg-teal-50 text-teal-700 border-teal-200",
+    dot: "bg-violet-500",
+    badge: "bg-violet-50 text-violet-800 border-violet-200",
     label: "Öğrenci Paneli",
-    activeItem: "bg-indigo-50 text-indigo-700",
-    activeBorder: "border-l-2 border-indigo-500",
-    activeIcon: "text-indigo-600",
-    activeDot: "bg-indigo-500",
+    activeItem: "bg-violet-50 text-violet-900",
+    activeBorder: "border-l-[3px] border-violet-600",
+    activeIcon: "text-violet-600",
+    activeDot: "bg-violet-500",
   },
 } as const;
 
@@ -230,7 +230,7 @@ export function DashboardSidebar() {
     "/ogrenci";
 
   return (
-    <aside className="w-64 min-h-screen bg-white border-r border-slate-100 flex flex-col">
+    <aside className="flex h-full min-h-0 w-full flex-col bg-white">
 
       {/* ── Logo + Rol badge ── */}
       <div className="px-4 py-4 border-b border-slate-100">
@@ -260,7 +260,7 @@ export function DashboardSidebar() {
       </div>
 
       {/* ── Navigasyon ── */}
-      <nav className="flex-1 overflow-y-auto px-3 py-4">
+      <nav className="flex-1 px-3 py-4 lg:overflow-visible">
         {navGroups.map((group, gi) => (
           <div key={group.label} className={cn(gi > 0 && "mt-5")}>
             {/* Grup etiketi */}

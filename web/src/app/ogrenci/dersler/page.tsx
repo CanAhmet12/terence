@@ -251,7 +251,7 @@ export default function DerslerimPage() {
   }
 
   return (
-    <div className="flex w-full flex-col bg-[#f6f5fb] lg:max-h-[calc(100dvh-7rem)] lg:min-h-0 lg:overflow-hidden">
+    <div className="flex w-full flex-col bg-[#f8f7fc]">
       <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center justify-between border-b border-slate-200/80 bg-white/95 px-4 shadow-sm backdrop-blur-sm sm:h-16 sm:px-6">
         <div className="flex items-center gap-3">
           <button type="button" onClick={() => setSidebarOpen(!sidebarOpen)} className="rounded-lg p-2 text-slate-600 hover:bg-slate-100 lg:hidden">
@@ -282,7 +282,7 @@ export default function DerslerimPage() {
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" aria-hidden />
             <input
               type="search"
-              placeholder={bucketTab === "school" ? "Sınıf derslerinde ara..." : "Sınav derslerinde ara..."}
+              placeholder="Ders veya konu ara..."
               value={toolbarSearch}
               onChange={(e) => setToolbarSearch(e.target.value)}
               className="w-full rounded-xl border border-slate-200 bg-slate-50/80 py-2 pl-10 pr-4 text-sm outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
@@ -308,18 +308,18 @@ export default function DerslerimPage() {
         </div>
       </header>
 
-      <div className="flex min-h-0 flex-1 flex-col lg:flex-row lg:overflow-hidden">
+      <div className="flex flex-col lg:flex-row lg:items-start">
         <aside
           className={cn(
-            "flex w-80 max-w-[min(100vw-1.5rem,20rem)] shrink-0 flex-col overflow-hidden border-r border-slate-200/90 bg-white transition-transform duration-300 ease-in-out",
-            "fixed inset-y-0 left-0 z-40 shadow-xl lg:static lg:z-0 lg:h-auto lg:max-h-[calc(100dvh-8rem)] lg:shadow-none",
+            "flex w-80 max-w-[min(100vw-1.5rem,20rem)] shrink-0 flex-col border-r border-slate-200/90 bg-white transition-transform duration-300 ease-in-out",
+            "fixed inset-y-0 left-0 z-40 shadow-xl lg:static lg:z-0 lg:shadow-none",
             sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
           )}
           id={bucketTab === "school" ? "panel-bucket-school" : "panel-bucket-exam"}
           role="tabpanel"
           aria-labelledby={bucketTab === "school" ? "tab-bucket-school" : "tab-bucket-exam"}
         >
-          <div className="flex h-full flex-col">
+          <div className="flex flex-col">
             <div className="border-b border-slate-100 bg-gradient-to-b from-white to-violet-50/40 p-4 sm:p-6">
               <div className="mb-3 flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -369,7 +369,7 @@ export default function DerslerimPage() {
               </div>
             )}
 
-            <div className="flex-1 overflow-y-auto p-4">
+            <div className="p-4 pb-6">
               {loadingList ? (
                 <div className="space-y-3">
                   {[1, 2, 3, 4].map((i) => (
@@ -461,9 +461,26 @@ export default function DerslerimPage() {
           </div>
         </aside>
 
-        <main className="min-h-0 flex-1 overflow-y-auto bg-[#f6f5fb] lg:min-h-0">
+        <main className="min-w-0 flex-1 bg-[#f8f7fc]">
           {activeTopic ? (
-            <div className="container mx-auto max-w-5xl space-y-0 p-4 pb-10 md:p-6 md:pb-12">
+            <div className="mx-auto max-w-5xl space-y-0 px-4 py-4 pb-16 md:px-6 md:py-6 md:pb-20">
+              <nav className="mb-4 flex flex-wrap items-center gap-1 text-xs text-slate-500 md:text-sm" aria-label="Konum">
+                <Home className="h-3.5 w-3.5 text-slate-400" aria-hidden />
+                <ChevronRight className="h-3 w-3 shrink-0 text-slate-300" aria-hidden />
+                <span className="font-medium text-slate-600">Derslerim</span>
+                {activeSubject && (
+                  <>
+                    <ChevronRight className="h-3 w-3 shrink-0 text-slate-300" aria-hidden />
+                    <span className="max-w-[140px] truncate font-medium text-slate-600 sm:max-w-none">{activeSubject.name}</span>
+                  </>
+                )}
+                {activeTopic && (
+                  <>
+                    <ChevronRight className="h-3 w-3 shrink-0 text-slate-300" aria-hidden />
+                    <span className="max-w-[180px] truncate font-semibold text-violet-900 sm:max-w-md">{activeTopic.title}</span>
+                  </>
+                )}
+              </nav>
               <TopicHero
                 topicTitle={activeTopic.title}
                 unitTitle={activeUnit?.title}
@@ -482,7 +499,7 @@ export default function DerslerimPage() {
               <TopicKpiStrip items={contentItems} />
 
               <div id="ders-icerik-alani" className="mt-8 space-y-6 scroll-mt-24 md:mt-10 md:space-y-8">
-                <TopicAbout title="Konu hakkında" body={activeTopic.description} />
+                <TopicAbout title="Konu Hakkında" body={activeTopic.description} />
 
                 <TopicContentList
                   items={contentItems}
@@ -562,7 +579,7 @@ export default function DerslerimPage() {
               </div>
             </div>
           ) : (
-            <div className="flex h-full items-center justify-center p-6">
+            <div className="flex flex-col items-center justify-center px-6 py-16 md:py-24">
               <div className="max-w-md text-center">
                 <div className="relative mx-auto mb-6">
                   <div className="absolute inset-0 animate-pulse rounded-3xl bg-gradient-to-br from-violet-200 to-indigo-100 opacity-50 blur-2xl" aria-hidden />

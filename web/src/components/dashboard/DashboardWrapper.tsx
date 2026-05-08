@@ -15,9 +15,9 @@ export function DashboardWrapper({ sidebar, header, children }: Props) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <div className="flex min-h-screen bg-slate-50/80">
-      {/* Desktop: sidebar */}
-      <aside className="hidden lg:flex w-64 min-h-screen bg-white border-r border-slate-200/80 flex-col shrink-0">
+    <div className="flex min-h-screen items-stretch bg-slate-50/80">
+      {/* Desktop: sidebar — yükseklik içerikle büyür; ayrı scroll çubuğu oluşturmaz */}
+      <aside className="hidden lg:flex w-64 shrink-0 flex-col self-stretch border-r border-slate-200/80 bg-white">
         {sidebar}
       </aside>
 
@@ -68,7 +68,7 @@ export function DashboardWrapper({ sidebar, header, children }: Props) {
           </div>
         </div>
         {header}
-        <main className="flex-1 overflow-auto">{children}</main>
+        <main className="min-h-0 w-full min-w-0 flex-1">{children}</main>
       </div>
     </div>
   );

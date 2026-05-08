@@ -28,7 +28,7 @@ export function TopicHero({
       <div
         className="relative px-5 pb-14 pt-5 text-white md:px-8 md:pb-16 md:pt-7"
         style={{
-          background: `linear-gradient(135deg, ${accentColor} 0%, #5b21b6 42%, #312e81 100%)`,
+          background: `linear-gradient(125deg, #0f172a 0%, #1e1b4b 38%, ${accentColor} 92%, #4c1d95 100%)`,
         }}
       >
         <div className="pointer-events-none absolute -right-20 -top-24 h-72 w-72 rounded-full bg-white/[0.07] blur-3xl" aria-hidden />
@@ -54,7 +54,7 @@ export function TopicHero({
               className="inline-flex items-center gap-2 rounded-xl border border-white/25 bg-white/10 px-3 py-2 text-sm font-semibold text-white/95 backdrop-blur transition hover:bg-white/20"
             >
               <LayoutGrid className="h-4 w-4" aria-hidden />
-              Derse genel bakış
+              Derse Genel Bakış
             </button>
           )}
         </div>
@@ -69,7 +69,7 @@ export function TopicHero({
             </span>
           </div>
           <div className="min-w-0 flex-1">
-            <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-violet-200/90">{unitTitle || "Ünite"}</p>
+            <p className="mb-1 text-[11px] font-bold uppercase tracking-[0.12em] text-indigo-200/95">{unitTitle || "Ünite"}</p>
             <h1 className="text-2xl font-black tracking-tight text-white md:text-3xl lg:text-4xl">{topicTitle}</h1>
             {meta && <p className="mt-2 text-sm text-violet-100 md:text-base">{meta}</p>}
           </div>
