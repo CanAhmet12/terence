@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { api } from "@/lib/api";
@@ -11,13 +10,13 @@ import { useCallback, useEffect, useState } from "react";
 type HeaderUserMenuProps = {
   /** Örn. Video & PDF: mor rozet */
   notificationBadgeClassName?: string;
-  /** Soru Bankası mockup: 3D bildirim görseli (`/images/...`) */
-  notificationIconSrc?: string | null;
+  /** Mockup: "12. Sınıf" satırı */
+  profileSubtext?: string | null;
 };
 
 export function HeaderUserMenu({
   notificationBadgeClassName,
-  notificationIconSrc,
+  profileSubtext,
 }: HeaderUserMenuProps) {
   const router = useRouter();
   const { user, token, logout } = useAuth();
@@ -94,23 +93,10 @@ export function HeaderUserMenu({
     <div className="flex shrink-0 items-center gap-1 sm:gap-2">
       <Link
         href={notificationsHref}
-        className={`relative flex items-center justify-center rounded-xl text-slate-600 transition-colors hover:bg-slate-100 ${
-          notificationIconSrc ? "p-0.5" : "p-2"
-        }`}
+        className="relative flex items-center justify-center rounded-xl p-2 text-slate-600 transition-colors hover:bg-slate-100"
         aria-label={`${unreadCount} okunmamış bildirim`}
       >
-        {notificationIconSrc ? (
-          <Image
-            src={notificationIconSrc}
-            alt="Bildirimler"
-            width={40}
-            height={40}
-            className="h-10 w-10 object-contain select-none"
-            priority
-          />
-        ) : (
-          <Bell className="h-5 w-5" />
-        )}
+        <Bell className="h-5 w-5" strokeWidth={2} />
         {unreadCount > 0 && (
           <span
             className={
@@ -123,7 +109,12 @@ export function HeaderUserMenu({
         )}
       </Link>
 
-      <span className="hidden text-sm font-medium text-slate-700 md:inline">{user.name}</span>
+      <div className="hidden flex-col items-end text-right leading-tight md:flex">
+        <span className="text-sm font-medium text-slate-800">{user.name}</span>
+        {profileSubtext ? (
+          <span className="text-[11px] font-medium text-slate-500">{profileSubtext}</span>
+        ) : null}
+      </div>
 
       <div className="relative">
         <button

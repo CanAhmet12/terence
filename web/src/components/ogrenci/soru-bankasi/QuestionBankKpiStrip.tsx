@@ -1,6 +1,6 @@
 "use client";
 
-import { BarChart3, CheckCircle2, HelpCircle, LineChart } from "lucide-react";
+import { BarChart3, CheckCircle2, LineChart } from "lucide-react";
 import type { QuestionBankSummary } from "@/lib/api";
 
 function formatInt(n: number): string {
@@ -20,7 +20,7 @@ export function QuestionBankKpiStrip({
       label: "Toplam Soru",
       value: k != null ? formatInt(k.total_questions) : "—",
       hint: "Kapsamdaki soru sayısı",
-      Icon: HelpCircle,
+      Icon: BarChart3,
       iconWrap: "bg-indigo-50 text-indigo-600",
     },
     {

@@ -1,7 +1,7 @@
 "use client";
 
-import { BookOpen, GraduationCap, HelpCircle, Mic, Sparkles } from "lucide-react";
-import { SubjectBook3D } from "@/components/ogrenci/soru-bankasi/SubjectBook3D";
+import Image from "next/image";
+import { Mic, Sparkles } from "lucide-react";
 
 type ScopeMode = "class" | "exam";
 
@@ -14,6 +14,9 @@ type QuestionBankHeroProps = {
   onOpenVoice: () => void;
   onOpenPersonalTest: () => void;
 };
+
+/** Sağdaki 3D sahne: `1icon.png` (kitaplar + kep + mor soru kitabı — mockup ile aynı kaynak görsel) */
+const HERO_SCENE_SRC = "/images/soru-bankasi/1icon.png";
 
 export function QuestionBankHero({
   scopeMode,
@@ -100,13 +103,21 @@ export function QuestionBankHero({
         )}
       </div>
 
-      <div className="sb-hero-visual relative flex min-h-0 flex-col items-center justify-center py-2">
-        <div className="qb-hero-book-cluster qb-hero-book-row relative z-[1]">
-          <SubjectBook3D g1="#3b82f6" g2="#1e3a8a" Icon={BookOpen} size="hero" />
-          <SubjectBook3D g1="#a855f7" g2="#6b21a8" Icon={HelpCircle} size="hero" />
-          <SubjectBook3D g1="#fb923c" g2="#c2410c" Icon={GraduationCap} size="hero" />
+      <div className="sb-hero-visual qb-hero-scene-wrap relative flex min-h-0 flex-col items-center justify-center overflow-visible py-1">
+        <div
+          className="relative z-[1] flex h-[clamp(100px,18vh,200px)] w-full max-w-[min(100%,320px)] items-center justify-center"
+          aria-hidden
+        >
+          <Image
+            src={HERO_SCENE_SRC}
+            alt=""
+            width={640}
+            height={520}
+            priority
+            sizes="(max-width: 768px) 85vw, 320px"
+            className="h-full w-full object-contain object-center drop-shadow-[0_20px_40px_rgba(91,63,212,0.25)]"
+          />
         </div>
-        <p className="relative z-[1] mt-2 text-center text-[10px] font-medium text-slate-500">Binlerce soru, tek yerde</p>
       </div>
     </section>
   );
