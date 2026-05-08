@@ -1,6 +1,6 @@
 "use client";
 
-import { Target } from "lucide-react";
+import { Trophy } from "lucide-react";
 
 export function StudyMotivationBanner({
   onStartQuick,
@@ -8,24 +8,24 @@ export function StudyMotivationBanner({
   onStartQuick: () => void;
 }) {
   return (
-    <div className="mt-8 flex flex-col items-start justify-between gap-4 rounded-2xl border border-purple-200 bg-gradient-to-r from-purple-50 to-white p-5 sm:flex-row sm:items-center">
-      <div className="flex gap-3">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-purple-600 text-white shadow-sm">
-          <Target className="h-5 w-5" aria-hidden />
+    <div className="mt-10 flex flex-col items-start justify-between gap-5 overflow-hidden rounded-[var(--qb-card-radius)] bg-gradient-to-r from-indigo-600 via-indigo-600 to-violet-700 p-6 text-white shadow-xl shadow-indigo-900/25 sm:flex-row sm:items-center">
+      <div className="flex gap-4">
+        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-sm">
+          <Trophy className="h-7 w-7 text-amber-300" aria-hidden />
         </div>
         <div>
-          <p className="font-bold text-slate-900">Bugün küçük bir hedef koy</p>
-          <p className="mt-0.5 text-sm text-slate-600">
-            On soruluk hızlı set ile başla; doğruluk yükseldikçe zorluk önerisi güncellenir.
+          <p className="text-lg font-bold">Hemen çözmeye başla</p>
+          <p className="mt-1 text-sm text-white/85">
+            On soruluk hızlı set ile başla; doğruluk yükseldikçe öneriler güncellenir.
           </p>
         </div>
       </div>
       <button
         type="button"
         onClick={onStartQuick}
-        className="w-full shrink-0 rounded-xl bg-purple-600 px-5 py-2.5 text-sm font-bold text-white shadow-sm transition-colors hover:bg-purple-700 sm:w-auto"
+        className="w-full shrink-0 rounded-xl bg-white px-6 py-3 text-sm font-bold text-indigo-700 shadow-lg transition-colors hover:bg-indigo-50 sm:w-auto"
       >
-        Hızlı 10 başlat
+        Hemen Çözmeye Başla
       </button>
     </div>
   );

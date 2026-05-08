@@ -1,23 +1,27 @@
 "use client";
 
-import dynamic from "next/dynamic";
-
-const Library3D = dynamic(() => import("@/components/Library3D"), { ssr: false });
-import { useState, useEffect, useCallback, useRef, Suspense, useMemo } from "react";
-import { useSearchParams } from "next/navigation";
+import { useState, useEffect, useCallback, useRef, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
-import { api, Question, AnswerResult, type QuestionBankSummary, type ExamSession, type StudyPlan, type WeakAchievement } from "@/lib/api";
+import {
+  api,
+  Question,
+  AnswerResult,
+  type QuestionBankSummary,
+  type ExamSession,
+  type WeakAchievement,
+  type BadgeData,
+  type PlanStats,
+} from "@/lib/api";
 import { QuestionBankHero } from "@/components/ogrenci/soru-bankasi/QuestionBankHero";
 import { QuestionBankKpiStrip } from "@/components/ogrenci/soru-bankasi/QuestionBankKpiStrip";
 import { SubjectBankCarousel } from "@/components/ogrenci/soru-bankasi/SubjectBankCarousel";
 import { QuestionBankSidebar } from "@/components/ogrenci/soru-bankasi/QuestionBankSidebar";
-import { QuestionBankStudyModes } from "@/components/ogrenci/soru-bankasi/QuestionBankStudyModes";
+import { QuestionBankInsightsRow } from "@/components/ogrenci/soru-bankasi/QuestionBankInsightsRow";
+import { QuestionBankQuickActions } from "@/components/ogrenci/soru-bankasi/QuestionBankQuickActions";
 import { StudyMotivationBanner } from "@/components/ogrenci/soru-bankasi/StudyMotivationBanner";
+import "./soru-bankasi.css";
 import { Loader2, Mic, MicOff, Volume2, Sparkles, X, Bot, AlertCircle } from "lucide-react";
-
-function Skeleton({ className }: { className?: string }) {
-  return <div className={`bg-slate-100 rounded-xl animate-pulse ${className ?? ""}`} />;
-}
 
 // ─── Sesli Soru Asistanı Modal ─────────────────────────────────────────────
 function VoiceAssistantModal({ token, onClose }: { token: string | null; onClose: () => void }) {
@@ -152,7 +156,7 @@ function VoiceAssistantModal({ token, onClose }: { token: string | null; onClose
                   disabled={loading}
                   className="flex-1 py-2.5 bg-teal-600 hover:bg-teal-700 disabled:opacity-60 text-white text-sm font-bold rounded-xl flex items-center justify-center gap-2 transition-colors"
                 >
-                  {loading ? <><Loader2 className="w-4 h-4 animate-spin" /> Yanıt alınıyor...</> : <><Bot className="w-4 h-4" /> AI'dan Cevap Al</>}
+                  {loading ? <><Loader2 className="w-4 h-4 animate-spin" /> Yanıt alınıyor...</> : <><Bot className="w-4 h-4" /> Yapay zekadan cevap al</>}
                 </button>
                 <button
                   onClick={() => { setTranscript(""); setAiAnswer(null); }}
@@ -221,19 +225,6 @@ const DEFAULT_SUBJECT_OPTIONS = [
   { value: "Coğrafya", label: "Coğrafya" },
 ];
 
-// Ders → 3D kitap rengi eşleşmesi
-const SUBJECT_COLORS: Record<string, string> = {
-  "Matematik":     "#0d9488",
-  "Türkçe":        "#2563eb",
-  "Fen Bilimleri": "#7c3aed",
-  "Fizik":         "#dc2626",
-  "Kimya":         "#d97706",
-  "Biyoloji":      "#16a34a",
-  "Tarih":         "#9333ea",
-  "Coğrafya":      "#0891b2",
-  "default":       "#64748b",
-};
-
 export default function SoruBankasiPage() {
   return (
     <Suspense
@@ -266,13 +257,16 @@ function SoruBankasiPageInner({
   topicFromUrl: string;
 }) {
   const { token } = useAuth();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const qParam = searchParams.get("q") ?? "";
   const urlSeedDone = useRef(false);
 
   const [availableSubjects, setAvailableSubjects] = useState<string[]>([]);
   const [subjectsByExamType, setSubjectsByExamType] = useState<Record<string, string[]>>({});
   const [examTabs, setExamTabs] = useState<string[]>(["ALL"]);
   const [activeExamTab, setActiveExamTab] = useState<string>("ALL");
-  const [scopeMode, setScopeMode] = useState<"class" | "exam">("exam");
+  const [scopeMode, setScopeMode] = useState<"class" | "exam">("class");
   const effectiveExamTab = scopeMode === "class" ? "ALL" : activeExamTab;
 
   const [bankSummary, setBankSummary] = useState<QuestionBankSummary | null>(null);
@@ -280,16 +274,14 @@ function SoruBankasiPageInner({
   const [sidebarLoading, setSidebarLoading] = useState(true);
   const [weakPreview, setWeakPreview] = useState<WeakAchievement[]>([]);
   const [examHistory, setExamHistory] = useState<ExamSession[]>([]);
-  const [todayPlan, setTodayPlan] = useState<StudyPlan | null>(null);
+  const [planStats, setPlanStats] = useState<PlanStats | null>(null);
+  const [badgeData, setBadgeData] = useState<BadgeData | null>(null);
+  const [goalHint, setGoalHint] = useState<string | null>(null);
   const [timedRemaining, setTimedRemaining] = useState<number | null>(null);
 
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
-  const [difficulty, setDifficulty] = useState("");
   const [subject, setSubject] = useState("");
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(false);
   const [selectedAnswers, setSelectedAnswers] = useState<Record<number, string>>({});
   const [answerResults, setAnswerResults] = useState<Record<number, AnswerResult & { selected: string; solution_video?: string }>>({});
   const [loadingSimilar, setLoadingSimilar] = useState<number | null>(null);
@@ -298,7 +290,6 @@ function SoruBankasiPageInner({
   const questionStartTimes = useRef<Record<number, number>>({});
   const [showVoice, setShowVoice] = useState(false);
   const [showPersonalTest, setShowPersonalTest] = useState(false);
-  const [selectedLibrarySubject, setSelectedLibrarySubject] = useState<string | null>(null);
   const [bookModalSubject, setBookModalSubject] = useState<string | null>(null);
   const [bookModalTitle, setBookModalTitle] = useState<string>("");
 
@@ -344,14 +335,12 @@ function SoruBankasiPageInner({
         } else {
           setQuestions((prev) => [...prev, ...resData]);
         }
-        setHasMore(resData.length === perPage);
         const now = Date.now();
         resData.forEach((qst: Question) => {
           questionStartTimes.current[qst.id] = now;
         });
       } catch {
         if (page === 1) setQuestions([]);
-        setHasMore(false);
       }
       setLoading(false);
       return resData;
@@ -435,20 +424,49 @@ function SoruBankasiPageInner({
     setSidebarLoading(true);
     void (async () => {
       try {
-        const [hist, plan, weak] = await Promise.all([
+        const [hist, weak, stats, badges, goalRes] = await Promise.allSettled([
           api.getExamHistory().catch(() => [] as ExamSession[]),
-          api.getTodayPlan().catch(() => null),
           api.getWeakAchievements().catch(() => [] as WeakAchievement[]),
+          api.getPlanStats().catch(() => null as PlanStats | null),
+          api.getBadges().catch(() => null as BadgeData | null),
+          api.getGoalAnalysis().catch(() => null),
         ]);
         if (cancelled) return;
-        setExamHistory(Array.isArray(hist) ? hist : []);
-        setTodayPlan(plan);
-        setWeakPreview(Array.isArray(weak) ? weak : []);
+        if (hist.status === "fulfilled" && Array.isArray(hist.value)) {
+          setExamHistory(hist.value);
+        } else {
+          setExamHistory([]);
+        }
+        if (weak.status === "fulfilled" && Array.isArray(weak.value)) {
+          setWeakPreview(weak.value);
+        } else {
+          setWeakPreview([]);
+        }
+        if (stats.status === "fulfilled" && stats.value) {
+          setPlanStats(stats.value);
+        } else {
+          setPlanStats(null);
+        }
+        if (badges.status === "fulfilled" && badges.value) {
+          setBadgeData(badges.value);
+        } else {
+          setBadgeData(null);
+        }
+        if (goalRes.status === "fulfilled" && goalRes.value) {
+          const g = goalRes.value;
+          setGoalHint(
+            `Hedef net ${g.target_net}, güncel ${g.current_net}. Kalan gün: ${g.days_remaining}.`
+          );
+        } else {
+          setGoalHint(null);
+        }
       } catch {
         if (!cancelled) {
           setExamHistory([]);
-          setTodayPlan(null);
           setWeakPreview([]);
+          setPlanStats(null);
+          setBadgeData(null);
+          setGoalHint(null);
         }
       } finally {
         if (!cancelled) setSidebarLoading(false);
@@ -468,27 +486,26 @@ function SoruBankasiPageInner({
     return () => window.clearInterval(id);
   }, [timerActive]);
 
-  // URL: topic → arama kutusu ön doldurma (konu metni `q` ile aranır); kazanim_code API'de ayrı
+  // topic URL → `q` parametresi (header arama ile uyumlu)
   useEffect(() => {
     if (urlSeedDone.current) return;
-    if (topicFromUrl) {
-      setSearch(topicFromUrl);
-      urlSeedDone.current = true;
-    } else if (kazanimFromUrl) {
-      urlSeedDone.current = true;
+    if (topicFromUrl && !searchParams.get("q")) {
+      const p = new URLSearchParams(searchParams.toString());
+      p.set("q", topicFromUrl);
+      router.replace(`/ogrenci/soru-bankasi?${p.toString()}`, { scroll: false });
     }
-  }, [topicFromUrl, kazanimFromUrl]);
+    urlSeedDone.current = true;
+  }, [topicFromUrl, searchParams, router]);
 
-  // Debounced arama — metin `q`, kazanım URL'den
+  // Debounced arama — `q` adres çubuğundan
   useEffect(() => {
-    setPage(1);
     if (searchTimer.current) clearTimeout(searchTimer.current);
     searchTimer.current = setTimeout(() => {
       loadQuestions({
         page: 1,
-        q: search,
+        q: qParam,
         kazanimCode: kazanimFromUrl || undefined,
-        difficulty: difficulty || undefined,
+        difficulty: undefined,
         subject: subject || undefined,
         examType: effectiveExamTab,
       });
@@ -496,7 +513,7 @@ function SoruBankasiPageInner({
     return () => {
       if (searchTimer.current) clearTimeout(searchTimer.current);
     };
-  }, [search, difficulty, subject, effectiveExamTab, kazanimFromUrl, loadQuestions]);
+  }, [qParam, subject, effectiveExamTab, kazanimFromUrl, loadQuestions]);
 
   const handleAnswer = async (question: Question, optionLetter: string) => {
     if (!token) return;
@@ -548,10 +565,6 @@ function SoruBankasiPageInner({
     setLoadingSimilar(null);
   };
 
-  const correctCount = Object.values(answerResults).filter((r) => r.is_correct).length;
-  const answeredCount = Object.keys(answerResults).length;
-
-  // 3D Kütüphane için kitap listesi: her ders bir kitap
   const subjectOptions = availableSubjects.length > 0
     ? [{ value: "", label: "Tüm Dersler" }, ...(effectiveExamTab === "ALL"
       ? availableSubjects
@@ -561,58 +574,21 @@ function SoruBankasiPageInner({
     ).map((subjectName) => ({ value: subjectName, label: subjectName }))]
     : DEFAULT_SUBJECT_OPTIONS;
 
-  const sessionAccuracyPct =
-    answeredCount > 0 ? Math.round((correctCount / Math.max(answeredCount, 1)) * 100) : 0;
-  const libraryBooks = subjectOptions.filter((s) => s.value !== "").map((s, i) => ({
-    id: i + 1,
-    title: s.label,
-    subject: s.value,
-    color: SUBJECT_COLORS[s.value] ?? SUBJECT_COLORS.default,
-    progress: sessionAccuracyPct,
-  }));
-
-  const handleLibraryBookClick = (bookId: number) => {
-    const book = libraryBooks.find((b) => b.id === bookId);
-    if (!book) return;
-    // Kitap modalını aç — PDF kitap görünümünde sorular
-    setBookModalSubject(book.subject);
-    setBookModalTitle(book.title);
-    setSelectedLibrarySubject(book.subject);
-    setSubject(book.subject);
-    loadQuestions({
-      page: 1,
-      subject: book.subject,
-      q: search.trim() || undefined,
-      kazanimCode: kazanimFromUrl || undefined,
-      difficulty: difficulty || undefined,
-      examType: effectiveExamTab,
-    });
-  };
-
-  const adaptiveHint = useMemo(() => {
-    if (answeredCount < 3) return "Üç sorudan sonra bu oturum için kısa zorluk önerisi görünür.";
-    const ratio = correctCount / Math.max(answeredCount, 1);
-    if (ratio >= 0.78) return "Yüksek doğruluk: bir üst zorluk veya süreli pratik deneyebilirsin.";
-    if (ratio >= 0.48) return "Dengeli gidiyorsun; kazanım seti veya tek konu derinleştirmesi iyi olur.";
-    return "Bu oturumda doğruluk düşük; kolay sorular ve kazanım setine yönel.";
-  }, [answeredCount, correctCount]);
-
   const onQuick10 = useCallback(async () => {
     const rows = await loadQuestions({
       page: 1,
       perPage: 10,
-      q: search,
+      q: qParam,
       kazanimCode: kazanimFromUrl || undefined,
-      difficulty: difficulty || undefined,
+      difficulty: undefined,
       subject: subject || undefined,
       examType: effectiveExamTab,
     });
     if (rows.length) {
       setBookModalSubject(rows[0].subject ?? "Matematik");
       setBookModalTitle("Hızlı 10");
-      setSelectedLibrarySubject(rows[0].subject ?? null);
     }
-  }, [loadQuestions, search, kazanimFromUrl, difficulty, subject, effectiveExamTab]);
+  }, [loadQuestions, qParam, kazanimFromUrl, subject, effectiveExamTab]);
 
   const onWeakFocus = useCallback(async () => {
     try {
@@ -638,16 +614,16 @@ function SoruBankasiPageInner({
     void loadQuestions({
       page: 1,
       perPage: 15,
-      q: search,
+      q: qParam,
       kazanimCode: kazanimFromUrl || undefined,
-      difficulty: difficulty || undefined,
+      difficulty: undefined,
       subject: subject || undefined,
       examType: effectiveExamTab,
     });
-  }, [loadQuestions, search, kazanimFromUrl, difficulty, subject, effectiveExamTab]);
+  }, [loadQuestions, qParam, kazanimFromUrl, subject, effectiveExamTab]);
 
   return (
-    <div className="p-6 lg:p-8">
+    <div className="soru-bankasi-page">
       <QuestionBankHero
         scopeMode={scopeMode}
         onScopeModeChange={(m) => {
@@ -655,7 +631,6 @@ function SoruBankasiPageInner({
           if (m === "class") {
             setActiveExamTab("ALL");
             setSubject("");
-            setSelectedLibrarySubject(null);
           }
         }}
         examTabs={examTabs}
@@ -663,7 +638,6 @@ function SoruBankasiPageInner({
         onExamTabChange={(tab) => {
           setActiveExamTab(tab);
           setSubject("");
-          setSelectedLibrarySubject(null);
         }}
         onOpenVoice={() => setShowVoice(true)}
         onOpenPersonalTest={() => setShowPersonalTest(true)}
@@ -671,7 +645,7 @@ function SoruBankasiPageInner({
 
       {typeof timedRemaining === "number" && timedRemaining > 0 && (
         <div
-          className="mb-4 rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm font-medium text-indigo-900"
+          className="mb-4 mt-2 rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm font-medium text-indigo-900"
           role="status"
           aria-live="polite"
         >
@@ -679,60 +653,31 @@ function SoruBankasiPageInner({
         </div>
       )}
 
-      <div className="mt-6 grid gap-8 lg:grid-cols-[minmax(0,1fr)_300px]">
-        <div className="space-y-6">
+      <div className="sb-main-layout mt-6">
+        <div className="space-y-8">
           <QuestionBankKpiStrip summary={bankSummary} loading={bankSummaryLoading} />
-          <QuestionBankStudyModes
-            adaptiveHint={adaptiveHint}
+          <SubjectBankCarousel subjects={bankSummary?.subjects ?? []} />
+          <QuestionBankQuickActions
             onQuick10={onQuick10}
             onWeakFocus={onWeakFocus}
             onTimedPractice={onTimedPractice}
             disabled={loading || !token}
           />
-          <SubjectBankCarousel subjects={bankSummary?.subjects ?? []} />
-
-          {answeredCount > 0 && (
-            <div className="flex flex-wrap items-center gap-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-              {[
-                { label: "Cevaplanan", value: answeredCount, color: "text-slate-900" },
-                { label: "Doğru", value: correctCount, color: "text-teal-600" },
-                { label: "Yanlış", value: answeredCount - correctCount, color: "text-red-500" },
-                { label: "Net", value: (correctCount - (answeredCount - correctCount) / 4).toFixed(2), color: "text-indigo-600" },
-              ].map(({ label, value, color }) => (
-                <div key={label}>
-                  <p className="text-xs font-medium text-slate-500">{label}</p>
-                  <p className={`text-xl font-bold ${color}`}>{value}</p>
-                </div>
-              ))}
-            </div>
-          )}
-
-          <div className="overflow-hidden rounded-2xl border border-slate-700/40 shadow-2xl">
-            <Library3D books={libraryBooks} onBookClick={handleLibraryBookClick} />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-            {[
-              { label: "Toplam ders", value: libraryBooks.length, color: "text-teal-600", bg: "bg-teal-50", border: "border-teal-100" },
-              { label: "Çözülen soru", value: answeredCount, color: "text-blue-600", bg: "bg-blue-50", border: "border-blue-100" },
-              { label: "Doğru cevap", value: correctCount, color: "text-emerald-600", bg: "bg-emerald-50", border: "border-emerald-100" },
-              { label: "Başarı oranı", value: answeredCount > 0 ? `%${Math.round((correctCount / answeredCount) * 100)}` : "—", color: "text-purple-600", bg: "bg-purple-50", border: "border-purple-100" },
-            ].map(({ label, value, color, bg, border }) => (
-              <div key={label} className={`rounded-2xl border p-4 shadow-sm ${bg} ${border}`}>
-                <p className="text-xs font-medium text-slate-500">{label}</p>
-                <p className={`mt-1 text-2xl font-bold ${color}`}>{value}</p>
-              </div>
-            ))}
-          </div>
-
+          <QuestionBankInsightsRow
+            subjects={bankSummary?.subjects ?? []}
+            weakPreview={weakPreview}
+            badgeData={badgeData}
+            goalHint={goalHint}
+            loading={sidebarLoading}
+          />
           <StudyMotivationBanner onStartQuick={onQuick10} />
         </div>
 
         <QuestionBankSidebar
-          weakPreview={weakPreview}
           examHistory={examHistory}
-          todayPlan={todayPlan}
+          planStats={planStats}
           loading={sidebarLoading}
+          onPersonalTest={() => setShowPersonalTest(true)}
         />
       </div>
 

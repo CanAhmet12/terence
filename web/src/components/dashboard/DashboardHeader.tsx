@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { HeaderUserMenu } from "@/components/dashboard/HeaderUserMenu";
 import {
@@ -25,7 +25,9 @@ import {
   ChevronRight,
   LayoutDashboard,
   Bell,
+  Search,
 } from "lucide-react";
+import { useCallback, useEffect, useRef, Suspense } from "react";
 
 const PATH_MAP: Record<string, { label: string; icon: React.ElementType }> = {
   "/ogrenci": { label: "Ana Panel", icon: LayoutDashboard },
@@ -69,8 +71,47 @@ const PATH_MAP: Record<string, { label: string; icon: React.ElementType }> = {
 };
 
 export function DashboardHeader() {
+  return (
+    <Suspense fallback={<div className="sticky top-0 z-40 h-[52px] border-b border-slate-200/60 bg-white/90 backdrop-blur-xl" />}>
+      <DashboardHeaderInner />
+    </Suspense>
+  );
+}
+
+function DashboardHeaderInner() {
   const pathname = usePathname();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const { user } = useAuth();
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  const isQuestionBank = pathname === "/ogrenci/soru-bankasi";
+  const qFromUrl = isQuestionBank ? (searchParams.get("q") ?? "") : "";
+
+  const setBankQuery = useCallback(
+    (q: string) => {
+      if (!isQuestionBank) return;
+      const params = new URLSearchParams(searchParams.toString());
+      const trimmed = q.trim();
+      if (trimmed) params.set("q", trimmed);
+      else params.delete("q");
+      const qs = params.toString();
+      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+    },
+    [isQuestionBank, pathname, router, searchParams]
+  );
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (!isQuestionBank) return;
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [isQuestionBank]);
 
   if (!user) return null;
 
@@ -88,14 +129,18 @@ export function DashboardHeader() {
     Object.entries(PATH_MAP).find(([key]) => pathname.startsWith(key + "/"))?.[1] ||
     ({ label: "Panel", icon: Home } as const);
   const PageIcon = currentPage.icon;
+  const accentIcon = isQuestionBank ? "text-indigo-600" : "text-teal-600";
+  const breadcrumbHover = isQuestionBank ? "hover:text-indigo-600" : "hover:text-teal-600";
 
   return (
     <header className="sticky top-0 z-40 border-b border-slate-200/60 bg-white/90 px-4 py-3.5 backdrop-blur-xl lg:px-8">
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex min-w-0 items-center gap-2">
+      <div
+        className={`flex items-center gap-3 ${isQuestionBank ? "justify-between" : "justify-between"}`}
+      >
+        <div className="flex min-w-0 shrink-0 items-center gap-2 lg:max-w-[min(280px,36vw)]">
           <Link
             href={dashboardHref}
-            className="hidden shrink-0 items-center gap-1.5 text-slate-400 transition-colors hover:text-teal-600 sm:flex"
+            className={`hidden shrink-0 items-center gap-1.5 text-slate-400 transition-colors sm:flex ${breadcrumbHover}`}
           >
             <Home className="h-4 w-4" />
             <span className="text-sm font-medium">Panel</span>
@@ -104,21 +149,64 @@ export function DashboardHeader() {
             <>
               <ChevronRight className="hidden h-3.5 w-3.5 shrink-0 text-slate-300 sm:block" />
               <div className="flex min-w-0 items-center gap-1.5">
-                <PageIcon className="h-4 w-4 shrink-0 text-teal-600" />
+                <PageIcon className={`h-4 w-4 shrink-0 ${accentIcon}`} />
                 <span className="truncate text-sm font-semibold text-slate-800">{currentPage.label}</span>
               </div>
             </>
           )}
           {pathname === dashboardHref && (
             <div className="flex items-center gap-1.5 sm:hidden">
-              <PageIcon className="h-4 w-4 shrink-0 text-teal-600" />
+              <PageIcon className={`h-4 w-4 shrink-0 ${accentIcon}`} />
               <span className="text-sm font-semibold text-slate-800">{currentPage.label}</span>
             </div>
           )}
         </div>
 
-        <HeaderUserMenu />
+        {isQuestionBank && (
+          <div className="mx-2 hidden min-w-0 flex-1 justify-center md:flex">
+            <div className="relative w-full max-w-xl">
+              <Search
+                className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+                aria-hidden
+              />
+              <input
+                ref={searchInputRef}
+                type="search"
+                value={qFromUrl}
+                onChange={(e) => setBankQuery(e.target.value)}
+                placeholder="Soru veya konu ara..."
+                className="w-full rounded-full border border-slate-200/90 bg-slate-50/90 py-2.5 pl-10 pr-[4.5rem] text-sm text-slate-900 shadow-inner outline-none ring-indigo-500/0 transition-[box-shadow,border-color] placeholder:text-slate-400 focus:border-indigo-300 focus:ring-2 focus:ring-indigo-500/20"
+                aria-label="Soru veya konu ara"
+                autoComplete="off"
+              />
+              <kbd className="pointer-events-none absolute right-3 top-1/2 hidden -translate-y-1/2 select-none rounded-md border border-slate-200 bg-white px-1.5 py-0.5 font-mono text-[10px] font-medium text-slate-400 sm:inline-block">
+                Ctrl+K
+              </kbd>
+            </div>
+          </div>
+        )}
+
+        <div className="flex shrink-0 items-center gap-2">
+          <HeaderUserMenu />
+        </div>
       </div>
+
+      {isQuestionBank && (
+        <div className="mt-3 border-t border-slate-100 pt-3 md:hidden">
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" aria-hidden />
+            <input
+              type="search"
+              value={qFromUrl}
+              onChange={(e) => setBankQuery(e.target.value)}
+              placeholder="Soru veya konu ara..."
+              className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-10 pr-3 text-sm outline-none focus:border-indigo-300 focus:ring-2 focus:ring-indigo-500/20"
+              aria-label="Soru veya konu ara"
+              autoComplete="off"
+            />
+          </div>
+        </div>
+      )}
     </header>
   );
 }
