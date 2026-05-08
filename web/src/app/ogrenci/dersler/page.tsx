@@ -31,24 +31,10 @@ import { CurriculumBucketTabs, ExamFilterChips } from "@/components/ogrenci/ders
 import { VideoPanel } from "@/components/ogrenci/dersler/VideoPanel";
 import { PdfPanel } from "@/components/ogrenci/dersler/PdfPanel";
 import { TopicHero } from "@/components/ogrenci/dersler/TopicHero";
-import { TopicKpiStrip, type TopicKpiCounts } from "@/components/ogrenci/dersler/TopicKpiStrip";
+import { TopicKpiStrip } from "@/components/ogrenci/dersler/TopicKpiStrip";
 import { TopicAbout } from "@/components/ogrenci/dersler/TopicAbout";
 import { TopicContentList, type ContentListItem } from "@/components/ogrenci/dersler/TopicContentList";
 import { UnitAccordion } from "@/components/ogrenci/dersler/UnitAccordion";
-
-function countKpis(items: ContentListItem[]): TopicKpiCounts {
-  let video = 0;
-  let pdf = 0;
-  let quiz = 0;
-  let other = 0;
-  for (const it of items) {
-    if (it.type === "video") video++;
-    else if (it.type === "pdf") pdf++;
-    else if (it.type === "quiz") quiz++;
-    else other++;
-  }
-  return { video, pdf, quiz, other };
-}
 
 export default function DerslerimPage() {
   const { user, loading: authLoading } = useAuth();
@@ -233,7 +219,10 @@ export default function DerslerimPage() {
     }
   };
 
-  const kpiCounts = useMemo(() => countKpis(contentItems), [contentItems]);
+  const scrollToLessonOverview = () => {
+    if (typeof document === "undefined") return;
+    document.getElementById("ders-icerik-alani")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
 
   if (authLoading) {
     return (
@@ -262,8 +251,8 @@ export default function DerslerimPage() {
   }
 
   return (
-    <div className="flex w-full flex-col bg-slate-50 lg:max-h-[calc(100dvh-7rem)] lg:min-h-0 lg:overflow-hidden">
-      <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center justify-between border-b border-slate-200 bg-white/95 px-4 shadow-sm backdrop-blur-sm sm:h-16 sm:px-6">
+    <div className="flex w-full flex-col bg-[#f6f5fb] lg:max-h-[calc(100dvh-7rem)] lg:min-h-0 lg:overflow-hidden">
+      <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center justify-between border-b border-slate-200/80 bg-white/95 px-4 shadow-sm backdrop-blur-sm sm:h-16 sm:px-6">
         <div className="flex items-center gap-3">
           <button type="button" onClick={() => setSidebarOpen(!sidebarOpen)} className="rounded-lg p-2 text-slate-600 hover:bg-slate-100 lg:hidden">
             <Menu className="h-5 w-5" />
@@ -296,7 +285,7 @@ export default function DerslerimPage() {
               placeholder={bucketTab === "school" ? "Sınıf derslerinde ara..." : "Sınav derslerinde ara..."}
               value={toolbarSearch}
               onChange={(e) => setToolbarSearch(e.target.value)}
-              className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 pl-10 pr-4 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+              className="w-full rounded-xl border border-slate-200 bg-slate-50/80 py-2 pl-10 pr-4 text-sm outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
               aria-label="Ders ara"
             />
             {toolbarSearch && (
@@ -310,10 +299,10 @@ export default function DerslerimPage() {
         <div className="flex items-center gap-2">
           {gradeStr && examStr && (
             <div className="hidden items-center gap-2 sm:flex">
-              <div className="rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700">
+              <div className="rounded-full bg-violet-50 px-3 py-1.5 text-xs font-semibold text-violet-900 ring-1 ring-violet-100">
                 {gradeStr === "mezun" ? "Mezun" : `${gradeStr}. Sınıf`}
               </div>
-              <div className="rounded-lg bg-indigo-100 px-3 py-1.5 text-xs font-semibold text-indigo-700">{examStr}</div>
+              <div className="rounded-full bg-violet-100 px-3 py-1.5 text-xs font-semibold text-violet-900 ring-1 ring-violet-200/60">{examStr}</div>
             </div>
           )}
         </div>
@@ -322,7 +311,7 @@ export default function DerslerimPage() {
       <div className="flex min-h-0 flex-1 flex-col lg:flex-row lg:overflow-hidden">
         <aside
           className={cn(
-            "flex w-80 max-w-[min(100vw-1.5rem,20rem)] shrink-0 flex-col overflow-hidden border-r border-slate-200 bg-white transition-transform duration-300 ease-in-out",
+            "flex w-80 max-w-[min(100vw-1.5rem,20rem)] shrink-0 flex-col overflow-hidden border-r border-slate-200/90 bg-white transition-transform duration-300 ease-in-out",
             "fixed inset-y-0 left-0 z-40 shadow-xl lg:static lg:z-0 lg:h-auto lg:max-h-[calc(100dvh-8rem)] lg:shadow-none",
             sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
           )}
@@ -331,10 +320,10 @@ export default function DerslerimPage() {
           aria-labelledby={bucketTab === "school" ? "tab-bucket-school" : "tab-bucket-exam"}
         >
           <div className="flex h-full flex-col">
-            <div className="border-b border-slate-100 bg-gradient-to-r from-cyan-50 to-teal-50 p-4 sm:p-6">
+            <div className="border-b border-slate-100 bg-gradient-to-b from-white to-violet-50/40 p-4 sm:p-6">
               <div className="mb-3 flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <BookOpen className="h-5 w-5 text-cyan-600" aria-hidden />
+                  <BookOpen className="h-5 w-5 text-violet-600" aria-hidden />
                   <h2 className="text-lg font-bold text-slate-900">Derslerim</h2>
                 </div>
                 <button type="button" onClick={() => setSidebarOpen(false)} className="rounded-lg p-2 text-slate-400 hover:bg-white/80 lg:hidden">
@@ -343,10 +332,10 @@ export default function DerslerimPage() {
               </div>
               {gradeStr && examStr && (
                 <div className="mb-3 flex items-center gap-2">
-                  <div className="rounded-lg bg-white/80 px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm">
+                  <div className="rounded-full bg-violet-50 px-3 py-1.5 text-xs font-semibold text-violet-900 ring-1 ring-violet-100">
                     {gradeStr === "mezun" ? "Mezun" : `${gradeStr}. Sınıf`}
                   </div>
-                  <div className="rounded-lg bg-cyan-100 px-3 py-1.5 text-xs font-semibold text-cyan-700 shadow-sm">{examStr}</div>
+                  <div className="rounded-full bg-violet-100 px-3 py-1.5 text-xs font-semibold text-violet-800 ring-1 ring-violet-200/70">{examStr}</div>
                 </div>
               )}
               <CurriculumBucketTabs value={bucketTab} onChange={setBucketTab} />
@@ -361,7 +350,7 @@ export default function DerslerimPage() {
                   placeholder={bucketTab === "school" ? "Sınıf dersinde ara..." : "Sınav dersinde ara..."}
                   value={bucketTab === "school" ? schoolSearch : examSearch}
                   onChange={(e) => (bucketTab === "school" ? setSchoolSearch(e.target.value) : setExamSearch(e.target.value))}
-                  className="w-full rounded-lg border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm outline-none transition-all focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100"
+                  className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm outline-none transition-all focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
                   aria-label={bucketTab === "school" ? "Sınıf dersleri araması" : "Sınav dersleri araması"}
                 />
               </div>
@@ -414,7 +403,7 @@ export default function DerslerimPage() {
                       <div
                         key={subject.slug}
                         className={`rounded-xl border-2 transition-all ${
-                          isActive ? "border-cyan-200 bg-cyan-50/30 shadow-sm" : "border-slate-100 hover:border-slate-200 hover:bg-slate-50"
+                          isActive ? "border-violet-200 bg-violet-50/50 shadow-md shadow-violet-100/50" : "border-slate-100 hover:border-slate-200 hover:bg-slate-50"
                         }`}
                       >
                         <button type="button" onClick={() => handleSubjectSelect(subject)} className="flex w-full items-center gap-3 p-4 text-left">
@@ -472,9 +461,9 @@ export default function DerslerimPage() {
           </div>
         </aside>
 
-        <main className="min-h-0 flex-1 overflow-y-auto bg-slate-50 lg:min-h-0">
+        <main className="min-h-0 flex-1 overflow-y-auto bg-[#f6f5fb] lg:min-h-0">
           {activeTopic ? (
-            <div className="container mx-auto max-w-7xl space-y-6 p-4 md:p-6">
+            <div className="container mx-auto max-w-5xl space-y-0 p-4 pb-10 md:p-6 md:pb-12">
               <TopicHero
                 topicTitle={activeTopic.title}
                 unitTitle={activeUnit?.title}
@@ -482,97 +471,102 @@ export default function DerslerimPage() {
                 gradeLabel={gradeStr === "mezun" ? "Mezun" : gradeStr ? `${gradeStr}. sınıf` : undefined}
                 examLabel={examStr}
                 accentColor={activeColor}
+                onBack={() => {
+                  setActiveTopic(null);
+                  setActiveContent(null);
+                  setContentItems([]);
+                }}
+                onOverview={scrollToLessonOverview}
               />
 
-              <TopicKpiStrip counts={kpiCounts} mebCode={activeTopic.meb_code} />
+              <TopicKpiStrip items={contentItems} />
 
-              <TopicAbout body={activeTopic.description} />
+              <div id="ders-icerik-alani" className="mt-8 space-y-6 scroll-mt-24 md:mt-10 md:space-y-8">
+                <TopicAbout title="Konu hakkında" body={activeTopic.description} />
 
-              <div className="overflow-hidden rounded-2xl bg-white shadow-lg ring-1 ring-slate-100">
-                <div className="relative aspect-video bg-slate-900">
-                  {activeContent ? (
-                    activeContent.type === "video" && activeContent.url ? (
-                      <VideoPanel url={activeContent.url} />
-                    ) : activeContent.type === "pdf" && activeContent.url ? (
-                      <PdfPanel url={activeContent.url} />
-                    ) : (
-                      <div className="flex h-full flex-col items-center justify-center text-white">
-                        <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-white/10">
-                          {activeContent.type === "video" ? <Play className="h-10 w-10" aria-hidden /> : <FileText className="h-10 w-10" aria-hidden />}
+                <TopicContentList
+                  items={contentItems}
+                  activeId={activeContent?.id ?? null}
+                  onSelect={(item) => setActiveContent(item)}
+                  topicTitle={activeTopic.title}
+                  mebCode={activeTopic.meb_code}
+                  accentColor={activeColor}
+                  filter={contentFilter}
+                  onFilterChange={setContentFilter}
+                />
+
+                <section className="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-md ring-1 ring-slate-900/[0.02]">
+                  <div className="border-b border-slate-100 px-5 py-4 md:px-6">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="min-w-0 flex-1">
+                        <h2 className="text-base font-bold text-slate-900 md:text-lg">{activeContent?.title || "Önizleme"}</h2>
+                        <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-500 md:text-sm">
+                          <span>{activeUnit?.title}</span>
+                          <span aria-hidden>·</span>
+                          <span>{activeSubject?.name}</span>
+                          {activeContent?.duration_seconds ? (
+                            <>
+                              <span aria-hidden>·</span>
+                              <span className="inline-flex items-center gap-1">
+                                <Clock className="h-3.5 w-3.5" aria-hidden />
+                                {Math.round(activeContent.duration_seconds / 60)} dk
+                              </span>
+                            </>
+                          ) : null}
                         </div>
-                        <p className="text-sm">İçerik adresi bulunamadı</p>
                       </div>
-                    )
-                  ) : contentItems.length === 0 ? (
-                    <div className="flex h-full flex-col items-center justify-center text-white">
-                      <BookOpen className="mb-4 h-16 w-16 opacity-50" aria-hidden />
-                      <p>İçerik yakında eklenecek</p>
+                      {activeTopic.status !== "completed" ? (
+                        <button
+                          type="button"
+                          onClick={handleTopicComplete}
+                          className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-700"
+                        >
+                          <CheckCircle className="h-4 w-4" aria-hidden />
+                          <span className="hidden sm:inline">Konuyu tamamla</span>
+                          <span className="sm:hidden">Tamamla</span>
+                        </button>
+                      ) : (
+                        <div className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-emerald-500 px-5 py-2.5 text-sm font-semibold text-white">
+                          <CheckCircle className="h-4 w-4" aria-hidden />
+                          Tamamlandı
+                        </div>
+                      )}
                     </div>
-                  ) : (
-                    <div className="flex h-full flex-col items-center justify-center text-white">
-                      <p className="text-sm">Soldan bir içerik seçin</p>
-                    </div>
-                  )}
-                </div>
-
-                <div className="p-6">
-                  <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                    <div className="min-w-0 flex-1">
-                      <h2 className="mb-2 text-lg font-bold text-slate-900 md:text-xl">{activeContent?.title || activeTopic.title}</h2>
-                      <div className="flex flex-wrap items-center gap-2 text-sm text-slate-500">
-                        <span>{activeUnit?.title}</span>
-                        <span aria-hidden>·</span>
-                        <span>{activeSubject?.name}</span>
-                        {activeContent?.duration_seconds ? (
-                          <>
-                            <span aria-hidden>·</span>
-                            <span className="inline-flex items-center gap-1">
-                              <Clock className="h-3.5 w-3.5" aria-hidden />
-                              {Math.round(activeContent.duration_seconds / 60)} dakika
-                            </span>
-                          </>
-                        ) : null}
+                  </div>
+                  <div className="relative h-[min(56vh,520px)] min-h-[220px] bg-slate-950">
+                    {activeContent ? (
+                      activeContent.type === "video" && activeContent.url ? (
+                        <VideoPanel url={activeContent.url} />
+                      ) : activeContent.type === "pdf" && activeContent.url ? (
+                        <PdfPanel url={activeContent.url} />
+                      ) : (
+                        <div className="flex h-[min(56vh,520px)] min-h-[220px] flex-col items-center justify-center gap-3 px-6 text-center text-white">
+                          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/10">
+                            {activeContent.type === "video" ? <Play className="h-8 w-8" aria-hidden /> : <FileText className="h-8 w-8" aria-hidden />}
+                          </div>
+                          <p className="text-sm text-white/80">Bu içerik için adres bulunamadı.</p>
+                        </div>
+                      )
+                    ) : contentItems.length === 0 ? (
+                      <div className="flex h-[min(40vh,360px)] min-h-[200px] flex-col items-center justify-center gap-3 text-white/90">
+                        <BookOpen className="h-14 w-14 text-white/40" aria-hidden />
+                        <p className="text-sm">İçerik yakında eklenecek</p>
                       </div>
-                    </div>
-
-                    {activeTopic.status !== "completed" ? (
-                      <button
-                        type="button"
-                        onClick={handleTopicComplete}
-                        className="flex shrink-0 items-center gap-2 rounded-xl px-6 py-3 font-semibold text-white transition-all hover:opacity-90"
-                        style={{ background: activeColor }}
-                      >
-                        <CheckCircle className="h-4 w-4" aria-hidden />
-                        <span className="hidden sm:inline">Konuyu Tamamla</span>
-                        <span className="sm:hidden">Tamamla</span>
-                      </button>
                     ) : (
-                      <div className="flex shrink-0 items-center gap-2 rounded-xl bg-emerald-500 px-6 py-3 font-semibold text-white">
-                        <CheckCircle className="h-4 w-4" aria-hidden />
-                        <span>Tamamlandı</span>
+                      <div className="flex h-[min(40vh,360px)] min-h-[200px] flex-col items-center justify-center gap-2 px-6 text-center text-white/85">
+                        <p className="text-sm">Yukarıdaki listeden bir içerik seçerek önizleyin.</p>
                       </div>
                     )}
                   </div>
-                </div>
+                </section>
               </div>
-
-              <TopicContentList
-                items={contentItems}
-                activeId={activeContent?.id ?? null}
-                onSelect={(item) => setActiveContent(item)}
-                topicTitle={activeTopic.title}
-                mebCode={activeTopic.meb_code}
-                accentColor={activeColor}
-                filter={contentFilter}
-                onFilterChange={setContentFilter}
-              />
             </div>
           ) : (
             <div className="flex h-full items-center justify-center p-6">
               <div className="max-w-md text-center">
                 <div className="relative mx-auto mb-6">
-                  <div className="absolute inset-0 animate-pulse rounded-3xl bg-gradient-to-br from-cyan-100 to-teal-100 opacity-50 blur-2xl" aria-hidden />
-                  <div className="relative mx-auto flex h-24 w-24 items-center justify-center rounded-3xl bg-gradient-to-br from-cyan-500 to-teal-500 shadow-xl">
+                  <div className="absolute inset-0 animate-pulse rounded-3xl bg-gradient-to-br from-violet-200 to-indigo-100 opacity-50 blur-2xl" aria-hidden />
+                  <div className="relative mx-auto flex h-24 w-24 items-center justify-center rounded-3xl bg-gradient-to-br from-violet-600 to-indigo-700 shadow-xl shadow-violet-500/25">
                     <BookOpen className="h-12 w-12 text-white" aria-hidden />
                   </div>
                 </div>
@@ -584,7 +578,7 @@ export default function DerslerimPage() {
                   <button
                     type="button"
                     onClick={() => setSidebarOpen(true)}
-                    className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-cyan-600 to-teal-600 px-6 py-3 font-semibold text-white shadow-lg shadow-cyan-500/25 transition-all hover:shadow-xl hover:shadow-cyan-500/30 lg:hidden"
+                    className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 px-6 py-3 font-semibold text-white shadow-lg shadow-violet-500/25 transition-all hover:shadow-xl hover:shadow-violet-500/30 lg:hidden"
                   >
                     <Menu className="h-5 w-5" aria-hidden />
                     Dersleri Göster

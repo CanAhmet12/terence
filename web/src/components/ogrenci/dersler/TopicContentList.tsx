@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Play, FileText, PenLine } from "lucide-react";
+import { Play, FileText, PenLine, ListChecks, FileQuestion } from "lucide-react";
 import { getVideoThumbnail } from "@/lib/api";
 
 export type ContentListItem = {
@@ -13,6 +13,19 @@ export type ContentListItem = {
   thumbnail_url?: string;
   is_free?: boolean;
 };
+
+function typeIcon(type: ContentListItem["type"]) {
+  switch (type) {
+    case "video":
+      return Play;
+    case "pdf":
+      return FileText;
+    case "quiz":
+      return ListChecks;
+    default:
+      return FileQuestion;
+  }
+}
 
 export function TopicContentList({
   items,
@@ -43,9 +56,9 @@ export function TopicContentList({
   });
 
   return (
-    <section aria-labelledby="topic-content-list-heading">
-      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h2 id="topic-content-list-heading" className="text-lg font-bold text-slate-900">
+    <section className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm md:p-6" aria-labelledby="topic-content-list-heading">
+      <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <h2 id="topic-content-list-heading" className="text-lg font-bold text-slate-900 md:text-xl">
           {items.length > 0 ? `Konu içeriği (${visible.length})` : "Konu içeriği"}
         </h2>
         {items.length > 0 && (
@@ -56,8 +69,8 @@ export function TopicContentList({
                 type="button"
                 aria-pressed={filter === f}
                 onClick={() => onFilterChange(f)}
-                className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
-                  filter === f ? "text-white shadow-sm" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                className={`rounded-full px-4 py-1.5 text-xs font-semibold transition-all ${
+                  filter === f ? "text-white shadow-md" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                 }`}
                 style={filter === f ? { backgroundColor: accentColor } : undefined}
               >
@@ -69,21 +82,28 @@ export function TopicContentList({
       </div>
 
       {visible.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/80 p-8 text-center text-sm text-slate-600">
+        <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50/90 p-10 text-center text-sm text-slate-500">
           Bu süzgeçte gösterilecek içerik yok.
         </div>
       ) : (
-        <ul className="space-y-2" role="listbox" aria-label="İzle veya çöz">
+        <ul className="divide-y divide-slate-100" role="listbox" aria-label="Konu içeriği listesi">
           {visible.map((item) => {
             const isActive = activeId === item.id;
             const thumb = item.thumbnail_url || (item.type === "video" && item.url ? getVideoThumbnail(item.url) : null);
+            const TypeIcon = typeIcon(item.type);
+            const durationLabel =
+              item.duration_seconds && item.duration_seconds > 0
+                ? `${Math.max(1, Math.round(item.duration_seconds / 60))} dk`
+                : item.type === "video"
+                  ? "Video"
+                  : item.type === "pdf"
+                    ? "PDF"
+                    : item.type === "quiz"
+                      ? "Etkinlik"
+                      : "Metin";
+
             return (
-              <li
-                key={item.id}
-                className={`flex flex-col gap-3 rounded-2xl border bg-white p-4 shadow-sm transition-all sm:flex-row sm:items-center ${
-                  isActive ? "ring-2 ring-offset-2 ring-indigo-400" : "border-slate-100"
-                }`}
-              >
+              <li key={item.id} className={`flex flex-col gap-4 py-4 first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between ${isActive ? "bg-violet-50/40 -mx-2 rounded-xl px-2 sm:-mx-3 sm:px-3" : ""}`}>
                 <button
                   type="button"
                   role="option"
@@ -91,38 +111,31 @@ export function TopicContentList({
                   onClick={() => onSelect(item)}
                   className="flex min-w-0 flex-1 items-center gap-4 text-left"
                 >
-                  <div className="relative h-16 w-28 shrink-0 overflow-hidden rounded-xl bg-slate-100">
+                  <div className="relative h-14 w-24 shrink-0 overflow-hidden rounded-xl bg-slate-100 ring-1 ring-slate-200/80 sm:h-16 sm:w-28">
                     {thumb ? (
                       <img src={thumb} alt="" className="h-full w-full object-cover" />
-                    ) : item.type === "video" ? (
-                      <div className="flex h-full items-center justify-center">
-                        <Play className="h-8 w-8 text-slate-400" aria-hidden />
-                      </div>
                     ) : (
-                      <div className="flex h-full items-center justify-center">
-                        <FileText className="h-8 w-8 text-slate-400" aria-hidden />
+                      <div className="flex h-full items-center justify-center bg-gradient-to-br from-violet-50 to-indigo-50">
+                        <TypeIcon className="h-7 w-7 text-violet-400" aria-hidden />
                       </div>
                     )}
-                    <span
-                      className="absolute bottom-1 left-1 rounded px-1.5 py-0.5 text-[10px] font-bold text-white"
-                      style={{ background: item.type === "video" ? "#ef4444" : "#f59e0b" }}
-                    >
-                      {item.type === "video" ? "Video" : "PDF"}
-                    </span>
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="font-semibold text-slate-900">{item.title}</p>
-                    {item.duration_seconds ? (
-                      <p className="text-xs text-slate-500">{Math.round(item.duration_seconds / 60)} dk</p>
-                    ) : (
-                      <p className="text-xs text-slate-500">İzle</p>
-                    )}
+                    <p className="mt-0.5 text-xs text-slate-500">{durationLabel}</p>
                   </div>
                 </button>
-                <div className="flex shrink-0 gap-2 sm:flex-col sm:items-stretch md:flex-row">
+                <div className="flex shrink-0 items-center gap-2 sm:pl-2">
+                  <button
+                    type="button"
+                    onClick={() => onSelect(item)}
+                    className="inline-flex min-w-[5.5rem] items-center justify-center rounded-xl bg-violet-100 px-4 py-2.5 text-sm font-bold text-violet-800 transition hover:bg-violet-200"
+                  >
+                    {item.type === "video" ? "İzle" : item.type === "pdf" ? "Aç" : "Aç"}
+                  </button>
                   <Link
                     href={practiceHref}
-                    className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-bold text-white hover:bg-slate-800 sm:flex-none"
+                    className="inline-flex min-w-[5.5rem] items-center justify-center gap-1.5 rounded-xl bg-emerald-500 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-600"
                   >
                     <PenLine className="h-4 w-4 shrink-0" aria-hidden />
                     Çöz

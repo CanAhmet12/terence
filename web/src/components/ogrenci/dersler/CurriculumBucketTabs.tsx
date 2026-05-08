@@ -13,11 +13,7 @@ export function CurriculumBucketTabs({
   onChange: (v: CurriculumBucket) => void;
 }) {
   return (
-    <div
-      role="tablist"
-      aria-label="Müfredat kovası"
-      className="mb-3 flex gap-1 rounded-xl border border-slate-200 bg-slate-50/80 p-1"
-    >
+    <div role="tablist" aria-label="Müfredat kovası" className="mb-3 flex gap-1 rounded-xl border border-slate-200/80 bg-slate-50/90 p-1">
       <button
         type="button"
         role="tab"
@@ -26,8 +22,8 @@ export function CurriculumBucketTabs({
         aria-controls="panel-bucket-school"
         onClick={() => onChange("school")}
         className={cn(
-          "flex-1 rounded-lg px-2 py-2 text-center text-xs font-bold transition-colors sm:text-sm",
-          value === "school" ? "bg-white text-cyan-800 shadow-sm" : "text-slate-600 hover:text-slate-900",
+          "flex-1 rounded-lg px-2 py-2 text-center text-xs font-bold transition-all sm:text-sm",
+          value === "school" ? "bg-white text-violet-800 shadow-sm ring-1 ring-slate-200/60" : "text-slate-600 hover:text-slate-900",
         )}
       >
         Sınıf dersleri
@@ -40,8 +36,8 @@ export function CurriculumBucketTabs({
         aria-controls="panel-bucket-exam"
         onClick={() => onChange("exam")}
         className={cn(
-          "flex-1 rounded-lg px-2 py-2 text-center text-xs font-bold transition-colors sm:text-sm",
-          value === "exam" ? "bg-white text-indigo-800 shadow-sm" : "text-slate-600 hover:text-slate-900",
+          "flex-1 rounded-lg px-2 py-2 text-center text-xs font-bold transition-all sm:text-sm",
+          value === "exam" ? "bg-white text-violet-800 shadow-sm ring-1 ring-slate-200/60" : "text-slate-600 hover:text-slate-900",
         )}
       >
         Sınavlar
@@ -67,7 +63,7 @@ export function ExamFilterChips({
           onClick={() => onChange(chip)}
           className={cn(
             "rounded-full px-2.5 py-1 text-[11px] font-bold transition-colors sm:px-3 sm:text-xs",
-            value === chip ? "bg-indigo-600 text-white shadow-sm" : "bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-50",
+            value === chip ? "bg-violet-600 text-white shadow-sm" : "bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-50",
           )}
         >
           {chip === "ALL" ? "Tümü" : chip}

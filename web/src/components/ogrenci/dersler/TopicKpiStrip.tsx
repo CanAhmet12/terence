@@ -1,37 +1,65 @@
 "use client";
 
-import { Play, FileText, ListChecks, Hash } from "lucide-react";
+import { BookOpen, ClipboardList, PenTool, ListChecks } from "lucide-react";
+import type { ContentListItem } from "./TopicContentList";
 
-export type TopicKpiCounts = { video: number; pdf: number; quiz: number; other: number };
+function sumVideoMinutes(items: ContentListItem[]): number {
+  let sec = 0;
+  for (const it of items) {
+    if (it.type === "video" && typeof it.duration_seconds === "number") sec += it.duration_seconds;
+  }
+  return Math.max(0, Math.round(sec / 60));
+}
 
-export function TopicKpiStrip({
-  counts,
-  mebCode,
-}: {
-  counts: TopicKpiCounts;
-  mebCode?: string | null;
-}) {
+export function TopicKpiStrip({ items }: { items: ContentListItem[] }) {
+  const videoMin = sumVideoMinutes(items);
+  const pdf = items.filter((i) => i.type === "pdf").length;
+  const quiz = items.filter((i) => i.type === "quiz").length;
+  const text = items.filter((i) => i.type === "text").length;
+
   const cards = [
-    { key: "video", label: "Video", value: counts.video, icon: Play, tone: "from-rose-500/20 to-rose-600/10" },
-    { key: "pdf", label: "PDF", value: counts.pdf, icon: FileText, tone: "from-amber-500/20 to-amber-600/10" },
-    { key: "quiz", label: "Test / etkinlik", value: counts.quiz, icon: ListChecks, tone: "from-teal-500/20 to-teal-600/10" },
-    { key: "kazanim", label: "Kazanım", value: mebCode || "—", icon: Hash, tone: "from-indigo-500/20 to-indigo-600/10", isText: true },
-  ] as const;
+    {
+      key: "lecture",
+      title: "Konu anlatımı",
+      subtitle: videoMin > 0 ? `${videoMin} dk video` : "Video henüz yok",
+      icon: BookOpen,
+    },
+    {
+      key: "example",
+      title: "Örnek sorular",
+      subtitle: pdf > 0 ? `${pdf} PDF` : "—",
+      icon: ClipboardList,
+    },
+    {
+      key: "practice",
+      title: "Alıştırmalar",
+      subtitle: text > 0 ? `${text} metin` : quiz > 0 ? `${quiz} etkinlik` : "—",
+      icon: PenTool,
+    },
+    {
+      key: "test",
+      title: "Konu testi",
+      subtitle: quiz > 0 ? `${quiz} etkinlik` : "—",
+      icon: ListChecks,
+    },
+  ];
 
   return (
-    <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-      {cards.map(({ key, label, value, icon: Icon, tone, isText }) => (
-        <div
-          key={key}
-          className={`rounded-2xl border border-slate-100 bg-gradient-to-br p-4 shadow-sm ${tone}`}
-        >
-          <div className="mb-2 flex items-center gap-2 text-slate-600">
-            <Icon className="h-4 w-4 shrink-0" aria-hidden />
-            <span className="text-xs font-bold uppercase tracking-wide text-slate-500">{label}</span>
+    <div className="relative z-20 -mt-10 px-1 md:-mt-12 md:px-2">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
+        {cards.map(({ key, title, subtitle, icon: Icon }) => (
+          <div
+            key={key}
+            className="rounded-2xl border border-slate-100/80 bg-white p-4 shadow-lg shadow-slate-200/60 ring-1 ring-slate-900/[0.03] md:p-5"
+          >
+            <div className="mb-3 flex items-center gap-2 text-violet-600">
+              <Icon className="h-4 w-4 shrink-0" aria-hidden />
+              <span className="text-xs font-bold text-slate-800">{title}</span>
+            </div>
+            <p className="text-sm font-semibold text-slate-600">{subtitle}</p>
           </div>
-          <p className={`font-black text-slate-900 ${isText ? "text-sm md:text-base" : "text-2xl"}`}>{value}</p>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   );
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, CheckCircle } from "lucide-react";
+import { ChevronDown, Check } from "lucide-react";
 import type { CurriculumTopic, CurriculumUnit } from "@/lib/api";
 
 export function UnitAccordion({
@@ -18,25 +18,28 @@ export function UnitAccordion({
   const [open, setOpen] = useState(true);
 
   return (
-    <div className="mb-2">
+    <div className="mb-1.5">
       <button
         type="button"
         aria-expanded={open}
         onClick={() => setOpen(!open)}
-        className="flex w-full items-center gap-2 rounded-lg p-2 text-left transition-colors hover:bg-slate-50"
+        className="flex w-full items-center gap-2 rounded-xl p-2.5 text-left transition-colors hover:bg-slate-50"
       >
-        <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-xs font-bold text-white" style={{ background: color }}>
+        <div
+          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-xs font-bold text-white shadow-sm"
+          style={{ background: `linear-gradient(135deg, ${color}, #4c1d95)` }}
+        >
           {unit.sort_order}
         </div>
-        <span className="flex-1 text-xs font-bold text-slate-700">{unit.title}</span>
-        <span className="text-xs text-slate-400">
+        <span className="flex-1 text-xs font-bold leading-snug text-slate-800">{unit.title}</span>
+        <span className="shrink-0 text-xs font-medium text-slate-400">
           {unit.completed_topics}/{unit.total_topics}
         </span>
-        <ChevronDown className={`h-3 w-3 shrink-0 text-slate-400 transition-transform ${open ? "rotate-180" : ""}`} aria-hidden />
+        <ChevronDown className={`h-4 w-4 shrink-0 text-slate-400 transition-transform ${open ? "rotate-180" : ""}`} aria-hidden />
       </button>
 
       {open && (
-        <div className="ml-8 mt-1 space-y-1">
+        <div className="ml-2 mt-1 space-y-0.5 border-l-2 border-slate-100 pl-3">
           {unit.topics.map((topic) => {
             const isActive = activeTopic?.id === topic.id;
             const isDone = topic.status === "completed";
@@ -46,19 +49,24 @@ export function UnitAccordion({
                 key={topic.id}
                 type="button"
                 onClick={() => onTopicSelect(topic)}
-                className={`flex w-full items-center gap-2 rounded-lg p-2 text-left text-xs transition-all ${
-                  isActive ? "text-white" : "text-slate-600 hover:bg-slate-50"
+                className={`flex w-full items-center gap-2.5 rounded-xl px-2 py-2 text-left text-xs transition-all ${
+                  isActive ? "bg-violet-100 font-semibold text-violet-950 shadow-sm ring-1 ring-violet-200/80" : "text-slate-600 hover:bg-slate-50"
                 }`}
-                style={isActive ? { background: color } : {}}
               >
                 <div
-                  className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 ${
-                    isDone ? (isActive ? "border-white bg-white" : "border-emerald-500 bg-emerald-500") : isActive ? "border-white/60" : "border-slate-300"
+                  className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 ${
+                    isDone
+                      ? isActive
+                        ? "border-violet-600 bg-violet-600 text-white"
+                        : "border-emerald-500 bg-emerald-500 text-white"
+                      : isActive
+                        ? "border-violet-400 bg-white"
+                        : "border-slate-300 bg-white"
                   }`}
                 >
-                  {isDone && <CheckCircle className="h-2.5 w-2.5" style={{ color: isActive ? color : "white" }} aria-hidden />}
+                  {isDone && <Check className="h-3 w-3" strokeWidth={3} aria-hidden />}
                 </div>
-                <span className={`flex-1 ${isDone && !isActive ? "line-through opacity-50" : ""}`}>{topic.title}</span>
+                <span className={`min-w-0 flex-1 leading-snug ${isDone && !isActive ? "text-slate-400 line-through" : ""}`}>{topic.title}</span>
               </button>
             );
           })}
