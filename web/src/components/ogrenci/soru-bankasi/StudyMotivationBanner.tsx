@@ -8,7 +8,7 @@ export function StudyMotivationBanner({
   onStartQuick: () => void;
 }) {
   return (
-    <div className="qb-motivation-banner flex flex-col items-start justify-between gap-5 overflow-hidden rounded-[18px] bg-gradient-to-r from-sky-500 via-blue-600 to-blue-700 px-6 py-6 text-white shadow-[0_12px_40px_rgba(37,99,235,0.25)] sm:flex-row sm:items-center sm:px-8 sm:py-7">
+    <div className="qb-motivation-banner flex flex-col items-start justify-between gap-4 overflow-hidden rounded-[18px] bg-gradient-to-r from-sky-500 via-blue-600 to-blue-700 px-5 py-5 text-white shadow-[0_12px_40px_rgba(37,99,235,0.25)] sm:flex-row sm:items-center sm:px-7 sm:py-6">
       <div className="flex gap-4">
         <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-sm">
           <Trophy className="h-7 w-7 text-amber-200" aria-hidden />

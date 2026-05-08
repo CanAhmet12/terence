@@ -66,9 +66,9 @@ export function QuestionBankInsightsRow({
   const badges = (badgeData?.badges ?? []).filter(Boolean).slice(0, 3);
 
   return (
-    <div className="qb-insights-root mt-0 grid gap-5 lg:grid-cols-3 lg:gap-5">
+    <div className="qb-insights-root mt-0 grid gap-4 lg:grid-cols-3 lg:gap-4">
       {/* Öneriler */}
-      <div className="flex min-h-[280px] flex-col rounded-[18px] border border-slate-100 bg-white p-[var(--qb-card-pad)] shadow-[var(--qb-card-shadow)]">
+      <div className="flex min-h-0 flex-col rounded-[18px] border border-slate-100 bg-white p-[var(--qb-card-pad)] shadow-[var(--qb-card-shadow)]">
         <h3 className="mb-4 text-[15px] font-bold leading-tight text-slate-900">
           Sınıfına Özel Öneriler
         </h3>
@@ -105,14 +105,14 @@ export function QuestionBankInsightsRow({
         </div>
         <Link
           href="/ogrenci/zayif-kazanim"
-          className="mt-auto pt-6 text-[13px] font-bold text-indigo-600 hover:text-indigo-800"
+          className="mt-auto pt-4 text-[13px] font-bold text-indigo-600 hover:text-indigo-800"
         >
           Önerileri Gör →
         </Link>
       </div>
 
       {/* Radar */}
-      <div className="flex min-h-[280px] flex-col rounded-[18px] border border-slate-100 bg-white p-[var(--qb-card-pad)] shadow-[var(--qb-card-shadow)]">
+      <div className="flex min-h-0 flex-col rounded-[18px] border border-slate-100 bg-white p-[var(--qb-card-pad)] shadow-[var(--qb-card-shadow)]">
         <h3 className="text-[15px] font-bold text-slate-900">Kazanım Analizi</h3>
         <p className="mt-1 text-[12px] leading-snug text-slate-500">
           Ders ve konu bazlı doğruluk özeti (%).
@@ -147,7 +147,7 @@ export function QuestionBankInsightsRow({
       </div>
 
       {/* Rozetler */}
-      <div className="flex min-h-[280px] flex-col rounded-[18px] border border-slate-100 bg-white p-[var(--qb-card-pad)] shadow-[var(--qb-card-shadow)]">
+      <div className="flex min-h-0 flex-col rounded-[18px] border border-slate-100 bg-white p-[var(--qb-card-pad)] shadow-[var(--qb-card-shadow)]">
         <div className="mb-4 flex items-center justify-between gap-2">
           <h3 className="text-[15px] font-bold text-slate-900">Başarı Rozetlerin</h3>
           <Link href="/ogrenci/rozet" className="text-[12px] font-bold text-indigo-600 hover:underline">

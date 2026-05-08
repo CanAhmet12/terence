@@ -130,7 +130,7 @@ export function QuestionBankSidebar({
   const total = planStats?.tasks_total_today ?? 0;
 
   return (
-    <aside className="qb-sidebar-rail flex flex-col gap-6 lg:sticky lg:top-24">
+    <aside className="qb-sidebar-rail flex flex-col gap-4 lg:sticky lg:top-[5.5rem]">
       {!hidePersonalTestCard && (
         <div className="rounded-[18px] border border-indigo-200/80 bg-gradient-to-br from-indigo-600 via-indigo-600 to-violet-700 p-[var(--qb-card-pad)] text-white shadow-lg shadow-indigo-500/20">
           <div className="flex items-start gap-3">

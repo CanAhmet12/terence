@@ -53,17 +53,17 @@ export function QuestionBankKpiStrip({
   ];
 
   return (
-    <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 sm:gap-5">
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-3.5">
       {items.map(({ label, value, hint, Icon, iconWrap }) => (
         <div
           key={label}
           className="rounded-[18px] border border-slate-100 bg-white p-[var(--qb-card-pad)] shadow-[var(--qb-card-shadow)]"
           title={hint}
         >
-          <div className="flex items-center justify-between gap-4">
-            <div className="min-w-0">
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0 flex-1">
               <p className="text-xs font-medium leading-tight text-slate-500">{label}</p>
-              <p className="mt-1 text-xl font-bold tabular-nums leading-tight tracking-tight text-slate-900">
+              <p className="mt-1 text-lg font-bold tabular-nums leading-tight tracking-tight text-slate-900 sm:text-xl">
                 {loading ? (
                   <span className="inline-block h-8 w-16 animate-pulse rounded-lg bg-slate-100" />
                 ) : (
@@ -72,9 +72,9 @@ export function QuestionBankKpiStrip({
               </p>
             </div>
             <div
-              className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${iconWrap}`}
+              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${iconWrap}`}
             >
-              <Icon className="h-[18px] w-[18px]" strokeWidth={2.25} aria-hidden />
+              <Icon className="h-[17px] w-[17px]" strokeWidth={2.25} aria-hidden />
             </div>
           </div>
         </div>

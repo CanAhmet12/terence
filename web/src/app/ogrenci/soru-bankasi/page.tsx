@@ -624,37 +624,37 @@ function SoruBankasiPageInner({
 
   return (
     <div className="soru-bankasi-page soru-bankasi-page--fit" data-qb-fit>
-      <QuestionBankHero
-        scopeMode={scopeMode}
-        onScopeModeChange={(m) => {
-          setScopeMode(m);
-          if (m === "class") {
-            setActiveExamTab("ALL");
-            setSubject("");
-          }
-        }}
-        examTabs={examTabs}
-        activeExamTab={activeExamTab}
-        onExamTabChange={(tab) => {
-          setActiveExamTab(tab);
-          setSubject("");
-        }}
-        onOpenVoice={() => setShowVoice(true)}
-        onOpenPersonalTest={() => setShowPersonalTest(true)}
-      />
-
-      {typeof timedRemaining === "number" && timedRemaining > 0 && (
-        <div
-          className="mb-4 mt-2 rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm font-medium text-indigo-900"
-          role="status"
-          aria-live="polite"
-        >
-          Süreli pratik: kalan {timedRemaining} sn
-        </div>
-      )}
-
-      <div className="sb-main-layout sb-main-layout--fit mt-3 min-h-0 flex-1">
+      <div className="sb-main-layout sb-main-layout--fit min-h-0 flex-1">
         <div className="sb-fit-main-col qb-page-stack min-h-0 overflow-hidden">
+          <QuestionBankHero
+            scopeMode={scopeMode}
+            onScopeModeChange={(m) => {
+              setScopeMode(m);
+              if (m === "class") {
+                setActiveExamTab("ALL");
+                setSubject("");
+              }
+            }}
+            examTabs={examTabs}
+            activeExamTab={activeExamTab}
+            onExamTabChange={(tab) => {
+              setActiveExamTab(tab);
+              setSubject("");
+            }}
+            onOpenVoice={() => setShowVoice(true)}
+            onOpenPersonalTest={() => setShowPersonalTest(true)}
+          />
+
+          {typeof timedRemaining === "number" && timedRemaining > 0 && (
+            <div
+              className="-mt-1 mb-0 rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-2.5 text-sm font-medium text-indigo-900"
+              role="status"
+              aria-live="polite"
+            >
+              Süreli pratik: kalan {timedRemaining} sn
+            </div>
+          )}
+
           <QuestionBankKpiStrip summary={bankSummary} loading={bankSummaryLoading} />
           <SubjectBankCarousel subjects={bankSummary?.subjects ?? []} />
           <QuestionBankQuickActions
@@ -663,7 +663,7 @@ function SoruBankasiPageInner({
             onTimedPractice={onTimedPractice}
             disabled={loading || !token}
           />
-          <div className="qb-fit-insights min-h-0 min-w-0 flex-1 overflow-hidden">
+          <div className="qb-fit-insights qb-after-quick-actions min-h-0 min-w-0 flex-1 overflow-hidden">
             <QuestionBankInsightsRow
               subjects={bankSummary?.subjects ?? []}
               weakPreview={weakPreview}

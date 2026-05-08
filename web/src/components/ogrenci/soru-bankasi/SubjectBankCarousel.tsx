@@ -62,7 +62,7 @@ export function SubjectBankCarousel({ subjects }: { subjects: QuestionBankSubjec
 
   return (
     <section className="qb-subjects-section">
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-[17px] font-bold tracking-tight text-slate-900 lg:text-lg">
           Derslere Göre Soru Bankaları
         </h2>
@@ -96,7 +96,7 @@ export function SubjectBankCarousel({ subjects }: { subjects: QuestionBankSubjec
 
       <div
         ref={scrollerRef}
-        className="-mx-1 flex gap-5 overflow-x-auto pb-3 pt-1 scrollbar-thin [scrollbar-color:rgba(148,163,184,0.6)_transparent]"
+        className="-mx-1 flex gap-4 overflow-x-auto pb-2 pt-0.5 scrollbar-thin [scrollbar-color:rgba(148,163,184,0.6)_transparent]"
       >
         {subjects.map((row) => {
           const { g1, g2, Icon, accent } = resolveStyle(row.subject);
