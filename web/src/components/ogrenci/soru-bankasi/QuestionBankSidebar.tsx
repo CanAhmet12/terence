@@ -78,13 +78,13 @@ function DailyGoalRing({ done, total }: { done: number; total: number }) {
   return (
     <div className="flex flex-col items-center gap-3">
       <div
-        className="relative h-36 w-36 rounded-full p-1"
+        className="relative h-28 w-28 rounded-full p-1 sm:h-32 sm:w-32"
         style={{
           background: `conic-gradient(#6366f1 ${pct * 3.6}deg, #e2e8f0 0deg)`,
         }}
       >
         <div className="flex h-full w-full flex-col items-center justify-center rounded-full bg-white">
-          <span className="text-3xl font-bold tabular-nums text-indigo-600">{pct}%</span>
+          <span className="text-2xl font-bold tabular-nums text-indigo-600 sm:text-3xl">{pct}%</span>
           <span className="mt-1 text-xs font-medium text-slate-500">
             {done} / {t} görev
           </span>
@@ -113,11 +113,11 @@ export function QuestionBankSidebar({
   const total = planStats?.tasks_total_today ?? 0;
 
   return (
-    <aside className="space-y-5 lg:sticky lg:top-24">
-      <div className="rounded-[var(--qb-card-radius)] border border-indigo-200/80 bg-gradient-to-br from-indigo-600 via-indigo-600 to-violet-700 p-5 text-white shadow-lg shadow-indigo-500/25">
-        <div className="flex items-start gap-3">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/20 backdrop-blur-sm">
-            <Target className="h-6 w-6" aria-hidden />
+    <aside className="qb-sidebar-rail space-y-4 lg:sticky lg:top-24">
+      <div className="rounded-[var(--qb-card-radius)] border border-indigo-200/80 bg-gradient-to-br from-indigo-600 via-indigo-600 to-violet-700 p-4 text-white shadow-lg shadow-indigo-500/25">
+        <div className="flex items-start gap-2.5">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white/20 backdrop-blur-sm">
+            <Target className="h-5 w-5" aria-hidden />
           </div>
           <div>
             <h2 className="text-sm font-bold">Bana Özel Test</h2>
@@ -127,7 +127,7 @@ export function QuestionBankSidebar({
         <button
           type="button"
           onClick={onPersonalTest}
-          className="mt-4 w-full rounded-xl bg-white py-3 text-sm font-bold text-indigo-700 shadow-md transition-colors hover:bg-indigo-50"
+          className="mt-3 w-full rounded-lg bg-white py-2.5 text-xs font-bold text-indigo-700 shadow-md transition-colors hover:bg-indigo-50 sm:text-sm"
         >
           Test Oluştur
         </button>
@@ -178,8 +178,8 @@ export function QuestionBankSidebar({
         <WeekStrip />
       </div>
 
-      <div className="rounded-[var(--qb-card-radius)] border border-slate-200/90 bg-white p-5 shadow-sm">
-        <h2 className="mb-4 text-center text-sm font-bold text-slate-900">Günlük Hedef</h2>
+      <div className="rounded-[var(--qb-card-radius)] border border-slate-200/90 bg-white p-4 shadow-sm">
+        <h2 className="mb-3 text-center text-sm font-bold text-slate-900">Günlük Hedef</h2>
         {loading && !planStats ? (
           <div className="h-40 animate-pulse rounded-xl bg-slate-100" />
         ) : planStats && (planStats.tasks_total_today ?? 0) <= 0 ? (

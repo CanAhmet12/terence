@@ -187,7 +187,11 @@ function DashboardHeaderInner() {
         )}
 
         <div className="flex shrink-0 items-center gap-2">
-          <HeaderUserMenu />
+          <HeaderUserMenu
+            notificationIconSrc={
+              isQuestionBank ? "/images/soru-bankasi/1icon.png" : undefined
+            }
+          />
         </div>
       </div>
 

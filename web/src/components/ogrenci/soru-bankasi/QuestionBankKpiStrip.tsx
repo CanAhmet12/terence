@@ -1,6 +1,6 @@
 "use client";
 
-import { BarChart3, CheckCircle2, HelpCircle, TrendingUp } from "lucide-react";
+import { BarChart3, CheckCircle2, HelpCircle, LineChart } from "lucide-react";
 import type { QuestionBankSummary } from "@/lib/api";
 
 function formatInt(n: number): string {
@@ -34,7 +34,7 @@ export function QuestionBankKpiStrip({
       label: "Doğru Oranı",
       value: k != null && k.attempts > 0 ? `%${k.accuracy_pct}` : "—",
       hint: "Tüm deneme girişlerine göre",
-      Icon: TrendingUp,
+      Icon: LineChart,
       iconWrap: "bg-orange-50 text-orange-600",
     },
     {
@@ -53,22 +53,22 @@ export function QuestionBankKpiStrip({
   ];
 
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-2.5">
       {items.map(({ label, value, hint, Icon, iconWrap }) => (
         <div
           key={label}
-          className="rounded-[var(--qb-card-radius)] border border-white/80 bg-white/95 p-4 shadow-[var(--qb-card-shadow)] backdrop-blur-sm"
+          className="rounded-[var(--qb-card-radius)] border border-white/80 bg-white/95 p-3 shadow-[var(--qb-card-shadow)] backdrop-blur-sm"
           title={hint}
         >
-          <div className="flex items-start gap-3">
-            <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${iconWrap}`}>
-              <Icon className="h-5 w-5" aria-hidden />
+          <div className="flex items-start gap-2">
+            <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${iconWrap}`}>
+              <Icon className="h-4 w-4" aria-hidden />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-xs font-medium text-slate-500">{label}</p>
-              <p className="mt-1 text-xl font-bold tabular-nums text-slate-900">
+              <p className="text-[11px] font-medium leading-tight text-slate-500">{label}</p>
+              <p className="mt-0.5 text-base font-bold tabular-nums leading-tight text-slate-900">
                 {loading ? (
-                  <span className="inline-block h-7 w-16 animate-pulse rounded-lg bg-slate-100" />
+                  <span className="inline-block h-6 w-14 animate-pulse rounded-md bg-slate-100" />
                 ) : (
                   value
                 )}

@@ -66,14 +66,14 @@ export function QuestionBankInsightsRow({
   const badges = (badgeData?.badges ?? []).filter(Boolean).slice(0, 3);
 
   return (
-    <div className="mt-8 grid gap-5 lg:grid-cols-3">
+    <div className="qb-insights-root mt-6 grid gap-4 lg:grid-cols-3 lg:gap-4">
       {/* Öneriler */}
-      <div className="rounded-[var(--qb-card-radius)] border border-indigo-100/80 bg-white/95 p-5 shadow-[var(--qb-card-shadow)]">
-        <div className="mb-4 flex items-center gap-2">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-100 text-indigo-600">
-            <Target className="h-5 w-5" aria-hidden />
+      <div className="rounded-[var(--qb-card-radius)] border border-indigo-100/80 bg-white/95 p-4 shadow-[var(--qb-card-shadow)]">
+        <div className="mb-3 flex items-center gap-2">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-100 text-indigo-600">
+            <Target className="h-4 w-4" aria-hidden />
           </div>
-          <h3 className="font-bold text-slate-900">Sınıfına Özel Öneriler</h3>
+          <h3 className="text-sm font-bold text-slate-900">Sınıfına Özel Öneriler</h3>
         </div>
         {loading ? (
           <div className="h-24 animate-pulse rounded-xl bg-slate-100" />
@@ -100,10 +100,10 @@ export function QuestionBankInsightsRow({
       </div>
 
       {/* Radar */}
-      <div className="rounded-[var(--qb-card-radius)] border border-indigo-100/80 bg-white/95 p-5 shadow-[var(--qb-card-shadow)]">
-        <h3 className="mb-2 font-bold text-slate-900">Kazanım Analizi</h3>
-        <p className="mb-4 text-xs text-slate-500">Ders bazlı doğruluk özeti (%) — eksenler gerçek veriden.</p>
-        <div className="h-[260px] w-full" role="img" aria-label="Kazanım radar grafiği">
+      <div className="rounded-[var(--qb-card-radius)] border border-indigo-100/80 bg-white/95 p-4 shadow-[var(--qb-card-shadow)]">
+        <h3 className="mb-1 text-sm font-bold text-slate-900">Kazanım Analizi</h3>
+        <p className="mb-3 text-[11px] leading-snug text-slate-500">Ders bazlı doğruluk özeti (%).</p>
+        <div className="qb-fit-radar h-[200px] w-full sm:h-[220px]" role="img" aria-label="Kazanım radar grafiği">
           {!hasRadar || radarData.length < 3 ? (
             <div className="flex h-full items-center justify-center rounded-xl bg-slate-50 text-sm text-slate-500">
               Grafik için en az birkaç dersden çözüm verisi gerekir.
@@ -127,20 +127,20 @@ export function QuestionBankInsightsRow({
       </div>
 
       {/* Rozetler */}
-      <div className="rounded-[var(--qb-card-radius)] border border-indigo-100/80 bg-white/95 p-5 shadow-[var(--qb-card-shadow)]">
-        <h3 className="mb-4 font-bold text-slate-900">Başarı Rozetlerin</h3>
+      <div className="rounded-[var(--qb-card-radius)] border border-indigo-100/80 bg-white/95 p-4 shadow-[var(--qb-card-shadow)]">
+        <h3 className="mb-3 text-sm font-bold text-slate-900">Başarı Rozetlerin</h3>
         {loading ? (
           <div className="h-24 animate-pulse rounded-xl bg-slate-100" />
         ) : badges.length === 0 ? (
           <p className="text-sm text-slate-600">Rozetler için çözmeye devam et.</p>
         ) : (
-          <div className="flex flex-wrap justify-center gap-4">
+          <div className="flex flex-wrap justify-center gap-3">
             {badges.map((b) => (
               <div
                 key={b.id}
-                className="flex h-[100px] w-[92px] flex-col items-center justify-center rounded-2xl border border-indigo-100 bg-gradient-to-b from-indigo-50 to-white p-2 text-center shadow-sm"
+                className="flex h-[88px] w-[80px] flex-col items-center justify-center rounded-xl border border-indigo-100 bg-gradient-to-b from-indigo-50 to-white p-1.5 text-center shadow-sm"
               >
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-600 text-lg text-white shadow-inner">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-600 text-base text-white shadow-inner">
                   {b.emoji ?? "🏅"}
                 </div>
                 <p className="mt-2 line-clamp-2 text-[10px] font-bold leading-tight text-slate-800">{b.name}</p>

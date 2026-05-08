@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { api } from "@/lib/api";
@@ -10,9 +11,14 @@ import { useCallback, useEffect, useState } from "react";
 type HeaderUserMenuProps = {
   /** Örn. Video & PDF: mor rozet */
   notificationBadgeClassName?: string;
+  /** Soru Bankası mockup: 3D bildirim görseli (`/images/...`) */
+  notificationIconSrc?: string | null;
 };
 
-export function HeaderUserMenu({ notificationBadgeClassName }: HeaderUserMenuProps) {
+export function HeaderUserMenu({
+  notificationBadgeClassName,
+  notificationIconSrc,
+}: HeaderUserMenuProps) {
   const router = useRouter();
   const { user, token, logout } = useAuth();
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -88,10 +94,23 @@ export function HeaderUserMenu({ notificationBadgeClassName }: HeaderUserMenuPro
     <div className="flex shrink-0 items-center gap-1 sm:gap-2">
       <Link
         href={notificationsHref}
-        className="relative rounded-xl p-2 text-slate-600 transition-colors hover:bg-slate-100"
+        className={`relative flex items-center justify-center rounded-xl text-slate-600 transition-colors hover:bg-slate-100 ${
+          notificationIconSrc ? "p-0.5" : "p-2"
+        }`}
         aria-label={`${unreadCount} okunmamış bildirim`}
       >
-        <Bell className="h-5 w-5" />
+        {notificationIconSrc ? (
+          <Image
+            src={notificationIconSrc}
+            alt="Bildirimler"
+            width={40}
+            height={40}
+            className="h-10 w-10 object-contain select-none"
+            priority
+          />
+        ) : (
+          <Bell className="h-5 w-5" />
+        )}
         {unreadCount > 0 && (
           <span
             className={

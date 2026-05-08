@@ -52,7 +52,7 @@ export function DashboardWrapper({ sidebar, header, children }: Props) {
       </aside>
 
       {/* Main content */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex min-h-0 flex-1 flex-col min-w-0">
         <div className="flex items-center gap-3 border-b border-slate-200 bg-white/95 px-4 py-3 backdrop-blur-sm lg:hidden">
           <button
             onClick={() => setMobileOpen(true)}

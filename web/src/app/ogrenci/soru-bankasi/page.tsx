@@ -623,7 +623,7 @@ function SoruBankasiPageInner({
   }, [loadQuestions, qParam, kazanimFromUrl, subject, effectiveExamTab]);
 
   return (
-    <div className="soru-bankasi-page">
+    <div className="soru-bankasi-page soru-bankasi-page--fit" data-qb-fit>
       <QuestionBankHero
         scopeMode={scopeMode}
         onScopeModeChange={(m) => {
@@ -653,8 +653,8 @@ function SoruBankasiPageInner({
         </div>
       )}
 
-      <div className="sb-main-layout mt-6">
-        <div className="space-y-8">
+      <div className="sb-main-layout sb-main-layout--fit mt-2 min-h-0 flex-1">
+        <div className="sb-fit-main-col space-y-2 min-h-0 overflow-hidden">
           <QuestionBankKpiStrip summary={bankSummary} loading={bankSummaryLoading} />
           <SubjectBankCarousel subjects={bankSummary?.subjects ?? []} />
           <QuestionBankQuickActions
@@ -663,13 +663,15 @@ function SoruBankasiPageInner({
             onTimedPractice={onTimedPractice}
             disabled={loading || !token}
           />
-          <QuestionBankInsightsRow
-            subjects={bankSummary?.subjects ?? []}
-            weakPreview={weakPreview}
-            badgeData={badgeData}
-            goalHint={goalHint}
-            loading={sidebarLoading}
-          />
+          <div className="qb-fit-insights min-h-0 min-w-0 flex-1 overflow-hidden">
+            <QuestionBankInsightsRow
+              subjects={bankSummary?.subjects ?? []}
+              weakPreview={weakPreview}
+              badgeData={badgeData}
+              goalHint={goalHint}
+              loading={sidebarLoading}
+            />
+          </div>
           <StudyMotivationBanner onStartQuick={onQuick10} />
         </div>
 
