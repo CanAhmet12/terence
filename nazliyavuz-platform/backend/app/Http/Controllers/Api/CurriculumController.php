@@ -8,12 +8,16 @@ use App\Models\Course;
 use App\Models\CurriculumSubject;
 use App\Models\CurriculumTopic;
 use App\Models\CurriculumTopicProgress;
+use App\Models\Topic;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 
 class CurriculumController extends Controller
 {
+    /** @var array<string, Collection<int, ContentItem>> */
+    private array $mediaCatalogTitleMatchItemsCache = [];
+
     /**
      * content_items.type alanındaki varyasyonları (Video, LINK, url vb.) katalog için video|pdf|text'e indirger.
      */
@@ -232,7 +236,7 @@ class CurriculumController extends Controller
             foreach ($subject->units as $unit) {
                 foreach ($unit->topics as $topic) {
                     $linked = $topic->linkedTopic;
-                    $contentItems = $this->resolveMediaCatalogContentItems($topic, $linked);
+                    $contentItems = $this->resolveMediaCatalogContentItems($topic, $linked, $subject);
                     if ($contentItems->isEmpty()) {
                         continue;
                     }
@@ -386,7 +390,7 @@ class CurriculumController extends Controller
     /**
      * @return Collection<int, ContentItem>
      */
-    private function resolveMediaCatalogContentItems(CurriculumTopic $topic, ?\App\Models\Topic $linked): Collection
+    private function resolveMediaCatalogContentItems(CurriculumTopic $topic, ?Topic $linked, CurriculumSubject $subject): Collection
     {
         if ($linked) {
             return $linked->contentItems;
@@ -394,8 +398,131 @@ class CurriculumController extends Controller
 
         $bridge = $this->contentItemsForBridgeCurriculumTopic($topic->id);
         $legacy = $this->legacyContentItemsLinkedToCurriculumTopicId($topic->id);
+        $byTitle = $this->contentItemsFromCatalogCourseTitleMatch($topic, $subject);
 
-        return $bridge->concat($legacy)->unique('id')->values();
+        return $bridge->concat($legacy)->concat($byTitle)->unique('id')->values();
+    }
+
+    /**
+     * Müfredat konusu başlığı ile katalog kurslarındaki (TYT/AYT/LGS) konu başlığı eşleşen videolar.
+     * Sunucuda linked_topic_id boş olsa bile örnek içerikler topics üzerinde durduğunda listeyi doldurur.
+     *
+     * @return Collection<int, ContentItem>
+     */
+    private function contentItemsFromCatalogCourseTitleMatch(CurriculumTopic $topic, CurriculumSubject $subject): Collection
+    {
+        $courseSubject = $this->mapCourseSubjectFromCurriculumName((string) ($subject->name ?? ''));
+        if ($courseSubject === null) {
+            return collect();
+        }
+
+        $cacheKey = $subject->slug."\0".$topic->title."\0".$courseSubject;
+        if (array_key_exists($cacheKey, $this->mediaCatalogTitleMatchItemsCache)) {
+            return $this->mediaCatalogTitleMatchItemsCache[$cacheKey];
+        }
+
+        $tModel = $this->findCatalogCourseTopicByTitle($topic, $courseSubject, $subject);
+        if (! $tModel) {
+            $this->mediaCatalogTitleMatchItemsCache[$cacheKey] = collect();
+
+            return $this->mediaCatalogTitleMatchItemsCache[$cacheKey];
+        }
+
+        $items = $tModel->contentItems()
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->with('video')
+            ->get();
+
+        $this->mediaCatalogTitleMatchItemsCache[$cacheKey] = $items;
+
+        return $items;
+    }
+
+    private function findCatalogCourseTopicByTitle(CurriculumTopic $topic, string $courseSubject, CurriculumSubject $subject): ?Topic
+    {
+        $resolver = function () use ($topic, $courseSubject, $subject) {
+            return Topic::query()
+                ->where('topics.is_active', true)
+                ->where('topics.title', $topic->title)
+                ->whereHas('unit', function ($uq) use ($courseSubject, $subject) {
+                    $uq->where('is_active', true)
+                        ->whereHas('course', function ($cq) use ($courseSubject, $subject) {
+                            $cq->where('is_active', true)
+                                ->where('subject', $courseSubject);
+                            $exam = (string) ($subject->exam_type ?? 'all');
+                            if ($exam !== '' && $exam !== 'all') {
+                                $cq->where(function ($q) use ($exam) {
+                                    $q->where('exam_type', 'Genel')
+                                        ->orWhere('exam_type', $exam)
+                                        ->orWhere('exam_type', 'TYT-AYT');
+                                });
+                            }
+                            $grade = $subject->grade;
+                            if ($grade !== null && $grade !== '' && $grade !== 'all') {
+                                $g = (int) $grade;
+                                $cq->where(function ($q) use ($g) {
+                                    $q->whereNull('grade')->orWhere('grade', $g);
+                                });
+                            }
+                        });
+                })
+                ->first();
+        };
+
+        $exact = $resolver();
+        if ($exact) {
+            return $exact;
+        }
+
+        try {
+            return Topic::query()
+                ->where('topics.is_active', true)
+                ->whereRaw(
+                    'topics.title COLLATE utf8mb4_turkish_ci = ? COLLATE utf8mb4_turkish_ci',
+                    [$topic->title]
+                )
+                ->whereHas('unit', function ($uq) use ($courseSubject, $subject) {
+                    $uq->where('is_active', true)
+                        ->whereHas('course', function ($cq) use ($courseSubject, $subject) {
+                            $cq->where('is_active', true)
+                                ->where('subject', $courseSubject);
+                            $exam = (string) ($subject->exam_type ?? 'all');
+                            if ($exam !== '' && $exam !== 'all') {
+                                $cq->where(function ($q) use ($exam) {
+                                    $q->where('exam_type', 'Genel')
+                                        ->orWhere('exam_type', $exam)
+                                        ->orWhere('exam_type', 'TYT-AYT');
+                                });
+                            }
+                            $grade = $subject->grade;
+                            if ($grade !== null && $grade !== '' && $grade !== 'all') {
+                                $g = (int) $grade;
+                                $cq->where(function ($q) use ($g) {
+                                    $q->whereNull('grade')->orWhere('grade', $g);
+                                });
+                            }
+                        });
+                })
+                ->first();
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
+    /**
+     * curriculum_subjects.name → courses.subject enum.
+     */
+    private function mapCourseSubjectFromCurriculumName(string $name): ?string
+    {
+        $allowed = ['Matematik', 'Fizik', 'Kimya', 'Biyoloji', 'Türkçe', 'Edebiyat', 'Tarih', 'Coğrafya', 'İngilizce', 'Felsefe', 'Din', 'Geometri', 'Diğer'];
+        foreach ($allowed as $sub) {
+            if ($sub !== 'Diğer' && $name !== '' && mb_stripos($name, $sub) !== false) {
+                return $sub;
+            }
+        }
+
+        return null;
     }
 
     /**
