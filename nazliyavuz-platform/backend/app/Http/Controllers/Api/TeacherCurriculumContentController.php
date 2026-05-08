@@ -91,7 +91,7 @@ class TeacherCurriculumContentController extends Controller
         /** @var CurriculumTopic $cTopic */
         $cTopic = CurriculumTopic::query()
             ->with(['unit.subject'])
-            ->whereKey($topicId)
+            ->whereKey((int) $data['curriculum_topic_id'])
             ->firstOrFail();
 
         $cUnit = $cTopic->unit;

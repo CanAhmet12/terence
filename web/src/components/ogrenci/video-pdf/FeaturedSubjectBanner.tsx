@@ -61,11 +61,11 @@ export function FeaturedSubjectBanner({ items, subjectsSummary }: Props) {
   const gradeLabel = meta.grade && meta.grade !== "all" ? `${meta.grade}. Sınıf` : "12. Sınıf";
 
   return (
-    <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-violet-600 via-violet-700 to-indigo-800 p-6 text-white shadow-xl shadow-violet-900/20 sm:p-8">
-      <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-white/10 blur-3xl" aria-hidden />
+    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-violet-600 via-violet-700 to-indigo-800 p-4 text-white shadow-lg shadow-violet-900/15 sm:p-5">
+      <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-white/10 blur-2xl" aria-hidden />
       <select
         aria-label="Öne çıkan ders seç"
-        className="absolute right-4 top-4 z-20 max-w-[10rem] cursor-pointer rounded-lg border border-white/25 bg-black/20 px-2 py-1.5 text-[11px] font-bold text-white backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-white/40 sm:right-6 sm:top-5 sm:max-w-[12rem] sm:text-xs"
+        className="absolute right-3 top-3 z-20 max-w-[9rem] cursor-pointer rounded-md border border-white/25 bg-black/20 px-2 py-1 text-[10px] font-bold text-white backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-white/40 sm:right-4 sm:top-3.5 sm:max-w-[11rem] sm:text-[11px]"
         value={pickSlug}
         onChange={(e) => {
           const v = e.target.value;
@@ -80,38 +80,38 @@ export function FeaturedSubjectBanner({ items, subjectsSummary }: Props) {
         ))}
       </select>
 
-      <div className="relative grid gap-8 pr-4 lg:grid-cols-[1fr_280px_200px] lg:items-center lg:pr-0">
-        <div className="min-w-0 pt-6 lg:pt-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-bold text-white/95 ring-1 ring-white/20">
+      <div className="relative grid gap-4 pr-2 sm:pr-3 lg:grid-cols-[1fr_minmax(0,14rem)_minmax(0,7rem)] lg:items-center lg:gap-5 lg:pr-0">
+        <div className="min-w-0 pt-8 sm:pt-9 lg:pt-0">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="rounded-full bg-white/15 px-2 py-0.5 text-[10px] font-bold text-white/95 ring-1 ring-white/20 sm:text-xs">
               {gradeLabel}
             </span>
-            <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-bold text-white/95 ring-1 ring-white/20">
+            <span className="rounded-full bg-white/15 px-2 py-0.5 text-[10px] font-bold text-white/95 ring-1 ring-white/20 sm:text-xs">
               {examLabel}
             </span>
           </div>
-          <h2 className="mt-3 text-2xl font-black tracking-tight sm:text-3xl">{meta.name}</h2>
-          <p className="mt-2 max-w-lg text-sm text-violet-100/95">
+          <h2 className="mt-2 text-lg font-black tracking-tight sm:text-xl lg:text-2xl">{meta.name}</h2>
+          <p className="mt-1 max-w-lg text-xs text-violet-100/95 sm:text-sm">
             {examLabel} {meta.name} video ders içerikleri
           </p>
           <Link
             href={`/ogrenci/dersler?slug=${encodeURIComponent(pickSlug)}`}
-            className="mt-5 inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-bold text-violet-700 shadow-lg transition hover:bg-violet-50"
+            className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-white px-4 py-2 text-xs font-bold text-violet-700 shadow-md transition hover:bg-violet-50 sm:text-sm"
           >
-            <Play className="h-4 w-4 fill-current" aria-hidden />
+            <Play className="h-3.5 w-3.5 fill-current sm:h-4 sm:w-4" aria-hidden />
             {hasPartial ? "Devam Et" : "Başla"}
           </Link>
         </div>
 
-        <div className="min-w-0 lg:max-w-sm">
-          <p className="text-xs font-bold uppercase tracking-wide text-violet-200">Genel İlerleme</p>
-          <div className="mt-2 flex items-end justify-between gap-2">
-            <span className="text-3xl font-black">%{meta.progress_percent ?? 0}</span>
-            <span className="pb-1 text-xs font-medium text-violet-100">
+        <div className="min-w-0">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-violet-200 sm:text-xs">Genel İlerleme</p>
+          <div className="mt-1 flex items-end justify-between gap-2">
+            <span className="text-2xl font-black sm:text-3xl">%{meta.progress_percent ?? 0}</span>
+            <span className="pb-0.5 text-[10px] font-medium text-violet-100 sm:text-xs">
               {doneMedia} / {Math.max(totalMedia, 1)} içerik tamamlandı
             </span>
           </div>
-          <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-black/20">
+          <div className="mt-2 h-2 overflow-hidden rounded-full bg-black/20">
             <div
               className="h-full rounded-full bg-white transition-all duration-500"
               style={{ width: `${Math.min(100, meta.progress_percent ?? 0)}%` }}
@@ -119,13 +119,13 @@ export function FeaturedSubjectBanner({ items, subjectsSummary }: Props) {
           </div>
         </div>
 
-        <div className="relative hidden h-36 items-center justify-center lg:flex">
-          <div className="relative h-28 w-32">
-            <div className="absolute bottom-0 left-2 h-14 w-14 rotate-[-12deg] rounded-xl bg-fuchsia-400/90 shadow-lg" />
-            <div className="absolute bottom-2 left-10 h-14 w-14 rotate-[6deg] rounded-xl bg-amber-300/95 shadow-lg" />
-            <div className="absolute bottom-0 right-4 h-16 w-14 rotate-[10deg] rounded-xl bg-sky-400/95 shadow-lg" />
-            <div className="absolute -top-1 right-6 flex h-12 w-12 items-center justify-center rounded-full bg-white text-violet-600 shadow-xl">
-              <Play className="ml-0.5 h-5 w-5 fill-current" aria-hidden />
+        <div className="relative hidden h-24 items-center justify-center lg:flex">
+          <div className="relative h-20 w-24">
+            <div className="absolute bottom-0 left-1 h-10 w-10 rotate-[-12deg] rounded-lg bg-fuchsia-400/90 shadow-md" />
+            <div className="absolute bottom-1 left-7 h-10 w-10 rotate-[6deg] rounded-lg bg-amber-300/95 shadow-md" />
+            <div className="absolute bottom-0 right-2 h-12 w-10 rotate-[10deg] rounded-lg bg-sky-400/95 shadow-md" />
+            <div className="absolute -top-0.5 right-4 flex h-9 w-9 items-center justify-center rounded-full bg-white text-violet-600 shadow-lg">
+              <Play className="ml-0.5 h-4 w-4 fill-current" aria-hidden />
             </div>
           </div>
         </div>

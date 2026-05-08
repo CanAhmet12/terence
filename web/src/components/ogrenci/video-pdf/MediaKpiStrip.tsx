@@ -95,22 +95,22 @@ export function MediaKpiStrip({ items, subjectsSummary }: Props) {
   ];
 
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
       {tiles.map(({ key, title, value, sub, Icon, wrap }) => (
         <div
           key={key}
-          className="flex items-start gap-3 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm shadow-slate-200/40 ring-1 ring-slate-900/[0.03]"
+          className="flex items-start gap-2 rounded-xl border border-slate-100 bg-white p-2.5 shadow-sm shadow-slate-200/30 ring-1 ring-slate-900/[0.02] sm:gap-2.5 sm:p-3"
         >
           <div
-            className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br shadow-md ${wrap}`}
+            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br shadow-sm sm:h-9 sm:w-9 ${wrap}`}
             aria-hidden
           >
-            <Icon className="h-5 w-5" strokeWidth={2} />
+            <Icon className="h-4 w-4 sm:h-[18px] sm:w-[18px]" strokeWidth={2} />
           </div>
           <div className="min-w-0">
-            <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500">{title}</p>
-            <p className="mt-1.5 text-2xl font-black leading-none tracking-tight text-slate-900">{value}</p>
-            <p className="mt-1 text-xs font-medium text-slate-400">{sub}</p>
+            <p className="text-[9px] font-bold uppercase tracking-[0.1em] text-slate-500 sm:text-[10px]">{title}</p>
+            <p className="mt-0.5 text-lg font-black leading-none tracking-tight text-slate-900 sm:text-xl">{value}</p>
+            <p className="mt-0.5 text-[10px] font-medium text-slate-400 sm:text-xs">{sub}</p>
           </div>
         </div>
       ))}

@@ -19,7 +19,7 @@ export function MediaFilterTabs({ value, onChange }: Props) {
     <div
       role="tablist"
       aria-label="Hızlı filtreler"
-      className="flex flex-wrap gap-2 rounded-full border border-slate-200 bg-slate-50/90 p-1.5 shadow-sm"
+      className="flex flex-wrap gap-1.5 rounded-full border border-slate-200 bg-slate-50/90 p-1 shadow-sm"
     >
       {FILTERS.map((f) => {
         const selected = value === f.id;
@@ -29,7 +29,7 @@ export function MediaFilterTabs({ value, onChange }: Props) {
             type="button"
             role="tab"
             aria-selected={selected}
-            className={`rounded-full px-4 py-2 text-xs font-bold transition-all sm:text-sm ${
+            className={`rounded-full px-3 py-1.5 text-[11px] font-bold transition-all sm:px-3.5 sm:text-xs ${
               selected
                 ? "bg-violet-600 text-white shadow-md shadow-violet-500/25"
                 : "text-slate-600 hover:bg-white hover:text-slate-900"

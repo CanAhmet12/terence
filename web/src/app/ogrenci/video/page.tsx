@@ -153,7 +153,7 @@ export default function VideoPage() {
       <div className="min-h-screen bg-[#f4f5f8]">
         <MediaHubPageHeader search={search} onSearchChange={setSearch} />
 
-        <div className="mx-auto w-full max-w-[1800px] space-y-6 px-4 py-6 sm:px-6 lg:space-y-8 lg:px-8 lg:py-8">
+        <div className="mx-auto w-full max-w-[1800px] space-y-3 px-4 py-4 sm:px-6 lg:space-y-4 lg:px-8 lg:py-5">
           <MediaHubHero />
 
           {error && (
@@ -161,13 +161,13 @@ export default function VideoPage() {
           )}
 
           {loading ? (
-            <div className="space-y-6">
-              <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-5">
+            <div className="space-y-3">
+              <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-5">
                 {[1, 2, 3, 4, 5].map((i) => (
-                  <Skeleton key={i} className="h-24 w-full" />
+                  <Skeleton key={i} className="h-16 w-full" />
                 ))}
               </div>
-              <Skeleton className="h-40 w-full rounded-3xl" />
+              <Skeleton className="h-28 w-full rounded-2xl" />
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
                   <Skeleton key={i} className="h-64 w-full rounded-2xl" />
@@ -179,7 +179,7 @@ export default function VideoPage() {
               <MediaKpiStrip items={items} subjectsSummary={subjectsSummary} />
               <FeaturedSubjectBanner items={items} subjectsSummary={subjectsSummary} />
 
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <MediaFilterTabs value={quickFilter} onChange={setQuickFilter} />
                 <div className="flex flex-wrap items-center justify-end gap-2">
                   <details className="relative z-20 group">

@@ -4,36 +4,34 @@ import { FileText, FolderOpen, Video } from "lucide-react";
 
 export function MediaHubHero() {
   return (
-    <section className="relative overflow-hidden rounded-3xl border border-slate-200/80 bg-white px-6 py-8 shadow-md shadow-slate-200/40 sm:px-10 sm:py-10">
-      <div className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-violet-100/60 blur-3xl" aria-hidden />
-      <div className="pointer-events-none absolute bottom-0 left-1/4 h-40 w-40 rounded-full bg-indigo-100/50 blur-2xl" aria-hidden />
+    <section className="relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white px-4 py-4 shadow-sm shadow-slate-200/30 sm:px-6 sm:py-5">
+      <div className="pointer-events-none absolute -right-12 -top-12 h-40 w-40 rounded-full bg-violet-100/50 blur-2xl" aria-hidden />
+      <div className="pointer-events-none absolute bottom-0 left-1/4 h-28 w-28 rounded-full bg-indigo-100/40 blur-xl" aria-hidden />
 
-      <div className="relative grid items-center gap-8 lg:grid-cols-[1fr_280px]">
-        <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:gap-6">
-          <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-600 to-indigo-600 text-white shadow-lg shadow-violet-500/30 sm:h-[4.5rem] sm:w-[4.5rem]">
-            <Video className="h-8 w-8 sm:h-9 sm:w-9" strokeWidth={2} aria-hidden />
-          </div>
-          <div className="min-w-0">
-            <h1 className="text-3xl font-black tracking-tight text-slate-900 sm:text-[2rem] lg:text-4xl">Video & PDF</h1>
-            <p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-600 sm:text-base">
-              Tüm derslerinizin video ve PDF içeriklerine tek yerden ulaşın.
-            </p>
-          </div>
+      <div className="relative flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-violet-600 to-indigo-600 text-white shadow-md shadow-violet-500/25 sm:h-12 sm:w-12">
+          <Video className="h-5 w-5 sm:h-6 sm:w-6" strokeWidth={2} aria-hidden />
+        </div>
+        <div className="min-w-0 flex-1">
+          <h1 className="text-xl font-black tracking-tight text-slate-900 sm:text-2xl">Video & PDF</h1>
+          <p className="mt-1 max-w-2xl text-xs leading-snug text-slate-600 sm:text-sm">
+            Tüm derslerinizin video ve PDF içeriklerine tek yerden ulaşın.
+          </p>
         </div>
 
-        <div className="relative hidden h-44 items-center justify-center rounded-2xl border border-slate-100 bg-gradient-to-br from-slate-50 via-violet-50/40 to-indigo-50/60 p-6 lg:flex">
-          <div className="relative flex h-full w-full items-center justify-center">
-            <div className="absolute left-4 top-6 flex h-14 w-14 rotate-[-8deg] items-center justify-center rounded-xl bg-white shadow-md ring-1 ring-slate-200/80">
-              <FolderOpen className="h-7 w-7 text-amber-500" aria-hidden />
+        <div className="relative hidden h-[4.5rem] shrink-0 items-center justify-center rounded-xl border border-slate-100 bg-gradient-to-br from-slate-50 via-violet-50/35 to-indigo-50/50 px-4 xl:flex">
+          <div className="relative flex h-full w-[7.5rem] items-center justify-center">
+            <div className="absolute left-0 top-1 flex h-8 w-8 rotate-[-8deg] items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-slate-200/70">
+              <FolderOpen className="h-4 w-4 text-amber-500" aria-hidden />
             </div>
-            <div className="absolute bottom-8 left-10 flex h-12 w-12 rotate-[6deg] items-center justify-center rounded-full bg-violet-600 text-white shadow-lg">
-              <Video className="h-5 w-5" aria-hidden />
+            <div className="absolute bottom-1 left-6 flex h-7 w-7 rotate-[6deg] items-center justify-center rounded-full bg-violet-600 text-white shadow-md">
+              <Video className="h-3.5 w-3.5" aria-hidden />
             </div>
-            <div className="absolute right-6 top-8 flex h-16 w-12 rotate-[4deg] items-center justify-center rounded-lg border border-red-100 bg-white shadow-md">
-              <span className="text-[10px] font-black text-red-500">PDF</span>
+            <div className="absolute right-0 top-1 flex h-9 w-7 rotate-[4deg] items-center justify-center rounded-md border border-red-100 bg-white shadow-sm">
+              <span className="text-[8px] font-black text-red-500">PDF</span>
             </div>
-            <div className="absolute right-10 bottom-10 flex h-11 w-11 items-center justify-center rounded-lg bg-indigo-100 text-indigo-600 shadow-inner">
-              <FileText className="h-5 w-5" aria-hidden />
+            <div className="absolute right-1 bottom-0 flex h-7 w-7 items-center justify-center rounded-md bg-indigo-100 text-indigo-600">
+              <FileText className="h-3.5 w-3.5" aria-hidden />
             </div>
           </div>
         </div>

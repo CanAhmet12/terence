@@ -3,11 +3,14 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\ContentItem;
+use App\Models\Course;
 use App\Models\CurriculumSubject;
 use App\Models\CurriculumTopic;
 use App\Models\CurriculumTopicProgress;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 
 class CurriculumController extends Controller
 {
@@ -202,7 +205,7 @@ class CurriculumController extends Controller
                                         'linkedTopic' => function ($ltq) {
                                             $ltq->with([
                                                 'contentItems' => function ($ciq) {
-                                                    $ciq->where('is_active', true)->orderBy('sort_order');
+                                                    $ciq->where('is_active', true)->orderBy('sort_order')->with('video');
                                                 },
                                             ]);
                                         },
@@ -229,11 +232,12 @@ class CurriculumController extends Controller
             foreach ($subject->units as $unit) {
                 foreach ($unit->topics as $topic) {
                     $linked = $topic->linkedTopic;
-                    if (! $linked) {
+                    $contentItems = $this->resolveMediaCatalogContentItems($topic, $linked);
+                    if ($contentItems->isEmpty()) {
                         continue;
                     }
                     $topicStatus = ($progRows[$topic->id] ?? null)?->status ?? 'not_started';
-                    foreach ($linked->contentItems as $ci) {
+                    foreach ($contentItems as $ci) {
                         $canonicalType = $this->normalizeMediaCatalogContentType((string) $ci->type);
                         if ($canonicalType === null) {
                             continue;
@@ -245,8 +249,8 @@ class CurriculumController extends Controller
                             'content_type'          => $canonicalType,
                             'id'                    => (int) $ci->id,
                             'title'                 => $ci->title,
-                            'url'                   => $ci->url,
-                            'duration_seconds'      => $ci->duration_seconds,
+                            'url'                   => $this->resolveMediaCatalogItemUrl($ci, $canonicalType),
+                            'duration_seconds'      => $ci->duration_seconds ?? ($ci->video?->duration_seconds ?? null),
                             'is_free'               => (bool) $ci->is_free,
                             'subject_slug'          => $subject->slug,
                             'subject_name'          => $subject->name,
@@ -377,5 +381,75 @@ class CurriculumController extends Controller
         });
 
         return response()->json(['progress' => $result]);
+    }
+
+    /**
+     * @return Collection<int, ContentItem>
+     */
+    private function resolveMediaCatalogContentItems(CurriculumTopic $topic, ?\App\Models\Topic $linked): Collection
+    {
+        if ($linked) {
+            return $linked->contentItems;
+        }
+
+        $bridge = $this->contentItemsForBridgeCurriculumTopic($topic->id);
+        $legacy = $this->legacyContentItemsLinkedToCurriculumTopicId($topic->id);
+
+        return $bridge->concat($legacy)->unique('id')->values();
+    }
+
+    /**
+     * Öğretmen müfredat içerik API'sinin oluşturduğu köprü kursu (slug: ct-topic-{curriculumTopicId}).
+     *
+     * @return Collection<int, ContentItem>
+     */
+    private function contentItemsForBridgeCurriculumTopic(int $curriculumTopicId): Collection
+    {
+        $base = 'ct-topic-'.$curriculumTopicId;
+        $course = Course::query()
+            ->where('slug', $base)
+            ->orWhere('slug', 'like', $base.'-%')
+            ->first();
+        if (! $course) {
+            return collect();
+        }
+
+        return ContentItem::query()
+            ->where('is_active', true)
+            ->whereHas('topic.unit', fn ($q) => $q->where('course_id', $course->id))
+            ->with('video')
+            ->orderBy('sort_order')
+            ->get();
+    }
+
+    /**
+     * Bazı kurulumlarda content_items.topic_id doğrudan curriculum_topics.id ile eşleştirilmiş olabiliyor.
+     *
+     * @return Collection<int, ContentItem>
+     */
+    private function legacyContentItemsLinkedToCurriculumTopicId(int $curriculumTopicId): Collection
+    {
+        return ContentItem::query()
+            ->join('curriculum_topics', 'curriculum_topics.id', '=', 'content_items.topic_id')
+            ->where('curriculum_topics.id', $curriculumTopicId)
+            ->where('content_items.is_active', true)
+            ->select('content_items.*')
+            ->with('video')
+            ->orderBy('content_items.sort_order')
+            ->get();
+    }
+
+    private function resolveMediaCatalogItemUrl(ContentItem $ci, string $canonicalType): ?string
+    {
+        if ($canonicalType !== 'video') {
+            return $ci->url;
+        }
+
+        $v = $ci->relationLoaded('video') ? $ci->video : null;
+        if ($v === null) {
+            $v = $ci->video()->first();
+        }
+
+        return ($v && $v->cdn_url) ? $v->cdn_url : $ci->url;
     }
 }
