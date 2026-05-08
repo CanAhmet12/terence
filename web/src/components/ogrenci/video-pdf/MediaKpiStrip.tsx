@@ -28,7 +28,6 @@ export function MediaKpiStrip({ items, subjectsSummary }: Props) {
     .reduce((acc, i) => acc + getStoredSeconds(i), 0);
 
   const completedTopics = subjectsSummary.reduce((a, s) => a + (s.completed_topics ?? 0), 0);
-  const totalTopics = subjectsSummary.reduce((a, s) => a + (s.total_topics ?? 0), 0);
 
   const completedVideos = items.filter(
     (i) => i.contentType === "video" && i.durationSeconds > 0 && videoProgressRatio(i) >= 0.92
@@ -71,7 +70,7 @@ export function MediaKpiStrip({ items, subjectsSummary }: Props) {
     },
     {
       key: "w",
-      title: "İzlenen süre",
+      title: "İzleme süresi",
       value: formatWatchTotal(watchedSeconds),
       sub: "Toplam",
       Icon: Clock,
@@ -81,7 +80,7 @@ export function MediaKpiStrip({ items, subjectsSummary }: Props) {
       key: "c",
       title: "Tamamlanan",
       value: String(completedVideos + completedTopics),
-      sub: totalTopics > 0 ? `Konu ${completedTopics}/${totalTopics}` : "İçerik / konu",
+      sub: "İçerik",
       Icon: CheckCircle2,
       wrap: "from-green-500 to-emerald-600 text-white shadow-green-500/20",
     },
@@ -109,9 +108,9 @@ export function MediaKpiStrip({ items, subjectsSummary }: Props) {
             <Icon className="h-5 w-5" strokeWidth={2} />
           </div>
           <div className="min-w-0">
-            <p className="text-2xl font-black leading-none tracking-tight text-slate-900">{value}</p>
-            <p className="mt-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500">{title}</p>
-            <p className="mt-0.5 truncate text-xs text-slate-400">{sub}</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500">{title}</p>
+            <p className="mt-1.5 text-2xl font-black leading-none tracking-tight text-slate-900">{value}</p>
+            <p className="mt-1 text-xs font-medium text-slate-400">{sub}</p>
           </div>
         </div>
       ))}

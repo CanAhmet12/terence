@@ -1,6 +1,6 @@
 "use client";
 
-import { BookMarked, FileText, Link2, Lock, Play, Video } from "lucide-react";
+import { BookMarked, FileText, Link2, Lock, MoreVertical, Play, Video } from "lucide-react";
 import type { UnifiedMediaItem } from "./types";
 import { getStoredSeconds, videoProgressRatio } from "./utils";
 
@@ -15,20 +15,34 @@ function formatDuration(seconds: number) {
   return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
-function accentFromColor(hex?: string | null): { from: string; to: string } {
+const PRESET_GRADIENTS: [string, string][] = [
+  ["#7c3aed", "#4f46e5"],
+  ["#ea580c", "#f97316"],
+  ["#db2777", "#ec4899"],
+  ["#059669", "#10b981"],
+];
+
+function presetGradient(index: number): { from: string; to: string } {
+  const [from, to] = PRESET_GRADIENTS[Math.abs(index) % PRESET_GRADIENTS.length]!;
+  return { from, to };
+}
+
+function accentFromColor(hex: string | null | undefined, index: number): { from: string; to: string } {
   if (hex && /^#[0-9A-Fa-f]{6}$/i.test(hex)) {
     return { from: hex, to: hex };
   }
-  return { from: "#7c3aed", to: "#4f46e5" };
+  return presetGradient(index);
 }
 
 type Props = {
   item: UnifiedMediaItem;
   subscriptionPlan?: string | null;
   onOpen: (item: UnifiedMediaItem) => void;
+  /** Mock’taki gibi kartlar farklı vurgu renkleri */
+  cardIndex?: number;
 };
 
-export function MediaContentCard({ item, subscriptionPlan, onOpen }: Props) {
+export function MediaContentCard({ item, subscriptionPlan, onOpen, cardIndex = 0 }: Props) {
   const locked = !item.isFree && !userHasProAccess(subscriptionPlan);
   const progressPct =
     item.contentType === "video" && item.durationSeconds > 0
@@ -36,7 +50,7 @@ export function MediaContentCard({ item, subscriptionPlan, onOpen }: Props) {
       : 0;
   const pos = getStoredSeconds(item);
   const thumb = item.thumbnailUrl;
-  const { from, to } = accentFromColor(item.subjectColor);
+  const { from, to } = accentFromColor(item.subjectColor, cardIndex);
   const examShort =
     item.examType && item.examType !== "all"
       ? String(item.examType).replace(/\s+/g, "").slice(0, 6).toUpperCase()
@@ -48,12 +62,13 @@ export function MediaContentCard({ item, subscriptionPlan, onOpen }: Props) {
 
   return (
     <article className="group flex flex-col overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-md shadow-slate-200/30 transition hover:-translate-y-0.5 hover:border-violet-200 hover:shadow-lg">
-      <button
-        type="button"
-        onClick={() => onOpen(item)}
-        className="relative block aspect-[16/10] w-full overflow-hidden text-left"
-        aria-label={`${item.title} aç`}
-      >
+      <div className="relative">
+        <button
+          type="button"
+          onClick={() => onOpen(item)}
+          className="relative block aspect-[16/10] w-full overflow-hidden text-left"
+          aria-label={`${item.title} aç`}
+        >
         {locked ? (
           <div className="flex h-full w-full flex-col items-center justify-center gap-2 bg-gradient-to-br from-slate-800 to-slate-950 text-white">
             <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white/10 ring-2 ring-white/20">
@@ -116,6 +131,15 @@ export function MediaContentCard({ item, subscriptionPlan, onOpen }: Props) {
           </span>
         )}
       </button>
+        <button
+          type="button"
+          className="absolute right-2 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-black/35 text-white backdrop-blur-sm transition hover:bg-black/50"
+          aria-label="Kart menüsü"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <MoreVertical className="h-4 w-4" aria-hidden />
+        </button>
+      </div>
 
       <div className="flex flex-1 flex-col border-t border-slate-100/80 p-3.5">
         <h3 className="line-clamp-2 text-sm font-bold leading-snug text-slate-900">{item.title}</h3>

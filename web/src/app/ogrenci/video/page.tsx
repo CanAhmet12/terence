@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo, useState } from "react";
 import Link from "next/link";
-import { Film, RefreshCw } from "lucide-react";
+import { Film, RefreshCw, SlidersHorizontal } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { useMediaHubCatalog } from "@/hooks/useMediaHubCatalog";
 import type { MediaHubQuickFilter, MediaHubSort, UnifiedMediaItem } from "@/components/ogrenci/video-pdf/types";
@@ -13,10 +13,7 @@ import { FeaturedSubjectBanner } from "@/components/ogrenci/video-pdf/FeaturedSu
 import { MediaFilterTabs } from "@/components/ogrenci/video-pdf/MediaFilterTabs";
 import { MediaSortSelect } from "@/components/ogrenci/video-pdf/MediaSortSelect";
 import { MediaTypeFilter, type MediaTypeFilter as MediaTypeFilterValue } from "@/components/ogrenci/video-pdf/MediaTypeFilter";
-import { ProPromoCard } from "@/components/ogrenci/video-pdf/ProPromoCard";
 import { MediaContentCard } from "@/components/ogrenci/video-pdf/MediaContentCard";
-import { MediaSubjectChips } from "@/components/ogrenci/video-pdf/MediaSubjectChips";
-import { RecentlyWatchedPanel } from "@/components/ogrenci/video-pdf/RecentlyWatchedPanel";
 import { MediaPlayerModal } from "@/components/ogrenci/video-pdf/MediaPlayerModal";
 import { getStoredSeconds, pushRecentWatch, videoProgressRatio } from "@/components/ogrenci/video-pdf/utils";
 
@@ -48,7 +45,6 @@ export default function VideoPage() {
   const [sort, setSort] = useState<MediaHubSort>("order");
   const [selectedSlug, setSelectedSlug] = useState<string | null>(null);
   const [activeItem, setActiveItem] = useState<UnifiedMediaItem | null>(null);
-  const [recentTick, setRecentTick] = useState(0);
 
   const openItem = useCallback((item: UnifiedMediaItem) => {
     setActiveItem(item);
@@ -60,7 +56,6 @@ export default function VideoPage() {
       contentType: item.contentType,
       ts: Date.now(),
     });
-    setRecentTick((t) => t + 1);
   }, []);
 
   const filtered = useMemo(() => {
@@ -158,19 +153,7 @@ export default function VideoPage() {
       <div className="min-h-screen bg-[#f4f5f8]">
         <MediaHubPageHeader search={search} onSearchChange={setSearch} />
 
-        <div className="mx-auto w-full max-w-[1760px] space-y-6 px-3 py-6 sm:px-5 lg:space-y-8 lg:py-8">
-          <div className="flex flex-wrap items-center justify-end gap-2">
-            <button
-              type="button"
-              onClick={() => void handleCatalogRefresh()}
-              disabled={loading || catalogRefreshing || !token}
-              className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              <RefreshCw className={`h-3.5 w-3.5 ${catalogRefreshing ? "animate-spin" : ""}`} aria-hidden />
-              Kataloğu yenile
-            </button>
-          </div>
-
+        <div className="mx-auto w-full max-w-[1800px] space-y-6 px-4 py-6 sm:px-6 lg:space-y-8 lg:px-8 lg:py-8">
           <MediaHubHero />
 
           {error && (
@@ -196,52 +179,75 @@ export default function VideoPage() {
               <MediaKpiStrip items={items} subjectsSummary={subjectsSummary} />
               <FeaturedSubjectBanner items={items} subjectsSummary={subjectsSummary} />
 
-              <label className="flex cursor-pointer items-center gap-2.5 rounded-2xl border border-slate-200/90 bg-white px-4 py-3 text-sm text-slate-700 shadow-sm">
-                <input
-                  type="checkbox"
-                  className="h-4 w-4 rounded border-slate-300 text-violet-600 focus:ring-violet-500"
-                  checked={includeCourseArchive}
-                  onChange={(e) => setIncludeCourseArchive(e.target.checked)}
-                />
-                Kurs arşivini göster (kayıtlı kurs içerikleri, müfredatla çakışan URL’ler gizlenir)
-              </label>
-
-              <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <MediaFilterTabs value={quickFilter} onChange={setQuickFilter} />
-                <MediaSortSelect value={sort} onChange={setSort} />
+                <div className="flex flex-wrap items-center justify-end gap-2">
+                  <details className="relative z-20 group">
+                    <summary className="flex cursor-pointer list-none items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 [&::-webkit-details-marker]:hidden">
+                      <SlidersHorizontal className="h-3.5 w-3.5 text-violet-600" aria-hidden />
+                      <span className="hidden sm:inline">Filtreler</span>
+                    </summary>
+                    <div className="absolute right-0 mt-2 w-[min(100vw-2rem,22rem)] rounded-2xl border border-slate-200 bg-white p-4 shadow-xl">
+                      <button
+                        type="button"
+                        onClick={() => void handleCatalogRefresh()}
+                        disabled={loading || catalogRefreshing || !token}
+                        className="mb-4 flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 py-2.5 text-xs font-bold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
+                      >
+                        <RefreshCw className={`h-3.5 w-3.5 ${catalogRefreshing ? "animate-spin" : ""}`} aria-hidden />
+                        Kataloğu yenile
+                      </button>
+                      <label className="flex cursor-pointer items-start gap-2 border-b border-slate-100 pb-3 text-xs text-slate-600">
+                        <input
+                          type="checkbox"
+                          className="mt-0.5 h-4 w-4 rounded border-slate-300 text-violet-600"
+                          checked={includeCourseArchive}
+                          onChange={(e) => setIncludeCourseArchive(e.target.checked)}
+                        />
+                        <span>Kurs arşivini göster (müfredatla aynı URL gizlenir)</span>
+                      </label>
+                      <p className="mb-2 mt-3 text-[10px] font-bold uppercase tracking-wide text-slate-400">İçerik türü</p>
+                      <MediaTypeFilter value={typeFilter} onChange={setTypeFilter} />
+                      <p className="mb-1.5 mt-4 text-[10px] font-bold uppercase tracking-wide text-slate-400">Ders</p>
+                      <select
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-800"
+                        value={selectedSlug ?? ""}
+                        onChange={(e) => setSelectedSlug(e.target.value === "" ? null : e.target.value)}
+                      >
+                        <option value="">Tüm dersler</option>
+                        {subjectsSummary.map((s) => (
+                          <option key={s.slug} value={s.slug}>
+                            {s.name} ({s.media_count ?? 0})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </details>
+                  <MediaSortSelect value={sort} onChange={setSort} />
+                </div>
               </div>
-
-              <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                <MediaTypeFilter value={typeFilter} onChange={setTypeFilter} />
-              </div>
-
-              <MediaSubjectChips rows={subjectsSummary} selectedSlug={selectedSlug} onSelect={setSelectedSlug} />
 
               {filtered.length === 0 ? (
                 <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-slate-200 bg-white py-24 text-center shadow-sm">
                   <Film className="mb-3 h-14 w-14 text-slate-300" aria-hidden />
                   <p className="text-base font-bold text-slate-800">Sonuç bulunamadı</p>
                   <p className="mt-2 max-w-md text-sm text-slate-500">
-                    Filtreleri veya aramayı değiştirmeyi deneyin. Kurs arşivini göstermek için alttaki kutuyu işaretleyebilirsiniz.
+                    Filtreleri veya aramayı değiştirmeyi deneyin. Gelişmiş filtrelerden kurs arşivini açabilirsiniz.
                   </p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                  {filtered.map((item) => (
+                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                  {filtered.map((item, idx) => (
                     <MediaContentCard
                       key={item.key}
                       item={item}
+                      cardIndex={idx}
                       subscriptionPlan={user?.subscription_plan}
                       onOpen={openItem}
                     />
                   ))}
                 </div>
               )}
-
-              <div className="grid gap-6 lg:grid-cols-2">
-                <RecentlyWatchedPanel items={items} recentTick={recentTick} onPick={openItem} />
-                <ProPromoCard />
-              </div>
             </>
           )}
         </div>

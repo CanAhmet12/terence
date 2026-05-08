@@ -27,7 +27,7 @@ export function MediaHubPageHeader({ search, onSearchChange }: Props) {
 
   return (
     <header className="sticky top-0 z-[60] border-b border-slate-200/90 bg-white/95 shadow-sm backdrop-blur-md">
-      <div className="mx-auto flex w-full max-w-[1760px] flex-col gap-3 px-3 py-3 sm:px-5 lg:flex-row lg:items-center lg:gap-6 lg:py-3">
+      <div className="mx-auto flex w-full max-w-[1800px] flex-col gap-3 px-4 py-3 sm:px-6 lg:flex-row lg:items-center lg:gap-8 lg:px-8 lg:py-3.5">
         <nav
           className="flex min-w-0 shrink-0 items-center gap-1 overflow-x-auto whitespace-nowrap text-xs text-slate-600 sm:text-sm"
           aria-label="Konum"
@@ -36,7 +36,9 @@ export function MediaHubPageHeader({ search, onSearchChange }: Props) {
             <Home className="h-4 w-4" aria-hidden />
           </Link>
           <ChevronRight className="h-3.5 w-3.5 shrink-0 text-slate-300" aria-hidden />
-          <span className="shrink-0 text-slate-500">Panel</span>
+          <Link href="/ogrenci" className="shrink-0 text-slate-500 transition-colors hover:text-violet-600">
+            Panel
+          </Link>
           <ChevronRight className="h-3.5 w-3.5 shrink-0 text-slate-300" aria-hidden />
           <span className="shrink-0 font-semibold text-slate-900">Video & PDF</span>
         </nav>
@@ -58,7 +60,7 @@ export function MediaHubPageHeader({ search, onSearchChange }: Props) {
         </div>
 
         <div className="flex shrink-0 items-center justify-end">
-          <HeaderUserMenu />
+          <HeaderUserMenu notificationBadgeClassName="absolute right-0.5 top-0.5 flex h-[18px] min-h-[18px] min-w-[18px] items-center justify-center rounded-full bg-violet-600 px-1 text-[10px] font-bold leading-none text-white shadow-sm shadow-violet-500/30" />
         </div>
       </div>
     </header>

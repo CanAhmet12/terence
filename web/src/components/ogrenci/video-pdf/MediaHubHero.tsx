@@ -1,7 +1,6 @@
 "use client";
 
-import Link from "next/link";
-import { FileText, FolderOpen, Video, Sparkles } from "lucide-react";
+import { FileText, FolderOpen, Video } from "lucide-react";
 
 export function MediaHubHero() {
   return (
@@ -15,17 +14,9 @@ export function MediaHubHero() {
             <Video className="h-8 w-8 sm:h-9 sm:w-9" strokeWidth={2} aria-hidden />
           </div>
           <div className="min-w-0">
-            <p className="mb-2 inline-flex items-center gap-2 rounded-full border border-violet-100 bg-violet-50 px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-violet-700">
-              <Sparkles className="h-3.5 w-3.5" aria-hidden />
-              Video & PDF
-            </p>
-            <h1 className="text-3xl font-black tracking-tight text-slate-900 sm:text-4xl">Video & PDF</h1>
+            <h1 className="text-3xl font-black tracking-tight text-slate-900 sm:text-[2rem] lg:text-4xl">Video & PDF</h1>
             <p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-600 sm:text-base">
-              Tüm derslerinizin video ve PDF içeriklerine tek yerden ulaşın. İlerlemenizi takip edin; konu bazlı çalışma için{" "}
-              <Link href="/ogrenci/dersler" className="font-semibold text-violet-700 underline decoration-violet-300 underline-offset-2 hover:text-violet-900">
-                Derslerim
-              </Link>{" "}
-              sayfasını kullanın.
+              Tüm derslerinizin video ve PDF içeriklerine tek yerden ulaşın.
             </p>
           </div>
         </div>

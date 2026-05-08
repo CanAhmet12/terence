@@ -7,7 +7,12 @@ import { api } from "@/lib/api";
 import { Bell, ChevronDown, LayoutDashboard, LogOut, User } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
-export function HeaderUserMenu() {
+type HeaderUserMenuProps = {
+  /** Örn. Video & PDF: mor rozet */
+  notificationBadgeClassName?: string;
+};
+
+export function HeaderUserMenu({ notificationBadgeClassName }: HeaderUserMenuProps) {
   const router = useRouter();
   const { user, token, logout } = useAuth();
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -88,7 +93,12 @@ export function HeaderUserMenu() {
       >
         <Bell className="h-5 w-5" />
         {unreadCount > 0 && (
-          <span className="absolute right-0.5 top-0.5 flex h-[18px] min-h-[18px] min-w-[18px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold leading-none text-white">
+          <span
+            className={
+              notificationBadgeClassName ??
+              "absolute right-0.5 top-0.5 flex h-[18px] min-h-[18px] min-w-[18px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold leading-none text-white"
+            }
+          >
             {unreadCount > 9 ? "9+" : unreadCount}
           </span>
         )}
