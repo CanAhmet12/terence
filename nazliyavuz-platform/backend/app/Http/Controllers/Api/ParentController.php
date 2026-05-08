@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
+use App\Support\LiveSessionViewSerializer;
 
 class ParentController extends Controller
 {
@@ -38,6 +39,52 @@ class ParentController extends Controller
 
         $student = User::findOrFail($childId);
         return response()->json(['success' => true, 'data' => $this->buildChildSummary($student)]);
+    }
+
+    // GET /api/parent/children/{id}/live-lessons?scope=upcoming|past|all
+    public function childLiveLessons(Request $request, int $id): JsonResponse
+    {
+        $parent = Auth::user();
+        ParentStudent::where('parent_id', $parent->id)
+            ->where('student_id', $id)
+            ->where('status', 'approved')
+            ->firstOrFail();
+
+        $scope = $request->get('scope', 'upcoming');
+        if (!in_array($scope, ['upcoming', 'past', 'all'], true)) {
+            return response()->json(['error' => true, 'message' => 'Geçersiz scope'], 422);
+        }
+
+        $sessions = StudentLiveSessionController::queryForStudent($id, $scope)
+            ->withCount('attendances')
+            ->with(['teacher:id,name,email,profile_photo_url', 'classRoom:id,name'])
+            ->orderBy('scheduled_at', $scope === 'past' ? 'desc' : 'asc')
+            ->limit(50)
+            ->get()
+            ->map(fn ($s) => LiveSessionViewSerializer::studentListItem($s));
+
+        return response()->json(['success' => true, 'data' => $sessions]);
+    }
+
+    // GET /api/parent/children/{id}/exams — çocuğun tamamlanan denemeleri (salt okunur)
+    public function childExams(int $childId): JsonResponse
+    {
+        $parent = Auth::user();
+        ParentStudent::where('parent_id', $parent->id)
+            ->where('student_id', $childId)
+            ->where('status', 'approved')
+            ->firstOrFail();
+
+        $exams = ExamSession::where('user_id', $childId)
+            ->where('status', 'completed')
+            ->orderByDesc('finished_at')
+            ->limit(50)
+            ->get([
+                'id', 'title', 'exam_type', 'net_score', 'correct_count', 'wrong_count', 'empty_count',
+                'finished_at', 'duration_minutes', 'time_spent_seconds', 'total_questions',
+            ]);
+
+        return response()->json(['success' => true, 'data' => $exams]);
     }
 
     // POST /api/parent/link

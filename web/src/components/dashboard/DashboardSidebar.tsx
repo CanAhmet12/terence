@@ -113,6 +113,7 @@ const parentNavGroups = [
     label: "TAKİP",
     items: [
       { href: "/veli", icon: LayoutDashboard, label: "Ana Panel", exact: true },
+      { href: "/veli/canli-dersler", icon: Video, label: "Canlı Dersler" },
       { href: "/veli/rapor", icon: PieChart, label: "Çocuğumun Raporu" },
       { href: "/veli/profil", icon: Baby, label: "Çocuk Profili" },
     ],

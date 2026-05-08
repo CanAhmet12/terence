@@ -76,6 +76,37 @@ class TeacherController extends Controller
         return response()->json(['success' => true, 'data' => $students]);
     }
 
+    // GET /api/teacher/classes/{id}/exam-summary — sınıftaki öğrencilerin deneme özeti (salt okunur)
+    public function classExamSummary(int $classId): JsonResponse
+    {
+        $teacher  = Auth::user();
+        $class    = ClassRoom::where('teacher_id', $teacher->id)->findOrFail($classId);
+        $students = $class->students()->get(['users.id', 'users.name']);
+        $since    = now()->subDays(30);
+
+        $data = $students->map(function ($u) use ($since) {
+            $exams30 = ExamSession::where('user_id', $u->id)
+                ->where('status', 'completed')
+                ->where('finished_at', '>=', $since)
+                ->count();
+            $last = ExamSession::where('user_id', $u->id)
+                ->where('status', 'completed')
+                ->orderByDesc('finished_at')
+                ->first(['net_score', 'exam_type', 'finished_at']);
+
+            return [
+                'student_id'          => $u->id,
+                'name'                => $u->name,
+                'exams_completed_30d' => $exams30,
+                'last_net'            => $last ? (float) $last->net_score : null,
+                'last_exam_type'      => $last?->exam_type,
+                'last_finished_at'    => $last?->finished_at?->toIso8601String(),
+            ];
+        });
+
+        return response()->json(['success' => true, 'data' => $data]);
+    }
+
     // GET /api/teacher/students/risk
     public function riskStudents(): JsonResponse
     {
@@ -217,31 +248,125 @@ class TeacherController extends Controller
     {
         $teacher  = Auth::user();
         $sessions = LiveSession::where('teacher_id', $teacher->id)
+            ->withCount('attendances')
             ->orderByDesc('scheduled_at')
             ->get();
         return response()->json(['success' => true, 'data' => $sessions]);
     }
 
-    // POST /api/teacher/live-sessions
-    public function createLiveSession(Request $request): JsonResponse
+    // GET /api/teacher/live-sessions/{id}
+    public function showLiveSession(int $id): JsonResponse
     {
+        $teacher = Auth::user();
+        $session = LiveSession::withCount('attendances')
+            ->where('teacher_id', $teacher->id)
+            ->findOrFail($id);
+
+        return response()->json(['success' => true, 'data' => $session]);
+    }
+
+    // PATCH /api/teacher/live-sessions/{id}/go-live
+    public function goLiveLiveSession(int $id): JsonResponse
+    {
+        $teacher = Auth::user();
+        $session = LiveSession::where('teacher_id', $teacher->id)->findOrFail($id);
+
+        if ($session->status === 'ended') {
+            return response()->json(['error' => true, 'message' => 'Bitmiş bir ders yeniden canlı yapılamaz.'], 422);
+        }
+
+        $session->update([
+            'status'     => 'live',
+            'started_at' => $session->started_at ?? now(),
+        ]);
+
+        return response()->json(['success' => true, 'data' => $session->fresh()]);
+    }
+
+    // PATCH /api/teacher/live-sessions/{id}/end
+    public function endLiveSession(Request $request, int $id): JsonResponse
+    {
+        $teacher = Auth::user();
+        $session = LiveSession::where('teacher_id', $teacher->id)->findOrFail($id);
+
         $v = Validator::make($request->all(), [
-            'title'           => 'required|string|max:255',
-            'class_room_id'   => 'sometimes|nullable|integer|exists:class_rooms,id',
-            'scheduled_at'    => 'sometimes|nullable|date',
-            'duration_minutes'=> 'sometimes|integer|min:15|max:240',
+            'recording_url' => 'sometimes|nullable|string|max:512',
         ]);
         if ($v->fails()) {
             return response()->json(['error' => true, 'errors' => $v->errors()], 422);
         }
-        $teacher  = Auth::user();
-        $roomName = 'terence-' . Str::slug($request->title) . '-' . Str::random(6);
 
-        $session = LiveSession::create(array_merge($v->validated(), [
+        $payload = [
+            'status'   => 'ended',
+            'ended_at' => now(),
+        ];
+        if ($request->filled('recording_url')) {
+            $payload['recording_url'] = $request->input('recording_url');
+        }
+
+        $session->update($payload);
+
+        return response()->json(['success' => true, 'data' => $session->fresh()]);
+    }
+
+    // POST /api/teacher/live-sessions
+    public function createLiveSession(Request $request): JsonResponse
+    {
+        $input = $request->all();
+        if (empty($input['scheduled_at']) && !empty($input['starts_at'])) {
+            $input['scheduled_at'] = $input['starts_at'];
+        }
+        if (!array_key_exists('class_room_id', $input) && array_key_exists('class_id', $input)) {
+            $input['class_room_id'] = $input['class_id'];
+        }
+
+        $v = Validator::make($input, [
+            'title'             => 'required|string|max:255',
+            'class_room_id'     => 'sometimes|nullable|integer|exists:class_rooms,id',
+            'class_id'          => 'sometimes|nullable|integer',
+            'scheduled_at'      => 'required_without:starts_at|nullable|date',
+            'starts_at'         => 'required_without:scheduled_at|nullable|date',
+            'duration_minutes'  => 'sometimes|integer|min:15|max:240',
+            'is_public'         => 'sometimes|boolean',
+            'subject_tag'       => 'sometimes|nullable|string|max:160',
+            'description'       => 'sometimes|nullable|string',
+            'max_participants'  => 'sometimes|nullable|integer|min:1|max:5000',
+        ]);
+        if ($v->fails()) {
+            return response()->json(['error' => true, 'errors' => $v->errors()], 422);
+        }
+
+        $teacher = Auth::user();
+        $data    = $v->validated();
+
+        if (empty($data['scheduled_at']) && !empty($data['starts_at'])) {
+            $data['scheduled_at'] = $data['starts_at'];
+        }
+        unset($data['starts_at'], $data['class_id']);
+
+        if (!empty($data['class_room_id'])) {
+            $owns = ClassRoom::where('id', $data['class_room_id'])->where('teacher_id', $teacher->id)->exists();
+            if (!$owns) {
+                return response()->json(['error' => true, 'message' => 'Bu sınıf size ait değil.'], 403);
+            }
+        }
+
+        $isPublic = (bool) ($data['is_public'] ?? false);
+        if (empty($data['class_room_id']) && !$isPublic) {
+            return response()->json([
+                'error'   => true,
+                'message' => 'Sınıf seçilmediyse ders yalnızca "herkese açık yayın" olarak işaretlenebilir.',
+            ], 422);
+        }
+
+        $roomName = 'terence-' . Str::slug($data['title']) . '-' . Str::random(6);
+
+        $session = LiveSession::create(array_merge($data, [
             'teacher_id'       => $teacher->id,
             'daily_room_name'  => $roomName,
             'daily_room_url'   => 'https://terenceegitim.daily.co/' . $roomName,
             'status'           => 'scheduled',
+            'is_public'        => $isPublic,
         ]));
 
         return response()->json(['success' => true, 'session' => $session], 201);

@@ -1,0 +1,5 @@
+# Kopyalayıp .env.local yapın veya aşağıdaki satırı .env.local içine ekleyin:
+NEXT_PUBLIC_API_URL=https://terenceegitim.com/api
+
+# Kendi Laravel’inizi çalıştırıyorsanız (php artisan serve --port=8000):
+# NEXT_PUBLIC_API_URL=http://127.0.0.1:8000/api

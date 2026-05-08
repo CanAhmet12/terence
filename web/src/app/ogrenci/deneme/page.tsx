@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
-import { api, ExamSession } from "@/lib/api";
+import { api, ExamSession, ExamSummaryStats } from "@/lib/api";
 import {
-  Play, Clock, BarChart3, Trophy, RefreshCw, CheckCircle,
+  Play, Clock, BarChart3, Trophy, RefreshCw,
   ChevronRight, Loader2, AlertCircle, Target, TrendingUp,
-  TrendingDown, Minus, Calendar, ArrowRight, Zap
+  ArrowRight, Zap, FileQuestion, Search, LayoutGrid, List, Keyboard, Calendar,
 } from "lucide-react";
 
 // ─── Tip tanımı ───────────────────────────────────────────────────────────────
@@ -106,6 +106,32 @@ function StatBadge({
       </div>
     </div>
   );
+}
+
+function formatDurationSeconds(sec: number): string {
+  if (!sec || sec < 60) return `${Math.max(0, Math.round(sec))} sn`;
+  const m = Math.floor(sec / 60);
+  const h = Math.floor(m / 60);
+  if (h > 0) return `${h}s ${m % 60}dk`;
+  return `${m} dk`;
+}
+
+function maxNetReference(profileExamType: string | undefined): number {
+  if (!profileExamType) return 120;
+  if (profileExamType === "TYT-AYT") return 120;
+  const t = EXAM_TYPES.find((e) => e.key === profileExamType);
+  return t?.questions ?? 120;
+}
+
+function avgAnsweredPercent(history: ExamSession[]): number {
+  const rows = history.filter((h) => (h.total_questions ?? 0) > 0);
+  if (!rows.length) return 0;
+  const sum = rows.reduce((a, s) => {
+    const tq = s.total_questions ?? 1;
+    const answered = (s.correct_count ?? 0) + (s.wrong_count ?? 0);
+    return a + (answered / tq) * 100;
+  }, 0);
+  return Math.round(sum / rows.length);
 }
 
 // ─── 3D Kart ─────────────────────────────────────────────────────────────────
@@ -278,70 +304,92 @@ function ExamCard3D({
   );
 }
 
-// ─── Geçmiş deneme satırı ─────────────────────────────────────────────────────
-
-function HistoryRow({ session }: { session: ExamSession }) {
+function HistoryGridCard({ session }: { session: ExamSession }) {
   const router = useRouter();
-  const net = (session as Record<string, unknown>).net_score as number ?? 0;
+  const net = Number(session.net_score ?? 0);
   const examType = session.exam_type ?? "TYT";
   const examConfig = EXAM_TYPES.find((e) => e.key === examType) ?? EXAM_TYPES[0];
-
   const date = session.finished_at
-    ? new Date(session.finished_at).toLocaleDateString("tr-TR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })
+    ? new Date(session.finished_at).toLocaleDateString("tr-TR", { day: "numeric", month: "short" })
     : "—";
-
-  const correct = session.correct_count ?? 0;
-  const wrong = session.wrong_count ?? 0;
-  const empty = session.empty_count ?? 0;
-  const total = correct + wrong + empty;
-
-  const successRate = total > 0 ? Math.round((correct / total) * 100) : 0;
-  const netSign = net >= 0 ? "+" : "";
-
   return (
-    <div className="flex items-center gap-4 p-4 hover:bg-slate-50 rounded-2xl transition-colors group cursor-pointer"
-      onClick={() => router.push(`/ogrenci/deneme/${session.id}/sonuc`)}>
-
-      {/* Sınav rozeti */}
-      <div
-        className={`w-12 h-12 rounded-xl bg-gradient-to-b ${examConfig.gradient} flex items-center justify-center shrink-0 shadow-sm`}
-      >
-        <span className="text-xl">{examConfig.icon}</span>
+    <button
+      type="button"
+      onClick={() => router.push(`/ogrenci/deneme/${session.id}/sonuc`)}
+      className={`text-left rounded-2xl border border-slate-100 p-4 hover:shadow-md transition-shadow bg-gradient-to-br ${examConfig.gradient} bg-opacity-5 from-white to-slate-50`}
+    >
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-2xl">{examConfig.icon}</span>
+        <span className="text-lg font-black text-slate-900">{net.toFixed(1)}</span>
       </div>
+      <p className="text-sm font-bold text-slate-800">{session.title ?? `${examType} Denemesi`}</p>
+      <p className="text-[11px] text-slate-500 mt-1">{date}</p>
+    </button>
+  );
+}
 
-      {/* Sol: Bilgi */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-1">
-          <span className="font-bold text-slate-800 text-sm">{examType} Denemesi</span>
-          <span className="text-[11px] text-slate-400">{date}</span>
-        </div>
-        <div className="flex items-center gap-3 text-xs font-medium">
-          <span className="text-emerald-600">✓ {correct}</span>
-          <span className="text-red-500">✗ {wrong}</span>
-          <span className="text-slate-400">— {empty}</span>
-        </div>
-      </div>
-
-      {/* Başarı oranı */}
-      <div className="hidden sm:flex flex-col items-center gap-1 shrink-0">
-        <div className="w-16 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-          <div
-            className="h-full bg-gradient-to-r from-indigo-400 to-violet-500 rounded-full transition-all"
-            style={{ width: `${successRate}%` }}
-          />
-        </div>
-        <span className="text-[10px] text-slate-400 font-medium">%{successRate}</span>
-      </div>
-
-      {/* Net */}
-      <div className="text-right shrink-0">
-        <p className={`text-xl font-black leading-none ${net > 0 ? "text-emerald-600" : net < 0 ? "text-red-500" : "text-slate-400"}`}>
-          {netSign}{net.toFixed(1)}
-        </p>
-        <p className="text-[10px] text-slate-400 mt-0.5">net</p>
-      </div>
-
-      <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-indigo-500 transition-colors shrink-0" />
+function HistoryDataTable({ sessions }: { sessions: ExamSession[] }) {
+  const router = useRouter();
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="text-left text-xs font-bold text-slate-400 uppercase tracking-wide border-b border-slate-100">
+            <th className="py-3 px-4">Deneme</th>
+            <th className="py-3 px-4 hidden sm:table-cell">Tarih</th>
+            <th className="py-3 px-4">Net</th>
+            <th className="py-3 px-4 hidden md:table-cell">D / Y / B</th>
+            <th className="py-3 px-4 hidden lg:table-cell">Süre</th>
+            <th className="py-3 px-4 w-28 hidden sm:table-cell">Başarı</th>
+            <th className="py-3 px-4 w-10" />
+          </tr>
+        </thead>
+        <tbody>
+          {sessions.map((session) => {
+            const net = Number(session.net_score ?? 0);
+            const correct = session.correct_count ?? 0;
+            const wrong = session.wrong_count ?? 0;
+            const empty = session.empty_count ?? 0;
+            const total = correct + wrong + empty;
+            const pct = total > 0 ? Math.round((correct / total) * 100) : 0;
+            const examType = session.exam_type ?? "TYT";
+            const title = session.title ?? `${examType} Denemesi`;
+            const date = session.finished_at
+              ? new Date(session.finished_at).toLocaleString("tr-TR", { dateStyle: "short", timeStyle: "short" })
+              : "—";
+            return (
+              <tr
+                key={session.id}
+                className="border-b border-slate-50 hover:bg-slate-50/80 cursor-pointer"
+                onClick={() => router.push(`/ogrenci/deneme/${session.id}/sonuc`)}
+              >
+                <td className="py-3 px-4 font-semibold text-slate-800 max-w-[180px] truncate">{title}</td>
+                <td className="py-3 px-4 text-slate-500 hidden sm:table-cell whitespace-nowrap">{date}</td>
+                <td className="py-3 px-4 font-black text-teal-700">{net.toFixed(1)}</td>
+                <td className="py-3 px-4 text-xs text-slate-600 hidden md:table-cell whitespace-nowrap">
+                  <span className="text-emerald-600 font-semibold">{correct}</span>
+                  {" / "}
+                  <span className="text-red-500 font-semibold">{wrong}</span>
+                  {" / "}
+                  <span className="text-slate-400">{empty}</span>
+                </td>
+                <td className="py-3 px-4 text-slate-500 hidden lg:table-cell whitespace-nowrap">
+                  {session.time_spent_seconds != null ? formatDurationSeconds(session.time_spent_seconds) : "—"}
+                </td>
+                <td className="py-3 px-4 hidden sm:table-cell">
+                  <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                    <div className="h-full bg-gradient-to-r from-teal-500 to-emerald-500 rounded-full" style={{ width: `${pct}%` }} />
+                  </div>
+                  <span className="text-[10px] text-slate-400">%{pct}</span>
+                </td>
+                <td className="py-3 px-4 text-slate-300">
+                  <ChevronRight className="w-4 h-4" />
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
     </div>
   );
 }
@@ -352,10 +400,21 @@ export default function DenemePage() {
   const router = useRouter();
   const { user } = useAuth();
   const [history, setHistory] = useState<ExamSession[]>([]);
+  const [summary, setSummary] = useState<ExamSummaryStats | null>(null);
+  const [insight, setInsight] = useState<ExamSession | null>(null);
   const [loading, setLoading] = useState(true);
   const [startingType, setStartingType] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [tab, setTab] = useState<"new" | "history">("new");
+  const [viewMode, setViewMode] = useState<"grid" | "list">("list");
+  const [filterType, setFilterType] = useState<string>("all");
+  const [paletteOpen, setPaletteOpen] = useState(false);
+  const [paletteQuery, setPaletteQuery] = useState("");
+  const paletteInputRef = useRef<HTMLInputElement>(null);
+
   const profileExamType = user?.target_exam ?? user?.exam_goal;
+  const maxRef = maxNetReference(typeof profileExamType === "string" ? profileExamType : undefined);
+
   const availableExamTypes = useMemo(() => {
     if (!profileExamType) {
       return EXAM_TYPES.filter((item) => item.key === "Mini");
@@ -366,19 +425,65 @@ export default function DenemePage() {
     return EXAM_TYPES.filter((item) => item.key === profileExamType || item.key === "Mini");
   }, [profileExamType]);
 
-  const loadHistory = useCallback(async () => {
+  const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await api.getExamHistory();
-      setHistory(Array.isArray(data) ? data : []);
+      const [hist, sum] = await Promise.all([
+        api.getExamHistory(),
+        api.getExamSummary().catch(() => null),
+      ]);
+      setHistory(Array.isArray(hist) ? hist : []);
+      setSummary(sum);
     } catch {
       setHistory([]);
+      setSummary(null);
     } finally {
       setLoading(false);
     }
   }, []);
 
-  useEffect(() => { loadHistory(); }, [loadHistory]);
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  useEffect(() => {
+    const first = history[0];
+    if (!first?.id) {
+      setInsight(null);
+      return;
+    }
+    let cancelled = false;
+    api
+      .getExamResult(first.id)
+      .then((r) => {
+        if (!cancelled) setInsight(r);
+      })
+      .catch(() => {
+        if (!cancelled) setInsight(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [history]);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setPaletteOpen(true);
+      }
+      if (e.key === "Escape") setPaletteOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  useEffect(() => {
+    if (paletteOpen) {
+      setPaletteQuery("");
+      setTimeout(() => paletteInputRef.current?.focus(), 50);
+    }
+  }, [paletteOpen]);
 
   const handleStartExam = async (examType: ExamType) => {
     setStartingType(examType.key);
@@ -398,203 +503,397 @@ export default function DenemePage() {
       }
       const questions = (res as Record<string, unknown>).questions;
       if (Array.isArray(questions) && questions.length) {
-        localStorage.setItem(`exam_questions_${sessionId}`, JSON.stringify({
-          questions,
-          duration: examType.duration,
-        }));
+        localStorage.setItem(
+          `exam_questions_${sessionId}`,
+          JSON.stringify({
+            questions,
+            duration: examType.duration,
+          }),
+        );
       }
+      setPaletteOpen(false);
       router.push(`/ogrenci/deneme/${sessionId}`);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Deneme başlatılamadı";
-      setError(msg.toLowerCase().includes("soru")
-        ? "Bu deneme türü için henüz yeterli soru bulunmuyor."
-        : msg);
+      setError(
+        msg.toLowerCase().includes("soru")
+          ? "Bu deneme türü için henüz yeterli soru bulunmuyor."
+          : msg,
+      );
       setStartingType(null);
     }
   };
 
-  // İstatistikler
-  const totalExams = history.length;
-  const avgNet = totalExams > 0
-    ? (history.reduce((a, s) => a + ((s as Record<string, unknown>).net_score as number ?? 0), 0) / totalExams).toFixed(1)
-    : "0.0";
-  const bestNet = totalExams > 0
-    ? Math.max(...history.map((s) => (s as Record<string, unknown>).net_score as number ?? 0)).toFixed(1)
-    : "0.0";
-  const lastNet = totalExams > 0
-    ? ((history[0] as Record<string, unknown>).net_score as number ?? 0).toFixed(1)
-    : "—";
+  const filteredHistory = useMemo(() => {
+    let h = history;
+    if (filterType !== "all") {
+      h = h.filter((s) => (s.exam_type ?? "TYT") === filterType);
+    }
+    const q = paletteQuery.trim().toLowerCase();
+    if (q) {
+      h = h.filter(
+        (s) =>
+          (s.title ?? "").toLowerCase().includes(q) ||
+          (s.exam_type ?? "").toLowerCase().includes(q),
+      );
+    }
+    return h;
+  }, [history, filterType, paletteQuery]);
+
+  const totalExams = summary?.total_completed ?? history.length;
+  const avgNetStr =
+    summary != null
+      ? summary.avg_net.toFixed(1)
+      : history.length > 0
+        ? (
+            history.reduce((a, s) => a + Number(s.net_score ?? 0), 0) / history.length
+          ).toFixed(1)
+        : "0.0";
+  const bestNetStr =
+    summary != null
+      ? summary.best_net.toFixed(1)
+      : history.length > 0
+        ? Math.max(...history.map((s) => Number(s.net_score ?? 0))).toFixed(1)
+        : "0.0";
+  const answeredPct = avgAnsweredPercent(history);
+  const avgTimeLabel =
+    summary != null && summary.avg_time_seconds > 0
+      ? formatDurationSeconds(summary.avg_time_seconds)
+      : "—";
+
+  const paletteFilteredExams = useMemo(() => {
+    const q = paletteQuery.trim().toLowerCase();
+    if (!q) return availableExamTypes;
+    return availableExamTypes.filter((e) => e.label.toLowerCase().includes(q) || e.key.toLowerCase().includes(q));
+  }, [availableExamTypes, paletteQuery]);
+
+  const paletteFilteredHistory = useMemo(() => {
+    const q = paletteQuery.trim().toLowerCase();
+    if (!q) return history.slice(0, 8);
+    return history
+      .filter(
+        (s) =>
+          (s.title ?? "").toLowerCase().includes(q) ||
+          (s.exam_type ?? "").toLowerCase().includes(q),
+      )
+      .slice(0, 8);
+  }, [history, paletteQuery]);
 
   return (
     <div className="bg-slate-50 min-h-full">
-      <div className="w-full px-6 py-8 space-y-10">
-
-        {/* ── Başlık ── */}
-        <div>
-          <h1 className="text-3xl font-black text-slate-900 tracking-tight">Deneme Sınavları</h1>
-          <p className="text-slate-500 mt-1.5 font-medium">
-            Gerçek sınav ortamında kendini test et · Anında analiz · Gelişimini takip et
-          </p>
-        </div>
-
-        {/* ── İstatistik banner (geçmiş varsa) ── */}
-        {!loading && totalExams > 0 && (
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <StatBadge
-              label="Toplam Deneme"
-              value={totalExams}
-              icon={Trophy}
-              color="text-violet-600"
-              bg="bg-violet-50"
-            />
-            <StatBadge
-              label="Ortalama Net"
-              value={avgNet}
-              icon={BarChart3}
-              color="text-indigo-600"
-              bg="bg-indigo-50"
-            />
-            <StatBadge
-              label="En Yüksek Net"
-              value={bestNet}
-              icon={TrendingUp}
-              color="text-emerald-600"
-              bg="bg-emerald-50"
-            />
-            <StatBadge
-              label="Son Deneme"
-              value={lastNet}
-              icon={Calendar}
-              color="text-amber-600"
-              bg="bg-amber-50"
-            />
-          </div>
-        )}
-
-        {/* ── Hata ── */}
-        {error && (
-          <div className="flex items-start gap-3 p-4 bg-red-50 border border-red-200 rounded-2xl text-red-700">
-            <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
-            <div>
-              <p className="font-semibold text-sm">Deneme başlatılamadı</p>
-              <p className="text-sm mt-0.5 text-red-600">{error}</p>
+      {paletteOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-start justify-center pt-[12vh] px-4 bg-slate-900/40 backdrop-blur-sm"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Deneme araması"
+          onClick={() => setPaletteOpen(false)}
+        >
+          <div
+            className="w-full max-w-lg bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-100">
+              <Search className="w-4 h-4 text-slate-400 shrink-0" />
+              <input
+                ref={paletteInputRef}
+                value={paletteQuery}
+                onChange={(e) => setPaletteQuery(e.target.value)}
+                placeholder="Deneme veya geçmiş ara…"
+                className="flex-1 text-sm outline-none placeholder:text-slate-400"
+              />
+              <kbd className="hidden sm:inline text-[10px] font-mono text-slate-400 border border-slate-200 rounded px-1.5 py-0.5">Esc</kbd>
+            </div>
+            <div className="max-h-80 overflow-y-auto p-2 text-sm">
+              <p className="px-2 py-1 text-xs font-bold text-slate-400 uppercase">Yeni başlat</p>
+              {paletteFilteredExams.map((e) => (
+                <button
+                  key={e.key}
+                  type="button"
+                  className="w-full text-left px-3 py-2 rounded-xl hover:bg-teal-50 flex items-center justify-between"
+                  onClick={() => handleStartExam(e)}
+                >
+                  <span>
+                    {e.icon} {e.label}
+                  </span>
+                  <span className="text-xs text-slate-400">{e.questions} soru</span>
+                </button>
+              ))}
+              <p className="px-2 py-1 mt-2 text-xs font-bold text-slate-400 uppercase">Geçmiş</p>
+              {paletteFilteredHistory.length === 0 ? (
+                <p className="px-3 py-2 text-slate-500 text-xs">Eşleşme yok</p>
+              ) : (
+                paletteFilteredHistory.map((s) => (
+                  <button
+                    key={s.id}
+                    type="button"
+                    className="w-full text-left px-3 py-2 rounded-xl hover:bg-slate-50 flex items-center justify-between"
+                    onClick={() => {
+                      setPaletteOpen(false);
+                      router.push(`/ogrenci/deneme/${s.id}/sonuc`);
+                    }}
+                  >
+                    <span className="truncate">{s.title ?? `${s.exam_type} Denemesi`}</span>
+                    <span className="text-xs text-teal-700 font-bold shrink-0 ml-2">{Number(s.net_score ?? 0).toFixed(1)} net</span>
+                  </button>
+                ))
+              )}
             </div>
           </div>
-        )}
-
-        {/* ── 3D Deneme Kartları ── */}
-        <div>
-          <h2 className="text-xl font-black text-slate-900 mb-6 flex items-center gap-2">
-            <Zap className="w-5 h-5 text-amber-500" />
-            Yeni Deneme Başlat
-          </h2>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-10">
-            {availableExamTypes.map((exam) => (
-              <ExamCard3D
-                key={exam.key}
-                exam={exam}
-                onStart={handleStartExam}
-                loading={startingType === exam.key}
-              />
-            ))}
-          </div>
         </div>
+      )}
 
-        {/* ── Geçmiş Denemeler ── */}
-        <div>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-black text-slate-900 flex items-center gap-2">
-              <Clock className="w-5 h-5 text-slate-400" />
-              Geçmiş Denemeler
-            </h2>
-            <button
-              onClick={loadHistory}
-              disabled={loading}
-              className="flex items-center gap-1.5 text-xs font-semibold text-slate-400 hover:text-indigo-600 transition-colors"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
-              Yenile
-            </button>
-          </div>
-
-          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-            {loading ? (
-              <div className="divide-y divide-slate-50">
-                {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className="flex items-center gap-4 p-4">
-                    <Skeleton className="w-12 h-12 rounded-xl" />
-                    <div className="flex-1 space-y-2">
-                      <Skeleton className="h-4 w-40" />
-                      <Skeleton className="h-3 w-28" />
-                    </div>
-                    <Skeleton className="w-12 h-8" />
-                  </div>
-                ))}
-              </div>
-            ) : history.length === 0 ? (
-              <div className="text-center py-16 px-6">
-                <div className="w-20 h-20 rounded-3xl bg-slate-100 flex items-center justify-center mx-auto mb-5">
-                  <FileQuestion className="w-10 h-10 text-slate-300" />
-                </div>
-                <h3 className="font-bold text-slate-700 text-lg">Henüz deneme yok</h3>
-                <p className="text-slate-500 text-sm mt-2 max-w-xs mx-auto">
-                  Yukarıdan bir deneme türü seç ve ilk denemenize başla!
-                </p>
-                <div className="flex justify-center gap-3 mt-6">
-                  {availableExamTypes.map((e) => (
+      <div className="w-full px-4 sm:px-6 py-8 max-w-[1400px] mx-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_300px] gap-8 items-start">
+          <div className="space-y-8">
+            {/* Hero */}
+            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-600 via-violet-600 to-teal-600 text-white px-6 py-10 sm:px-10 sm:py-12">
+              <div className="absolute inset-0 opacity-20 pointer-events-none bg-[radial-gradient(circle_at_20%_20%,white,transparent_50%)]" />
+              <div className="relative flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
+                <div>
+                  <h1 className="text-3xl sm:text-4xl font-black tracking-tight">Deneme Sınavları</h1>
+                  <p className="mt-2 text-white/85 text-sm sm:text-base max-w-xl font-medium">
+                    Gerçek sınav süresinde çöz · Anında net ve ders analizi · Gelişimini tek yerden izle
+                  </p>
+                  <div className="mt-6 flex flex-wrap gap-3">
                     <button
-                      key={e.key}
-                      onClick={() => handleStartExam(e)}
-                      className={`px-4 py-2 rounded-xl text-sm font-bold text-white bg-gradient-to-r ${e.gradient} hover:opacity-90 transition-opacity`}
+                      type="button"
+                      onClick={() => setPaletteOpen(true)}
+                      className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/15 hover:bg-white/25 text-sm font-semibold border border-white/30"
                     >
-                      {e.icon} {e.label}
+                      <Search className="w-4 h-4" />
+                      Ara
+                      <span className="hidden sm:inline-flex items-center gap-1 text-[10px] font-mono opacity-80">
+                        <Keyboard className="w-3 h-3" /> Ctrl+K
+                      </span>
                     </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setTab("new");
+                        window.scrollTo({ top: 400, behavior: "smooth" });
+                      }}
+                      className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white text-indigo-700 text-sm font-bold shadow-lg"
+                    >
+                      <Play className="w-4 h-4" fill="currentColor" />
+                      Hızlı başlat
+                    </button>
+                  </div>
+                </div>
+                <div className="hidden lg:flex w-44 h-44 rounded-3xl bg-white/10 border border-white/20 items-center justify-center shrink-0">
+                  <FileQuestion className="w-24 h-24 text-white/90" strokeWidth={1.25} />
+                </div>
+              </div>
+            </div>
+
+            {/* KPI */}
+            {!loading && (
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                <StatBadge label="Toplam tamamlanan" value={totalExams} icon={Trophy} color="text-violet-600" bg="bg-violet-50" />
+                <StatBadge label="Ort. cevaplanma" value={`%${answeredPct}`} icon={BarChart3} color="text-indigo-600" bg="bg-indigo-50" />
+                <StatBadge label={`Ort. net / ${maxRef}`} value={avgNetStr} icon={TrendingUp} color="text-teal-600" bg="bg-teal-50" />
+                <StatBadge label={`En yüksek / ${maxRef}`} value={bestNetStr} icon={Calendar} color="text-emerald-600" bg="bg-emerald-50" />
+                <StatBadge label="Ort. süre" value={avgTimeLabel} icon={Clock} color="text-amber-600" bg="bg-amber-50" />
+              </div>
+            )}
+
+            {summary != null && summary.this_week_count > 0 && (
+              <p className="text-xs text-slate-500 -mt-4">
+                Bu hafta tamamlanan: <strong className="text-slate-800">{summary.this_week_count}</strong> deneme
+              </p>
+            )}
+
+            {error && (
+              <div className="flex items-start gap-3 p-4 bg-red-50 border border-red-200 rounded-2xl text-red-700">
+                <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-semibold text-sm">Deneme başlatılamadı</p>
+                  <p className="text-sm mt-0.5 text-red-600">{error}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Sekmeler */}
+            <div className="flex flex-wrap items-center gap-2 border-b border-slate-200 pb-1">
+              {(
+                [
+                  { id: "new" as const, label: "Yeni deneme" },
+                  { id: "history" as const, label: "Geçmiş" },
+                ] as const
+              ).map((t) => (
+                <button
+                  key={t.id}
+                  type="button"
+                  onClick={() => setTab(t.id)}
+                  className={`px-4 py-2 rounded-xl text-sm font-bold transition-colors ${
+                    tab === t.id ? "bg-white text-indigo-700 shadow-sm border border-slate-200" : "text-slate-500 hover:text-slate-800"
+                  }`}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+
+            {tab === "new" && (
+              <div>
+                <h2 className="text-xl font-black text-slate-900 mb-6 flex items-center gap-2">
+                  <Zap className="w-5 h-5 text-amber-500" />
+                  Deneme türü seç
+                </h2>
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-10">
+                  {availableExamTypes.map((exam) => (
+                    <ExamCard3D key={exam.key} exam={exam} onStart={handleStartExam} loading={startingType === exam.key} />
                   ))}
                 </div>
               </div>
-            ) : (
-              <div className="divide-y divide-slate-50 p-2">
-                {history.map((session) => (
-                  <HistoryRow key={session.id} session={session} />
-                ))}
+            )}
+
+            {tab === "history" && (
+              <div className="space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  <h2 className="text-xl font-black text-slate-900 flex items-center gap-2">
+                    <Clock className="w-5 h-5 text-slate-400" />
+                    Geçmiş denemeler
+                  </h2>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <select
+                      value={filterType}
+                      onChange={(e) => setFilterType(e.target.value)}
+                      className="text-xs font-semibold border border-slate-200 rounded-xl px-3 py-2 bg-white text-slate-700"
+                    >
+                      <option value="all">Tümü</option>
+                      {EXAM_TYPES.map((e) => (
+                        <option key={e.key} value={e.key}>
+                          {e.label}
+                        </option>
+                      ))}
+                    </select>
+                    <div className="flex rounded-xl border border-slate-200 overflow-hidden">
+                      <button
+                        type="button"
+                        onClick={() => setViewMode("grid")}
+                        className={`p-2 ${viewMode === "grid" ? "bg-slate-900 text-white" : "bg-white text-slate-500"}`}
+                        aria-label="Izgara"
+                      >
+                        <LayoutGrid className="w-4 h-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setViewMode("list")}
+                        className={`p-2 ${viewMode === "list" ? "bg-slate-900 text-white" : "bg-white text-slate-500"}`}
+                        aria-label="Liste"
+                      >
+                        <List className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={loadData}
+                      disabled={loading}
+                      className="flex items-center gap-1.5 text-xs font-semibold text-slate-400 hover:text-indigo-600 transition-colors px-2"
+                    >
+                      <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
+                      Yenile
+                    </button>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+                  {loading ? (
+                    <div className="divide-y divide-slate-50 p-2">
+                      {[1, 2, 3, 4].map((i) => (
+                        <div key={i} className="flex items-center gap-4 p-4">
+                          <Skeleton className="w-12 h-12 rounded-xl" />
+                          <div className="flex-1 space-y-2">
+                            <Skeleton className="h-4 w-40" />
+                            <Skeleton className="h-3 w-28" />
+                          </div>
+                          <Skeleton className="w-12 h-8" />
+                        </div>
+                      ))}
+                    </div>
+                  ) : filteredHistory.length === 0 ? (
+                    <div className="text-center py-16 px-6">
+                      <div className="w-20 h-20 rounded-3xl bg-slate-100 flex items-center justify-center mx-auto mb-5">
+                        <FileQuestion className="w-10 h-10 text-slate-300" />
+                      </div>
+                      <h3 className="font-bold text-slate-700 text-lg">Kayıt yok</h3>
+                      <p className="text-slate-500 text-sm mt-2 max-w-xs mx-auto">
+                        Filtreyi değiştir veya yeni bir deneme başlat.
+                      </p>
+                    </div>
+                  ) : viewMode === "grid" ? (
+                    <div className="p-4 grid grid-cols-2 sm:grid-cols-3 gap-3">
+                      {filteredHistory.map((session) => (
+                        <HistoryGridCard key={session.id} session={session} />
+                      ))}
+                    </div>
+                  ) : (
+                    <HistoryDataTable sessions={filteredHistory} />
+                  )}
+                </div>
               </div>
             )}
-          </div>
-        </div>
 
-        {/* ── İpucu banner ── */}
-        <div className="flex items-start gap-4 p-5 rounded-2xl bg-gradient-to-r from-indigo-50 to-violet-50 border border-indigo-100">
-          <div className="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center shrink-0">
-            <Target className="w-5 h-5 text-indigo-600" />
+            <div className="flex items-start gap-4 p-5 rounded-2xl bg-gradient-to-r from-indigo-50 to-violet-50 border border-indigo-100">
+              <div className="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center shrink-0">
+                <Target className="w-5 h-5 text-indigo-600" />
+              </div>
+              <div className="flex-1">
+                <p className="font-bold text-indigo-800 text-sm">Deneme stratejisi</p>
+                <p className="text-indigo-600 text-xs mt-1 leading-relaxed">
+                  Haftada en az bir tam süre denemesi çöz. Sonuç sayfasındaki ders dağılımını inceleyip zayıf kazanımları planına ekle.
+                </p>
+              </div>
+              <a
+                href="/ogrenci/rapor"
+                className="shrink-0 flex items-center gap-1 text-xs font-bold text-indigo-600 hover:text-indigo-700 transition-colors"
+              >
+                Raporlar
+                <ArrowRight className="w-3.5 h-3.5" />
+              </a>
+            </div>
           </div>
-          <div className="flex-1">
-            <p className="font-bold text-indigo-800 text-sm">Deneme stratejisi</p>
-            <p className="text-indigo-600 text-xs mt-1 leading-relaxed">
-              Haftada en az 1 TYT denemesi çöz. Her deneme sonrasında hata analizini incele ve
-              zayıf kazanımlara özel çalışma planı oluştur.
-            </p>
-          </div>
-          <a
-            href="/ogrenci/rapor"
-            className="shrink-0 flex items-center gap-1 text-xs font-bold text-indigo-600 hover:text-indigo-700 transition-colors"
-          >
-            Raporlar
-            <ArrowRight className="w-3.5 h-3.5" />
-          </a>
+
+          {/* Sağ sütun */}
+          <aside className="space-y-4 lg:sticky lg:top-24">
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-wide mb-3">Son deneme özeti</p>
+              {!history[0] ? (
+                <p className="text-sm text-slate-500">Henüz tamamlanan deneme yok.</p>
+              ) : (
+                <>
+                  <p className="font-bold text-slate-900">{history[0].title ?? `${history[0].exam_type ?? "TYT"} Denemesi`}</p>
+                  <p className="text-2xl font-black text-teal-600 mt-2">{Number(history[0].net_score ?? 0).toFixed(2)} net</p>
+                  <p className="text-xs text-slate-500 mt-1">
+                    {history[0].finished_at
+                      ? new Date(history[0].finished_at!).toLocaleString("tr-TR")
+                      : ""}
+                  </p>
+                  {insight?.subject_breakdown && Object.keys(insight.subject_breakdown).length > 0 ? (
+                    <div className="mt-4 pt-4 border-t border-slate-100 space-y-2">
+                      <p className="text-xs font-bold text-slate-500">Ders netleri</p>
+                      {Object.entries(insight.subject_breakdown)
+                        .slice(0, 8)
+                        .map(([k, v]) => (
+                          <div key={k} className="flex items-center justify-between text-xs">
+                            <span className="text-slate-600 truncate pr-2">{k}</span>
+                            <span className="font-bold text-slate-900 shrink-0">{v.net.toFixed(1)}</span>
+                          </div>
+                        ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-slate-400 mt-3">Detaylı ders dağılımı yükleniyor…</p>
+                  )}
+                </>
+              )}
+            </div>
+            <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/80 p-4 text-xs text-slate-500 leading-relaxed">
+              Tüm metrikler sunucudaki tamamlanan denemelerinizden hesaplanır; gösterilen sosyal kanıt veya sahte sayılar yoktur.
+            </div>
+          </aside>
         </div>
       </div>
     </div>
-  );
-}
-
-// lucide-react import için eksik
-function FileQuestion(props: React.SVGProps<SVGSVGElement>) {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
-      <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
-      <polyline points="14 2 14 8 20 8"/>
-      <path d="M10 10.3c.2-.4.5-.8.9-1a2.1 2.1 0 0 1 2.6.4c.3.4.5.8.5 1.3 0 1.3-2 2-2 2"/>
-      <line x1="12" y1="17" x2="12.01" y2="17"/>
-    </svg>
   );
 }

@@ -30,8 +30,7 @@ export default function ExamResultPage() {
     if (!token) return;
     try {
       const res = await api.getExamResult(sessionId);
-      const resObj = res as Record<string, unknown>;
-      setResult((resObj?.result ?? res) as ExamSession);
+      setResult(res);
       // Zayıf kazanımları da yükle
       setWeakLoading(true);
       try {

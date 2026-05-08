@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/lib/auth-context";
-import { api, LiveSession, ClassRoom } from "@/lib/api";
+import { teacherApi, type LiveSession, type ClassRoom } from "@/lib/api";
 import { Video, Calendar, Clock, CheckCircle, Copy, Loader2, RefreshCw, Play } from "lucide-react";
 
 function Skeleton({ className }: { className?: string }) {
@@ -33,17 +33,20 @@ export default function CanliDersPage() {
   const [error, setError] = useState("");
   const [createdUrl, setCreatedUrl] = useState("");
   const [copied, setCopied] = useState(false);
+  const [actionId, setActionId] = useState<number | null>(null);
   const [form, setForm] = useState({
     title: "",
     class_room_id: "" as string | number,
     scheduled_at: "",
     duration_minutes: 45,
+    is_public: false,
+    subject_tag: "",
   });
 
   const loadLessons = useCallback(async () => {
     if (!token) return;
     try {
-      const data = await api.getLiveSessions(token);
+      const data = await teacherApi.getLiveSessions();
       setLessons(data);
     } catch {
       setLessons([]);
@@ -55,7 +58,7 @@ export default function CanliDersPage() {
   const loadClasses = useCallback(async () => {
     if (!token) return;
     try {
-      const res = await api.getTeacherClasses(token);
+      const res = await teacherApi.getTeacherClasses();
       setClasses(res);
     } catch {}
   }, [token]);
@@ -75,12 +78,16 @@ export default function CanliDersPage() {
     setError("");
 
     try {
-      const res = await api.createLiveSession({
+      const res = await teacherApi.createLiveSession({
         title: form.title || (classes.find((c) => c.id === Number(form.class_room_id))?.name ?? "Canlı Ders"),
+        class_room_id: form.class_room_id ? Number(form.class_room_id) : undefined,
         class_id: form.class_room_id ? Number(form.class_room_id) : undefined,
         starts_at: form.scheduled_at,
+        scheduled_at: form.scheduled_at,
         duration_minutes: form.duration_minutes || undefined,
-      } as Parameters<typeof api.createLiveSession>[0]);
+        is_public: form.is_public || !form.class_room_id,
+        subject_tag: form.subject_tag.trim() || undefined,
+      } as Parameters<typeof teacherApi.createLiveSession>[0]);
       const session = ((res as Record<string, unknown>)?.session ?? res) as LiveSession;
       setCreatedUrl((session as Record<string, unknown>)?.daily_room_url as string ?? "");
       setSaved(true);
@@ -149,7 +156,7 @@ export default function CanliDersPage() {
                     </div>
                   )}
                   <button
-                    onClick={() => { setSaved(false); setCreatedUrl(""); setForm({ title: "", class_room_id: "", scheduled_at: "", duration_minutes: 45 }); }}
+                    onClick={() => { setSaved(false); setCreatedUrl(""); setForm({ title: "", class_room_id: "", scheduled_at: "", duration_minutes: 45, is_public: false, subject_tag: "" }); }}
                     className="w-full py-3 border-2 border-indigo-200 text-indigo-700 font-bold rounded-xl hover:bg-indigo-50 transition-colors">
                     Yeni Ders Oluştur
                   </button>
@@ -164,12 +171,37 @@ export default function CanliDersPage() {
                       className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-400 outline-none text-sm transition-all" />
                   </div>
                   <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1.5">Konu etiketi (isteğe bağlı)</label>
+                    <input
+                      type="text"
+                      value={form.subject_tag}
+                      onChange={(e) => setForm({ ...form, subject_tag: e.target.value })}
+                      placeholder="Örn: TYT Türkçe"
+                      className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-400 outline-none text-sm transition-all"
+                    />
+                  </div>
+                  <label className="flex cursor-pointer items-center gap-2 text-sm font-medium text-slate-700">
+                    <input
+                      type="checkbox"
+                      checked={form.is_public}
+                      onChange={(e) => setForm({ ...form, is_public: e.target.checked })}
+                      className="h-4 w-4 rounded border-slate-300 text-indigo-600"
+                    />
+                    Tüm öğrencilere açık yayın (sınıf seçilmediyse zorunlu)
+                  </label>
+                  <div>
                     <label className="block text-xs font-bold text-slate-700 mb-1.5">Sınıf / Grup</label>
-                    <select value={form.class_room_id}
+                    <select
+                      value={form.class_room_id}
                       onChange={(e) => setForm({ ...form, class_room_id: e.target.value })}
-                      className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-400 outline-none text-sm transition-all">
+                      className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-400 outline-none text-sm transition-all"
+                    >
                       <option value="">Sınıf seçin (isteğe bağlı)</option>
-                      {classes.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                      {classes.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.name}
+                        </option>
+                      ))}
                     </select>
                   </div>
                   <div className="grid sm:grid-cols-2 gap-4">
@@ -181,7 +213,7 @@ export default function CanliDersPage() {
                     </div>
                     <div>
                       <label className="block text-xs font-bold text-slate-700 mb-1.5">Süre (dk)</label>
-                      <input type="number" min={15} max={180} value={form.duration_minutes}
+                      <input type="number" min={15} max={240} value={form.duration_minutes}
                         onChange={(e) => setForm({ ...form, duration_minutes: Number(e.target.value) })}
                         className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-400 outline-none text-sm transition-all" />
                     </div>
@@ -230,7 +262,10 @@ export default function CanliDersPage() {
                           <p className="font-semibold text-slate-900 text-sm truncate">{l.title}</p>
                           <p className="text-xs text-slate-500 mt-0.5 flex items-center gap-2">
                             <Calendar className="w-3 h-3" />
-                            {fmtDate(l.scheduled_at)}
+                            {fmtDate(l.scheduled_at || l.starts_at)}
+                            {typeof l.attendances_count === "number" && (
+                              <span className="text-slate-400">· {l.attendances_count} katılımcı</span>
+                            )}
                             {l.duration_minutes && (
                               <span className="flex items-center gap-1">
                                 <Clock className="w-3 h-3" />{l.duration_minutes} dk
@@ -246,9 +281,53 @@ export default function CanliDersPage() {
                               <Copy className="w-3.5 h-3.5" />
                             </button>
                           )}
+                          {l.status === "scheduled" && (
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                setActionId(l.id);
+                                try {
+                                  await teacherApi.goLiveSession(l.id);
+                                  await loadLessons();
+                                } catch (e) {
+                                  setError((e as Error).message || "Yayın başlatılamadı");
+                                } finally {
+                                  setActionId(null);
+                                }
+                              }}
+                              disabled={actionId === l.id}
+                              className="px-2.5 py-1.5 rounded-lg bg-amber-500 text-white text-[11px] font-bold hover:bg-amber-600 disabled:opacity-60"
+                            >
+                              {actionId === l.id ? "…" : "Yayına başlat"}
+                            </button>
+                          )}
+                          {l.status === "live" && (
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                setActionId(l.id);
+                                try {
+                                  await teacherApi.endLiveSession(l.id);
+                                  await loadLessons();
+                                } catch (e) {
+                                  setError((e as Error).message || "Ders bitirilemedi");
+                                } finally {
+                                  setActionId(null);
+                                }
+                              }}
+                              disabled={actionId === l.id}
+                              className="px-2.5 py-1.5 rounded-lg bg-slate-700 text-white text-[11px] font-bold hover:bg-slate-800 disabled:opacity-60"
+                            >
+                              {actionId === l.id ? "…" : "Bitir"}
+                            </button>
+                          )}
                           {l.status === "live" && l.daily_room_url && (
-                            <a href={l.daily_room_url} target="_blank" rel="noopener noreferrer"
-                              className="flex items-center gap-1 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-colors">
+                            <a
+                              href={l.daily_room_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-1 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-colors"
+                            >
                               <Play className="w-3 h-3" fill="white" /> Katıl
                             </a>
                           )}
@@ -271,7 +350,7 @@ export default function CanliDersPage() {
                     <div key={l.id} className="flex items-center justify-between px-5 py-3.5 hover:bg-slate-50 transition-colors">
                       <div>
                         <p className="font-semibold text-slate-700 text-sm">{l.title}</p>
-                        <p className="text-xs text-slate-400">{fmtDate(l.scheduled_at)}</p>
+                        <p className="text-xs text-slate-400">{fmtDate(l.scheduled_at || l.starts_at)}</p>
                       </div>
                       <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700">
                         Tamamlandı

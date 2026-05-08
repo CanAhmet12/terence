@@ -46,12 +46,12 @@ export default function AdminSorularPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await api.getQuestions({
+      const res = await api.getAdminQuestions({
         search: debouncedSearch || undefined,
         difficulty: difficulty || undefined,
         per_page: 20,
         page,
-      } as Parameters<typeof api.getQuestions>[0]);
+      });
       const resObj = res as Record<string, unknown>;
       const metaObj = (resObj.meta as Record<string, number>) ?? {};
       setQuestions(Array.isArray(resObj.data) ? resObj.data as Question[] : []);

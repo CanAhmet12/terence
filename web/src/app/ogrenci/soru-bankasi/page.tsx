@@ -3,9 +3,16 @@
 import dynamic from "next/dynamic";
 
 const Library3D = dynamic(() => import("@/components/Library3D"), { ssr: false });
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, Suspense, useMemo } from "react";
+import { useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
-import { api, Question, AnswerResult } from "@/lib/api";
+import { api, Question, AnswerResult, type QuestionBankSummary, type ExamSession, type StudyPlan, type WeakAchievement } from "@/lib/api";
+import { QuestionBankHero } from "@/components/ogrenci/soru-bankasi/QuestionBankHero";
+import { QuestionBankKpiStrip } from "@/components/ogrenci/soru-bankasi/QuestionBankKpiStrip";
+import { SubjectBankCarousel } from "@/components/ogrenci/soru-bankasi/SubjectBankCarousel";
+import { QuestionBankSidebar } from "@/components/ogrenci/soru-bankasi/QuestionBankSidebar";
+import { QuestionBankStudyModes } from "@/components/ogrenci/soru-bankasi/QuestionBankStudyModes";
+import { StudyMotivationBanner } from "@/components/ogrenci/soru-bankasi/StudyMotivationBanner";
 import { Loader2, Mic, MicOff, Volume2, Sparkles, X, Bot, AlertCircle } from "lucide-react";
 
 function Skeleton({ className }: { className?: string }) {
@@ -228,11 +235,53 @@ const SUBJECT_COLORS: Record<string, string> = {
 };
 
 export default function SoruBankasiPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-[40vh] items-center justify-center p-8 text-slate-500">
+          <Loader2 className="h-8 w-8 animate-spin" aria-hidden />
+        </div>
+      }
+    >
+      <SoruBankasiPageWithSearchParams />
+    </Suspense>
+  );
+}
+
+function SoruBankasiPageWithSearchParams() {
+  const searchParams = useSearchParams();
+  return (
+    <SoruBankasiPageInner
+      kazanimFromUrl={searchParams.get("kazanim_code") ?? ""}
+      topicFromUrl={searchParams.get("topic") ?? ""}
+    />
+  );
+}
+
+function SoruBankasiPageInner({
+  kazanimFromUrl,
+  topicFromUrl,
+}: {
+  kazanimFromUrl: string;
+  topicFromUrl: string;
+}) {
   const { token } = useAuth();
+  const urlSeedDone = useRef(false);
+
   const [availableSubjects, setAvailableSubjects] = useState<string[]>([]);
   const [subjectsByExamType, setSubjectsByExamType] = useState<Record<string, string[]>>({});
   const [examTabs, setExamTabs] = useState<string[]>(["ALL"]);
   const [activeExamTab, setActiveExamTab] = useState<string>("ALL");
+  const [scopeMode, setScopeMode] = useState<"class" | "exam">("exam");
+  const effectiveExamTab = scopeMode === "class" ? "ALL" : activeExamTab;
+
+  const [bankSummary, setBankSummary] = useState<QuestionBankSummary | null>(null);
+  const [bankSummaryLoading, setBankSummaryLoading] = useState(false);
+  const [sidebarLoading, setSidebarLoading] = useState(true);
+  const [weakPreview, setWeakPreview] = useState<WeakAchievement[]>([]);
+  const [examHistory, setExamHistory] = useState<ExamSession[]>([]);
+  const [todayPlan, setTodayPlan] = useState<StudyPlan | null>(null);
+  const [timedRemaining, setTimedRemaining] = useState<number | null>(null);
 
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(true);
@@ -242,7 +291,7 @@ export default function SoruBankasiPage() {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
   const [selectedAnswers, setSelectedAnswers] = useState<Record<number, string>>({});
-  const [answerResults, setAnswerResults] = useState<Record<number, AnswerResult & { selected: string }>>({});
+  const [answerResults, setAnswerResults] = useState<Record<number, AnswerResult & { selected: string; solution_video?: string }>>({});
   const [loadingSimilar, setLoadingSimilar] = useState<number | null>(null);
   const [answeringId, setAnsweringId] = useState<number | null>(null);
   const searchTimer = useRef<NodeJS.Timeout | null>(null);
@@ -250,32 +299,65 @@ export default function SoruBankasiPage() {
   const [showVoice, setShowVoice] = useState(false);
   const [showPersonalTest, setShowPersonalTest] = useState(false);
   const [selectedLibrarySubject, setSelectedLibrarySubject] = useState<string | null>(null);
+  const [bookModalSubject, setBookModalSubject] = useState<string | null>(null);
+  const [bookModalTitle, setBookModalTitle] = useState<string>("");
 
-  const loadQuestions = useCallback(async (kazanim?: string, diff?: string, subj?: string, p = 1, examType?: string) => {
-    if (!token) { setLoading(false); return; }
-    setLoading(true);
-    try {
-      const params: Record<string, string | number> = { per_page: 20, page: p };
-      if (kazanim) params.kazanim_code = kazanim;
-      if (diff) params.difficulty = diff;
-      if (subj) params.subject = subj;
-      if (examType && examType !== "ALL" && examType !== "ORTAK") params.exam_type = examType;
-      const res = await api.getQuestions(params as Record<string, unknown>);
-      const resData = Array.isArray((res as Record<string, unknown>).data) ? (res as Record<string, unknown>).data as Question[] : Array.isArray(res) ? res as Question[] : [];
-      if (p === 1) {
-        setQuestions(resData);
-      } else {
-        setQuestions((prev) => [...prev, ...resData]);
+  type LoadQOpts = {
+    page?: number;
+    q?: string;
+    kazanimCode?: string;
+    difficulty?: string;
+    subject?: string;
+    examType?: string;
+    perPage?: number;
+  };
+
+  const loadQuestions = useCallback(
+    async ({
+      page = 1,
+      q,
+      kazanimCode,
+      difficulty: diff,
+      subject: subj,
+      examType,
+      perPage = 20,
+    }: LoadQOpts): Promise<Question[]> => {
+      if (!token) {
+        setLoading(false);
+        return [];
       }
-      setHasMore(resData.length === 20);
-      const now = Date.now();
-      resData.forEach((q: Question) => { questionStartTimes.current[q.id] = now; });
-    } catch {
-      if (p === 1) setQuestions([]);
-      setHasMore(false);
-    }
-    setLoading(false);
-  }, [token]);
+      setLoading(true);
+      let resData: Question[] = [];
+      try {
+        const params: Record<string, string | number> = { per_page: perPage, page };
+        const qt = (q ?? "").trim();
+        if (qt) params.q = qt;
+        const kz = (kazanimCode ?? "").trim();
+        if (kz) params.kazanim_code = kz;
+        if (diff) params.difficulty = diff;
+        if (subj) params.subject = subj;
+        if (examType && examType !== "ALL" && examType !== "ORTAK") params.exam_type = examType;
+        const res = await api.getQuestions(params);
+        resData = Array.isArray(res.data) ? res.data : [];
+        if (page === 1) {
+          setQuestions(resData);
+        } else {
+          setQuestions((prev) => [...prev, ...resData]);
+        }
+        setHasMore(resData.length === perPage);
+        const now = Date.now();
+        resData.forEach((qst: Question) => {
+          questionStartTimes.current[qst.id] = now;
+        });
+      } catch {
+        if (page === 1) setQuestions([]);
+        setHasMore(false);
+      }
+      setLoading(false);
+      return resData;
+    },
+    [token]
+  );
 
   useEffect(() => {
     let mounted = true;
@@ -320,15 +402,101 @@ export default function SoruBankasiPage() {
     };
   }, []);
 
-  // Debounced arama — filtre değişince page'i sıfırla
+  useEffect(() => {
+    if (!token) {
+      setBankSummary(null);
+      setBankSummaryLoading(false);
+      return;
+    }
+    let cancelled = false;
+    setBankSummaryLoading(true);
+    void api
+      .getBankSummary()
+      .then((s) => {
+        if (!cancelled) setBankSummary(s);
+      })
+      .catch(() => {
+        if (!cancelled) setBankSummary(null);
+      })
+      .finally(() => {
+        if (!cancelled) setBankSummaryLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [token]);
+
+  useEffect(() => {
+    if (!token) {
+      setSidebarLoading(false);
+      return;
+    }
+    let cancelled = false;
+    setSidebarLoading(true);
+    void (async () => {
+      try {
+        const [hist, plan, weak] = await Promise.all([
+          api.getExamHistory().catch(() => [] as ExamSession[]),
+          api.getTodayPlan().catch(() => null),
+          api.getWeakAchievements().catch(() => [] as WeakAchievement[]),
+        ]);
+        if (cancelled) return;
+        setExamHistory(Array.isArray(hist) ? hist : []);
+        setTodayPlan(plan);
+        setWeakPreview(Array.isArray(weak) ? weak : []);
+      } catch {
+        if (!cancelled) {
+          setExamHistory([]);
+          setTodayPlan(null);
+          setWeakPreview([]);
+        }
+      } finally {
+        if (!cancelled) setSidebarLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [token]);
+
+  const timerActive = timedRemaining != null && timedRemaining > 0;
+  useEffect(() => {
+    if (!timerActive) return;
+    const id = window.setInterval(() => {
+      setTimedRemaining((r) => (r == null || r <= 1 ? null : r - 1));
+    }, 1000);
+    return () => window.clearInterval(id);
+  }, [timerActive]);
+
+  // URL: topic → arama kutusu ön doldurma (konu metni `q` ile aranır); kazanim_code API'de ayrı
+  useEffect(() => {
+    if (urlSeedDone.current) return;
+    if (topicFromUrl) {
+      setSearch(topicFromUrl);
+      urlSeedDone.current = true;
+    } else if (kazanimFromUrl) {
+      urlSeedDone.current = true;
+    }
+  }, [topicFromUrl, kazanimFromUrl]);
+
+  // Debounced arama — metin `q`, kazanım URL'den
   useEffect(() => {
     setPage(1);
     if (searchTimer.current) clearTimeout(searchTimer.current);
     searchTimer.current = setTimeout(() => {
-      loadQuestions(search, difficulty, subject, 1, activeExamTab);
+      loadQuestions({
+        page: 1,
+        q: search,
+        kazanimCode: kazanimFromUrl || undefined,
+        difficulty: difficulty || undefined,
+        subject: subject || undefined,
+        examType: effectiveExamTab,
+      });
     }, 400);
-    return () => { if (searchTimer.current) clearTimeout(searchTimer.current); };
-  }, [search, difficulty, subject, activeExamTab, loadQuestions]);
+    return () => {
+      if (searchTimer.current) clearTimeout(searchTimer.current);
+    };
+  }, [search, difficulty, subject, effectiveExamTab, kazanimFromUrl, loadQuestions]);
 
   const handleAnswer = async (question: Question, optionLetter: string) => {
     if (!token) return;
@@ -350,6 +518,7 @@ export default function SoruBankasiPage() {
         ...prev,
         [question.id]: { ...result, selected: optionLetter },
       }));
+      void api.getBankSummary().then(setBankSummary).catch(() => {});
     } catch {
       setAnswerResults((prev) => ({
         ...prev,
@@ -373,7 +542,9 @@ export default function SoruBankasiPage() {
           return next;
         });
       }
-    } catch {}
+    } catch (e) {
+      console.error("getSimilarQuestions", e);
+    }
     setLoadingSimilar(null);
   };
 
@@ -382,28 +553,23 @@ export default function SoruBankasiPage() {
 
   // 3D Kütüphane için kitap listesi: her ders bir kitap
   const subjectOptions = availableSubjects.length > 0
-    ? [{ value: "", label: "Tüm Dersler" }, ...(activeExamTab === "ALL"
+    ? [{ value: "", label: "Tüm Dersler" }, ...(effectiveExamTab === "ALL"
       ? availableSubjects
-      : activeExamTab === "ORTAK"
+      : effectiveExamTab === "ORTAK"
         ? Array.from(new Set([...(subjectsByExamType["Genel"] ?? []), ...(subjectsByExamType["all"] ?? []), ...(subjectsByExamType["TYT-AYT"] ?? [])]))
-        : (subjectsByExamType[activeExamTab] ?? [])
+        : (subjectsByExamType[effectiveExamTab] ?? [])
     ).map((subjectName) => ({ value: subjectName, label: subjectName }))]
     : DEFAULT_SUBJECT_OPTIONS;
 
+  const sessionAccuracyPct =
+    answeredCount > 0 ? Math.round((correctCount / Math.max(answeredCount, 1)) * 100) : 0;
   const libraryBooks = subjectOptions.filter((s) => s.value !== "").map((s, i) => ({
     id: i + 1,
     title: s.label,
     subject: s.value,
     color: SUBJECT_COLORS[s.value] ?? SUBJECT_COLORS.default,
-    progress: Math.round(
-      Object.values(answerResults).filter(() => true).length > 0
-        ? (correctCount / Math.max(answeredCount, 1)) * 100
-        : Math.floor(Math.random() * 40)
-    ),
+    progress: sessionAccuracyPct,
   }));
-
-  const [bookModalSubject, setBookModalSubject] = useState<string | null>(null);
-  const [bookModalTitle, setBookModalTitle]     = useState<string>("");
 
   const handleLibraryBookClick = (bookId: number) => {
     const book = libraryBooks.find((b) => b.id === bookId);
@@ -413,95 +579,161 @@ export default function SoruBankasiPage() {
     setBookModalTitle(book.title);
     setSelectedLibrarySubject(book.subject);
     setSubject(book.subject);
-    // Soruları yükle
-    loadQuestions(undefined, undefined, book.subject, 1);
+    loadQuestions({
+      page: 1,
+      subject: book.subject,
+      q: search.trim() || undefined,
+      kazanimCode: kazanimFromUrl || undefined,
+      difficulty: difficulty || undefined,
+      examType: effectiveExamTab,
+    });
   };
+
+  const adaptiveHint = useMemo(() => {
+    if (answeredCount < 3) return "Üç sorudan sonra bu oturum için kısa zorluk önerisi görünür.";
+    const ratio = correctCount / Math.max(answeredCount, 1);
+    if (ratio >= 0.78) return "Yüksek doğruluk: bir üst zorluk veya süreli pratik deneyebilirsin.";
+    if (ratio >= 0.48) return "Dengeli gidiyorsun; kazanım seti veya tek konu derinleştirmesi iyi olur.";
+    return "Bu oturumda doğruluk düşük; kolay sorular ve kazanım setine yönel.";
+  }, [answeredCount, correctCount]);
+
+  const onQuick10 = useCallback(async () => {
+    const rows = await loadQuestions({
+      page: 1,
+      perPage: 10,
+      q: search,
+      kazanimCode: kazanimFromUrl || undefined,
+      difficulty: difficulty || undefined,
+      subject: subject || undefined,
+      examType: effectiveExamTab,
+    });
+    if (rows.length) {
+      setBookModalSubject(rows[0].subject ?? "Matematik");
+      setBookModalTitle("Hızlı 10");
+      setSelectedLibrarySubject(rows[0].subject ?? null);
+    }
+  }, [loadQuestions, search, kazanimFromUrl, difficulty, subject, effectiveExamTab]);
+
+  const onWeakFocus = useCallback(async () => {
+    try {
+      const wa = await api.getWeakAchievements();
+      const first = Array.isArray(wa) ? wa[0] : undefined;
+      if (!first?.kod) return;
+      const rows = await loadQuestions({
+        page: 1,
+        kazanimCode: first.kod,
+        examType: effectiveExamTab,
+      });
+      if (rows.length) {
+        setBookModalSubject(rows[0].subject ?? first.subject ?? "Matematik");
+        setBookModalTitle(first.konu ?? "Kazanım seti");
+      }
+    } catch {
+      /* ignore */
+    }
+  }, [loadQuestions, effectiveExamTab]);
+
+  const onTimedPractice = useCallback(() => {
+    setTimedRemaining(300);
+    void loadQuestions({
+      page: 1,
+      perPage: 15,
+      q: search,
+      kazanimCode: kazanimFromUrl || undefined,
+      difficulty: difficulty || undefined,
+      subject: subject || undefined,
+      examType: effectiveExamTab,
+    });
+  }, [loadQuestions, search, kazanimFromUrl, difficulty, subject, effectiveExamTab]);
 
   return (
     <div className="p-6 lg:p-8">
-      {/* Başlık */}
-      <div className="mb-6 flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Soru Bankası</h1>
-          <p className="text-slate-500 mt-1 text-sm">Kategoriye göre ders seç → soruları çöz → anında doğrula</p>
-        </div>
-        <div className="flex items-center gap-2 shrink-0 flex-wrap">
-          <button
-            onClick={() => setShowVoice(true)}
-            className="flex items-center gap-2 px-4 py-2.5 border border-teal-200 bg-teal-50 hover:bg-teal-100 text-teal-700 font-semibold text-sm rounded-xl transition-colors"
-          >
-            <Mic className="w-4 h-4" />
-            <span className="hidden sm:inline">Sesli Çöz</span>
-          </button>
-          <button
-            onClick={() => setShowPersonalTest(true)}
-            className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-700 hover:to-purple-600 text-white font-semibold text-sm rounded-xl transition-all shadow-sm shadow-purple-500/20"
-          >
-            <Sparkles className="w-4 h-4" />
-            <span className="hidden sm:inline">Bana Özel Test</span>
-          </button>
-        </div>
-      </div>
-      {examTabs.length > 1 && (
-        <div className="mb-4 flex flex-wrap gap-2">
-          {examTabs.map((tab) => (
-            <button
-              key={tab}
-              onClick={() => {
-                setActiveExamTab(tab);
-                setSubject("");
-                setSelectedLibrarySubject(null);
-              }}
-              className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
-                activeExamTab === tab
-                  ? "bg-teal-600 text-white border-teal-600"
-                  : "bg-white text-slate-600 border-slate-200 hover:border-slate-300"
-              }`}
-            >
-              {tab === "ORTAK" ? "Ortak" : tab}
-            </button>
-          ))}
+      <QuestionBankHero
+        scopeMode={scopeMode}
+        onScopeModeChange={(m) => {
+          setScopeMode(m);
+          if (m === "class") {
+            setActiveExamTab("ALL");
+            setSubject("");
+            setSelectedLibrarySubject(null);
+          }
+        }}
+        examTabs={examTabs}
+        activeExamTab={activeExamTab}
+        onExamTabChange={(tab) => {
+          setActiveExamTab(tab);
+          setSubject("");
+          setSelectedLibrarySubject(null);
+        }}
+        onOpenVoice={() => setShowVoice(true)}
+        onOpenPersonalTest={() => setShowPersonalTest(true)}
+      />
+
+      {typeof timedRemaining === "number" && timedRemaining > 0 && (
+        <div
+          className="mb-4 rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm font-medium text-indigo-900"
+          role="status"
+          aria-live="polite"
+        >
+          Süreli pratik: kalan {timedRemaining} sn
         </div>
       )}
 
-      {/* İstatistik bandı */}
-      {answeredCount > 0 && (
-        <div className="mb-6 flex items-center gap-6 p-4 bg-white rounded-2xl border border-slate-200 shadow-sm flex-wrap">
-          {[
-            { label: "Cevaplanan", value: answeredCount, color: "text-slate-900" },
-            { label: "Doğru", value: correctCount, color: "text-teal-600" },
-            { label: "Yanlış", value: answeredCount - correctCount, color: "text-red-500" },
-            { label: "Net", value: (correctCount - (answeredCount - correctCount) / 4).toFixed(2), color: "text-indigo-600" },
-          ].map(({ label, value, color }) => (
-            <div key={label}>
-              <p className="text-xs text-slate-500 font-medium">{label}</p>
-              <p className={`text-xl font-bold ${color}`}>{value}</p>
+      <div className="mt-6 grid gap-8 lg:grid-cols-[minmax(0,1fr)_300px]">
+        <div className="space-y-6">
+          <QuestionBankKpiStrip summary={bankSummary} loading={bankSummaryLoading} />
+          <QuestionBankStudyModes
+            adaptiveHint={adaptiveHint}
+            onQuick10={onQuick10}
+            onWeakFocus={onWeakFocus}
+            onTimedPractice={onTimedPractice}
+            disabled={loading || !token}
+          />
+          <SubjectBankCarousel subjects={bankSummary?.subjects ?? []} />
+
+          {answeredCount > 0 && (
+            <div className="flex flex-wrap items-center gap-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+              {[
+                { label: "Cevaplanan", value: answeredCount, color: "text-slate-900" },
+                { label: "Doğru", value: correctCount, color: "text-teal-600" },
+                { label: "Yanlış", value: answeredCount - correctCount, color: "text-red-500" },
+                { label: "Net", value: (correctCount - (answeredCount - correctCount) / 4).toFixed(2), color: "text-indigo-600" },
+              ].map(({ label, value, color }) => (
+                <div key={label}>
+                  <p className="text-xs font-medium text-slate-500">{label}</p>
+                  <p className={`text-xl font-bold ${color}`}>{value}</p>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-      )}
+          )}
 
-      {/* 3D Kütüphane */}
-      <div className="rounded-2xl overflow-hidden border border-slate-700/40 shadow-2xl mb-6">
-        <Library3D
-          books={libraryBooks}
-          onBookClick={handleLibraryBookClick}
-        />
-      </div>
-
-      {/* Alt istatistikler */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        {[
-          { label: "Toplam Ders", value: libraryBooks.length, color: "text-teal-600", bg: "bg-teal-50", border: "border-teal-100" },
-          { label: "Çözülen Soru", value: answeredCount, color: "text-blue-600", bg: "bg-blue-50", border: "border-blue-100" },
-          { label: "Doğru Cevap", value: correctCount, color: "text-emerald-600", bg: "bg-emerald-50", border: "border-emerald-100" },
-          { label: "Başarı Oranı", value: answeredCount > 0 ? `%${Math.round((correctCount/answeredCount)*100)}` : "—", color: "text-purple-600", bg: "bg-purple-50", border: "border-purple-100" },
-        ].map(({ label, value, color, bg, border }) => (
-          <div key={label} className={`${bg} rounded-2xl p-4 border ${border} shadow-sm`}>
-            <p className="text-xs text-slate-500 font-medium">{label}</p>
-            <p className={`text-2xl font-bold mt-1 ${color}`}>{value}</p>
+          <div className="overflow-hidden rounded-2xl border border-slate-700/40 shadow-2xl">
+            <Library3D books={libraryBooks} onBookClick={handleLibraryBookClick} />
           </div>
-        ))}
+
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+            {[
+              { label: "Toplam ders", value: libraryBooks.length, color: "text-teal-600", bg: "bg-teal-50", border: "border-teal-100" },
+              { label: "Çözülen soru", value: answeredCount, color: "text-blue-600", bg: "bg-blue-50", border: "border-blue-100" },
+              { label: "Doğru cevap", value: correctCount, color: "text-emerald-600", bg: "bg-emerald-50", border: "border-emerald-100" },
+              { label: "Başarı oranı", value: answeredCount > 0 ? `%${Math.round((correctCount / answeredCount) * 100)}` : "—", color: "text-purple-600", bg: "bg-purple-50", border: "border-purple-100" },
+            ].map(({ label, value, color, bg, border }) => (
+              <div key={label} className={`rounded-2xl border p-4 shadow-sm ${bg} ${border}`}>
+                <p className="text-xs font-medium text-slate-500">{label}</p>
+                <p className={`mt-1 text-2xl font-bold ${color}`}>{value}</p>
+              </div>
+            ))}
+          </div>
+
+          <StudyMotivationBanner onStartQuick={onQuick10} />
+        </div>
+
+        <QuestionBankSidebar
+          weakPreview={weakPreview}
+          examHistory={examHistory}
+          todayPlan={todayPlan}
+          loading={sidebarLoading}
+        />
       </div>
 
       {/* Sesli Asistan Modal */}
@@ -534,7 +766,9 @@ export default function SoruBankasiPage() {
           answerResults={answerResults}
           selectedAnswers={selectedAnswers}
           answeringId={answeringId}
+          loadingSimilar={loadingSimilar}
           onAnswer={handleAnswer}
+          onSimilar={handleSimilar}
           onClose={() => setBookModalSubject(null)}
         />
       )}
@@ -688,16 +922,19 @@ const DIFF_COLORS: Record<string, { dot: string; label: string }> = {
 function BookQuestionsModal({
   subject, title, questions, loading,
   answerResults, selectedAnswers, answeringId,
-  onAnswer, onClose,
+  loadingSimilar,
+  onAnswer, onSimilar, onClose,
 }: {
   subject: string;
   title: string;
   questions: Question[];
   loading: boolean;
-  answerResults: Record<number, AnswerResult & { selected: string }>;
+  answerResults: Record<number, AnswerResult & { selected: string; solution_video?: string }>;
   selectedAnswers: Record<number, string>;
   answeringId: number | null;
+  loadingSimilar?: number | null;
   onAnswer: (q: Question, opt: string) => void;
+  onSimilar?: (questionId: number) => void;
   onClose: () => void;
 }) {
   const [currentPage, setCurrentPage] = useState(0)
@@ -710,6 +947,9 @@ function BookQuestionsModal({
 
   return (
     <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="book-modal-title"
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
       style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)' }}
       onClick={(e) => e.target === e.currentTarget && onClose()}
@@ -881,7 +1121,7 @@ function BookQuestionsModal({
                 {subject.slice(0, 2).toUpperCase()}
               </div>
               <div>
-                <div style={{ fontSize: '15px', fontWeight: 800, color: '#1e293b' }}>
+                <div style={{ fontSize: '15px', fontWeight: 800, color: '#1e293b' }} id="book-modal-title">
                   {title} — Sorular
                 </div>
                 <div style={{ fontSize: '11px', color: '#94a3b8' }}>
@@ -1015,6 +1255,8 @@ function BookQuestionsModal({
                           return (
                             <button
                               key={opt.id}
+                              type="button"
+                              aria-label={`Şık ${opt.option_letter}: ${opt.option_text}`}
                               disabled={!!result || answeringId === soru.id}
                               onClick={() => onAnswer(soru, opt.option_letter)}
                               style={{
@@ -1054,6 +1296,46 @@ function BookQuestionsModal({
                           <p style={{ fontSize: '12px', color: '#92400e', fontWeight: 600 }}>
                             💡 {result.explanation}
                           </p>
+                        </div>
+                      )}
+                      {result?.solution_video && (
+                        <div style={{ marginTop: '10px' }}>
+                          <a
+                            href={result.solution_video}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{
+                              display: 'inline-block',
+                              fontSize: '12px',
+                              fontWeight: 700,
+                              color: theme.spine,
+                              textDecoration: 'underline',
+                            }}
+                          >
+                            Video çözümü aç
+                          </a>
+                        </div>
+                      )}
+                      {result && onSimilar && (
+                        <div style={{ marginTop: '10px' }}>
+                          <button
+                            type="button"
+                            onClick={() => onSimilar(soru.id)}
+                            disabled={loadingSimilar === soru.id}
+                            style={{
+                              padding: '8px 14px',
+                              fontSize: '12px',
+                              fontWeight: 700,
+                              borderRadius: '8px',
+                              border: `1px solid ${theme.spine}`,
+                              background: '#fff',
+                              color: theme.spine,
+                              cursor: loadingSimilar === soru.id ? 'wait' : 'pointer',
+                              opacity: loadingSimilar === soru.id ? 0.7 : 1,
+                            }}
+                          >
+                            {loadingSimilar === soru.id ? 'Benzer sorular yükleniyor…' : 'Benzer sorular'}
+                          </button>
                         </div>
                       )}
                     </div>

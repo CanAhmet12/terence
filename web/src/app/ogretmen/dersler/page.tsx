@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
-import { api, Course, CourseUnit } from "@/lib/api";
+import { api, Course, CourseUnit, CourseTopic, ContentItem } from "@/lib/api";
 import { BookOpen, ChevronDown, ChevronRight, Play, FileText, RefreshCw, BarChart3, AlertCircle } from "lucide-react";
 
 const PROGRESS_COLOR: Record<string, string> = {
@@ -51,8 +51,9 @@ export default function OgretmenDerslerPage() {
     setLoadingUnits(true);
     try {
       const res = await api.getCourseUnits(slug, token ?? undefined);
-      setUnits(Array.isArray(res) ? res as CourseUnit[] : []);
-      if (res.length > 0) setOpenUnitId((res as CourseUnit[])[0].id);
+      const list = Array.isArray(res) ? (res as CourseUnit[]) : [];
+      setUnits(list);
+      if (list.length > 0) setOpenUnitId(list[0].id);
     } catch {
       setUnits([]);
     }
@@ -216,6 +217,10 @@ export default function OgretmenDerslerPage() {
                           <div className="border-t border-slate-100 divide-y divide-slate-50">
                             {topics.map((topic) => {
                               const progColor = PROGRESS_COLOR[topic.progress ?? "not_started"];
+                              const topicExt = topic as CourseTopic & { content_items?: ContentItem[] };
+                              const items = topicExt.contentItems ?? topicExt.content_items ?? [];
+                              const hasVideo = items.some((it) => it.type === "video");
+                              const hasPdf = items.some((it) => it.type === "pdf");
                               return (
                                 <div key={topic.id} className="flex items-center gap-4 px-5 py-3.5 hover:bg-slate-50/50 transition-colors">
                                   <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${progColor}`} />
@@ -229,15 +234,25 @@ export default function OgretmenDerslerPage() {
                                       )}
                                     </div>
                                   </div>
-                                  <div className="flex items-center gap-1.5 shrink-0">
-                                    <span className="flex items-center gap-1 px-2.5 py-1 bg-indigo-50 text-indigo-600 rounded-lg text-xs font-semibold border border-indigo-100">
-                                      <Play className="w-3 h-3" /> Video
-                                    </span>
-                                    <span className="flex items-center gap-1 px-2.5 py-1 bg-sky-50 text-sky-600 rounded-lg text-xs font-semibold border border-sky-100">
-                                      <FileText className="w-3 h-3" /> PDF
-                                    </span>
-                                    <Link href={`/ogretmen/analiz`}
-                                      className="flex items-center gap-1 px-2.5 py-1 bg-slate-100 text-slate-600 rounded-lg text-xs font-semibold hover:bg-slate-200 transition-colors">
+                                  <div className="flex flex-wrap items-center justify-end gap-1.5 shrink-0">
+                                    {hasVideo ? (
+                                      <span className="flex items-center gap-1 px-2.5 py-1 bg-indigo-50 text-indigo-600 rounded-lg text-xs font-semibold border border-indigo-100">
+                                        <Play className="w-3 h-3" /> Video
+                                      </span>
+                                    ) : (
+                                      <span className="rounded-lg border border-slate-100 bg-slate-50 px-2.5 py-1 text-[11px] font-medium text-slate-400">Video yok</span>
+                                    )}
+                                    {hasPdf ? (
+                                      <span className="flex items-center gap-1 px-2.5 py-1 bg-sky-50 text-sky-600 rounded-lg text-xs font-semibold border border-sky-100">
+                                        <FileText className="w-3 h-3" /> PDF
+                                      </span>
+                                    ) : (
+                                      <span className="rounded-lg border border-slate-100 bg-slate-50 px-2.5 py-1 text-[11px] font-medium text-slate-400">PDF yok</span>
+                                    )}
+                                    <Link
+                                      href={`/ogretmen/analiz?course=${encodeURIComponent(selectedCourse?.slug ?? "")}&topic=${topic.id}`}
+                                      className="flex items-center gap-1 px-2.5 py-1 bg-slate-100 text-slate-600 rounded-lg text-xs font-semibold hover:bg-slate-200 transition-colors"
+                                    >
                                       <BarChart3 className="w-3 h-3" /> Analiz
                                     </Link>
                                   </div>

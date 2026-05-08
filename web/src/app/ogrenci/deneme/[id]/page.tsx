@@ -5,6 +5,7 @@ import { useRouter, useParams } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { api, ExamQuestion } from "@/lib/api";
 import { Flag, ChevronLeft, ChevronRight, Clock, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
+import toast from "react-hot-toast";
 
 function formatTime(seconds: number) {
   const h = Math.floor(seconds / 3600);
@@ -59,8 +60,7 @@ export default function ExamSessionPage() {
     // 2. localStorage yoksa → API'den sonuç kontrol et
     try {
       const res = await api.getExamResult(sessionId);
-      const resObj = res as Record<string, unknown>;
-      if (resObj?.result ? (resObj.result as Record<string, unknown>)?.status === "completed" : resObj?.status === "completed") {
+      if (res?.status === "completed") {
         router.replace(`/ogrenci/deneme/${sessionId}/sonuc`);
         return;
       }
@@ -118,28 +118,54 @@ export default function ExamSessionPage() {
     const question = questions[currentIdx];
     if (!question || !token) return;
     const prev = answers[question.id];
-    setAnswers((a) => ({ ...a, [question.id]: letter === prev ? null : letter }));
+    const cleared = letter === prev;
+    const nextLetter = cleared ? null : letter;
+    setAnswers((a) => ({ ...a, [question.id]: nextLetter }));
 
     const startTime = questionStartTimes.current[question.id] ?? Date.now();
     const timeSpent = Math.round((Date.now() - startTime) / 1000);
-    api.answerExamQuestion(sessionId, {
-      question_id: question.id,
-      answer: letter === prev ? '' : letter,
-    } as Parameters<typeof api.answerExamQuestion>[1]).catch(() => {});
+    const wasFlagged = flagged.has(question.id);
+    try {
+      await api.answerExamQuestion(sessionId, {
+        question_id: question.id,
+        selected_option: nextLetter,
+        is_flagged: wasFlagged,
+        time_spent_seconds: timeSpent,
+      });
+    } catch {
+      toast.error("Cevabınız kaydedilemedi. İnternet bağlantınızı kontrol edin.");
+      setAnswers((a) => ({ ...a, [question.id]: prev }));
+    }
   };
 
-  const toggleFlag = (questionId: number) => {
+  const toggleFlag = async (questionId: number) => {
     if (!token) return;
+    const willFlag = !flagged.has(questionId);
     setFlagged((f) => {
       const next = new Set(f);
-      if (next.has(questionId)) next.delete(questionId);
-      else next.add(questionId);
+      if (willFlag) next.add(questionId);
+      else next.delete(questionId);
       return next;
     });
-    api.answerExamQuestion(sessionId, {
-      question_id: questionId,
-      answer: flagged.has(questionId) ? '' : 'flagged',
-    } as Parameters<typeof api.answerExamQuestion>[1]).catch(() => {});
+    const selected = answers[questionId] ?? null;
+    const startTime = questionStartTimes.current[questionId] ?? Date.now();
+    const timeSpent = Math.round((Date.now() - startTime) / 1000);
+    try {
+      await api.answerExamQuestion(sessionId, {
+        question_id: questionId,
+        selected_option: selected,
+        is_flagged: willFlag,
+        time_spent_seconds: timeSpent,
+      });
+    } catch {
+      toast.error("İşaret kaydedilemedi.");
+      setFlagged((f) => {
+        const next = new Set(f);
+        if (willFlag) next.delete(questionId);
+        else next.add(questionId);
+        return next;
+      });
+    }
   };
 
   const handleFinish = async () => {
@@ -149,7 +175,7 @@ export default function ExamSessionPage() {
     if (!token) return;
     try {
       const result = await api.finishExam(sessionId);
-      const resultId = (result as Record<string, unknown>)?.session_id ?? (result as Record<string, unknown>)?.id ?? sessionId;
+      const resultId = result.id || sessionId;
       localStorage.removeItem(`exam_questions_${sessionId}`);
       router.push(`/ogrenci/deneme/${resultId}/sonuc`);
     } catch (err: unknown) {

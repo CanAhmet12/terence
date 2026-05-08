@@ -3,13 +3,14 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, X, Users, BarChart3, Bell, ChevronLeft, UserCircle, Settings } from "lucide-react";
+import { Menu, X, Users, BarChart3, Bell, ChevronLeft, UserCircle, Settings, ClipboardList } from "lucide-react";
 import Image from "next/image";
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 
 const veliNav = [
   { href: "/veli", icon: Users, label: "Çocuklarım" },
+  { href: "/veli/denemeler", icon: ClipboardList, label: "Denemeler" },
   { href: "/veli/rapor", icon: BarChart3, label: "Raporlar" },
   { href: "/veli/bildirimler", icon: Bell, label: "Bildirimler" },
   { href: "/veli/bildirim", icon: Settings, label: "Bildirim Ayarları" },

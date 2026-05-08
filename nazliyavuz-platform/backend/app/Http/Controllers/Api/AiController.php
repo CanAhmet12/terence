@@ -166,16 +166,19 @@ class AiController extends Controller
         $count      = $request->count ?? 10;
         $difficulty = $request->difficulty ?? 'mixed';
 
-        // Get weak achievement codes from this user's wrong answers
-        $weakKazanimIds = QuestionAnswer::where('user_id', $user->id)
-            ->where('is_correct', false)
-            ->select('question_id', DB::raw('COUNT(*) as wrong_count'))
-            ->groupBy('question_id')
-            ->orderByDesc('wrong_count')
-            ->limit(50)
-            ->pluck('question_id');
+        $q = Question::where('is_active', true)->with([
+            'options:id,question_id,option_letter,option_text,option_image_url,is_correct',
+        ]);
 
-        $q = Question::where('is_active', true);
+        if ($user && $user->isStudent()) {
+            $scope = $user->learningScope();
+            $allowedExamTypes = $user->allowedExamTypes();
+            $q->where('grade', $scope['grade'])
+                ->where(function ($scopeQuery) use ($allowedExamTypes) {
+                    $scopeQuery->whereIn('exam_type', $allowedExamTypes)
+                        ->orWhere('exam_type', 'Genel');
+                });
+        }
 
         if ($subject) {
             $q->where('subject', $subject);
@@ -184,12 +187,21 @@ class AiController extends Controller
             $q->where('difficulty', $difficulty);
         }
 
+        // Get weak question ids from this user's wrong answers
+        $weakQuestionIds = QuestionAnswer::where('user_id', $user->id)
+            ->where('is_correct', false)
+            ->select('question_id', DB::raw('COUNT(*) as wrong_count'))
+            ->groupBy('question_id')
+            ->orderByDesc('wrong_count')
+            ->limit(50)
+            ->pluck('question_id');
+
         // Prioritize questions from weak areas
-        if ($weakKazanimIds->isNotEmpty()) {
-            $weakQ = (clone $q)->whereIn('id', $weakKazanimIds)->limit($count)->get();
+        if ($weakQuestionIds->isNotEmpty()) {
+            $weakQ = (clone $q)->whereIn('id', $weakQuestionIds)->limit($count)->get();
             if ($weakQ->count() < $count) {
                 $remaining = $count - $weakQ->count();
-                $otherQ = (clone $q)->whereNotIn('id', $weakKazanimIds)->inRandomOrder()->limit($remaining)->get();
+                $otherQ = (clone $q)->whereNotIn('id', $weakQuestionIds)->inRandomOrder()->limit($remaining)->get();
                 $questions = $weakQ->concat($otherQ);
             } else {
                 $questions = $weakQ;
@@ -198,14 +210,13 @@ class AiController extends Controller
             $questions = $q->inRandomOrder()->limit($count)->get();
         }
 
-        $data = $questions->map(fn($q) => [
-            'id'             => $q->id,
-            'stem'           => $q->stem,
-            'options'        => $q->options,
-            'subject'        => $q->subject,
-            'topic'          => $q->topic,
-            'difficulty'     => $q->difficulty,
-            'kazanim_kodu'   => $q->kazanim_kodu,
+        $data = $questions->map(fn ($row) => [
+            'id'             => $row->id,
+            'question_text'  => $row->question_text,
+            'options'        => $row->options,
+            'subject'        => $row->subject,
+            'difficulty'     => $row->difficulty,
+            'kazanim_code'   => $row->kazanim_code,
         ])->values();
 
         return response()->json(['success' => true, 'data' => $data, 'total' => $data->count()]);
@@ -216,15 +227,15 @@ class AiController extends Controller
     {
         $results = QuestionAnswer::where('is_correct', false)
             ->join('questions', 'question_answers.question_id', '=', 'questions.id')
-            ->whereNotNull('questions.kazanim_kodu')
+            ->whereNotNull('questions.kazanim_code')
             ->select(
-                'questions.kazanim_kodu',
+                'questions.kazanim_code',
                 'questions.subject',
                 DB::raw('COUNT(*) as wrong_count'),
                 DB::raw('COUNT(DISTINCT question_answers.question_id) as question_count'),
                 DB::raw('COUNT(DISTINCT question_answers.user_id) as user_count')
             )
-            ->groupBy('questions.kazanim_kodu', 'questions.subject')
+            ->groupBy('questions.kazanim_code', 'questions.subject')
             ->orderByDesc('wrong_count')
             ->limit(20)
             ->get();
@@ -233,7 +244,7 @@ class AiController extends Controller
 
         $data = $results->map(function ($r) use ($totalAnswers) {
             $totalForKazanim = QuestionAnswer::whereHas('question', function ($q) use ($r) {
-                $q->where('kazanim_kodu', $r->kazanim_kodu);
+                $q->where('kazanim_code', $r->kazanim_code);
             })->count();
 
             $errorRate = $totalForKazanim > 0
@@ -241,7 +252,7 @@ class AiController extends Controller
                 : 0;
 
             return [
-                'kazanim_kodu'   => $r->kazanim_kodu,
+                'kazanim_code'   => $r->kazanim_code,
                 'subject'        => $r->subject,
                 'wrong_count'    => $r->wrong_count,
                 'total_attempts' => $totalForKazanim,

@@ -9,6 +9,7 @@ use App\Models\ExamSession;
 use App\Models\Subscription;
 use App\Models\ContentItem;
 use App\Models\Question;
+use App\Models\QuestionOption;
 use App\Models\AuditLog;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -206,7 +207,7 @@ class AdminController extends Controller
     {
         $q = Question::query();
         if ($request->filled('search')) {
-            $q->where('stem', 'like', '%' . $request->search . '%');
+            $q->where('question_text', 'like', '%' . $request->search . '%');
         }
         if ($request->filled('subject')) {
             $q->where('subject', $request->subject);
@@ -224,19 +225,60 @@ class AdminController extends Controller
 
     public function createQuestion(Request $request): JsonResponse
     {
-        $v = Validator::make($request->all(), [
-            'stem'           => 'required|string',
+        $payload = $request->all();
+        if (! isset($payload['question_text']) && isset($payload['stem'])) {
+            $payload['question_text'] = $payload['stem'];
+        }
+        if (! isset($payload['kazanim_code']) && isset($payload['kazanim_kodu'])) {
+            $payload['kazanim_code'] = $payload['kazanim_kodu'];
+        }
+
+        $v = Validator::make($payload, [
+            'question_text'  => 'required|string',
             'options'        => 'required|array|min:2',
             'correct_option' => 'required|integer|min:0',
             'subject'        => 'required|string',
             'difficulty'     => 'required|in:easy,medium,hard',
-            'kazanim_kodu'   => 'nullable|string|max:50',
+            'kazanim_code'   => 'nullable|string|max:50',
             'explanation'    => 'nullable|string',
+            'grade'          => 'nullable|integer|min:1|max:12',
+            'exam_type'      => 'nullable|string|in:LGS,TYT,AYT,KPSS,Genel,TYT-AYT,all',
         ]);
         if ($v->fails()) {
             return response()->json(['error' => true, 'errors' => $v->errors()], 422);
         }
-        $question = Question::create(array_merge($v->validated(), ['is_active' => true]));
+
+        $data = $v->validated();
+        $optionsRaw = $data['options'];
+        $correctIdx = (int) $data['correct_option'];
+
+        $question = DB::transaction(function () use ($data, $optionsRaw, $correctIdx) {
+            $q = Question::create([
+                'question_text'  => $data['question_text'],
+                'subject'        => $data['subject'],
+                'difficulty'     => $data['difficulty'],
+                'kazanim_code'   => $data['kazanim_code'] ?? null,
+                'solution_text'  => $data['explanation'] ?? null,
+                'grade'          => $data['grade'] ?? null,
+                'exam_type'      => $data['exam_type'] ?? 'Genel',
+                'is_active'      => true,
+            ]);
+
+            foreach ($optionsRaw as $i => $opt) {
+                $letter = chr(65 + $i);
+                $text = is_array($opt) ? (string) ($opt['option_text'] ?? $opt['text'] ?? '') : (string) $opt;
+                QuestionOption::create([
+                    'question_id'   => $q->id,
+                    'option_letter' => $letter,
+                    'option_text'   => $text,
+                    'is_correct'    => $i === $correctIdx,
+                    'sort_order'    => $i,
+                ]);
+            }
+
+            return $q->load('options');
+        });
+
         return response()->json(['success' => true, 'question' => $question], 201);
     }
 
@@ -332,20 +374,20 @@ class AdminController extends Controller
     {
         $results = DB::table('question_answers')
             ->join('questions', 'question_answers.question_id', '=', 'questions.id')
-            ->whereNotNull('questions.kazanim_kodu')
+            ->whereNotNull('questions.kazanim_code')
             ->where('question_answers.is_correct', false)
             ->select(
-                'questions.kazanim_kodu',
+                'questions.kazanim_code',
                 'questions.subject',
                 DB::raw('COUNT(*) as wrong_count'),
                 DB::raw('COUNT(DISTINCT question_answers.user_id) as user_count')
             )
-            ->groupBy('questions.kazanim_kodu', 'questions.subject')
+            ->groupBy('questions.kazanim_code', 'questions.subject')
             ->orderByDesc('wrong_count')
             ->limit(20)
             ->get()
             ->map(fn($r) => [
-                'kazanim_kodu'   => $r->kazanim_kodu,
+                'kazanim_code'   => $r->kazanim_code,
                 'subject'        => $r->subject,
                 'wrong_count'    => $r->wrong_count,
                 'affected_users' => $r->user_count,

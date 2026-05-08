@@ -32,14 +32,17 @@ class CurriculumController extends Controller
 
         $subjects = CurriculumSubject::forUser($grade, $examType)
             ->with(['units' => function ($q) {
-                $q->where('is_active', true)->orderBy('sort_order');
+                $q->where('is_active', true)->orderBy('sort_order')
+                    ->with(['topics' => function ($tq) {
+                        $tq->where('is_active', true)->orderBy('sort_order');
+                    }]);
             }])
             ->get();
 
         // Her ders için tamamlanan konu sayısını hesapla
         $progressMap = [];
         if ($user) {
-            $allTopicIds = $subjects->flatMap(fn($s) => $s->units->flatMap(fn($u) => $u->topics ?? []))->pluck('id')->filter();
+            $allTopicIds = $subjects->flatMap(fn ($s) => $s->units->flatMap(fn ($u) => $u->topics->pluck('id')))->filter();
             $progRows = CurriculumTopicProgress::where('user_id', $user->id)
                 ->where('status', 'completed')
                 ->whereIn('topic_id', $allTopicIds)
@@ -55,11 +58,10 @@ class CurriculumController extends Controller
             $completedTopics = 0;
 
             foreach ($subject->units as $unit) {
-                $topicCount = $unit->topics()->count();
+                $topics = $unit->topics;
+                $topicCount = $topics->count();
                 $totalTopics += $topicCount;
-                $completedTopics += collect(array_keys($progressMap))->filter(function ($topicId) use ($unit) {
-                    return CurriculumTopic::where('id', $topicId)->where('unit_id', $unit->id)->exists();
-                })->count();
+                $completedTopics += $topics->filter(fn ($t) => ($progressMap[$t->id] ?? '') === 'completed')->count();
             }
 
             $data['total_topics']     = $totalTopics;
@@ -153,6 +155,142 @@ class CurriculumController extends Controller
         return response()->json([
             'subject' => $subject->toApiArray(false),
             'units'   => $units,
+        ]);
+    }
+
+    /**
+     * Öğrenci kapsamındaki müfredat medya içeriklerini (video, pdf, text) tek istekte düz listeler.
+     * GET /curriculum/media-catalog
+     */
+    public function mediaCatalog(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        if (! $user || ! $user->isStudent()) {
+            return response()->json([
+                'error'   => true,
+                'code'    => 'FORBIDDEN',
+                'message' => 'Bu uç nokta yalnızca öğrenci hesapları içindir.',
+            ], 403);
+        }
+
+        $scope = $user->learningScope();
+        $grade = $scope['grade'];
+        $examType = $user->allowedExamTypes();
+
+        $subjects = CurriculumSubject::forUser($grade, $examType)
+            ->with([
+                'units' => function ($q) {
+                    $q->where('is_active', true)->orderBy('sort_order')
+                        ->with([
+                            'topics' => function ($tq) {
+                                $tq->where('is_active', true)->orderBy('sort_order')
+                                    ->with([
+                                        'linkedTopic' => function ($ltq) {
+                                            $ltq->with([
+                                                'contentItems' => function ($ciq) {
+                                                    $ciq->where('is_active', true)->orderBy('sort_order');
+                                                },
+                                            ]);
+                                        },
+                                    ]);
+                            },
+                        ]);
+                },
+            ])
+            ->get();
+
+        $allTopicIds = $subjects->flatMap(fn ($s) => $s->units->flatMap(fn ($u) => $u->topics->pluck('id')))->filter()->unique()->values();
+        $progRows = $allTopicIds->isNotEmpty()
+            ? CurriculumTopicProgress::where('user_id', $user->id)
+                ->whereIn('topic_id', $allTopicIds)
+                ->get()
+                ->keyBy('topic_id')
+            : collect();
+
+        $items = [];
+        $countsBySlug = [];
+
+        foreach ($subjects as $subject) {
+            $countsBySlug[$subject->slug] = 0;
+            foreach ($subject->units as $unit) {
+                foreach ($unit->topics as $topic) {
+                    $linked = $topic->linkedTopic;
+                    if (! $linked) {
+                        continue;
+                    }
+                    $topicStatus = ($progRows[$topic->id] ?? null)?->status ?? 'not_started';
+                    foreach ($linked->contentItems as $ci) {
+                        if (! in_array($ci->type, ['video', 'pdf', 'text'], true)) {
+                            continue;
+                        }
+                        $countsBySlug[$subject->slug]++;
+                        $items[] = [
+                            'key'                   => 'cur-'.$topic->id.'-'.$ci->id,
+                            'source'                => 'curriculum',
+                            'content_type'          => $ci->type,
+                            'id'                    => (int) $ci->id,
+                            'title'                 => $ci->title,
+                            'url'                   => $ci->url,
+                            'duration_seconds'      => $ci->duration_seconds,
+                            'is_free'               => (bool) $ci->is_free,
+                            'subject_slug'          => $subject->slug,
+                            'subject_name'          => $subject->name,
+                            'subject_icon'          => $subject->icon,
+                            'subject_color'         => $subject->color,
+                            'grade'                 => $subject->grade,
+                            'exam_type'             => $subject->exam_type,
+                            'curriculum_topic_id'   => (int) $topic->id,
+                            'topic_title'           => $topic->title,
+                            'unit_title'            => $unit->title,
+                            'topic_status'          => $topicStatus,
+                            'sort_order'            => (int) $ci->sort_order,
+                        ];
+                    }
+                }
+            }
+        }
+
+        $progressMap = [];
+        foreach ($subjects as $subject) {
+            $totalTopics = 0;
+            $completedTopics = 0;
+            foreach ($subject->units as $unit) {
+                foreach ($unit->topics as $topic) {
+                    $totalTopics++;
+                    if (($progRows[$topic->id] ?? null)?->status === 'completed') {
+                        $completedTopics++;
+                    }
+                }
+            }
+            $progressMap[$subject->slug] = [
+                'total_topics'     => $totalTopics,
+                'completed_topics' => $completedTopics,
+                'progress_percent'   => $totalTopics > 0 ? round(($completedTopics / $totalTopics) * 100) : 0,
+            ];
+        }
+
+        $subjectsSummary = $subjects->map(function ($subject) use ($countsBySlug, $progressMap) {
+            $p = $progressMap[$subject->slug] ?? ['total_topics' => 0, 'completed_topics' => 0, 'progress_percent' => 0];
+
+            return [
+                'slug'             => $subject->slug,
+                'name'             => $subject->name,
+                'icon'             => $subject->icon,
+                'color'            => $subject->color,
+                'grade'            => $subject->grade,
+                'exam_type'        => $subject->exam_type,
+                'media_count'      => $countsBySlug[$subject->slug] ?? 0,
+                'total_topics'     => $p['total_topics'],
+                'completed_topics' => $p['completed_topics'],
+                'progress_percent' => $p['progress_percent'],
+            ];
+        })->values();
+
+        return response()->json([
+            'items'            => $items,
+            'subjects_summary' => $subjectsSummary,
+            'grade'            => $grade,
+            'exam_type'        => $scope['exam_type'] ?? '',
         ]);
     }
 

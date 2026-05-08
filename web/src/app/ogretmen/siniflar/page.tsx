@@ -3,10 +3,10 @@
 import Link from "next/link";
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/lib/auth-context";
-import { api, ClassRoom, TeacherStudent } from "@/lib/api";
+import { api, ClassRoom, TeacherStudent, type TeacherClassExamSummaryRow } from "@/lib/api";
 import type { StudentGoalDashboard, RiskTier } from "@/lib/goal-dashboard";
 import { goalTemplateLabel } from "@/lib/goal-dashboard";
-import { Search, Users, Clock, RefreshCw, AlertCircle, Plus, X, Target, Loader2, CalendarDays } from "lucide-react";
+import { Search, Users, Clock, RefreshCw, AlertCircle, Plus, X, Target, Loader2, CalendarDays, ClipboardList } from "lucide-react";
 
 const RISK_CONFIG = {
   green: { label: "İyi", dot: "bg-green-500", badge: "bg-green-100 text-green-700" },
@@ -58,6 +58,8 @@ export default function SiniflarPage() {
   const [goalDash, setGoalDash] = useState<StudentGoalDashboard | null>(null);
   const [goalLoading, setGoalLoading] = useState(false);
   const [goalErr, setGoalErr] = useState<string | null>(null);
+  const [examRows, setExamRows] = useState<TeacherClassExamSummaryRow[]>([]);
+  const [examLoading, setExamLoading] = useState(false);
 
   const loadClasses = useCallback(async () => {
     if (!token) return;
@@ -110,6 +112,19 @@ export default function SiniflarPage() {
       })
       .catch(() => setStudents([]))
       .finally(() => setStudentsLoading(false));
+  }, [selectedClassId, token]);
+
+  useEffect(() => {
+    if (!selectedClassId || !token) {
+      setExamRows([]);
+      return;
+    }
+    setExamLoading(true);
+    api
+      .getClassExamSummary(selectedClassId)
+      .then((rows) => setExamRows(Array.isArray(rows) ? rows : []))
+      .catch(() => setExamRows([]))
+      .finally(() => setExamLoading(false));
   }, [selectedClassId, token]);
 
   const filteredStudents = students.filter((s) => {
@@ -377,6 +392,54 @@ export default function SiniflarPage() {
                                 );
                               })
                             )}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden shadow-sm">
+                    <div className="flex items-center gap-2 px-5 py-3 border-b border-slate-100 bg-slate-50/80">
+                      <ClipboardList className="w-4 h-4 text-indigo-500" />
+                      <p className="text-sm font-bold text-slate-800">Deneme özeti (son 30 gün)</p>
+                    </div>
+                    {examLoading ? (
+                      <div className="p-4 space-y-2">
+                        {[1, 2, 3].map((i) => (
+                          <Skeleton key={i} className="h-10" />
+                        ))}
+                      </div>
+                    ) : examRows.length === 0 ? (
+                      <p className="px-5 py-8 text-center text-sm text-slate-400">Veri yok veya öğrenci henüz deneme tamamlamadı.</p>
+                    ) : (
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                          <thead>
+                            <tr className="bg-slate-50 border-b border-slate-100 text-xs font-bold text-slate-500 uppercase">
+                              <th className="text-left px-4 py-2">Öğrenci</th>
+                              <th className="text-right px-4 py-2">30g deneme</th>
+                              <th className="text-right px-4 py-2">Son net</th>
+                              <th className="text-left px-4 py-2 hidden sm:table-cell">Son tür</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-50">
+                            {examRows.map((row) => (
+                              <tr key={row.student_id} className="hover:bg-slate-50/60">
+                                <td className="px-4 py-2 font-medium text-slate-800">{row.name}</td>
+                                <td className="px-4 py-2 text-right text-slate-600">{row.exams_completed_30d}</td>
+                                <td className="px-4 py-2 text-right font-bold text-teal-700">
+                                  {row.last_net != null ? row.last_net.toFixed(1) : "—"}
+                                </td>
+                                <td className="px-4 py-2 text-slate-500 text-xs hidden sm:table-cell">
+                                  {row.last_exam_type ?? "—"}
+                                  {row.last_finished_at && (
+                                    <span className="block text-slate-400">
+                                      {new Date(row.last_finished_at).toLocaleDateString("tr-TR")}
+                                    </span>
+                                  )}
+                                </td>
+                              </tr>
+                            ))}
                           </tbody>
                         </table>
                       </div>

@@ -2,93 +2,100 @@
 
 namespace Database\Seeders;
 
+use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
-use Carbon\Carbon;
+use Illuminate\Support\Str;
 
+/**
+ * Gerçek `live_sessions` şeması ile uyumlu örnek veriler (geliştirme).
+ * Yeni kolonlar için önce `2026_05_08_120000_extend_live_sessions_and_attendance` migration çalıştırılmalıdır.
+ */
 class LiveSessionSeeder extends Seeder
 {
     public function run(): void
     {
-        $now = Carbon::now();
-        
-        // Öğretmenleri bul
-        $teachers = DB::table('users')->where('role', 'teacher')->get();
-        
-        if ($teachers->isEmpty()) {
-            $this->command->error('Öğretmen bulunamadı!');
+        $teacher = DB::table('users')->where('role', 'teacher')->first();
+        if (!$teacher) {
+            if ($this->command) {
+                $this->command->warn('LiveSessionSeeder: öğretmen yok, atlanıyor.');
+            }
+
             return;
         }
-        
-        // 12. ve 11. sınıf dersleri
-        $subjects = DB::table('curriculum_subjects')
-            ->whereIn('grade', [11, 12])
-            ->get();
-        
-        // Önümüzdeki 2 hafta ve geçmiş 1 ay için canlı dersler
-        $sessions = [];
-        
-        foreach ($subjects as $subject) {
-            // Her ders için 3 geçmiş, 2 gelecek ders
-            
-            // Geçmiş dersler (kayıtlı)
-            for ($i = 1; $i <= 3; $i++) {
-                $teacher = $teachers->random();
-                $sessionDate = $now->copy()->subDays(rand(1, 30));
-                
-                $sessions[] = [
-                    'title' => "{$subject->name} - Canlı Ders {$i}",
-                    'description' => "{$subject->name} konularının detaylı anlatımı. Soru-cevap bölümü ile interaktif ders.",
-                    'teacher_id' => $teacher->id,
-                    'subject_id' => $subject->id,
-                    'scheduled_at' => $sessionDate,
-                    'duration_minutes' => rand(60, 120),
-                    'meeting_url' => "https://meet.terenceegitim.com/live-" . \Illuminate\Support\Str::random(12),
-                    'recording_url' => "https://cdn.terenceegitim.com/recordings/session-" . \Illuminate\Support\Str::random(16) . ".mp4",
-                    'status' => 'completed',
-                    'max_participants' => rand(50, 200),
-                    'is_recorded' => true,
-                    'is_public' => rand(0, 1) === 1,
-                    'grade' => $subject->grade,
-                    'exam_type' => 'TYT-AYT',
-                    'thumbnail_url' => "https://cdn.terenceegitim.com/thumbnails/live-{$subject->slug}-{$i}.jpg",
-                    'created_at' => $sessionDate->copy()->subHours(24),
-                    'updated_at' => $sessionDate->copy()->addHours(2),
-                ];
-            }
-            
-            // Gelecek dersler (planlanmış)
-            for ($i = 1; $i <= 2; $i++) {
-                $teacher = $teachers->random();
-                $sessionDate = $now->copy()->addDays(rand(1, 14));
-                
-                $sessions[] = [
-                    'title' => "{$subject->name} - Canlı Ders (Yaklaşan)",
-                    'description' => "{$subject->name} konularının interaktif anlatımı. Öğrencilerle soru-cevap ve problem çözümü.",
-                    'teacher_id' => $teacher->id,
-                    'subject_id' => $subject->id,
-                    'scheduled_at' => $sessionDate,
-                    'duration_minutes' => rand(60, 120),
-                    'meeting_url' => "https://meet.terenceegitim.com/live-" . \Illuminate\Support\Str::random(12),
-                    'recording_url' => null,
-                    'status' => 'scheduled',
-                    'max_participants' => rand(50, 200),
-                    'is_recorded' => true,
-                    'is_public' => true,
-                    'grade' => $subject->grade,
-                    'exam_type' => 'TYT-AYT',
-                    'thumbnail_url' => "https://cdn.terenceegitim.com/thumbnails/live-{$subject->slug}-upcoming.jpg",
-                    'created_at' => $now,
-                    'updated_at' => $now,
-                ];
-            }
+
+        $classId = DB::table('class_rooms')->where('teacher_id', $teacher->id)->value('id');
+        $now     = Carbon::now();
+
+        $room1 = 'terence-seed-' . Str::random(6);
+        $room2 = 'terence-seed-' . Str::random(6);
+
+        $rows = [
+            [
+                'teacher_id'        => $teacher->id,
+                'class_room_id'     => $classId,
+                'is_public'         => false,
+                'title'             => 'Örnek yaklaşan canlı ders',
+                'subject_tag'       => 'TYT Matematik',
+                'description'       => 'Seeder ile oluşturuldu.',
+                'daily_room_url'    => 'https://terenceegitim.daily.co/' . $room1,
+                'daily_room_name'   => $room1,
+                'recording_url'     => null,
+                'scheduled_at'      => $now->copy()->addDays(2),
+                'started_at'        => null,
+                'ended_at'          => null,
+                'duration_minutes'  => 45,
+                'max_participants'  => 120,
+                'status'            => 'scheduled',
+                'created_at'        => $now,
+                'updated_at'        => $now,
+            ],
+            [
+                'teacher_id'        => $teacher->id,
+                'class_room_id'     => null,
+                'is_public'         => true,
+                'title'             => 'Genel yayın (örnek)',
+                'subject_tag'       => 'TYT Türkçe',
+                'description'       => null,
+                'daily_room_url'    => 'https://terenceegitim.daily.co/' . $room2,
+                'daily_room_name'   => $room2,
+                'recording_url'     => null,
+                'scheduled_at'      => $now->copy()->addHours(3),
+                'started_at'        => null,
+                'ended_at'          => null,
+                'duration_minutes'  => 60,
+                'max_participants'  => null,
+                'status'            => 'scheduled',
+                'created_at'        => $now,
+                'updated_at'        => $now,
+            ],
+            [
+                'teacher_id'        => $teacher->id,
+                'class_room_id'     => $classId,
+                'is_public'         => false,
+                'title'             => 'Bitmiş ders (kayıt örneği)',
+                'subject_tag'       => 'AYT Fizik',
+                'description'       => null,
+                'daily_room_url'    => 'https://terenceegitim.daily.co/' . Str::slug('bitmis-' . Str::random(4)),
+                'daily_room_name'   => 'terence-ended-' . Str::random(4),
+                'recording_url'     => 'https://example.com/recordings/demo.mp4',
+                'scheduled_at'      => $now->copy()->subDays(5),
+                'started_at'        => $now->copy()->subDays(5),
+                'ended_at'          => $now->copy()->subDays(5)->addMinutes(50),
+                'duration_minutes'  => 50,
+                'max_participants'  => null,
+                'status'            => 'ended',
+                'created_at'        => $now->copy()->subDays(6),
+                'updated_at'        => $now->copy()->subDays(5),
+            ],
+        ];
+
+        foreach ($rows as $row) {
+            DB::table('live_sessions')->insert($row);
         }
-        
-        // Batch insert
-        foreach (array_chunk($sessions, 50) as $chunk) {
-            DB::table('live_sessions')->insert($chunk);
+
+        if ($this->command) {
+            $this->command->info('LiveSessionSeeder: ' . count($rows) . ' oturum eklendi.');
         }
-        
-        $this->command->info('✅ ' . count($sessions) . ' canlı ders oluşturuldu!');
     }
 }

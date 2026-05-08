@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect } from 'react'
-import toast from 'react-hot-toast'
 
 export default function GlobalError({
   error,
@@ -13,12 +12,10 @@ export default function GlobalError({
   useEffect(() => {
     // Log to error reporting service
     console.error('Global error:', error)
-    
+
     if (typeof window !== 'undefined' && (window as any).Sentry) {
       ;(window as any).Sentry.captureException(error)
     }
-
-    toast.error('Beklenmeyen bir hata oluştu')
   }, [error])
 
   return (

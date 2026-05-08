@@ -10,6 +10,7 @@ use App\Models\XpLog;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 
@@ -82,6 +83,119 @@ class QuestionController extends Controller
         ]);
     }
 
+    // GET /api/questions/bank-summary — KPI + ders kartları (öğrenci kapsamı)
+    public function bankSummary(): JsonResponse
+    {
+        $user = Auth::user();
+        if (!$user || !$user->isStudent()) {
+            return response()->json(['error' => true, 'message' => 'Yalnızca öğrenci hesapları.'], 403);
+        }
+
+        $scope             = $user->learningScope();
+        $allowedExamTypes  = $user->allowedExamTypes();
+
+        $scoped = Question::query()
+            ->where('is_active', true)
+            ->where('grade', $scope['grade'])
+            ->where(function ($q) use ($allowedExamTypes) {
+                $q->whereIn('exam_type', $allowedExamTypes)
+                    ->orWhere('exam_type', 'Genel');
+            });
+
+        $totalInScope = (clone $scoped)->count();
+
+        $answersBase = QuestionAnswer::query()
+            ->where('question_answers.user_id', $user->id)
+            ->where('question_answers.source', 'question_bank')
+            ->join('questions', 'questions.id', '=', 'question_answers.question_id')
+            ->where('questions.is_active', true)
+            ->where('questions.grade', $scope['grade'])
+            ->where(function ($q) use ($allowedExamTypes) {
+                $q->whereIn('questions.exam_type', $allowedExamTypes)
+                    ->orWhere('questions.exam_type', 'Genel');
+            });
+
+        $attempts        = (clone $answersBase)->count();
+        $correctAttempts = (clone $answersBase)->where('question_answers.is_correct', true)->count();
+        $distinctAnswered = (int) ((clone $answersBase)
+            ->selectRaw('COUNT(DISTINCT question_answers.question_id) as c')
+            ->value('c') ?? 0);
+
+        $accuracyPct = $attempts > 0 ? round(($correctAttempts / $attempts) * 100, 1) : 0.0;
+        $netEstimate  = $attempts > 0
+            ? round($correctAttempts - (($attempts - $correctAttempts) / 4), 2)
+            : 0.0;
+
+        $subjects = (clone $scoped)
+            ->select('subject', DB::raw('COUNT(*) as total'))
+            ->whereNotNull('subject')
+            ->where('subject', '!=', '')
+            ->groupBy('subject')
+            ->orderBy('subject')
+            ->get();
+
+        $answeredBySubject = QuestionAnswer::query()
+            ->where('question_answers.user_id', $user->id)
+            ->where('question_answers.source', 'question_bank')
+            ->join('questions', 'questions.id', '=', 'question_answers.question_id')
+            ->where('questions.is_active', true)
+            ->where('questions.grade', $scope['grade'])
+            ->where(function ($q) use ($allowedExamTypes) {
+                $q->whereIn('questions.exam_type', $allowedExamTypes)
+                    ->orWhere('questions.exam_type', 'Genel');
+            })
+            ->select(
+                'questions.subject',
+                DB::raw('COUNT(DISTINCT question_answers.question_id) as answered'),
+                DB::raw('SUM(CASE WHEN question_answers.is_correct = 1 THEN 1 ELSE 0 END) as correct_hits'),
+                DB::raw('COUNT(question_answers.id) as attempts')
+            )
+            ->groupBy('questions.subject')
+            ->get()
+            ->keyBy('subject');
+
+        $subjectRows = $subjects->map(function ($row) use ($answeredBySubject) {
+            $ab          = $answeredBySubject->get($row->subject);
+            $answered    = (int) ($ab->answered ?? 0);
+            $att         = (int) ($ab->attempts ?? 0);
+            $correctHits = (int) ($ab->correct_hits ?? 0);
+            $rate        = $att > 0 ? round(($correctHits / $att) * 100, 1) : null;
+            $query       = http_build_query(['subject' => $row->subject]);
+
+            return [
+                'subject'         => $row->subject,
+                'total'           => (int) $row->total,
+                'answered'        => $answered,
+                'correct_rate'    => $rate,
+                'cta_deep_link'   => '/ogrenci/soru-bankasi?' . $query,
+            ];
+        })->values();
+
+        $examTabs = collect($allowedExamTypes)->map(function ($et) use ($scoped) {
+            $cnt = (clone $scoped)->where('exam_type', $et)->count();
+
+            return [
+                'exam_type'      => $et,
+                'question_count' => $cnt,
+            ];
+        })->values();
+
+        return response()->json([
+            'success' => true,
+            'data'    => [
+                'kpis' => [
+                    'total_questions'   => $totalInScope,
+                    'answered_distinct' => $distinctAnswered,
+                    'attempts'          => $attempts,
+                    'accuracy_pct'      => $accuracyPct,
+                    'net_estimate'      => $netEstimate,
+                ],
+                'subjects'  => $subjectRows,
+                'exam_tabs' => $examTabs,
+            ],
+        ]);
+    }
+
     // GET /api/questions/similar — benzer sorular
     public function similar(Request $request): JsonResponse
     {
@@ -144,6 +258,27 @@ class QuestionController extends Controller
         $user     = Auth::user();
         $question = Question::with('options')->findOrFail($request->question_id);
 
+        if ($user->isStudent()) {
+            $scope = $user->learningScope();
+            if ((string) $question->grade !== $scope['grade']) {
+                return response()->json(['error' => true, 'message' => 'Soru profil kapsamınız dışında.'], 403);
+            }
+            $examOk = ($question->exam_type === 'Genel') || $user->matchesExamType((string) $question->exam_type);
+            if (!$examOk) {
+                return response()->json(['error' => true, 'message' => 'Soru profil kapsamınız dışında.'], 403);
+            }
+        }
+
+        $idempHeader    = $request->header('Idempotency-Key');
+        $idempCacheKey  = null;
+        if (is_string($idempHeader) && strlen($idempHeader) >= 8 && strlen($idempHeader) <= 120) {
+            $idempCacheKey = 'question_answer:idemp:' . $user->id . ':' . hash('sha256', $idempHeader);
+            $cached        = Cache::get($idempCacheKey);
+            if (is_array($cached)) {
+                return response()->json($cached);
+            }
+        }
+
         // 'answer' veya 'selected_option' alanını al
         $selectedOption = $request->selected_option ?? $request->answer;
 
@@ -176,7 +311,7 @@ class QuestionController extends Controller
             $this->awardXp($user->id, 5, 'question_correct', 'question_answers', $answer->id);
         }
 
-        return response()->json([
+        $payload = [
             'success'        => true,
             'is_correct'     => $isCorrect,
             'correct'        => $isCorrect,
@@ -184,7 +319,13 @@ class QuestionController extends Controller
             'explanation'    => $question->solution_text,
             'solution_video' => $question->solution_video_url,
             'xp_earned'      => $isCorrect ? 5 : 0,
-        ]);
+        ];
+
+        if ($idempCacheKey !== null) {
+            Cache::put($idempCacheKey, $payload, 86400);
+        }
+
+        return response()->json($payload);
     }
 
     // GET /api/questions/weak — zayıf kazanımlar
@@ -192,10 +333,21 @@ class QuestionController extends Controller
     {
         $user = Auth::user();
 
-        $weak = QuestionAnswer::where('user_id', $user->id)
+        $weak = QuestionAnswer::where('question_answers.user_id', $user->id)
             ->join('questions', 'question_answers.question_id', '=', 'questions.id')
-            ->whereNotNull('questions.kazanim_code')
-            ->select(
+            ->whereNotNull('questions.kazanim_code');
+
+        if ($user->isStudent()) {
+            $scope            = $user->learningScope();
+            $allowedExamTypes = $user->allowedExamTypes();
+            $weak->where('questions.grade', $scope['grade'])
+                ->where(function ($q) use ($allowedExamTypes) {
+                    $q->whereIn('questions.exam_type', $allowedExamTypes)
+                        ->orWhere('questions.exam_type', 'Genel');
+                });
+        }
+
+        $weak = $weak->select(
                 'questions.kazanim_code',
                 'questions.subject',
                 DB::raw('COUNT(*) as total_count'),

@@ -244,9 +244,38 @@ class ExamController extends Controller
             ->where('status', 'completed')
             ->orderByDesc('finished_at')
             ->limit(50)
-            ->get(['id','title','exam_type','net_score','correct_count','wrong_count','empty_count','finished_at','duration_minutes']);
+            ->get([
+                'id', 'title', 'exam_type', 'net_score', 'correct_count', 'wrong_count', 'empty_count',
+                'finished_at', 'duration_minutes', 'time_spent_seconds', 'total_questions',
+            ]);
 
         return response()->json(['success' => true, 'data' => $history]);
+    }
+
+    // GET /api/exams/summary — öğrenci deneme KPI özeti (aggregate)
+    public function summary(): JsonResponse
+    {
+        $user = Auth::user();
+        $base = ExamSession::where('user_id', $user->id)->where('status', 'completed');
+
+        $totalCompleted = (clone $base)->count();
+        $thisWeekCount  = (clone $base)->where('finished_at', '>=', now()->startOfWeek())->count();
+
+        $nets = (clone $base)->pluck('net_score')->filter(fn ($n) => $n !== null)->map(fn ($n) => (float) $n);
+        $avgNet   = $nets->isNotEmpty() ? round($nets->avg(), 2) : 0.0;
+        $bestNet  = $nets->isNotEmpty() ? round($nets->max(), 2) : 0.0;
+
+        $times = (clone $base)->whereNotNull('time_spent_seconds')->pluck('time_spent_seconds');
+        $avgTimeSeconds = $times->isNotEmpty() ? (int) round($times->avg()) : 0;
+
+        return response()->json([
+            'success'            => true,
+            'total_completed'    => $totalCompleted,
+            'this_week_count'    => $thisWeekCount,
+            'avg_net'            => $avgNet,
+            'best_net'           => $bestNet,
+            'avg_time_seconds'   => $avgTimeSeconds,
+        ]);
     }
 
     // -------------------------------------------------------

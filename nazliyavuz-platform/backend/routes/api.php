@@ -400,6 +400,10 @@ Route::get('/packages', [\App\Http\Controllers\Api\PaymentController::class, 'pa
 // Payment callback (public) - Keep outside auth
 Route::post('/payment/callback', [\App\Http\Controllers\Api\PaymentController::class, 'callback']);
 
+// Daily.co — kayıt hazır webhook (isteğe bağlı; DAILY_WEBHOOK_SECRET ile korunur)
+Route::post('/webhooks/daily-recording', [\App\Http\Controllers\Api\DailyRecordingWebhookController::class, 'handle'])
+    ->middleware('throttle:60,1');
+
 // ============================================================
 // TERENCE EÄÄ°TÄ°M PLATFORMU - API ROUTES
 // ============================================================
@@ -423,22 +427,28 @@ Route::middleware(['auth:api'])->group(function () {
     // ── Müfredat (Curriculum) ────────────────────────────────────────────
     Route::get('/curriculum/progress', [\App\Http\Controllers\Api\CurriculumController::class, 'myProgress'])->middleware('student_grade');
     Route::post('/curriculum/progress', [\App\Http\Controllers\Api\CurriculumController::class, 'updateProgress'])->middleware('student_grade');
+    Route::get('/curriculum/media-catalog', [\App\Http\Controllers\Api\CurriculumController::class, 'mediaCatalog'])->middleware('student_grade');
     Route::get('/curriculum/{slug}', [\App\Http\Controllers\Api\CurriculumController::class, 'show'])->middleware('student_grade');
     Route::get('/curriculum', [\App\Http\Controllers\Api\CurriculumController::class, 'index'])->middleware('student_grade');
 
-    // â”€â”€ Soru BankasÄ± â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-    // ── Soru Bankası ─────────────────────────────────────────────────────────
-    Route::get('/questions', [\App\Http\Controllers\Api\QuestionController::class, 'index'])->middleware('student_grade');
-    Route::post('/questions/answer', [\App\Http\Controllers\Api\QuestionController::class, 'answer'])->middleware('student_grade');
-    Route::get('/questions/similar', [\App\Http\Controllers\Api\QuestionController::class, 'similar'])->middleware('student_grade');
-    Route::get('/questions/weak', [\App\Http\Controllers\Api\QuestionController::class, 'weakAchievements'])->middleware('student_grade');
+    // ── Soru Bankası (yalnızca öğrenci + sınıf kapsamı) ───────────────────────
+    Route::middleware(['role:student', 'student_grade'])->group(function () {
+        Route::get('/questions/bank-summary', [\App\Http\Controllers\Api\QuestionController::class, 'bankSummary']);
+        Route::get('/questions', [\App\Http\Controllers\Api\QuestionController::class, 'index']);
+        Route::post('/questions/answer', [\App\Http\Controllers\Api\QuestionController::class, 'answer'])->middleware('throttle:90,1');
+        Route::get('/questions/similar', [\App\Http\Controllers\Api\QuestionController::class, 'similar']);
+        Route::get('/questions/weak', [\App\Http\Controllers\Api\QuestionController::class, 'weakAchievements']);
+    });
 
     // â”€â”€ Deneme SÄ±navÄ± â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-    Route::post('/exams/start', [\App\Http\Controllers\Api\ExamController::class, 'start'])->middleware('student_grade');
-    Route::get('/exams/history', [\App\Http\Controllers\Api\ExamController::class, 'history'])->middleware('student_grade');
-    Route::post('/exams/{id}/answer', [\App\Http\Controllers\Api\ExamController::class, 'answer'])->middleware('student_grade');
-    Route::post('/exams/{id}/finish', [\App\Http\Controllers\Api\ExamController::class, 'finish'])->middleware('student_grade');
-    Route::get('/exams/{id}/result', [\App\Http\Controllers\Api\ExamController::class, 'result'])->middleware('student_grade');
+    Route::middleware(['role:student', 'student_grade'])->group(function () {
+        Route::post('/exams/start', [\App\Http\Controllers\Api\ExamController::class, 'start']);
+        Route::get('/exams/history', [\App\Http\Controllers\Api\ExamController::class, 'history']);
+        Route::get('/exams/summary', [\App\Http\Controllers\Api\ExamController::class, 'summary']);
+        Route::post('/exams/{id}/answer', [\App\Http\Controllers\Api\ExamController::class, 'answer']);
+        Route::post('/exams/{id}/finish', [\App\Http\Controllers\Api\ExamController::class, 'finish']);
+        Route::get('/exams/{id}/result', [\App\Http\Controllers\Api\ExamController::class, 'result']);
+    });
 
     // Günlük plan (öğrenci)
     Route::middleware('role:student')->group(function () {
@@ -460,7 +470,13 @@ Route::middleware(['auth:api'])->group(function () {
     // â”€â”€ Ã–ÄŸrenci Gamification â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     Route::get('/student/badges', [\App\Http\Controllers\Api\StudentController::class, 'badges']);
     Route::get('/student/leaderboard', [\App\Http\Controllers\Api\StudentController::class, 'leaderboard']);
-    Route::get('/student/upcoming-lessons', [\App\Http\Controllers\Api\StudentController::class, 'upcomingLessons']);
+    Route::middleware('role:student')->group(function () {
+        Route::get('/student/live-lessons', [\App\Http\Controllers\Api\StudentLiveSessionController::class, 'index']);
+        Route::get('/student/live-lessons/summary', [\App\Http\Controllers\Api\StudentLiveSessionController::class, 'summary']);
+        Route::post('/student/live-sessions/{id}/join', [\App\Http\Controllers\Api\StudentLiveSessionController::class, 'join']);
+        Route::post('/student/live-sessions/{id}/reminder', [\App\Http\Controllers\Api\StudentLiveSessionController::class, 'reminder']);
+        Route::get('/student/upcoming-lessons', [\App\Http\Controllers\Api\StudentController::class, 'upcomingLessons']);
+    });
     Route::post('/student/generate-parent-code', [\App\Http\Controllers\Api\ParentController::class, 'generateParentCode']);
 
     // â”€â”€ Bildirimler â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -481,7 +497,9 @@ Route::middleware(['auth:api'])->group(function () {
     // -- AI Endpoints
     Route::post('/ai/generate-question', [\App\Http\Controllers\Api\AiController::class, 'generateQuestion']);
     Route::post('/ai/summarize', [\App\Http\Controllers\Api\AiController::class, 'summarize']);
-    Route::post('/ai/personal-test', [\App\Http\Controllers\Api\AiController::class, 'personalTest']);
+    Route::middleware(['role:student', 'student_grade'])->group(function () {
+        Route::post('/ai/personal-test', [\App\Http\Controllers\Api\AiController::class, 'personalTest']);
+    });
     Route::get('/ai/hard-achievements', [\App\Http\Controllers\Api\AiController::class, 'hardAchievements']);
     Route::post('/ai/ask-coach', [\App\Http\Controllers\Api\AiController::class, 'askCoach']);
     Route::get('/ai/coach/history', [\App\Http\Controllers\Api\AiController::class, 'coachHistory']);
@@ -496,6 +514,7 @@ Route::middleware(['auth:api'])->group(function () {
         Route::get('/teacher/classes', [\App\Http\Controllers\Api\TeacherController::class, 'classes']);
         Route::post('/teacher/classes', [\App\Http\Controllers\Api\TeacherController::class, 'createClass']);
         Route::get('/teacher/classes/{id}/students', [\App\Http\Controllers\Api\TeacherController::class, 'classStudents']);
+        Route::get('/teacher/classes/{id}/exam-summary', [\App\Http\Controllers\Api\TeacherController::class, 'classExamSummary']);
         Route::post('/teacher/classes/{id}/plan-tasks', [\App\Http\Controllers\Api\TeacherPlanController::class, 'assignClassPlanTasks']);
         Route::get('/teacher/students/{studentId}/goal-dashboard', [\App\Http\Controllers\Api\TeacherController::class, 'studentGoalDashboard']);
         Route::get('/teacher/students/risk', [\App\Http\Controllers\Api\TeacherController::class, 'riskStudents']);
@@ -505,15 +524,22 @@ Route::middleware(['auth:api'])->group(function () {
         Route::delete('/teacher/assignments/{id}', [\App\Http\Controllers\Api\TeacherController::class, 'deleteAssignment']);
         Route::get('/teacher/live-sessions', [\App\Http\Controllers\Api\TeacherController::class, 'liveSessions']);
         Route::post('/teacher/live-sessions', [\App\Http\Controllers\Api\TeacherController::class, 'createLiveSession']);
+        Route::get('/teacher/live-sessions/{id}', [\App\Http\Controllers\Api\TeacherController::class, 'showLiveSession']);
+        Route::patch('/teacher/live-sessions/{id}/go-live', [\App\Http\Controllers\Api\TeacherController::class, 'goLiveLiveSession']);
+        Route::patch('/teacher/live-sessions/{id}/end', [\App\Http\Controllers\Api\TeacherController::class, 'endLiveSession']);
         Route::get('/teacher/analytics/{type}', [\App\Http\Controllers\Api\TeacherController::class, 'analytics']);
         Route::get('/teacher/messages', [\App\Http\Controllers\Api\TeacherController::class, 'messages']);
         Route::post('/teacher/messages', [\App\Http\Controllers\Api\TeacherController::class, 'sendMessage']);
+        Route::get('/teacher/curriculum/topics', [\App\Http\Controllers\Api\TeacherCurriculumContentController::class, 'searchTopics']);
+        Route::post('/teacher/curriculum-content', [\App\Http\Controllers\Api\TeacherCurriculumContentController::class, 'store']);
     });
 
     // â”€â”€ Veli â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     Route::middleware('role:parent,admin')->group(function () {
         Route::get('/parent/children', [\App\Http\Controllers\Api\ParentController::class, 'children']);
         Route::get('/parent/children/{id}/summary', [\App\Http\Controllers\Api\ParentController::class, 'childSummary']);
+        Route::get('/parent/children/{id}/live-lessons', [\App\Http\Controllers\Api\ParentController::class, 'childLiveLessons']);
+        Route::get('/parent/children/{id}/exams', [\App\Http\Controllers\Api\ParentController::class, 'childExams']);
         Route::post('/parent/link', [\App\Http\Controllers\Api\ParentController::class, 'linkChild']);
         Route::get('/parent/child-report', [\App\Http\Controllers\Api\ParentController::class, 'childReport']);
         Route::get('/parent/notification-settings', [\App\Http\Controllers\Api\ParentController::class, 'getNotificationSettings']);
