@@ -1,6 +1,6 @@
 "use client";
 
-import { BarChart3, CheckCircle2, LineChart } from "lucide-react";
+import { BarChart3, CheckCircle2, TrendingUp } from "lucide-react";
 import type { QuestionBankSummary } from "@/lib/api";
 
 function formatInt(n: number): string {
@@ -34,7 +34,7 @@ export function QuestionBankKpiStrip({
       label: "Doğru Oranı",
       value: k != null && k.attempts > 0 ? `%${k.accuracy_pct}` : "—",
       hint: "Tüm deneme girişlerine göre",
-      Icon: LineChart,
+      Icon: TrendingUp,
       iconWrap: "bg-orange-50 text-orange-600",
     },
     {
@@ -60,11 +60,8 @@ export function QuestionBankKpiStrip({
           className="rounded-[var(--qb-card-radius)] border border-white/80 bg-white/95 p-3 shadow-[var(--qb-card-shadow)] backdrop-blur-sm"
           title={hint}
         >
-          <div className="flex items-start gap-2">
-            <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${iconWrap}`}>
-              <Icon className="h-4 w-4" aria-hidden />
-            </div>
-            <div className="min-w-0 flex-1">
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
               <p className="text-[11px] font-medium leading-tight text-slate-500">{label}</p>
               <p className="mt-0.5 text-base font-bold tabular-nums leading-tight text-slate-900">
                 {loading ? (
@@ -73,6 +70,9 @@ export function QuestionBankKpiStrip({
                   value
                 )}
               </p>
+            </div>
+            <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${iconWrap}`}>
+              <Icon className="h-4 w-4" aria-hidden />
             </div>
           </div>
         </div>

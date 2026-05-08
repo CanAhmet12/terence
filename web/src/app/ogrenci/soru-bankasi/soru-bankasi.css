@@ -48,58 +48,8 @@
   }
 }
 
-.soru-bankasi-page--fit .sb-hero {
+.soru-bankasi-page--fit .sb-hero--mockup-top {
   flex-shrink: 0;
-  grid-template-columns: 1.35fr 0.88fr;
-  gap: 12px;
-  padding: 10px 14px;
-  border-radius: 18px;
-}
-
-.soru-bankasi-page--fit .sb-hero h1,
-.soru-bankasi-page--fit .sb-hero-title {
-  font-size: clamp(1.05rem, 1.8vw, 1.35rem);
-  margin-bottom: 4px;
-}
-
-.soru-bankasi-page--fit .sb-hero p.sb-hero-lead {
-  font-size: 11px;
-  line-height: 1.4;
-  max-width: 380px;
-}
-
-.soru-bankasi-page--fit .sb-hero-visual {
-  padding: 6px 8px 8px;
-  border-radius: 14px;
-}
-
-.soru-bankasi-page--fit .qb-book3d-scene--hero {
-  width: 52px;
-  height: 70px;
-}
-
-.soru-bankasi-page--fit .qb-book3d-icon--hero {
-  width: 22px;
-  height: 22px;
-}
-
-.soru-bankasi-page--fit .qb-hero-book-row {
-  gap: 8px;
-}
-
-.qb-hero-scene-wrap::before {
-  content: "";
-  position: absolute;
-  inset: auto -12% -8% -12%;
-  height: 55%;
-  border-radius: 50%;
-  background: radial-gradient(ellipse at center, rgba(124, 92, 255, 0.22), transparent 68%);
-  pointer-events: none;
-  z-index: 0;
-}
-
-.soru-bankasi-page--fit .sb-hero-visual > p:last-child {
-  display: none;
 }
 
 .soru-bankasi-page--fit .sb-main-layout {
@@ -170,6 +120,68 @@
   max-height: 100%;
   overflow-y: auto;
   scrollbar-width: thin;
+}
+
+/* ─── Üst blok mockup: 3 kolon (sol + orta PNG + sağ mor CTA) ─── */
+.sb-hero--mockup-top {
+  background: #ffffff;
+  border: 1px solid #eef0f4;
+  border-radius: 16px;
+  box-shadow: 0 10px 36px rgba(15, 23, 42, 0.06);
+  padding: 18px 20px 20px;
+}
+
+.sb-hero-top-grid {
+  display: grid;
+  gap: 16px;
+  align-items: center;
+}
+
+@media (min-width: 1024px) {
+  .sb-hero-top-grid {
+    grid-template-columns: minmax(0, 1.05fr) minmax(160px, 0.95fr) minmax(240px, 300px);
+    gap: 12px 20px;
+  }
+}
+
+@media (max-width: 1023px) {
+  .sb-hero-top-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .sb-hero-art {
+    order: 2;
+  }
+
+  .sb-hero-left {
+    order: 1;
+  }
+
+  .sb-hero-cta-wrap {
+    order: 3;
+  }
+}
+
+.sb-hero--mockup-top .sb-hero-title {
+  font-size: clamp(1.5rem, 2.5vw, 1.85rem);
+  letter-spacing: -0.04em;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.sb-hero--mockup-top .sb-hero-lead {
+  font-size: 13px;
+  line-height: 1.5;
+  color: #64748b;
+  max-width: 400px;
+}
+
+.soru-bankasi-page--fit .sb-hero--mockup-top {
+  padding: 12px 14px 14px;
+}
+
+.soru-bankasi-page--fit .sb-hero--mockup-top .sb-hero-title {
+  font-size: clamp(1.15rem, 2vw, 1.45rem);
 }
 
 .sb-main-layout {

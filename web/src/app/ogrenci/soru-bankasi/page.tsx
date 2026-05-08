@@ -680,6 +680,7 @@ function SoruBankasiPageInner({
           planStats={planStats}
           loading={sidebarLoading}
           onPersonalTest={() => setShowPersonalTest(true)}
+          hidePersonalTestCard
         />
       </div>
 

@@ -103,35 +103,40 @@ export function QuestionBankSidebar({
   planStats,
   loading,
   onPersonalTest,
+  hidePersonalTestCard = false,
 }: {
   examHistory: ExamSession[];
   planStats: PlanStats | null;
   loading: boolean;
   onPersonalTest: () => void;
+  /** Üst hero’da mor CTA varsa sağ kolonda tekrar gösterme */
+  hidePersonalTestCard?: boolean;
 }) {
   const done = planStats?.tasks_done_today ?? 0;
   const total = planStats?.tasks_total_today ?? 0;
 
   return (
     <aside className="qb-sidebar-rail space-y-4 lg:sticky lg:top-24">
-      <div className="rounded-[var(--qb-card-radius)] border border-indigo-200/80 bg-gradient-to-br from-indigo-600 via-indigo-600 to-violet-700 p-4 text-white shadow-lg shadow-indigo-500/25">
-        <div className="flex items-start gap-2.5">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white/20 backdrop-blur-sm">
-            <Target className="h-5 w-5" aria-hidden />
+      {!hidePersonalTestCard && (
+        <div className="rounded-[var(--qb-card-radius)] border border-indigo-200/80 bg-gradient-to-br from-indigo-600 via-indigo-600 to-violet-700 p-4 text-white shadow-lg shadow-indigo-500/25">
+          <div className="flex items-start gap-2.5">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white/20 backdrop-blur-sm">
+              <Target className="h-5 w-5" aria-hidden />
+            </div>
+            <div>
+              <h2 className="text-sm font-bold">Bana Özel Test</h2>
+              <p className="mt-1 text-xs text-white/85">Konu ve zorluk seç, anında test oluştur.</p>
+            </div>
           </div>
-          <div>
-            <h2 className="text-sm font-bold">Bana Özel Test</h2>
-            <p className="mt-1 text-xs text-white/85">Konu ve zorluk seç, anında test oluştur.</p>
-          </div>
+          <button
+            type="button"
+            onClick={onPersonalTest}
+            className="mt-3 w-full rounded-lg bg-white py-2.5 text-xs font-bold text-indigo-700 shadow-md transition-colors hover:bg-indigo-50 sm:text-sm"
+          >
+            Test Oluştur
+          </button>
         </div>
-        <button
-          type="button"
-          onClick={onPersonalTest}
-          className="mt-3 w-full rounded-lg bg-white py-2.5 text-xs font-bold text-indigo-700 shadow-md transition-colors hover:bg-indigo-50 sm:text-sm"
-        >
-          Test Oluştur
-        </button>
-      </div>
+      )}
 
       <div className="rounded-[var(--qb-card-radius)] border border-slate-200/90 bg-white p-4 shadow-sm">
         <h2 className="mb-3 text-sm font-bold text-slate-900">Son Çözdüğün Testler</h2>

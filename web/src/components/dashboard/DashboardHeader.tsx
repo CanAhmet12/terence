@@ -133,7 +133,13 @@ function DashboardHeaderInner() {
   const breadcrumbHover = isQuestionBank ? "hover:text-indigo-600" : "hover:text-teal-600";
 
   return (
-    <header className="sticky top-0 z-40 border-b border-slate-200/60 bg-white/90 px-4 py-3.5 backdrop-blur-xl lg:px-8">
+    <header
+      className={`sticky top-0 z-40 border-b px-4 py-3 lg:px-8 ${
+        isQuestionBank
+          ? "border-slate-200 bg-white"
+          : "border-slate-200/60 bg-white/90 backdrop-blur-xl py-3.5"
+      }`}
+    >
       <div
         className={`flex items-center gap-3 ${isQuestionBank ? "justify-between" : "justify-between"}`}
       >
@@ -149,8 +155,14 @@ function DashboardHeaderInner() {
             <>
               <ChevronRight className="hidden h-3.5 w-3.5 shrink-0 text-slate-300 sm:block" />
               <div className="flex min-w-0 items-center gap-1.5">
-                <PageIcon className={`h-4 w-4 shrink-0 ${accentIcon}`} />
-                <span className="truncate text-sm font-semibold text-slate-800">{currentPage.label}</span>
+                {!isQuestionBank && (
+                  <PageIcon className={`h-4 w-4 shrink-0 ${accentIcon}`} />
+                )}
+                <span
+                  className={`truncate text-sm ${isQuestionBank ? "font-bold text-slate-900" : "font-semibold text-slate-800"}`}
+                >
+                  {currentPage.label}
+                </span>
               </div>
             </>
           )}
