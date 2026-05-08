@@ -653,8 +653,8 @@ function SoruBankasiPageInner({
         </div>
       )}
 
-      <div className="sb-main-layout sb-main-layout--fit mt-2 min-h-0 flex-1">
-        <div className="sb-fit-main-col space-y-2 min-h-0 overflow-hidden">
+      <div className="sb-main-layout sb-main-layout--fit mt-3 min-h-0 flex-1">
+        <div className="sb-fit-main-col qb-page-stack min-h-0 overflow-hidden">
           <QuestionBankKpiStrip summary={bankSummary} loading={bankSummaryLoading} />
           <SubjectBankCarousel subjects={bankSummary?.subjects ?? []} />
           <QuestionBankQuickActions

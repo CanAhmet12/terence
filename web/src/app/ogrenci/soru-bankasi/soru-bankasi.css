@@ -5,9 +5,13 @@
   --qb-primary-soft: #eef2ff;
   --qb-text: #171725;
   --qb-muted: #707086;
-  --qb-card-radius: 1rem;
-  --qb-card-shadow: 0 10px 32px rgba(47, 38, 120, 0.08);
-  --qb-gap-section: 1.25rem;
+  /* Mockup ölçüleri */
+  --qb-card-radius: 1.125rem;
+  --qb-card-pad: 1.5rem;
+  --qb-card-shadow: 0 8px 28px rgba(15, 23, 42, 0.07);
+  --qb-gap-section: 2rem;
+  --qb-gap-main-sidebar: 2rem;
+  --qb-gap-stack: 1.5rem;
 }
 
 /* Soru Bankası — referans mock + kullanıcı spesifikasyonu */
@@ -65,7 +69,7 @@
 .soru-bankasi-page--fit .sb-fit-main-col {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--qb-gap-stack);
 }
 
 .soru-bankasi-page--fit .qb-fit-insights {
@@ -77,42 +81,10 @@
 
 .soru-bankasi-page--fit .qb-insights-root {
   margin-top: 0;
-  gap: 8px;
+  gap: 1.25rem;
   flex: 1 1 auto;
   min-height: 0;
   align-content: start;
-}
-
-.soru-bankasi-page--fit .qb-insights-root > div {
-  padding: 10px 12px;
-}
-
-.soru-bankasi-page--fit .qb-fit-radar {
-  height: 118px !important;
-}
-
-@media (min-width: 640px) {
-  .soru-bankasi-page--fit .qb-fit-radar {
-    height: 132px !important;
-  }
-}
-
-.soru-bankasi-page--fit .qb-motivation-banner {
-  margin-top: 4px;
-  flex-shrink: 0;
-  padding-top: 10px;
-  padding-bottom: 10px;
-}
-
-.soru-bankasi-page--fit .qb-book3d-scene--carousel {
-  width: 64px;
-  height: 86px;
-  margin-bottom: 4px;
-}
-
-.soru-bankasi-page--fit section.mt-1 h2 {
-  margin-bottom: 6px;
-  font-size: 13px;
 }
 
 .soru-bankasi-page--fit .qb-sidebar-rail {
@@ -126,21 +98,21 @@
 .sb-hero--mockup-top {
   background: #ffffff;
   border: 1px solid #eef0f4;
-  border-radius: 16px;
-  box-shadow: 0 10px 36px rgba(15, 23, 42, 0.06);
-  padding: 18px 20px 20px;
+  border-radius: 18px;
+  box-shadow: var(--qb-card-shadow);
+  padding: 24px 24px 28px;
 }
 
 .sb-hero-top-grid {
   display: grid;
-  gap: 16px;
+  gap: 20px;
   align-items: center;
 }
 
 @media (min-width: 1024px) {
   .sb-hero-top-grid {
-    grid-template-columns: minmax(0, 1.05fr) minmax(160px, 0.95fr) minmax(240px, 300px);
-    gap: 12px 20px;
+    grid-template-columns: minmax(0, 1.05fr) minmax(160px, 0.95fr) minmax(248px, 300px);
+    gap: 24px 28px;
   }
 }
 
@@ -184,12 +156,18 @@
   font-size: clamp(1.15rem, 2vw, 1.45rem);
 }
 
+.qb-page-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--qb-gap-stack);
+}
+
 .sb-main-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(280px, 340px);
-  gap: var(--qb-gap-section);
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 360px);
+  gap: var(--qb-gap-main-sidebar);
   align-items: start;
-  margin-top: 8px;
+  margin-top: 12px;
 }
 
 @media (max-width: 1023px) {
@@ -956,9 +934,9 @@ a.sb-card-cta:hover {
 }
 
 .qb-book3d-scene--carousel {
-  width: 76px;
-  height: 102px;
-  margin-bottom: 8px;
+  width: 82px;
+  height: 108px;
+  margin-bottom: 10px;
 }
 
 .qb-book3d-scene--hero {
@@ -1037,8 +1015,8 @@ a.sb-card-cta:hover {
 }
 
 .qb-book3d-icon {
-  width: 34px;
-  height: 34px;
+  width: 36px;
+  height: 36px;
   color: #fff;
   filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.42));
   position: relative;

@@ -38,7 +38,7 @@ export function QuestionBankHero({
           </p>
 
           <div
-            className="mt-5 inline-flex rounded-xl bg-slate-100 p-[3px] shadow-[inset_0_1px_2px_rgba(15,23,42,0.06)]"
+            className="inline-flex rounded-xl bg-slate-100/95 p-1 ring-1 ring-slate-200/80"
             role="group"
             aria-label="Kapsam"
           >
@@ -48,7 +48,7 @@ export function QuestionBankHero({
               className={`inline-flex items-center gap-1.5 rounded-[10px] px-3.5 py-2 text-[12px] font-bold transition-all ${
                 scopeMode === "class"
                   ? "bg-[#6d28d9] text-white shadow-[0_4px_14px_rgba(109,40,217,0.35)]"
-                  : "bg-transparent text-slate-600 hover:bg-white/60"
+                  : "border border-slate-200 bg-white text-slate-700 shadow-sm hover:bg-slate-50"
               }`}
             >
               <GraduationCap className="h-3.5 w-3.5 shrink-0" strokeWidth={2.25} aria-hidden />
@@ -60,7 +60,7 @@ export function QuestionBankHero({
               className={`inline-flex items-center gap-1.5 rounded-[10px] px-3.5 py-2 text-[12px] font-bold transition-all ${
                 scopeMode === "exam"
                   ? "bg-[#6d28d9] text-white shadow-[0_4px_14px_rgba(109,40,217,0.35)]"
-                  : "bg-transparent text-slate-700 hover:bg-white/60"
+                  : "border border-slate-200 bg-white text-slate-700 shadow-sm hover:bg-slate-50"
               }`}
             >
               <Target className="h-3.5 w-3.5 shrink-0" strokeWidth={2.25} aria-hidden />
@@ -120,7 +120,7 @@ export function QuestionBankHero({
 
         {/* Sağ: mor CTA (mockup) */}
         <div className="sb-hero-cta-wrap min-w-0">
-          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#7c3aed] via-[#6d28d9] to-[#5b21b6] p-5 text-white shadow-[0_16px_40px_rgba(91,33,182,0.28)]">
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#7c3aed] via-[#6d28d9] to-[#5b21b6] p-6 text-white shadow-[0_16px_40px_rgba(91,33,182,0.28)]">
             <div className="relative z-[1] flex gap-3">
               <div className="min-w-0 flex-1">
                 <h2 className="text-[15px] font-bold leading-tight tracking-tight">Bana Özel Test</h2>

@@ -1,6 +1,6 @@
 "use client";
 
-import { BarChart3, CheckCircle2, TrendingUp } from "lucide-react";
+import { BarChart3, CheckCircle2, LineChart } from "lucide-react";
 import type { QuestionBankSummary } from "@/lib/api";
 
 function formatInt(n: number): string {
@@ -20,8 +20,8 @@ export function QuestionBankKpiStrip({
       label: "Toplam Soru",
       value: k != null ? formatInt(k.total_questions) : "—",
       hint: "Kapsamdaki soru sayısı",
-      Icon: BarChart3,
-      iconWrap: "bg-indigo-50 text-indigo-600",
+      Icon: LineChart,
+      iconWrap: "bg-violet-50 text-violet-600",
     },
     {
       label: "Çözülen Soru",
@@ -34,7 +34,7 @@ export function QuestionBankKpiStrip({
       label: "Doğru Oranı",
       value: k != null && k.attempts > 0 ? `%${k.accuracy_pct}` : "—",
       hint: "Tüm deneme girişlerine göre",
-      Icon: TrendingUp,
+      Icon: LineChart,
       iconWrap: "bg-orange-50 text-orange-600",
     },
     {
@@ -53,26 +53,28 @@ export function QuestionBankKpiStrip({
   ];
 
   return (
-    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-2.5">
+    <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 sm:gap-5">
       {items.map(({ label, value, hint, Icon, iconWrap }) => (
         <div
           key={label}
-          className="rounded-[var(--qb-card-radius)] border border-white/80 bg-white/95 p-3 shadow-[var(--qb-card-shadow)] backdrop-blur-sm"
+          className="rounded-[18px] border border-slate-100 bg-white p-[var(--qb-card-pad)] shadow-[var(--qb-card-shadow)]"
           title={hint}
         >
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center justify-between gap-4">
             <div className="min-w-0">
-              <p className="text-[11px] font-medium leading-tight text-slate-500">{label}</p>
-              <p className="mt-0.5 text-base font-bold tabular-nums leading-tight text-slate-900">
+              <p className="text-xs font-medium leading-tight text-slate-500">{label}</p>
+              <p className="mt-1 text-xl font-bold tabular-nums leading-tight tracking-tight text-slate-900">
                 {loading ? (
-                  <span className="inline-block h-6 w-14 animate-pulse rounded-md bg-slate-100" />
+                  <span className="inline-block h-8 w-16 animate-pulse rounded-lg bg-slate-100" />
                 ) : (
                   value
                 )}
               </p>
             </div>
-            <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${iconWrap}`}>
-              <Icon className="h-4 w-4" aria-hidden />
+            <div
+              className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${iconWrap}`}
+            >
+              <Icon className="h-[18px] w-[18px]" strokeWidth={2.25} aria-hidden />
             </div>
           </div>
         </div>

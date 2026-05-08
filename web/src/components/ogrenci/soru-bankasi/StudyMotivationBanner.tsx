@@ -8,24 +8,26 @@ export function StudyMotivationBanner({
   onStartQuick: () => void;
 }) {
   return (
-    <div className="qb-motivation-banner mt-6 flex flex-col items-start justify-between gap-4 overflow-hidden rounded-[var(--qb-card-radius)] bg-gradient-to-r from-sky-500 via-blue-600 to-blue-700 p-4 text-white shadow-lg shadow-blue-900/20 sm:flex-row sm:items-center sm:p-5">
-      <div className="flex gap-3">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/20 backdrop-blur-sm">
-          <Trophy className="h-6 w-6 text-amber-200" aria-hidden />
+    <div className="qb-motivation-banner flex flex-col items-start justify-between gap-5 overflow-hidden rounded-[18px] bg-gradient-to-r from-sky-500 via-blue-600 to-blue-700 px-6 py-6 text-white shadow-[0_12px_40px_rgba(37,99,235,0.25)] sm:flex-row sm:items-center sm:px-8 sm:py-7">
+      <div className="flex gap-4">
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-sm">
+          <Trophy className="h-7 w-7 text-amber-200" aria-hidden />
         </div>
-        <div>
-          <p className="text-base font-bold leading-tight">Hedefe bir adım daha</p>
-          <p className="mt-1 text-xs leading-snug text-white/90 sm:text-sm">
-            Hızlı setle başla; netin arttıkça öneriler ve rozetler güncellenir.
+        <div className="max-w-xl">
+          <p className="text-[15px] font-bold leading-snug">
+            Hedeflerine ulaşmak için düzenli çalışmaya devam et!
+          </p>
+          <p className="mt-2 text-[13px] leading-relaxed text-white/95">
+            Bugün 20 soru çözerek hedefini tamamlayabilirsin; hızlı set ile başla.
           </p>
         </div>
       </div>
       <button
         type="button"
         onClick={onStartQuick}
-        className="w-full shrink-0 rounded-lg bg-white px-4 py-2.5 text-xs font-bold text-blue-700 shadow-md transition-colors hover:bg-sky-50 sm:w-auto sm:text-sm"
+        className="w-full shrink-0 rounded-xl bg-white px-6 py-3 text-[13px] font-bold text-blue-700 shadow-lg transition-colors hover:bg-sky-50 sm:w-auto"
       >
-        Hemen Çözmeye Başla
+        Hemen Çözmeye Başla →
       </button>
     </div>
   );

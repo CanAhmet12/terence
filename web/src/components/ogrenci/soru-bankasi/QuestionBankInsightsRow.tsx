@@ -8,7 +8,7 @@ import {
   PolarAngleAxis,
   ResponsiveContainer,
 } from "recharts";
-import { Target } from "lucide-react";
+import { Check, Target } from "lucide-react";
 import type { BadgeData, QuestionBankSubjectSummary, WeakAchievement } from "@/lib/api";
 
 function buildRadarSeries(
@@ -66,51 +66,65 @@ export function QuestionBankInsightsRow({
   const badges = (badgeData?.badges ?? []).filter(Boolean).slice(0, 3);
 
   return (
-    <div className="qb-insights-root mt-6 grid gap-4 lg:grid-cols-3 lg:gap-4">
+    <div className="qb-insights-root mt-0 grid gap-5 lg:grid-cols-3 lg:gap-5">
       {/* Öneriler */}
-      <div className="rounded-[var(--qb-card-radius)] border border-indigo-100/80 bg-white/95 p-4 shadow-[var(--qb-card-shadow)]">
-        <div className="mb-3 flex items-center gap-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-100 text-indigo-600">
-            <Target className="h-4 w-4" aria-hidden />
+      <div className="flex min-h-[280px] flex-col rounded-[18px] border border-slate-100 bg-white p-[var(--qb-card-pad)] shadow-[var(--qb-card-shadow)]">
+        <h3 className="mb-4 text-[15px] font-bold leading-tight text-slate-900">
+          Sınıfına Özel Öneriler
+        </h3>
+        <div className="flex flex-1 gap-4">
+          <div className="flex h-[72px] w-[72px] shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-100 to-indigo-100 shadow-inner">
+            <Target className="h-9 w-9 text-sky-600" strokeWidth={1.75} aria-hidden />
           </div>
-          <h3 className="text-sm font-bold text-slate-900">Sınıfına Özel Öneriler</h3>
+          <div className="min-w-0 flex-1">
+            <p className="text-[13px] font-semibold leading-snug text-slate-800">
+              {goalHint ?? "12. Sınıf konularına göre sana özel testler"}
+            </p>
+            {loading ? (
+              <div className="mt-4 h-24 animate-pulse rounded-xl bg-slate-100" />
+            ) : bullets.length === 0 && !goalHint ? (
+              <p className="mt-3 text-[13px] leading-relaxed text-slate-600">
+                Henüz yeterli veri yok; çözmeye devam et, öneriler burada belirecek.
+              </p>
+            ) : (
+              <ul className="mt-3 space-y-2.5">
+                {bullets.map((b) => (
+                  <li key={b.href} className="flex gap-2 text-[13px] text-slate-700">
+                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-indigo-500" strokeWidth={2.5} aria-hidden />
+                    <Link
+                      href={b.href}
+                      className="font-medium leading-snug text-indigo-700 underline-offset-2 hover:underline"
+                    >
+                      {b.text}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         </div>
-        {loading ? (
-          <div className="h-24 animate-pulse rounded-xl bg-slate-100" />
-        ) : bullets.length === 0 && !goalHint ? (
-          <p className="text-sm text-slate-600">Henüz yeterli veri yok; çözmeye devam et, öneriler burada belirecek.</p>
-        ) : (
-          <ul className="space-y-2 text-sm text-slate-700">
-            {goalHint && <li className="leading-relaxed text-slate-700">{goalHint}</li>}
-            {bullets.map((b) => (
-              <li key={b.href}>
-                <Link href={b.href} className="font-medium text-indigo-700 underline-offset-2 hover:underline">
-                  {b.text}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        )}
         <Link
           href="/ogrenci/zayif-kazanim"
-          className="mt-4 inline-flex text-xs font-bold text-indigo-600 hover:text-indigo-800"
+          className="mt-auto pt-6 text-[13px] font-bold text-indigo-600 hover:text-indigo-800"
         >
           Önerileri Gör →
         </Link>
       </div>
 
       {/* Radar */}
-      <div className="rounded-[var(--qb-card-radius)] border border-indigo-100/80 bg-white/95 p-4 shadow-[var(--qb-card-shadow)]">
-        <h3 className="mb-1 text-sm font-bold text-slate-900">Kazanım Analizi</h3>
-        <p className="mb-3 text-[11px] leading-snug text-slate-500">Ders bazlı doğruluk özeti (%).</p>
-        <div className="qb-fit-radar h-[200px] w-full sm:h-[220px]" role="img" aria-label="Kazanım radar grafiği">
+      <div className="flex min-h-[280px] flex-col rounded-[18px] border border-slate-100 bg-white p-[var(--qb-card-pad)] shadow-[var(--qb-card-shadow)]">
+        <h3 className="text-[15px] font-bold text-slate-900">Kazanım Analizi</h3>
+        <p className="mt-1 text-[12px] leading-snug text-slate-500">
+          Ders ve konu bazlı doğruluk özeti (%).
+        </p>
+        <div className="qb-fit-radar mt-4 h-[220px] w-full sm:h-[240px]" role="img" aria-label="Kazanım radar grafiği">
           {!hasRadar || radarData.length < 3 ? (
-            <div className="flex h-full items-center justify-center rounded-xl bg-slate-50 text-sm text-slate-500">
-              Grafik için en az birkaç dersden çözüm verisi gerekir.
+            <div className="flex h-full items-center justify-center rounded-xl bg-slate-50 text-[13px] text-slate-500">
+              Grafik için en az birkaç dersten çözüm verisi gerekir.
             </div>
           ) : (
             <ResponsiveContainer width="100%" height="100%">
-              <RadarChart cx="50%" cy="50%" outerRadius="75%" data={radarData}>
+              <RadarChart cx="50%" cy="50%" outerRadius="72%" data={radarData}>
                 <PolarGrid stroke="#e2e8f0" />
                 <PolarAngleAxis dataKey="label" tick={{ fill: "#64748b", fontSize: 11 }} />
                 <Radar
@@ -118,42 +132,54 @@ export function QuestionBankInsightsRow({
                   dataKey="value"
                   stroke="#6366f1"
                   fill="#6366f1"
-                  fillOpacity={0.35}
+                  fillOpacity={0.32}
                 />
               </RadarChart>
             </ResponsiveContainer>
           )}
         </div>
+        <Link
+          href="/ogrenci/rapor"
+          className="mt-4 inline-flex text-[13px] font-bold text-indigo-600 hover:text-indigo-800"
+        >
+          Detaylı Analiz →
+        </Link>
       </div>
 
       {/* Rozetler */}
-      <div className="rounded-[var(--qb-card-radius)] border border-indigo-100/80 bg-white/95 p-4 shadow-[var(--qb-card-shadow)]">
-        <h3 className="mb-3 text-sm font-bold text-slate-900">Başarı Rozetlerin</h3>
+      <div className="flex min-h-[280px] flex-col rounded-[18px] border border-slate-100 bg-white p-[var(--qb-card-pad)] shadow-[var(--qb-card-shadow)]">
+        <div className="mb-4 flex items-center justify-between gap-2">
+          <h3 className="text-[15px] font-bold text-slate-900">Başarı Rozetlerin</h3>
+          <Link href="/ogrenci/rozet" className="text-[12px] font-bold text-indigo-600 hover:underline">
+            Tümü
+          </Link>
+        </div>
         {loading ? (
-          <div className="h-24 animate-pulse rounded-xl bg-slate-100" />
+          <div className="h-28 animate-pulse rounded-xl bg-slate-100" />
         ) : badges.length === 0 ? (
-          <p className="text-sm text-slate-600">Rozetler için çözmeye devam et.</p>
+          <p className="flex-1 text-[13px] leading-relaxed text-slate-600">
+            Rozetler için çözmeye devam et.
+          </p>
         ) : (
-          <div className="flex flex-wrap justify-center gap-3">
+          <div className="flex flex-1 flex-wrap items-center justify-center gap-5">
             {badges.map((b) => (
               <div
                 key={b.id}
-                className="flex h-[88px] w-[80px] flex-col items-center justify-center rounded-xl border border-indigo-100 bg-gradient-to-b from-indigo-50 to-white p-1.5 text-center shadow-sm"
+                className="flex w-[96px] flex-col items-center text-center"
               >
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-600 text-base text-white shadow-inner">
-                  {b.emoji ?? "🏅"}
+                <div
+                  className="flex h-[52px] w-[52px] items-center justify-center bg-indigo-50 text-lg shadow-sm"
+                  style={{
+                    clipPath: "polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)",
+                  }}
+                >
+                  <span className="drop-shadow-sm">{b.emoji ?? "🏅"}</span>
                 </div>
-                <p className="mt-2 line-clamp-2 text-[10px] font-bold leading-tight text-slate-800">{b.name}</p>
+                <p className="mt-2 line-clamp-2 text-[11px] font-bold leading-tight text-slate-800">{b.name}</p>
               </div>
             ))}
           </div>
         )}
-        <Link
-          href="/ogrenci/rozet"
-          className="mt-4 inline-flex text-xs font-bold text-indigo-600 hover:text-indigo-800"
-        >
-          Tüm rozetler →
-        </Link>
       </div>
     </div>
   );
