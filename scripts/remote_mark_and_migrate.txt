@@ -1,0 +1,3 @@
+cd /var/www/terence/nazliyavuz-platform/backend
+php -r 'require "vendor/autoload.php"; $app = require_once "bootstrap/app.php"; $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap(); $b = (int) Illuminate\Support\Facades\DB::table("migrations")->max("batch") + 1; foreach (array("2025_01_15_000001_create_payments_table","2025_01_15_000004_create_assignments_table","2025_01_15_000005_create_lessons_table","2025_01_15_000011_create_video_calls_table") as $m) { Illuminate\Support\Facades\DB::table("migrations")->insertOrIgnore(array("migration"=>$m,"batch"=>$b)); } echo "legacy migrations marked batch=$b\n";'
+php artisan migrate --force --no-interaction
