@@ -2,7 +2,12 @@ import axios, { AxiosError, AxiosRequestConfig, AxiosResponse } from 'axios'
 import toast from 'react-hot-toast'
 import type { StudentGoalDashboard, RiskTier } from './goal-dashboard'
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'
+// Önce NEXT_PUBLIC_API_URL (build / runtime). Yoksa: development → yerel Laravel, production → canlı site (deploy’da env unutulursa kırılmaz).
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL ||
+  (process.env.NODE_ENV === 'development'
+    ? 'http://localhost:8000/api'
+    : 'https://terenceegitim.com/api')
 
 export const api = axios.create({
   baseURL: API_BASE_URL,
@@ -307,9 +312,10 @@ export interface Question {
   subject?: string
   topic?: string
   kazanim?: string
+  kazanim_code?: string
   difficulty?: string
   question_text: string
-  options?: { option_letter: string; option_text: string; is_correct?: boolean }[]
+  options?: { id?: number; option_letter: string; option_text: string; is_correct?: boolean }[]
   correct_answer?: string
   explanation?: string
   image_url?: string
@@ -320,6 +326,11 @@ export interface ExamSession {
   exam_type?: string
   status?: string
   score?: number
+  /** Net skor (TYT vb.); backend `finish` / `result` yanıtlarında dönebilir */
+  net_score?: number
+  title?: string
+  subject_breakdown?: Record<string, { correct: number; wrong: number; empty: number; net: number }>
+  time_spent_seconds?: number
   total_questions?: number
   correct_count?: number
   wrong_count?: number
@@ -328,6 +339,14 @@ export interface ExamSession {
   started_at?: string
   finished_at?: string
   questions?: Question[]
+}
+
+/** POST /exams/{id}/answer gövdesi — backend ExamController ile uyumlu */
+export interface ExamAnswerPayload {
+  question_id: number
+  selected_option?: string | null
+  is_flagged?: boolean
+  time_spent_seconds?: number
 }
 
 // ─── Curriculum (Müfredat) Interfaces ────────────────────────────────────────
@@ -381,6 +400,49 @@ export interface CurriculumSubject {
   units?: CurriculumUnit[]
 }
 
+/** GET /curriculum/media-catalog — düz medya listesi */
+export interface MediaCatalogItem {
+  key: string
+  source: 'curriculum'
+  content_type: 'video' | 'pdf' | 'text'
+  id: number
+  title: string
+  url: string | null | undefined
+  duration_seconds: number | null
+  is_free: boolean
+  subject_slug: string
+  subject_name: string
+  subject_icon?: string | null
+  subject_color?: string | null
+  grade: string
+  exam_type: string
+  curriculum_topic_id: number
+  topic_title: string
+  unit_title: string
+  topic_status: string
+  sort_order: number
+}
+
+export interface MediaCatalogSubjectSummary {
+  slug: string
+  name: string
+  icon?: string | null
+  color?: string | null
+  grade: string
+  exam_type: string
+  media_count: number
+  total_topics: number
+  completed_topics: number
+  progress_percent: number
+}
+
+export interface MediaCatalogResponse {
+  items: MediaCatalogItem[]
+  subjects_summary: MediaCatalogSubjectSummary[]
+  grade: string
+  exam_type: string
+}
+
 export type PlanTaskSource = 'student' | 'teacher' | 'system'
 
 export interface PlanTask {
@@ -424,6 +486,7 @@ export interface PlanTemplatePack {
 export interface StudyPlan {
   id?: number
   date?: string
+  plan_date?: string
   tasks?: PlanTask[]
   total_tasks?: number
   completed_tasks?: number
@@ -462,6 +525,16 @@ export interface TeacherClass {
   subject?: string
   student_count?: number
   created_at?: string
+}
+
+/** GET /teacher/classes/{id}/exam-summary satırı */
+export interface TeacherClassExamSummaryRow {
+  student_id: number
+  name: string
+  exams_completed_30d: number
+  last_net: number | null
+  last_exam_type?: string | null
+  last_finished_at?: string | null
 }
 
 export type ClassRoom = TeacherClass
@@ -543,6 +616,7 @@ export interface AnswerResult {
   is_correct?: boolean
   correct_option?: string
   explanation?: string
+  solution_video?: string
 }
 
 export interface WeakAchievement {
@@ -555,6 +629,33 @@ export interface WeakAchievement {
   total_count?: number
   kazanim?: string
   topic?: string
+}
+
+export interface QuestionBankKpis {
+  total_questions: number
+  answered_distinct: number
+  attempts: number
+  accuracy_pct: number
+  net_estimate: number
+}
+
+export interface QuestionBankSubjectSummary {
+  subject: string
+  total: number
+  answered: number
+  correct_rate: number | null
+  cta_deep_link: string
+}
+
+export interface QuestionBankExamTabRow {
+  exam_type: string
+  question_count: number
+}
+
+export interface QuestionBankSummary {
+  kpis: QuestionBankKpis
+  subjects: QuestionBankSubjectSummary[]
+  exam_tabs: QuestionBankExamTabRow[]
 }
 
 export interface DailyPlan {
@@ -649,6 +750,12 @@ export interface ContentItem {
   sort_order?: number
   progress_status?: 'not_started' | 'in_progress' | 'completed'
   is_active?: boolean
+  is_free?: boolean
+  video?: {
+    cdn_url?: string
+    thumbnail_url?: string
+    duration_seconds?: number
+  }
 }
 
 export interface CourseTopic {
@@ -696,11 +803,18 @@ export interface TeacherLesson {
   title?: string
   status?: string
   starts_at?: string
+  scheduled_at?: string
   ends_at?: string
+  started_at?: string
   duration_minutes?: number
   daily_room_url?: string
+  recording_url?: string | null
+  subject_tag?: string | null
+  description?: string | null
+  is_public?: boolean
+  participant_count?: number
   class_room?: { name?: string; id?: number }
-  teacher?: { name?: string; id?: number }
+  teacher?: { name?: string; id?: number; profile_photo_url?: string | null }
   reservation_id?: number
 }
 
@@ -720,10 +834,24 @@ export interface LiveSession {
   starts_at?: string
   scheduled_at?: string
   ends_at?: string
+  started_at?: string
+  ended_at?: string
   class_id?: number
+  class_room_id?: number | null
+  is_public?: boolean
+  subject_tag?: string | null
+  description?: string | null
+  recording_url?: string | null
+  attendances_count?: number
   duration_minutes?: number
   teacher_id?: number
   class_room?: { id?: number; name?: string; student_count?: number }
+}
+
+export interface StudentLiveLessonsSummary {
+  upcoming_this_week: number
+  joined_this_month: number
+  minutes_this_month: number
 }
 
 export interface TeacherMessage {
@@ -733,6 +861,31 @@ export interface TeacherMessage {
   sender_name?: string
   class_id?: number
   created_at?: string
+}
+
+export interface TeacherCurriculumTopicRow {
+  id: number
+  title: string
+  meb_code?: string | null
+  unit_title?: string | null
+  subject_name?: string | null
+  subject_slug?: string | null
+  grade?: string | null
+  exam_type?: string | null
+}
+
+export interface TeacherCurriculumUploadResponse {
+  success: boolean
+  content_item?: {
+    id: number
+    type: string
+    title: string
+    url?: string | null
+    is_free?: boolean
+  }
+  curriculum_topic_id?: number
+  error?: boolean
+  message?: string
 }
 
 // ─── Auth API ────────────────────────────────────────────────────────────────
@@ -910,6 +1063,46 @@ export const planApi = {
   },
 }
 
+/** GET /exams/summary — tamamlanan deneme KPI özeti */
+export interface ExamSummaryStats {
+  total_completed: number
+  this_week_count: number
+  avg_net: number
+  best_net: number
+  avg_time_seconds: number
+}
+
+/** Laravel `GET /exams/{id}/result`, `POST /exams/{id}/finish` vb. yanıtlarını tek `ExamSession` şekline indirger */
+export function normalizeExamSessionFromApi(payload: unknown): ExamSession {
+  if (payload == null || typeof payload !== 'object') {
+    return { id: 0 }
+  }
+  const o = payload as Record<string, unknown>
+  const nested =
+    (o.result as ExamSession | undefined) ??
+    (o.session as ExamSession | undefined) ??
+    (o.data as ExamSession | undefined)
+  if (nested && typeof nested === 'object' && typeof (nested as ExamSession).id === 'number') {
+    return nested as ExamSession
+  }
+  if (typeof o.session_id === 'number') {
+    return {
+      id: o.session_id,
+      correct_count: o.correct_count as number | undefined,
+      wrong_count: o.wrong_count as number | undefined,
+      empty_count: o.empty_count as number | undefined,
+      net_score: o.net_score as number | undefined,
+      subject_breakdown: o.subject_breakdown as ExamSession['subject_breakdown'],
+      time_spent_seconds: o.time_spent_seconds as number | undefined,
+      status: 'completed',
+    }
+  }
+  if (typeof o.id === 'number') {
+    return o as unknown as ExamSession
+  }
+  return { id: 0 }
+}
+
 // ─── Exam API ────────────────────────────────────────────────────────────────
 export const examApi = {
   async startExam(_tokenOrData?: string | { exam_type: string; subject?: string; question_count?: number; difficulty?: string; duration_minutes?: number }, data?: { exam_type: string; subject?: string; question_count?: number; difficulty?: string; duration_minutes?: number }): Promise<ExamSession & { session?: ExamSession; questions?: Question[] }> {
@@ -923,28 +1116,56 @@ export const examApi = {
     return normalizeArray<ExamSession>(response.data)
   },
 
-  async answerExamQuestion(_tokenOrId?: string | number, idOrData?: number | { question_id: number; answer: string }, data?: { question_id: number; answer: string }): Promise<void> {
+  async getExamSummary(_token?: string): Promise<ExamSummaryStats> {
+    const response = await api.get<unknown>('/exams/summary')
+    const d = (response.data && typeof response.data === 'object' ? response.data : {}) as Record<string, unknown>
+    return {
+      total_completed: Number(d.total_completed ?? 0),
+      this_week_count: Number(d.this_week_count ?? 0),
+      avg_net: Number(d.avg_net ?? 0),
+      best_net: Number(d.best_net ?? 0),
+      avg_time_seconds: Number(d.avg_time_seconds ?? 0),
+    }
+  },
+
+  async answerExamQuestion(_tokenOrId?: string | number, idOrData?: number | ExamAnswerPayload, data?: ExamAnswerPayload): Promise<void> {
     const actualId = typeof _tokenOrId === 'number' ? _tokenOrId : (typeof idOrData === 'number' ? idOrData : undefined)
-    const actualData = typeof _tokenOrId === 'number' ? (idOrData as { question_id: number; answer: string }) : data
+    const actualData = typeof _tokenOrId === 'number' ? (idOrData as ExamAnswerPayload) : data
     await api.post(`/exams/${actualId}/answer`, actualData)
   },
 
   async finishExam(_tokenOrId?: string | number, id?: number): Promise<ExamSession> {
     const actualId = typeof _tokenOrId === 'number' ? _tokenOrId : id
-    const response = await api.post<{ session: ExamSession; result: ExamSession }>(`/exams/${actualId}/finish`)
-    return response.data.result ?? response.data.session ?? (response.data as unknown as ExamSession)
+    const response = await api.post<unknown>(`/exams/${actualId}/finish`)
+    return normalizeExamSessionFromApi(response.data)
   },
 
   async getExamResult(_tokenOrId?: string | number, id?: number | string): Promise<ExamSession> {
     const actualId = typeof _tokenOrId === 'string' && id !== undefined ? id : (typeof _tokenOrId === 'number' ? _tokenOrId : id)
-    const response = await api.get<{ session: ExamSession; data: ExamSession }>(`/exams/${actualId}/result`)
-    return response.data.session ?? response.data.data ?? (response.data as unknown as ExamSession)
+    const response = await api.get<unknown>(`/exams/${actualId}/result`)
+    return normalizeExamSessionFromApi(response.data)
   },
 }
 
 // ─── Question API ────────────────────────────────────────────────────────────
+export type QuestionListParams = {
+  subject?: string
+  difficulty?: string
+  topic_id?: number
+  /** Metin araması — backend `question_text` LIKE */
+  q?: string
+  /** Kazanım kodu — tam eşleşme */
+  kazanim_code?: string
+  page?: number
+  per_page?: number
+  exam_type?: string
+}
+
 export const questionApi = {
-  async getQuestions(_tokenOrParams?: string | { subject?: string; topic?: string; difficulty?: string; page?: number; per_page?: number; exam_type?: string }, params?: { subject?: string; topic?: string; difficulty?: string; page?: number; per_page?: number; exam_type?: string }): Promise<PaginatedResponse<Question>> {
+  async getQuestions(
+    _tokenOrParams?: string | QuestionListParams,
+    params?: QuestionListParams
+  ): Promise<PaginatedResponse<Question>> {
     const actualParams = typeof _tokenOrParams === 'string' ? params : _tokenOrParams
     const response = await api.get<unknown>('/questions', { params: actualParams })
     const raw = response.data
@@ -954,10 +1175,34 @@ export const questionApi = {
     return { data: [], current_page: 1, last_page: 1, per_page: 20, total: 0 }
   },
 
-  async answerQuestion(_tokenOrData?: string | { question_id: number; answer: string; time_spent?: number }, data?: { question_id: number; answer: string; time_spent?: number }): Promise<{ correct: boolean; explanation?: string }> {
+  async answerQuestion(
+    _tokenOrData?: string | { question_id: number; answer: string; time_spent?: number },
+    data?: { question_id: number; answer: string; time_spent?: number }
+  ): Promise<AnswerResult & { selected?: string; correct_option?: string }> {
     const actualData = typeof _tokenOrData === 'string' ? data : _tokenOrData
-    const response = await api.post<{ correct: boolean; explanation?: string }>('/questions/answer', actualData)
-    return response.data
+    const response = await api.post<Record<string, unknown>>('/questions/answer', actualData)
+    const d = response.data ?? {}
+    const isCorrect = Boolean(d.is_correct ?? d.correct)
+    return {
+      is_correct: isCorrect,
+      correct: isCorrect,
+      correct_option: typeof d.correct_option === 'string' ? d.correct_option : undefined,
+      explanation: typeof d.explanation === 'string' ? d.explanation : undefined,
+      solution_video: typeof d.solution_video === 'string' ? d.solution_video : undefined,
+    }
+  },
+
+  async getBankSummary(_token?: string): Promise<QuestionBankSummary | null> {
+    const response = await api.get<{ success?: boolean; data?: QuestionBankSummary }>('/questions/bank-summary')
+    const raw = response.data as Record<string, unknown> | undefined
+    const inner =
+      raw && typeof raw.data === 'object' && raw.data !== null
+        ? (raw.data as QuestionBankSummary)
+        : (raw as unknown as QuestionBankSummary | undefined)
+    if (inner?.kpis && Array.isArray(inner.subjects) && Array.isArray(inner.exam_tabs)) {
+      return inner
+    }
+    return null
   },
 
   async getWeakAchievements(_token?: string): Promise<WeakAchievement[]> {
@@ -979,6 +1224,12 @@ export const questionApi = {
 }
 
 // ─── Course / Content API ────────────────────────────────────────────────────
+/**
+ * Legacy kurs kataloğu (GET /courses, /courses/{id}).
+ * Öğrenci "Derslerim" deneyimi müfredat API’si üzerinden yürütülür (`curriculumApi`).
+ * Bu modül yalnızca eski sayfalar veya yönetim akışları içindir; yeni içerik öğretmen tarafında
+ * `teacherApi.uploadCurriculumContent` ile müfredat konusuna bağlanır.
+ */
 export const courseApi = {
   async getCourses(_token?: string): Promise<Course[]> {
     const response = await api.get<{ success: boolean; data: Course[] }>('/courses')
@@ -1063,6 +1314,47 @@ export const studentApi = {
   async getStudentUpcomingLessons(_token?: string): Promise<unknown[]> {
     const response = await api.get<unknown>('/student/upcoming-lessons')
     return normalizeArray(response.data)
+  },
+
+  /** Canlı ders listesi (yaklaşan / geçmiş / tümü). GET /student/live-lessons */
+  async getStudentLiveLessons(_tokenOrScope?: string, scope: 'upcoming' | 'past' | 'all' = 'upcoming'): Promise<TeacherLesson[]> {
+    const actualScope =
+      _tokenOrScope === 'upcoming' || _tokenOrScope === 'past' || _tokenOrScope === 'all' ? _tokenOrScope : scope
+    const response = await api.get<unknown>('/student/live-lessons', { params: { scope: actualScope } })
+    return normalizeArray<TeacherLesson>(response.data)
+  },
+
+  async getStudentLiveLessonsSummary(_token?: string): Promise<StudentLiveLessonsSummary> {
+    const response = await api.get<{ success?: boolean; data?: StudentLiveLessonsSummary }>('/student/live-lessons/summary')
+    const d = response.data as Record<string, unknown>
+    const inner = d.data as StudentLiveLessonsSummary | undefined
+    if (inner && typeof inner === 'object') return inner
+    return { upcoming_this_week: 0, joined_this_month: 0, minutes_this_month: 0 }
+  },
+
+  /** Canlı derse katıl — P2P video araması için `getVideoRoom` kullanılır; `lesson_id` canlı dersde desteklenmez. */
+  async joinLiveSession(sessionId: number): Promise<VideoRoom> {
+    const response = await api.post<{ success?: boolean; data?: { room_url?: string; session_id?: number } }>(
+      `/student/live-sessions/${sessionId}/join`,
+    )
+    const raw = response.data as Record<string, unknown>
+    const inner = (raw.data ?? raw) as Record<string, unknown>
+    const room_url = (inner.room_url as string) || ''
+    if (!room_url) throw new Error('Oda bağlantısı alınamadı')
+    return {
+      room_url,
+      session_id: String(inner.session_id ?? sessionId),
+    }
+  },
+
+  async setLiveLessonReminder(
+    sessionId: number,
+    body: { remind_at: string; channel?: 'in_app' | 'push' | 'email' },
+  ): Promise<void> {
+    await api.post(`/student/live-sessions/${sessionId}/reminder`, {
+      remind_at: body.remind_at,
+      channel: body.channel ?? 'in_app',
+    })
   },
 
   async generateParentCode(_token?: string): Promise<{ code: string }> {
@@ -1169,6 +1461,12 @@ export const teacherApi = {
     return normalizeArray<User>(response.data)
   },
 
+  async getClassExamSummary(_tokenOrId?: string | number, classId?: number): Promise<TeacherClassExamSummaryRow[]> {
+    const actualId = typeof _tokenOrId === 'number' ? _tokenOrId : classId
+    const response = await api.get<unknown>(`/teacher/classes/${actualId}/exam-summary`)
+    return normalizeArray<TeacherClassExamSummaryRow>(response.data)
+  },
+
   async assignClassPlanTasks(
     classId: number,
     body: {
@@ -1232,10 +1530,55 @@ export const teacherApi = {
     return normalizeArray<LiveSession>(response.data)
   },
 
-  async createLiveSession(_tokenOrData?: string | { title: string; class_id?: number; starts_at?: string }, data?: { title: string; class_id?: number; starts_at?: string }): Promise<LiveSession> {
+  async createLiveSession(
+    _tokenOrData?: string | {
+      title: string
+      class_id?: number
+      class_room_id?: number
+      starts_at?: string
+      scheduled_at?: string
+      duration_minutes?: number
+      is_public?: boolean
+      subject_tag?: string
+      description?: string
+      max_participants?: number
+    },
+    data?: {
+      title: string
+      class_id?: number
+      class_room_id?: number
+      starts_at?: string
+      scheduled_at?: string
+      duration_minutes?: number
+      is_public?: boolean
+      subject_tag?: string
+      description?: string
+      max_participants?: number
+    },
+  ): Promise<LiveSession> {
     const actualData = typeof _tokenOrData === 'string' ? data : _tokenOrData
     const response = await api.post<{ session: LiveSession }>('/teacher/live-sessions', actualData)
     return response.data.session ?? (response.data as unknown as LiveSession)
+  },
+
+  async getLiveSession(_tokenOrId?: string | number, sessionId?: number): Promise<LiveSession> {
+    const actualId = typeof _tokenOrId === 'number' ? _tokenOrId : sessionId
+    if (actualId === undefined) throw new Error('Oturum ID gerekli')
+    const response = await api.get<{ success?: boolean; data?: LiveSession }>(`/teacher/live-sessions/${actualId}`)
+    const d = response.data as Record<string, unknown>
+    return (d.data ?? response.data) as LiveSession
+  },
+
+  async goLiveSession(sessionId: number): Promise<LiveSession> {
+    const response = await api.patch<{ success?: boolean; data?: LiveSession }>(`/teacher/live-sessions/${sessionId}/go-live`)
+    const d = response.data as Record<string, unknown>
+    return (d.data ?? response.data) as LiveSession
+  },
+
+  async endLiveSession(sessionId: number, body?: { recording_url?: string | null }): Promise<LiveSession> {
+    const response = await api.patch<{ success?: boolean; data?: LiveSession }>(`/teacher/live-sessions/${sessionId}/end`, body ?? {})
+    const d = response.data as Record<string, unknown>
+    return (d.data ?? response.data) as LiveSession
   },
 
   async getTeacherAnalytics(_tokenOrType?: string, type?: string): Promise<unknown> {
@@ -1260,7 +1603,7 @@ export const teacherApi = {
     return response.data.message ?? (response.data as unknown as TeacherMessage)
   },
 
-  // canli-ders için video room oluşturma/alma
+  // P2P görüşme — canlı ders için `joinLiveSession` kullanın (`lesson_id` desteklenmez).
   async getVideoRoom(_tokenOrId?: string | number, lessonId?: number): Promise<VideoRoom | null> {
     try {
       const actualId = typeof _tokenOrId === 'number' ? _tokenOrId : lessonId
@@ -1271,16 +1614,21 @@ export const teacherApi = {
     }
   },
 
-  // içerik yükleme
-  async uploadContent(_token?: string, formData?: FormData): Promise<unknown> {
-    try {
-      const response = await api.post<unknown>('/upload/document', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      })
-      return response.data
-    } catch {
-      return null
-    }
+  /** Müfredat konusu araması (içerik yükleme seçici). GET /teacher/curriculum/topics */
+  async searchCurriculumTopics(q: string, limit = 40): Promise<TeacherCurriculumTopicRow[]> {
+    const response = await api.get<{ success?: boolean; topics?: TeacherCurriculumTopicRow[] }>('/teacher/curriculum/topics', {
+      params: { q: q.trim(), limit },
+    })
+    const topics = response.data?.topics
+    return Array.isArray(topics) ? topics : []
+  },
+
+  /** Video/PDF’yi müfredat konusuna bağlar. POST /teacher/curriculum-content (multipart) */
+  async uploadCurriculumContent(formData: FormData): Promise<TeacherCurriculumUploadResponse> {
+    const response = await api.post<TeacherCurriculumUploadResponse>('/teacher/curriculum-content', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    return response.data
   },
 }
 
@@ -1297,9 +1645,24 @@ export const parentApi = {
     return response.data
   },
 
+  async getChildLiveLessons(
+    childId: number,
+    scope: 'upcoming' | 'past' | 'all' = 'upcoming',
+  ): Promise<TeacherLesson[]> {
+    const response = await api.get<unknown>(`/parent/children/${childId}/live-lessons`, { params: { scope } })
+    return normalizeArray<TeacherLesson>(response.data)
+  },
+
+  async getChildExams(_tokenOrId?: string | number, childId?: number): Promise<ExamSession[]> {
+    const actualId = typeof _tokenOrId === 'number' ? _tokenOrId : childId
+    if (actualId === undefined) throw new Error('Öğrenci ID gerekli')
+    const response = await api.get<unknown>(`/parent/children/${actualId}/exams`)
+    return normalizeArray<ExamSession>(response.data)
+  },
+
   async linkChild(_tokenOrCode?: string, code?: string): Promise<void> {
     const actualCode = code ?? _tokenOrCode
-    await api.post('/parent/link', { code: actualCode })
+    await api.post('/parent/link', { invite_code: actualCode })
   },
 
   async getChildReport(_token?: string, childId?: number): Promise<unknown> {
@@ -1373,7 +1736,10 @@ export const adminApi = {
     return response.data
   },
 
-  async getAdminQuestions(_tokenOrParams?: string | { page?: number; subject?: string }, params?: { page?: number; subject?: string }): Promise<PaginatedResponse<Question>> {
+  async getAdminQuestions(
+    _tokenOrParams?: string | { page?: number; subject?: string; search?: string; difficulty?: string },
+    params?: { page?: number; subject?: string; search?: string; difficulty?: string }
+  ): Promise<PaginatedResponse<Question>> {
     const actualParams = typeof _tokenOrParams === 'string' ? params : _tokenOrParams
     const response = await api.get<unknown>('/admin/questions', { params: actualParams })
     const raw = response.data
@@ -1600,6 +1966,16 @@ export const curriculumApi = {
     const response = await api.get<{ progress: Array<{ slug: string; name: string; total_topics: number; completed_topics: number; progress_percent: number }> }>('/curriculum/progress')
     return response.data
   },
+
+  async getMediaCatalog(): Promise<MediaCatalogResponse | null> {
+    try {
+      const response = await api.get<MediaCatalogResponse>('/curriculum/media-catalog')
+      return response.data
+    } catch (e) {
+      console.error('getMediaCatalog error:', e)
+      return null
+    }
+  },
 }
 
 // ─── Unified api object — backwards compatibility ────────────────────────────
@@ -1637,6 +2013,7 @@ Object.assign(api, {
   // Exam
   startExam: examApi.startExam.bind(examApi),
   getExamHistory: examApi.getExamHistory.bind(examApi),
+  getExamSummary: examApi.getExamSummary.bind(examApi),
   answerExamQuestion: examApi.answerExamQuestion.bind(examApi),
   finishExam: examApi.finishExam.bind(examApi),
   getExamResult: examApi.getExamResult.bind(examApi),
@@ -1646,6 +2023,7 @@ Object.assign(api, {
   getWeakAchievements: questionApi.getWeakAchievements.bind(questionApi),
   getSimilarQuestions: questionApi.getSimilarQuestions.bind(questionApi),
   generatePersonalTest: questionApi.generatePersonalTest.bind(questionApi),
+  getBankSummary: questionApi.getBankSummary.bind(questionApi),
   // Courses
   getCourses: courseApi.getCourses.bind(courseApi),
   getCourse: courseApi.getCourse.bind(courseApi),
@@ -1658,6 +2036,10 @@ Object.assign(api, {
   getBadges: studentApi.getBadges.bind(studentApi),
   getLeaderboard: studentApi.getLeaderboard.bind(studentApi),
   getStudentUpcomingLessons: studentApi.getStudentUpcomingLessons.bind(studentApi),
+  getStudentLiveLessons: studentApi.getStudentLiveLessons.bind(studentApi),
+  getStudentLiveLessonsSummary: studentApi.getStudentLiveLessonsSummary.bind(studentApi),
+  joinLiveSession: studentApi.joinLiveSession.bind(studentApi),
+  setLiveLessonReminder: studentApi.setLiveLessonReminder.bind(studentApi),
   generateParentCode: studentApi.generateParentCode.bind(studentApi),
   getGoalEngine: studentApi.getGoalEngine.bind(studentApi),
   getStudentGoalDashboard: studentApi.getStudentGoalDashboard.bind(studentApi),
@@ -1674,6 +2056,7 @@ Object.assign(api, {
   getTeacherClasses: teacherApi.getTeacherClasses.bind(teacherApi),
   createClass: teacherApi.createClass.bind(teacherApi),
   getClassStudents: teacherApi.getClassStudents.bind(teacherApi),
+  getClassExamSummary: teacherApi.getClassExamSummary.bind(teacherApi),
   assignClassPlanTasks: teacherApi.assignClassPlanTasks.bind(teacherApi),
   getTeacherStudentGoalDashboard: teacherApi.getTeacherStudentGoalDashboard.bind(teacherApi),
   getRiskStudents: teacherApi.getRiskStudents.bind(teacherApi),
@@ -1683,14 +2066,20 @@ Object.assign(api, {
   deleteAssignment: teacherApi.deleteAssignment.bind(teacherApi),
   getLiveSessions: teacherApi.getLiveSessions.bind(teacherApi),
   createLiveSession: teacherApi.createLiveSession.bind(teacherApi),
+  getLiveSession: teacherApi.getLiveSession.bind(teacherApi),
+  goLiveSession: teacherApi.goLiveSession.bind(teacherApi),
+  endLiveSession: teacherApi.endLiveSession.bind(teacherApi),
   getTeacherAnalytics: teacherApi.getTeacherAnalytics.bind(teacherApi),
   getTeacherMessages: teacherApi.getTeacherMessages.bind(teacherApi),
   sendMessage: teacherApi.sendMessage.bind(teacherApi),
   getVideoRoom: teacherApi.getVideoRoom.bind(teacherApi),
-  uploadContent: teacherApi.uploadContent.bind(teacherApi),
+  searchCurriculumTopics: teacherApi.searchCurriculumTopics.bind(teacherApi),
+  uploadCurriculumContent: teacherApi.uploadCurriculumContent.bind(teacherApi),
   // Parent
   getChildren: parentApi.getChildren.bind(parentApi),
   getChildSummary: parentApi.getChildSummary.bind(parentApi),
+  getChildLiveLessons: parentApi.getChildLiveLessons.bind(parentApi),
+  getChildExams: parentApi.getChildExams.bind(parentApi),
   linkChild: parentApi.linkChild.bind(parentApi),
   getChildReport: parentApi.getChildReport.bind(parentApi),
   getParentNotificationSettings: parentApi.getParentNotificationSettings.bind(parentApi),
@@ -1738,6 +2127,7 @@ Object.assign(api, {
   getCurriculumSubject: curriculumApi.getCurriculumSubject.bind(curriculumApi),
   updateCurriculumProgress: curriculumApi.updateCurriculumProgress.bind(curriculumApi),
   getMyCurriculumProgress: curriculumApi.getMyCurriculumProgress.bind(curriculumApi),
+  getMediaCatalog: curriculumApi.getMediaCatalog.bind(curriculumApi),
 })
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -1811,5 +2201,4 @@ export function isStreamingVideo(url: string | null): boolean {
          url.includes('vimeo.com');
 }
 
-export { authApi }
 export default api
