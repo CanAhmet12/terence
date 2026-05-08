@@ -14,12 +14,11 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
     return <>{children}</>;
   }
 
+  const hideGlobalHeader = pathname === "/ogrenci/dersler" || pathname?.startsWith("/ogrenci/dersler/");
+
   return (
     <OnboardingGuard>
-      <DashboardWrapper
-        sidebar={<DashboardSidebar />}
-        header={<DashboardHeader />}
-      >
+      <DashboardWrapper sidebar={<DashboardSidebar />} header={hideGlobalHeader ? null : <DashboardHeader />}>
         {children}
       </DashboardWrapper>
     </OnboardingGuard>

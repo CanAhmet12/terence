@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import { api, CurriculumSubject, CurriculumUnit, CurriculumTopic } from "@/lib/api";
 import {
@@ -11,16 +12,15 @@ import {
   BookOpen,
   Loader2,
   GraduationCap,
-  Play,
-  FileText,
   Menu,
   X,
   Home,
-  Clock,
   RefreshCw,
   AlertCircle,
+  BarChart3,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { HeaderUserMenu } from "@/components/dashboard/HeaderUserMenu";
 import { SUBJECT_COLORS } from "@/components/ogrenci/dersler/constants";
 import {
   partitionCurriculumSubjects,
@@ -28,12 +28,11 @@ import {
   type CurriculumBucket,
 } from "@/components/ogrenci/dersler/curriculumBuckets";
 import { CurriculumBucketTabs, ExamFilterChips } from "@/components/ogrenci/dersler/CurriculumBucketTabs";
-import { VideoPanel } from "@/components/ogrenci/dersler/VideoPanel";
-import { PdfPanel } from "@/components/ogrenci/dersler/PdfPanel";
 import { TopicHero } from "@/components/ogrenci/dersler/TopicHero";
 import { TopicKpiStrip } from "@/components/ogrenci/dersler/TopicKpiStrip";
 import { TopicAbout } from "@/components/ogrenci/dersler/TopicAbout";
 import { TopicContentList, type ContentListItem } from "@/components/ogrenci/dersler/TopicContentList";
+import { TopicMediaModal } from "@/components/ogrenci/dersler/TopicMediaModal";
 import { UnitAccordion } from "@/components/ogrenci/dersler/UnitAccordion";
 
 export default function DerslerimPage() {
@@ -57,6 +56,7 @@ export default function DerslerimPage() {
   const [activeContent, setActiveContent] = useState<ContentListItem | null>(null);
   const [contentItems, setContentItems] = useState<ContentListItem[]>([]);
   const [contentFilter, setContentFilter] = useState<"all" | "video" | "pdf">("all");
+  const [mediaModalOpen, setMediaModalOpen] = useState(false);
 
   const gradeStr = user?.grade != null ? String(user.grade) : undefined;
   const examStr = user?.target_exam ?? user?.exam_goal ?? undefined;
@@ -162,11 +162,8 @@ export default function DerslerimPage() {
     const raw = topic.content_items ?? [];
     const items = raw as ContentListItem[];
     setContentItems(items);
-    if (items.length > 0) {
-      setActiveContent(items[0]);
-    } else {
-      setActiveContent(null);
-    }
+    setActiveContent(null);
+    setMediaModalOpen(false);
   };
 
   const handleTopicComplete = async () => {
@@ -251,60 +248,108 @@ export default function DerslerimPage() {
   }
 
   return (
-    <div className="flex w-full flex-col bg-[#f8f7fc]">
-      <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center justify-between border-b border-slate-200/80 bg-white/95 px-4 shadow-sm backdrop-blur-sm sm:h-16 sm:px-6">
-        <div className="flex items-center gap-3">
-          <button type="button" onClick={() => setSidebarOpen(!sidebarOpen)} className="rounded-lg p-2 text-slate-600 hover:bg-slate-100 lg:hidden">
-            <Menu className="h-5 w-5" />
-          </button>
-
-          <div className="flex items-center gap-2 text-sm text-slate-600">
-            <Home className="h-4 w-4" aria-hidden />
-            <ChevronRight className="h-3 w-3 text-slate-400" aria-hidden />
-            <span className="font-semibold text-slate-900">Derslerim</span>
-            {activeSubject && (
-              <>
-                <ChevronRight className="h-3 w-3 text-slate-400" aria-hidden />
-                <span className="hidden sm:inline">{activeSubject.name}</span>
-              </>
-            )}
-            {activeTopic && (
-              <>
-                <ChevronRight className="h-3 w-3 text-slate-400" aria-hidden />
-                <span className="hidden md:inline max-w-xs truncate">{activeTopic.title}</span>
-              </>
-            )}
-          </div>
-        </div>
-
-        <div className="mx-4 hidden max-w-md flex-1 md:block">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" aria-hidden />
-            <input
-              type="search"
-              placeholder="Ders veya konu ara..."
-              value={toolbarSearch}
-              onChange={(e) => setToolbarSearch(e.target.value)}
-              className="w-full rounded-xl border border-slate-200 bg-slate-50/80 py-2 pl-10 pr-4 text-sm outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
-              aria-label="Ders ara"
-            />
-            {toolbarSearch && (
-              <button type="button" onClick={() => setToolbarSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
-                <X className="h-4 w-4" />
+    <div className="flex w-full flex-col bg-[#f8f9fb]">
+      <header className="sticky top-0 z-[60] border-b border-slate-200/90 bg-white shadow-sm">
+        <div className="flex w-full flex-col gap-2.5 px-3 py-2.5 sm:px-4 lg:flex-row lg:items-center lg:gap-5 lg:px-5 lg:py-3">
+          <div className="flex w-full min-w-0 flex-col gap-2.5 lg:flex-row lg:items-center lg:gap-5">
+            <div className="flex min-w-0 flex-1 items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+                className="shrink-0 rounded-lg p-2 text-slate-600 hover:bg-slate-100 lg:hidden"
+                aria-label="Ders menüsünü aç"
+              >
+                <Menu className="h-5 w-5" />
               </button>
-            )}
-          </div>
-        </div>
 
-        <div className="flex items-center gap-2">
-          {gradeStr && examStr && (
-            <div className="hidden items-center gap-2 sm:flex">
-              <div className="rounded-full bg-violet-50 px-3 py-1.5 text-xs font-semibold text-violet-900 ring-1 ring-violet-100">
-                {gradeStr === "mezun" ? "Mezun" : `${gradeStr}. Sınıf`}
-              </div>
-              <div className="rounded-full bg-violet-100 px-3 py-1.5 text-xs font-semibold text-violet-900 ring-1 ring-violet-200/60">{examStr}</div>
+              <nav
+                className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto whitespace-nowrap text-xs text-slate-600 sm:text-sm"
+                aria-label="Konum"
+              >
+                <Link href="/ogrenci" className="shrink-0 text-slate-400 transition-colors hover:text-violet-600" title="Ana sayfa">
+                  <Home className="h-4 w-4" aria-hidden />
+                </Link>
+                <ChevronRight className="h-3.5 w-3.5 shrink-0 text-slate-300" aria-hidden />
+                <span className="shrink-0 font-semibold text-slate-900">Derslerim</span>
+                {activeSubject && (
+                  <>
+                    <ChevronRight className="h-3.5 w-3.5 shrink-0 text-slate-300" aria-hidden />
+                    <span className="max-w-[7rem] truncate font-medium text-slate-700 sm:max-w-[10rem] md:max-w-none">{activeSubject.name}</span>
+                  </>
+                )}
+                {activeTopic && (
+                  <>
+                    <ChevronRight className="h-3.5 w-3.5 shrink-0 text-slate-300" aria-hidden />
+                    <span className="max-w-[9rem] truncate font-semibold text-violet-800 sm:max-w-[14rem] lg:max-w-[20rem]">{activeTopic.title}</span>
+                  </>
+                )}
+              </nav>
             </div>
-          )}
+
+            <div className="w-full md:hidden">
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" aria-hidden />
+                <input
+                  type="search"
+                  placeholder="Ders veya konu ara..."
+                  value={toolbarSearch}
+                  onChange={(e) => setToolbarSearch(e.target.value)}
+                  className="w-full rounded-full border border-slate-200 bg-slate-50/90 py-2 pl-10 pr-10 text-sm outline-none focus:border-violet-300 focus:ring-2 focus:ring-violet-100"
+                  aria-label="Ders ara"
+                />
+                {toolbarSearch ? (
+                  <button
+                    type="button"
+                    onClick={() => setToolbarSearch("")}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                    aria-label="Aramayı temizle"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                ) : null}
+              </div>
+            </div>
+
+            <div className="hidden min-w-0 w-full md:block lg:flex-[1.35] lg:px-2">
+              <div className="relative w-full">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" aria-hidden />
+                <input
+                  type="search"
+                  placeholder="Ders veya konu ara..."
+                  value={toolbarSearch}
+                  onChange={(e) => setToolbarSearch(e.target.value)}
+                  className="w-full rounded-full border border-slate-200 bg-slate-50/90 py-2 pl-10 pr-10 text-sm outline-none transition-shadow focus:border-violet-300 focus:ring-2 focus:ring-violet-100"
+                  aria-label="Ders ara"
+                />
+                {toolbarSearch ? (
+                  <button
+                    type="button"
+                    onClick={() => setToolbarSearch("")}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                    aria-label="Aramayı temizle"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                ) : null}
+              </div>
+            </div>
+
+            <div className="flex shrink-0 items-center justify-end gap-2">
+              {gradeStr && examStr ? (
+                <>
+                  <div className="hidden items-center gap-1.5 rounded-full border border-slate-200/90 bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-800 shadow-sm sm:flex">
+                    <GraduationCap className="h-3.5 w-3.5 text-violet-600" aria-hidden />
+                    {gradeStr === "mezun" ? "Mezun" : `${gradeStr}. Sınıf`}
+                  </div>
+                  <div className="hidden items-center gap-1.5 rounded-full border border-slate-200/90 bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-800 shadow-sm sm:flex">
+                    <BarChart3 className="h-3.5 w-3.5 text-violet-600" aria-hidden />
+                    {examStr}
+                  </div>
+                </>
+              ) : null}
+              <HeaderUserMenu />
+            </div>
+          </div>
         </div>
       </header>
 
@@ -461,31 +506,14 @@ export default function DerslerimPage() {
           </div>
         </aside>
 
-        <main className="min-w-0 flex-1 bg-[#f8f7fc]">
+        <main className="min-w-0 flex-1 bg-[#f8f9fb]">
           {activeTopic ? (
-            <div className="mx-auto max-w-5xl space-y-0 px-4 py-4 pb-16 md:px-6 md:py-6 md:pb-20">
-              <nav className="mb-4 flex flex-wrap items-center gap-1 text-xs text-slate-500 md:text-sm" aria-label="Konum">
-                <Home className="h-3.5 w-3.5 text-slate-400" aria-hidden />
-                <ChevronRight className="h-3 w-3 shrink-0 text-slate-300" aria-hidden />
-                <span className="font-medium text-slate-600">Derslerim</span>
-                {activeSubject && (
-                  <>
-                    <ChevronRight className="h-3 w-3 shrink-0 text-slate-300" aria-hidden />
-                    <span className="max-w-[140px] truncate font-medium text-slate-600 sm:max-w-none">{activeSubject.name}</span>
-                  </>
-                )}
-                {activeTopic && (
-                  <>
-                    <ChevronRight className="h-3 w-3 shrink-0 text-slate-300" aria-hidden />
-                    <span className="max-w-[180px] truncate font-semibold text-violet-900 sm:max-w-md">{activeTopic.title}</span>
-                  </>
-                )}
-              </nav>
+            <div className="w-full space-y-0 px-3 py-4 pb-16 sm:px-4 md:py-6 md:pb-20 lg:px-5">
               <TopicHero
                 topicTitle={activeTopic.title}
                 unitTitle={activeUnit?.title}
                 subjectName={activeSubject?.name}
-                gradeLabel={gradeStr === "mezun" ? "Mezun" : gradeStr ? `${gradeStr}. sınıf` : undefined}
+                gradeLabel={gradeStr === "mezun" ? "Mezun" : gradeStr ? `${gradeStr}. Sınıf` : undefined}
                 examLabel={examStr}
                 accentColor={activeColor}
                 onBack={() => {
@@ -499,84 +527,45 @@ export default function DerslerimPage() {
               <TopicKpiStrip items={contentItems} />
 
               <div id="ders-icerik-alani" className="mt-8 space-y-6 scroll-mt-24 md:mt-10 md:space-y-8">
+                {activeTopic.status !== "completed" ? (
+                  <div className="flex flex-col gap-3 rounded-2xl border border-violet-100 bg-gradient-to-r from-violet-50/90 to-indigo-50/50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+                    <p className="text-sm font-medium text-slate-700">Bu konuyu bitirdiğinizde ilerlemeniz güncellenir.</p>
+                    <button
+                      type="button"
+                      onClick={handleTopicComplete}
+                      className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-700"
+                    >
+                      <CheckCircle className="h-4 w-4" aria-hidden />
+                      <span className="hidden sm:inline">Konuyu tamamla</span>
+                      <span className="sm:hidden">Tamamla</span>
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 rounded-2xl border border-emerald-100 bg-emerald-50/80 px-4 py-3 text-sm font-semibold text-emerald-800 sm:px-5">
+                    <CheckCircle className="h-5 w-5 shrink-0" aria-hidden />
+                    Bu konu tamamlandı.
+                  </div>
+                )}
+
                 <TopicAbout title="Konu Hakkında" body={activeTopic.description} />
 
                 <TopicContentList
                   items={contentItems}
                   activeId={activeContent?.id ?? null}
                   onSelect={(item) => setActiveContent(item)}
+                  onOpenMedia={(item) => {
+                    setActiveContent(item);
+                    setMediaModalOpen(true);
+                  }}
                   topicTitle={activeTopic.title}
                   mebCode={activeTopic.meb_code}
                   accentColor={activeColor}
                   filter={contentFilter}
                   onFilterChange={setContentFilter}
                 />
-
-                <section className="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-md ring-1 ring-slate-900/[0.02]">
-                  <div className="border-b border-slate-100 px-5 py-4 md:px-6">
-                    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                      <div className="min-w-0 flex-1">
-                        <h2 className="text-base font-bold text-slate-900 md:text-lg">{activeContent?.title || "Önizleme"}</h2>
-                        <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-500 md:text-sm">
-                          <span>{activeUnit?.title}</span>
-                          <span aria-hidden>·</span>
-                          <span>{activeSubject?.name}</span>
-                          {activeContent?.duration_seconds ? (
-                            <>
-                              <span aria-hidden>·</span>
-                              <span className="inline-flex items-center gap-1">
-                                <Clock className="h-3.5 w-3.5" aria-hidden />
-                                {Math.round(activeContent.duration_seconds / 60)} dk
-                              </span>
-                            </>
-                          ) : null}
-                        </div>
-                      </div>
-                      {activeTopic.status !== "completed" ? (
-                        <button
-                          type="button"
-                          onClick={handleTopicComplete}
-                          className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-700"
-                        >
-                          <CheckCircle className="h-4 w-4" aria-hidden />
-                          <span className="hidden sm:inline">Konuyu tamamla</span>
-                          <span className="sm:hidden">Tamamla</span>
-                        </button>
-                      ) : (
-                        <div className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-emerald-500 px-5 py-2.5 text-sm font-semibold text-white">
-                          <CheckCircle className="h-4 w-4" aria-hidden />
-                          Tamamlandı
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  <div className="relative h-[min(56vh,520px)] min-h-[220px] bg-slate-950">
-                    {activeContent ? (
-                      activeContent.type === "video" && activeContent.url ? (
-                        <VideoPanel url={activeContent.url} />
-                      ) : activeContent.type === "pdf" && activeContent.url ? (
-                        <PdfPanel url={activeContent.url} />
-                      ) : (
-                        <div className="flex h-[min(56vh,520px)] min-h-[220px] flex-col items-center justify-center gap-3 px-6 text-center text-white">
-                          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/10">
-                            {activeContent.type === "video" ? <Play className="h-8 w-8" aria-hidden /> : <FileText className="h-8 w-8" aria-hidden />}
-                          </div>
-                          <p className="text-sm text-white/80">Bu içerik için adres bulunamadı.</p>
-                        </div>
-                      )
-                    ) : contentItems.length === 0 ? (
-                      <div className="flex h-[min(40vh,360px)] min-h-[200px] flex-col items-center justify-center gap-3 text-white/90">
-                        <BookOpen className="h-14 w-14 text-white/40" aria-hidden />
-                        <p className="text-sm">İçerik yakında eklenecek</p>
-                      </div>
-                    ) : (
-                      <div className="flex h-[min(40vh,360px)] min-h-[200px] flex-col items-center justify-center gap-2 px-6 text-center text-white/85">
-                        <p className="text-sm">Yukarıdaki listeden bir içerik seçerek önizleyin.</p>
-                      </div>
-                    )}
-                  </div>
-                </section>
               </div>
+
+              <TopicMediaModal item={activeContent} open={mediaModalOpen} onClose={() => setMediaModalOpen(false)} />
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center px-6 py-16 md:py-24">

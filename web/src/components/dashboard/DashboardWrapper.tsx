@@ -53,18 +53,18 @@ export function DashboardWrapper({ sidebar, header, children }: Props) {
 
       {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0">
-        <div className="lg:hidden flex items-center gap-3 px-4 py-3 border-b border-slate-200 bg-white/95 backdrop-blur-sm">
+        <div className="flex items-center gap-3 border-b border-slate-200 bg-white/95 px-4 py-3 backdrop-blur-sm lg:hidden">
           <button
             onClick={() => setMobileOpen(true)}
-            className="p-2.5 rounded-xl hover:bg-slate-100 text-slate-600 transition-colors"
+            className="rounded-xl p-2.5 text-slate-600 transition-colors hover:bg-slate-100"
           >
             <Menu className="w-6 h-6" />
           </button>
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg overflow-hidden">
+            <div className="h-8 w-8 overflow-hidden rounded-lg">
               <Image src="/logo.png" alt="Terence Eğitim" width={32} height={32} />
             </div>
-            <span className="font-bold text-slate-900 text-sm">TERENCE EĞİTİM</span>
+            <span className="text-sm font-bold text-slate-900">TERENCE EĞİTİM</span>
           </div>
         </div>
         {header}
