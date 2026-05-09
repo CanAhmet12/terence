@@ -165,6 +165,7 @@ Route::prefix('v1')->group(function () {
         // Deneme sınavı (Terence — frontend /api + /v1/exams ile uyumlu)
         Route::middleware(['role:student', 'student_grade'])->group(function () {
             Route::post('/exams/start', [\App\Http\Controllers\Api\ExamController::class, 'start']);
+            Route::get('/exams/templates', [\App\Http\Controllers\Api\ExamController::class, 'templateCatalog']);
             Route::get('/exams/history', [\App\Http\Controllers\Api\ExamController::class, 'history']);
             Route::get('/exams/summary', [\App\Http\Controllers\Api\ExamController::class, 'summary']);
             Route::post('/exams/{id}/answer', [\App\Http\Controllers\Api\ExamController::class, 'answer']);
@@ -453,6 +454,7 @@ Route::middleware(['auth:api'])->group(function () {
     // â”€â”€ Deneme SÄ±navÄ± â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     Route::middleware(['role:student', 'student_grade'])->group(function () {
         Route::post('/exams/start', [\App\Http\Controllers\Api\ExamController::class, 'start']);
+        Route::get('/exams/templates', [\App\Http\Controllers\Api\ExamController::class, 'templateCatalog']);
         Route::get('/exams/history', [\App\Http\Controllers\Api\ExamController::class, 'history']);
         Route::get('/exams/summary', [\App\Http\Controllers\Api\ExamController::class, 'summary']);
         Route::post('/exams/{id}/answer', [\App\Http\Controllers\Api\ExamController::class, 'answer']);
@@ -575,6 +577,12 @@ Route::middleware(['auth:api'])->group(function () {
         Route::post('/admin/question-bank-displays', [\App\Http\Controllers\Api\AdminController::class, 'storeQuestionBankDisplay']);
         Route::patch('/admin/question-bank-displays/{id}', [\App\Http\Controllers\Api\AdminController::class, 'updateQuestionBankDisplay']);
         Route::delete('/admin/question-bank-displays/{id}', [\App\Http\Controllers\Api\AdminController::class, 'destroyQuestionBankDisplay']);
+        Route::get('/admin/exam-templates', [\App\Http\Controllers\Api\AdminController::class, 'examTemplates']);
+        Route::get('/admin/exam-templates/{id}', [\App\Http\Controllers\Api\AdminController::class, 'showExamTemplate']);
+        Route::post('/admin/exam-templates', [\App\Http\Controllers\Api\AdminController::class, 'storeExamTemplate']);
+        Route::patch('/admin/exam-templates/{id}', [\App\Http\Controllers\Api\AdminController::class, 'updateExamTemplate']);
+        Route::delete('/admin/exam-templates/{id}', [\App\Http\Controllers\Api\AdminController::class, 'destroyExamTemplate']);
+        Route::put('/admin/exam-templates/{id}/questions', [\App\Http\Controllers\Api\AdminController::class, 'syncExamTemplateQuestions']);
         Route::get('/admin/teachers/pending', [\App\Http\Controllers\Api\AdminController::class, 'pendingTeachers']);
         Route::post('/admin/teachers/{id}/approve', [\App\Http\Controllers\Api\AdminController::class, 'approveTeacher']);
         Route::post('/admin/teachers/{id}/reject', [\App\Http\Controllers\Api\AdminController::class, 'rejectTeacher']);

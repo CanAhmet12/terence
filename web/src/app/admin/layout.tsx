@@ -16,6 +16,7 @@ import {
   Tag,
   Upload,
   Library,
+  ClipboardList,
 } from "lucide-react";
 import Image from "next/image";
 import { AuthGuard } from "@/components/auth/AuthGuard";
@@ -28,6 +29,7 @@ const navItems = [
   { href: "/admin/icerik", icon: BookOpen, label: "İçerik" },
   { href: "/admin/icerik/yukle", icon: Upload, label: "İçerik yükle" },
   { href: "/admin/sorular", icon: FileQuestion, label: "Soru Havuzu" },
+  { href: "/admin/deneme-sablonlari", icon: ClipboardList, label: "Deneme şablonları" },
   { href: "/admin/soru-bankasi-kitaplari", icon: Library, label: "Kitap kapakları" },
   { href: "/admin/kupon", icon: Tag, label: "Kuponlar" },
   { href: "/admin/raporlar", icon: BarChart3, label: "Raporlar" },

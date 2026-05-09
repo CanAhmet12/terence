@@ -367,6 +367,7 @@ export interface Question {
 export interface ExamSession {
   id: number
   exam_type?: string
+  exam_template_id?: number
   status?: string
   score?: number
   /** Net skor (TYT vb.); backend `finish` / `result` yanıtlarında dönebilir */
@@ -382,6 +383,55 @@ export interface ExamSession {
   started_at?: string
   finished_at?: string
   questions?: Question[]
+}
+
+/** Öğrenci deneme kataloğu — GET /v1/exams/templates */
+export type ExamTemplateCatalogItem = {
+  id: number
+  title: string
+  slug: string
+  exam_type: string
+  grade: number | null
+  duration_minutes: number
+  description?: string | null
+  question_count: number
+}
+
+export type ExamTemplateAdminRow = {
+  id: number
+  title: string
+  slug: string
+  exam_type: string
+  grade: number | null
+  duration_minutes: number
+  description?: string | null
+  is_active: boolean
+  sort_order: number
+  published_at?: string | null
+  template_questions_count?: number
+}
+
+export type ExamTemplateQuestionRow = {
+  sort_order: number
+  question_id: number
+  section: string | null
+  subject?: string | null
+  grade?: number | null
+  exam_type?: string | null
+  is_active?: boolean
+  preview?: string | null
+}
+
+export type StartExamPayload = {
+  exam_type: string
+  subject?: string
+  question_count?: number
+  difficulty?: string
+  duration_minutes?: number
+  title?: string
+  mode?: "pool" | "template"
+  exam_template_id?: number
+  template_slug?: string
 }
 
 /** POST /exams/{id}/answer gövdesi — backend ExamController ile uyumlu */
@@ -1247,10 +1297,22 @@ export function normalizeExamSessionFromApi(payload: unknown): ExamSession {
 
 // ─── Exam API ────────────────────────────────────────────────────────────────
 export const examApi = {
-  async startExam(_tokenOrData?: string | { exam_type: string; subject?: string; question_count?: number; difficulty?: string; duration_minutes?: number }, data?: { exam_type: string; subject?: string; question_count?: number; difficulty?: string; duration_minutes?: number }): Promise<ExamSession & { session?: ExamSession; questions?: Question[] }> {
-    const actualData = typeof _tokenOrData === 'string' ? data : _tokenOrData
+  async listExamTemplates(params?: { exam_type?: string }): Promise<ExamTemplateCatalogItem[]> {
+    const response = await api.get<{ success?: boolean; data?: ExamTemplateCatalogItem[] }>("/v1/exams/templates", {
+      params: params?.exam_type ? { exam_type: params.exam_type } : undefined,
+    })
+    const d = response.data
+    if (Array.isArray(d?.data)) return d.data
+    return []
+  },
+
+  async startExam(
+    _tokenOrData?: string | StartExamPayload,
+    data?: StartExamPayload
+  ): Promise<ExamSession & { session?: ExamSession; questions?: Question[] }> {
+    const actualData = typeof _tokenOrData === "string" ? data : _tokenOrData
     const response = await api.post<ExamSession & { session?: ExamSession; questions?: Question[] }>(
-      '/v1/exams/start',
+      "/v1/exams/start",
       actualData
     )
     return response.data
@@ -1983,6 +2045,63 @@ export const adminApi = {
     await api.post('/admin/settings', actualData)
   },
 
+  async getExamTemplates(params?: { active_only?: boolean; exam_type?: string }): Promise<ExamTemplateAdminRow[]> {
+    const response = await api.get<{ success?: boolean; data?: ExamTemplateAdminRow[] }>('/admin/exam-templates', {
+      params: {
+        active_only: params?.active_only ? 1 : undefined,
+        exam_type: params?.exam_type,
+      },
+    })
+    const body = response.data
+    return Array.isArray(body?.data) ? body.data : []
+  },
+
+  async getExamTemplateDetail(id: number): Promise<{ template: ExamTemplateAdminRow; questions: ExamTemplateQuestionRow[] }> {
+    const response = await api.get<{
+      success?: boolean
+      data?: ExamTemplateAdminRow
+      questions?: ExamTemplateQuestionRow[]
+    }>(`/admin/exam-templates/${id}`)
+    const body = response.data
+    return {
+      template: body.data as ExamTemplateAdminRow,
+      questions: Array.isArray(body.questions) ? body.questions : [],
+    }
+  },
+
+  async createExamTemplate(data: {
+    title: string
+    slug?: string
+    exam_type: string
+    grade?: number | null
+    duration_minutes?: number
+    description?: string | null
+    is_active?: boolean
+    sort_order?: number
+  }): Promise<ExamTemplateAdminRow> {
+    const response = await api.post<{ success?: boolean; data: ExamTemplateAdminRow }>('/admin/exam-templates', data)
+    return response.data.data
+  },
+
+  async updateExamTemplate(id: number, data: Partial<ExamTemplateAdminRow> & { published_at?: string | null }): Promise<ExamTemplateAdminRow> {
+    const response = await api.patch<{ success?: boolean; data: ExamTemplateAdminRow }>(`/admin/exam-templates/${id}`, data)
+    return response.data.data
+  },
+
+  async deleteExamTemplate(id: number): Promise<void> {
+    await api.delete(`/admin/exam-templates/${id}`)
+  },
+
+  async syncExamTemplateQuestions(
+    id: number,
+    questions: Array<{ question_id: number; section?: string | null }>
+  ): Promise<ExamTemplateAdminRow> {
+    const response = await api.put<{ success?: boolean; data: ExamTemplateAdminRow }>(`/admin/exam-templates/${id}/questions`, {
+      questions,
+    })
+    return response.data.data
+  },
+
   async getHardAchievements(_token?: string): Promise<unknown[]> {
     const response = await api.get<unknown>('/ai/hard-achievements')
     return normalizeArray(response.data)
@@ -2189,6 +2308,7 @@ Object.assign(api, {
   startStudySession: planApi.startStudySession.bind(planApi),
   endStudySession: planApi.endStudySession.bind(planApi),
   // Exam
+  listExamTemplates: examApi.listExamTemplates.bind(examApi),
   startExam: examApi.startExam.bind(examApi),
   getExamHistory: examApi.getExamHistory.bind(examApi),
   getExamSummary: examApi.getExamSummary.bind(examApi),
@@ -2280,6 +2400,12 @@ Object.assign(api, {
   createQuestionBankDisplay: adminApi.createQuestionBankDisplay.bind(adminApi),
   updateQuestionBankDisplay: adminApi.updateQuestionBankDisplay.bind(adminApi),
   deleteQuestionBankDisplay: adminApi.deleteQuestionBankDisplay.bind(adminApi),
+  getExamTemplates: adminApi.getExamTemplates.bind(adminApi),
+  getExamTemplateDetail: adminApi.getExamTemplateDetail.bind(adminApi),
+  createExamTemplate: adminApi.createExamTemplate.bind(adminApi),
+  updateExamTemplate: adminApi.updateExamTemplate.bind(adminApi),
+  deleteExamTemplate: adminApi.deleteExamTemplate.bind(adminApi),
+  syncExamTemplateQuestions: adminApi.syncExamTemplateQuestions.bind(adminApi),
   getPendingTeachers: adminApi.getPendingTeachers.bind(adminApi),
   approveTeacher: adminApi.approveTeacher.bind(adminApi),
   rejectTeacher: adminApi.rejectTeacher.bind(adminApi),

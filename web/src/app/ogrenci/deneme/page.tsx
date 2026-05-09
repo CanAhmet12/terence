@@ -3,11 +3,12 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
-import { api, ExamSession, ExamSummaryStats } from "@/lib/api";
+import { api, examApi, ExamSession, ExamSummaryStats, type ExamTemplateCatalogItem } from "@/lib/api";
 import {
   Play, Clock, BarChart3, Trophy, RefreshCw,
   ChevronRight, Loader2, AlertCircle, Target, TrendingUp,
   ArrowRight, Zap, FileQuestion, Search, LayoutGrid, List, Keyboard, Calendar,
+  ListOrdered,
 } from "lucide-react";
 
 // ─── Tip tanımı ───────────────────────────────────────────────────────────────
@@ -394,6 +395,47 @@ function HistoryDataTable({ sessions }: { sessions: ExamSession[] }) {
   );
 }
 
+function TemplateCard({
+  item,
+  onStart,
+  loading,
+}: {
+  item: ExamTemplateCatalogItem;
+  onStart: (item: ExamTemplateCatalogItem) => void;
+  loading: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => !loading && onStart(item)}
+      disabled={loading}
+      className="text-left rounded-2xl border border-slate-200 bg-white p-4 shadow-sm hover:shadow-md hover:border-teal-200 transition-all min-w-[200px] max-w-[260px] shrink-0"
+    >
+      <div className="flex items-start gap-3">
+        <div className="w-10 h-10 rounded-xl bg-teal-50 flex items-center justify-center shrink-0">
+          <ListOrdered className="w-5 h-5 text-teal-700" />
+        </div>
+        <div className="min-w-0">
+          <p className="font-bold text-slate-900 text-sm leading-snug line-clamp-2">{item.title}</p>
+          <p className="text-[11px] text-slate-500 mt-1">
+            {item.exam_type} · {item.question_count} soru · {item.duration_minutes} dk
+          </p>
+        </div>
+      </div>
+      {loading ? (
+        <div className="mt-3 flex items-center gap-2 text-xs text-teal-700 font-semibold">
+          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+          Başlatılıyor…
+        </div>
+      ) : (
+        <div className="mt-3 flex items-center gap-1 text-xs font-bold text-teal-700">
+          Başlat <ChevronRight className="w-3.5 h-3.5" />
+        </div>
+      )}
+    </button>
+  );
+}
+
 // ─── Ana sayfa ────────────────────────────────────────────────────────────────
 
 export default function DenemePage() {
@@ -411,6 +453,7 @@ export default function DenemePage() {
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [paletteQuery, setPaletteQuery] = useState("");
   const paletteInputRef = useRef<HTMLInputElement>(null);
+  const [templates, setTemplates] = useState<ExamTemplateCatalogItem[]>([]);
 
   const profileExamType = user?.target_exam ?? user?.exam_goal;
   const maxRef = maxNetReference(typeof profileExamType === "string" ? profileExamType : undefined);
@@ -425,18 +468,26 @@ export default function DenemePage() {
     return EXAM_TYPES.filter((item) => item.key === profileExamType || item.key === "Mini");
   }, [profileExamType]);
 
+  const visibleTemplates = useMemo(() => {
+    const keys = new Set(availableExamTypes.map((e) => e.key));
+    return templates.filter((t) => keys.has(t.exam_type));
+  }, [templates, availableExamTypes]);
+
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const [hist, sum] = await Promise.all([
+      const [hist, sum, tpl] = await Promise.all([
         api.getExamHistory(),
         api.getExamSummary().catch(() => null),
+        examApi.listExamTemplates().catch(() => []),
       ]);
       setHistory(Array.isArray(hist) ? hist : []);
       setSummary(sum);
+      setTemplates(Array.isArray(tpl) ? tpl : []);
     } catch {
       setHistory([]);
       setSummary(null);
+      setTemplates([]);
     } finally {
       setLoading(false);
     }
@@ -489,7 +540,7 @@ export default function DenemePage() {
     setStartingType(examType.key);
     setError(null);
     try {
-      const res = await api.startExam({
+      const res = await examApi.startExam({
         exam_type: examType.key,
         question_count: examType.questions,
         duration_minutes: examType.duration,
@@ -518,6 +569,47 @@ export default function DenemePage() {
       setError(
         msg.toLowerCase().includes("soru")
           ? "Bu deneme türü için henüz yeterli soru bulunmuyor."
+          : msg,
+      );
+      setStartingType(null);
+    }
+  };
+
+  const handleStartTemplate = async (tpl: ExamTemplateCatalogItem) => {
+    const key = `template-${tpl.id}`;
+    setStartingType(key);
+    setError(null);
+    try {
+      const res = await examApi.startExam({
+        exam_type: tpl.exam_type,
+        mode: "template",
+        exam_template_id: tpl.id,
+        duration_minutes: tpl.duration_minutes,
+      });
+      const session = (res as Record<string, unknown>).session ?? res;
+      const sessionId = (session as ExamSession).id;
+      if (!sessionId) {
+        setError("Deneme oturumu oluşturulamadı. Lütfen tekrar deneyin.");
+        setStartingType(null);
+        return;
+      }
+      const questions = (res as Record<string, unknown>).questions;
+      if (Array.isArray(questions) && questions.length) {
+        localStorage.setItem(
+          `exam_questions_${sessionId}`,
+          JSON.stringify({
+            questions,
+            duration: tpl.duration_minutes,
+          }),
+        );
+      }
+      setPaletteOpen(false);
+      router.push(`/ogrenci/deneme/${sessionId}`);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Deneme başlatılamadı";
+      setError(
+        msg.toLowerCase().includes("soru") || msg.toLowerCase().includes("uygun")
+          ? "Bu deneme şu an profiliniz veya soru durumu için uygun değil."
           : msg,
       );
       setStartingType(null);
@@ -579,6 +671,19 @@ export default function DenemePage() {
       .slice(0, 8);
   }, [history, paletteQuery]);
 
+  const paletteFilteredTemplates = useMemo(() => {
+    const q = paletteQuery.trim().toLowerCase();
+    if (!q) return visibleTemplates.slice(0, 8);
+    return visibleTemplates
+      .filter(
+        (t) =>
+          t.title.toLowerCase().includes(q) ||
+          t.exam_type.toLowerCase().includes(q) ||
+          (t.description ?? "").toLowerCase().includes(q),
+      )
+      .slice(0, 8);
+  }, [visibleTemplates, paletteQuery]);
+
   return (
     <div className="bg-slate-50 min-h-full min-w-0 overflow-x-hidden">
       {paletteOpen && (
@@ -619,6 +724,25 @@ export default function DenemePage() {
                   <span className="text-xs text-slate-400">{e.questions} soru</span>
                 </button>
               ))}
+              {paletteFilteredTemplates.length > 0 && (
+                <>
+                  <p className="px-2 py-1 mt-2 text-xs font-bold text-slate-400 uppercase">Hazır denemeler</p>
+                  {paletteFilteredTemplates.map((t) => (
+                    <button
+                      key={t.id}
+                      type="button"
+                      className="w-full text-left px-3 py-2 rounded-xl hover:bg-indigo-50 flex items-center justify-between gap-2"
+                      onClick={() => handleStartTemplate(t)}
+                    >
+                      <span className="truncate">
+                        <ListOrdered className="w-3.5 h-3.5 inline mr-1 text-indigo-500" />
+                        {t.title}
+                      </span>
+                      <span className="text-xs text-slate-400 shrink-0">{t.question_count} soru</span>
+                    </button>
+                  ))}
+                </>
+              )}
               <p className="px-2 py-1 mt-2 text-xs font-bold text-slate-400 uppercase">Geçmiş</p>
               {paletteFilteredHistory.length === 0 ? (
                 <p className="px-3 py-2 text-slate-500 text-xs">Eşleşme yok</p>
@@ -735,7 +859,30 @@ export default function DenemePage() {
             </div>
 
             {tab === "new" && (
-              <div>
+              <div className="space-y-10">
+                {visibleTemplates.length > 0 && (
+                  <div>
+                    <h2 className="text-xl font-black text-slate-900 mb-4 flex items-center gap-2">
+                      <ListOrdered className="w-5 h-5 text-indigo-600" />
+                      Hazır denemeler
+                    </h2>
+                    <p className="text-sm text-slate-600 mb-4 max-w-2xl">
+                      Kurumun yayınladığı sabit soru setleri. Sıra ve süre önceden tanımlıdır.
+                    </p>
+                    <div className="flex gap-4 overflow-x-auto pb-2 -mx-1 px-1 snap-x snap-mandatory">
+                      {visibleTemplates.map((t) => (
+                        <div key={t.id} className="snap-start">
+                          <TemplateCard
+                            item={t}
+                            onStart={handleStartTemplate}
+                            loading={startingType === `template-${t.id}`}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <div>
                 <h2 className="text-xl font-black text-slate-900 mb-6 flex items-center gap-2">
                   <Zap className="w-5 h-5 text-amber-500" />
                   Deneme türü seç
@@ -744,6 +891,7 @@ export default function DenemePage() {
                   {availableExamTypes.map((exam) => (
                     <ExamCard3D key={exam.key} exam={exam} onStart={handleStartExam} loading={startingType === exam.key} />
                   ))}
+                </div>
                 </div>
               </div>
             )}

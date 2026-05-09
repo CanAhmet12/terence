@@ -11,6 +11,8 @@ use App\Models\ContentItem;
 use App\Models\Question;
 use App\Models\QuestionOption;
 use App\Models\QuestionBankDisplay;
+use App\Models\ExamTemplate;
+use App\Models\ExamTemplateQuestion;
 use App\Models\AuditLog;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -19,6 +21,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Carbon\Carbon;
+use Illuminate\Support\Str;
 
 class AdminController extends Controller
 {
@@ -519,6 +522,161 @@ class AdminController extends Controller
     {
         DB::table('coupons')->where('id', $id)->delete();
         return response()->json(['success' => true, 'message' => 'Kupon silindi']);
+    }
+
+    // ─── Sabit deneme şablonları (exam_templates) ───────────────────────────
+
+    public function examTemplates(Request $request): JsonResponse
+    {
+        if (! Schema::hasTable('exam_templates')) {
+            return response()->json(['success' => true, 'data' => []]);
+        }
+        $q = ExamTemplate::query()->withCount('templateQuestions')->orderByDesc('sort_order')->orderBy('title');
+        if ($request->boolean('active_only')) {
+            $q->where('is_active', true);
+        }
+        if ($request->filled('exam_type')) {
+            $q->where('exam_type', $request->exam_type);
+        }
+        $rows = $q->get();
+
+        return response()->json(['success' => true, 'data' => $rows]);
+    }
+
+    public function showExamTemplate(int $id): JsonResponse
+    {
+        $t = ExamTemplate::withCount('templateQuestions')->findOrFail($id);
+        $items = $t->templateQuestions()->with('question:id,question_text,subject,grade,exam_type,is_active')->orderBy('sort_order')->get()->map(function ($row) {
+            $q = $row->question;
+
+            return [
+                'sort_order'   => (int) $row->sort_order,
+                'question_id'  => (int) $row->question_id,
+                'section'      => $row->section,
+                'subject'      => $q?->subject,
+                'grade'        => $q?->grade,
+                'exam_type'    => $q?->exam_type,
+                'is_active'    => $q?->is_active,
+                'preview'      => $q ? mb_substr(strip_tags($q->question_text), 0, 120) : null,
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'data'    => $t,
+            'questions' => $items,
+        ]);
+    }
+
+    public function storeExamTemplate(Request $request): JsonResponse
+    {
+        if (! Schema::hasTable('exam_templates')) {
+            return response()->json(['error' => true, 'message' => 'Migrasyon henüz çalıştırılmamış.'], 503);
+        }
+        $v = Validator::make($request->all(), [
+            'title'             => 'required|string|max:255',
+            'slug'              => 'nullable|string|max:160|unique:exam_templates,slug',
+            'exam_type'         => 'required|string|max:32|in:LGS,TYT,AYT,TYT-AYT,KPSS,Mini',
+            'grade'             => 'nullable|integer|min:1|max:12',
+            'duration_minutes'  => 'nullable|integer|min:5|max:300',
+            'description'       => 'nullable|string|max:2000',
+            'is_active'         => 'sometimes|boolean',
+            'sort_order'        => 'nullable|integer|min:0|max:65535',
+        ]);
+        if ($v->fails()) {
+            return response()->json(['error' => true, 'errors' => $v->errors()], 422);
+        }
+        $data = $v->validated();
+        $slug = $data['slug'] ?? null;
+        if (! $slug) {
+            $base = Str::slug($data['title']) ?: 'deneme';
+            $slug = $base;
+            $n    = 0;
+            while (ExamTemplate::where('slug', $slug)->exists()) {
+                $slug = $base . '-' . (++$n);
+            }
+        }
+        $admin = Auth::user();
+        $row   = ExamTemplate::create([
+            'title'             => $data['title'],
+            'slug'              => $slug,
+            'exam_type'         => $data['exam_type'],
+            'grade'             => $data['grade'] ?? null,
+            'duration_minutes'  => (int) ($data['duration_minutes'] ?? 135),
+            'description'       => $data['description'] ?? null,
+            'is_active'         => (bool) ($data['is_active'] ?? true),
+            'sort_order'        => (int) ($data['sort_order'] ?? 0),
+            'published_at'      => ($data['is_active'] ?? true) ? now() : null,
+            'created_by'        => $admin?->id,
+        ]);
+
+        return response()->json(['success' => true, 'data' => $row], 201);
+    }
+
+    public function updateExamTemplate(int $id, Request $request): JsonResponse
+    {
+        $row = ExamTemplate::findOrFail($id);
+        $v   = Validator::make($request->all(), [
+            'title'             => 'sometimes|string|max:255',
+            'slug'              => 'sometimes|nullable|string|max:160|unique:exam_templates,slug,' . $id,
+            'exam_type'         => 'sometimes|string|max:32|in:LGS,TYT,AYT,TYT-AYT,KPSS,Mini',
+            'grade'             => 'nullable|integer|min:1|max:12',
+            'duration_minutes'  => 'nullable|integer|min:5|max:300',
+            'description'       => 'nullable|string|max:2000',
+            'is_active'         => 'sometimes|boolean',
+            'sort_order'        => 'nullable|integer|min:0|max:65535',
+            'published_at'      => 'nullable|date',
+        ]);
+        if ($v->fails()) {
+            return response()->json(['error' => true, 'errors' => $v->errors()], 422);
+        }
+        $patch = $v->validated();
+        if (array_key_exists('is_active', $patch) && $patch['is_active'] && ! $row->published_at) {
+            $patch['published_at'] = now();
+        }
+        $row->update($patch);
+
+        return response()->json(['success' => true, 'data' => $row->fresh()]);
+    }
+
+    public function destroyExamTemplate(int $id): JsonResponse
+    {
+        ExamTemplate::findOrFail($id)->delete();
+
+        return response()->json(['success' => true, 'message' => 'Şablon silindi']);
+    }
+
+    public function syncExamTemplateQuestions(int $id, Request $request): JsonResponse
+    {
+        $template = ExamTemplate::findOrFail($id);
+        $v        = Validator::make($request->all(), [
+            'questions'   => 'required|array|min:1|max:200',
+            'questions.*' => 'required|array',
+            'questions.*.question_id' => 'required|integer|exists:questions,id',
+            'questions.*.section'     => 'nullable|string|max:120',
+        ]);
+        if ($v->fails()) {
+            return response()->json(['error' => true, 'errors' => $v->errors()], 422);
+        }
+        $list = $request->input('questions');
+        DB::transaction(function () use ($template, $list) {
+            ExamTemplateQuestion::where('exam_template_id', $template->id)->delete();
+            foreach ($list as $i => $item) {
+                ExamTemplateQuestion::create([
+                    'exam_template_id' => $template->id,
+                    'question_id'      => (int) $item['question_id'],
+                    'sort_order'       => $i + 1,
+                    'section'          => $item['section'] ?? null,
+                ]);
+            }
+        });
+        $template->loadCount('templateQuestions');
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Soru sırası güncellendi',
+            'data'    => $template,
+        ]);
     }
 
     public function hardAchievements(): JsonResponse
