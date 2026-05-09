@@ -20,8 +20,7 @@ import { QuestionBankSidebar } from "@/components/ogrenci/soru-bankasi/QuestionB
 import { QuestionBankInsightsRow } from "@/components/ogrenci/soru-bankasi/QuestionBankInsightsRow";
 import { QuestionBankQuickActions } from "@/components/ogrenci/soru-bankasi/QuestionBankQuickActions";
 import { StudyMotivationBanner } from "@/components/ogrenci/soru-bankasi/StudyMotivationBanner";
-import "./soru-bankasi.css";
-import { Loader2, Mic, MicOff, Volume2, Sparkles, X, Bot, AlertCircle } from "lucide-react";
+import { Loader2, Mic, MicOff, Volume2, AlertCircle } from "lucide-react";
 
 // ─── Sesli Soru Asistanı Modal ─────────────────────────────────────────────
 function VoiceAssistantModal({ token, onClose }: { token: string | null; onClose: () => void }) {
@@ -102,114 +101,93 @@ function VoiceAssistantModal({ token, onClose }: { token: string | null; onClose
   }, []);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden">
-        <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100">
-          <div className="flex items-center gap-3">
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isListening ? "bg-red-100 animate-pulse" : "bg-teal-100"}`}>
-              <Mic className={`w-5 h-5 ${isListening ? "text-red-600" : "text-teal-600"}`} />
-            </div>
-            <div>
-              <h3 className="font-bold text-base text-slate-900">Sesli Soru Çözüm Asistanı</h3>
-              <p className="text-xs text-slate-500">Soruyu sesli oku, AI açıklasın</p>
-            </div>
-          </div>
-          <button onClick={onClose} className="w-9 h-9 rounded-xl border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-100">
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-
-        <div className="p-6 space-y-5">
-          {!supported && (
-            <div className="flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-700">
-              <AlertCircle className="w-4 h-4 shrink-0" />
-              Bu tarayıcı ses tanımayı desteklemiyor. Chrome veya Edge kullanın.
-            </div>
+    <dialog open>
+      <button type="button" onClick={onClose}>
+        Kapat
+      </button>
+      <h3>Sesli soru çözüm asistanı</h3>
+      <p>Soruyu sesli oku; yapay zeka kısaca açıklasın.</p>
+      {!supported && (
+        <p>
+          <AlertCircle aria-hidden /> Bu tarayıcı ses tanımayı desteklemiyor.
+        </p>
+      )}
+      <p>
+        <button type="button" onClick={isListening ? stopListening : startListening} disabled={!supported}>
+          {isListening ? (
+            <>
+              <MicOff aria-hidden /> Durdur
+            </>
+          ) : (
+            <>
+              <Mic aria-hidden /> Dinle
+            </>
           )}
-
-          {/* Ses kaydı alanı */}
-          <div className="text-center space-y-4">
-            <button
-              onClick={isListening ? stopListening : startListening}
-              disabled={!supported}
-              className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto transition-all shadow-lg ${
-                isListening
-                  ? "bg-red-500 hover:bg-red-600 shadow-red-500/30 scale-110"
-                  : "bg-teal-600 hover:bg-teal-700 shadow-teal-500/30 hover:scale-105"
-              } disabled:opacity-50 disabled:cursor-not-allowed`}
-            >
-              {isListening ? <MicOff className="w-8 h-8 text-white" /> : <Mic className="w-8 h-8 text-white" />}
+        </button>
+      </p>
+      <p>{isListening ? "Dinleniyor." : "Soruyu sesli okumak için Dinle’ye bas."}</p>
+      {transcript && (
+        <div>
+          <p>
+            <strong>Duyulan soru</strong>
+          </p>
+          <p>{transcript}</p>
+          <p>
+            <button type="button" onClick={askAI} disabled={loading}>
+              {loading ? (
+                <>
+                  <Loader2 aria-hidden /> Yanıt alınıyor…
+                </>
+              ) : (
+                "Yapay zekadan cevap al"
+              )}
             </button>
-            <p className="text-sm font-medium text-slate-600">
-              {isListening ? "Dinleniyor... (durdurmak için tıkla)" : "Soruyu sesli okumak için tıkla"}
-            </p>
-          </div>
-
-          {/* Transkript */}
-          {transcript && (
-            <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
-              <p className="text-xs text-slate-500 font-semibold uppercase tracking-wide">Duyulan Soru</p>
-              <p className="text-sm text-slate-800 leading-relaxed">{transcript}</p>
-              <div className="flex gap-2">
-                <button
-                  onClick={askAI}
-                  disabled={loading}
-                  className="flex-1 py-2.5 bg-teal-600 hover:bg-teal-700 disabled:opacity-60 text-white text-sm font-bold rounded-xl flex items-center justify-center gap-2 transition-colors"
-                >
-                  {loading ? <><Loader2 className="w-4 h-4 animate-spin" /> Yanıt alınıyor...</> : <><Bot className="w-4 h-4" /> Yapay zekadan cevap al</>}
-                </button>
-                <button
-                  onClick={() => { setTranscript(""); setAiAnswer(null); }}
-                  className="px-4 py-2.5 border border-slate-200 text-slate-600 text-sm font-semibold rounded-xl hover:bg-slate-50 transition-colors"
-                >
-                  Temizle
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* AI Yanıtı */}
-          {aiAnswer && (
-            <div className="p-4 bg-teal-50 border border-teal-200 rounded-2xl space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-teal-700 font-semibold text-sm">
-                  <Bot className="w-4 h-4" />
-                  AI Cevabı
-                </div>
-                {speaking ? (
-                  <button onClick={stopSpeaking} className="flex items-center gap-1.5 text-xs text-red-600 hover:text-red-700 font-medium">
-                    <MicOff className="w-3.5 h-3.5" /> Durdur
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => {
-                      if ("speechSynthesis" in window) {
-                        const u = new SpeechSynthesisUtterance(aiAnswer);
-                        u.lang = "tr-TR";
-                        u.onstart = () => setSpeaking(true);
-                        u.onend = () => setSpeaking(false);
-                        window.speechSynthesis.speak(u);
-                      }
-                    }}
-                    className="flex items-center gap-1.5 text-xs text-teal-600 hover:text-teal-700 font-medium"
-                  >
-                    <Volume2 className="w-3.5 h-3.5" /> Sesli Oku
-                  </button>
-                )}
-              </div>
-              <p className="text-sm text-slate-700 leading-relaxed">{aiAnswer}</p>
-            </div>
-          )}
-
-          {error && (
-            <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-100 rounded-xl">
-              <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
-              <p className="text-sm text-red-700">{error}</p>
-            </div>
-          )}
+            <button
+              type="button"
+              onClick={() => {
+                setTranscript("");
+                setAiAnswer(null);
+              }}
+            >
+              Temizle
+            </button>
+          </p>
         </div>
-      </div>
-    </div>
+      )}
+      {aiAnswer && (
+        <div>
+          <p>
+            <strong>AI cevabı</strong>
+          </p>
+          {speaking ? (
+            <button type="button" onClick={stopSpeaking}>
+              <MicOff aria-hidden /> Okumayı durdur
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                if ("speechSynthesis" in window) {
+                  const u = new SpeechSynthesisUtterance(aiAnswer);
+                  u.lang = "tr-TR";
+                  u.onstart = () => setSpeaking(true);
+                  u.onend = () => setSpeaking(false);
+                  window.speechSynthesis.speak(u);
+                }
+              }}
+            >
+              <Volume2 aria-hidden /> Sesli oku
+            </button>
+          )}
+          <p>{aiAnswer}</p>
+        </div>
+      )}
+      {error && (
+        <p>
+          <AlertCircle aria-hidden /> {error}
+        </p>
+      )}
+    </dialog>
   );
 }
 
@@ -227,13 +205,7 @@ const DEFAULT_SUBJECT_OPTIONS = [
 
 export default function SoruBankasiPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="flex min-h-[40vh] items-center justify-center p-8 text-slate-500">
-          <Loader2 className="h-8 w-8 animate-spin" aria-hidden />
-        </div>
-      }
-    >
+    <Suspense fallback={<p>Yükleniyor…</p>}>
       <SoruBankasiPageWithSearchParams />
     </Suspense>
   );
@@ -623,73 +595,65 @@ function SoruBankasiPageInner({
   }, [loadQuestions, qParam, kazanimFromUrl, subject, effectiveExamTab]);
 
   return (
-    <div className="soru-bankasi-page soru-bankasi-page--fit" data-qb-fit>
-      <div className="sb-main-layout sb-main-layout--fit min-h-0 flex-1">
-        <div className="sb-fit-main-col qb-page-stack min-h-0 overflow-hidden">
-          <QuestionBankHero
-            scopeMode={scopeMode}
-            onScopeModeChange={(m) => {
-              setScopeMode(m);
-              if (m === "class") {
-                setActiveExamTab("ALL");
-                setSubject("");
-              }
-            }}
-            examTabs={examTabs}
-            activeExamTab={activeExamTab}
-            onExamTabChange={(tab) => {
-              setActiveExamTab(tab);
+    <div>
+      <div>
+        <QuestionBankHero
+          scopeMode={scopeMode}
+          onScopeModeChange={(m) => {
+            setScopeMode(m);
+            if (m === "class") {
+              setActiveExamTab("ALL");
               setSubject("");
-            }}
-            onOpenVoice={() => setShowVoice(true)}
-            onOpenPersonalTest={() => setShowPersonalTest(true)}
-          />
-
-          {typeof timedRemaining === "number" && timedRemaining > 0 && (
-            <div
-              className="-mt-1 mb-0 rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-2.5 text-sm font-medium text-indigo-900"
-              role="status"
-              aria-live="polite"
-            >
-              Süreli pratik: kalan {timedRemaining} sn
-            </div>
-          )}
-
-          <QuestionBankKpiStrip summary={bankSummary} loading={bankSummaryLoading} />
-          <SubjectBankCarousel subjects={bankSummary?.subjects ?? []} />
-          <QuestionBankQuickActions
-            onQuick10={onQuick10}
-            onWeakFocus={onWeakFocus}
-            onTimedPractice={onTimedPractice}
-            disabled={loading || !token}
-          />
-          <div className="qb-fit-insights qb-after-quick-actions min-h-0 min-w-0 flex-1 overflow-hidden">
-            <QuestionBankInsightsRow
-              subjects={bankSummary?.subjects ?? []}
-              weakPreview={weakPreview}
-              badgeData={badgeData}
-              goalHint={goalHint}
-              loading={sidebarLoading}
-            />
-          </div>
-          <StudyMotivationBanner onStartQuick={onQuick10} />
-        </div>
-
-        <QuestionBankSidebar
-          examHistory={examHistory}
-          planStats={planStats}
-          loading={sidebarLoading}
-          onPersonalTest={() => setShowPersonalTest(true)}
-          hidePersonalTestCard
+            }
+          }}
+          examTabs={examTabs}
+          activeExamTab={activeExamTab}
+          onExamTabChange={(tab) => {
+            setActiveExamTab(tab);
+            setSubject("");
+          }}
+          onOpenVoice={() => setShowVoice(true)}
+          onOpenPersonalTest={() => setShowPersonalTest(true)}
         />
+
+        {typeof timedRemaining === "number" && timedRemaining > 0 && (
+          <p role="status" aria-live="polite">
+            Süreli pratik: kalan {timedRemaining} sn
+          </p>
+        )}
+
+        <QuestionBankKpiStrip summary={bankSummary} loading={bankSummaryLoading} />
+        <SubjectBankCarousel subjects={bankSummary?.subjects ?? []} />
+        <QuestionBankQuickActions
+          onQuick10={onQuick10}
+          onWeakFocus={onWeakFocus}
+          onTimedPractice={onTimedPractice}
+          disabled={loading || !token}
+        />
+        <div>
+          <QuestionBankInsightsRow
+            subjects={bankSummary?.subjects ?? []}
+            weakPreview={weakPreview}
+            badgeData={badgeData}
+            goalHint={goalHint}
+            loading={sidebarLoading}
+          />
+        </div>
+        <StudyMotivationBanner onStartQuick={onQuick10} />
       </div>
 
-      {/* Sesli Asistan Modal */}
+      <QuestionBankSidebar
+        examHistory={examHistory}
+        planStats={planStats}
+        loading={sidebarLoading}
+        onPersonalTest={() => setShowPersonalTest(true)}
+        hidePersonalTestCard
+      />
+
       {showVoice && (
         <VoiceAssistantModal token={token} onClose={() => setShowVoice(false)} />
       )}
 
-      {/* Bana Özel Test Modal */}
       {showPersonalTest && (
         <PersonalTestModal
           token={token}
@@ -704,7 +668,6 @@ function SoruBankasiPageInner({
         />
       )}
 
-      {/* Kitap PDF Modalı */}
       {bookModalSubject && (
         <BookQuestionsModal
           subject={bookModalSubject}
@@ -761,117 +724,85 @@ function PersonalTestModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden">
-        <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center">
-              <Sparkles className="w-5 h-5 text-purple-600" />
-            </div>
-            <div>
-              <h3 className="font-bold text-base text-slate-900">Bana Özel Test</h3>
-              <p className="text-xs text-slate-500">Zayıf kazanımlarına göre özelleştirilmiş test</p>
-            </div>
-          </div>
-          <button onClick={onClose} className="w-9 h-9 rounded-xl border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-100">
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-
-        <div className="p-6 space-y-5">
-          <div className="p-4 bg-purple-50 border border-purple-200 rounded-2xl text-sm text-purple-700 flex items-start gap-2">
-            <Bot className="w-4 h-4 shrink-0 mt-0.5" />
-            AI, zayıf kazanımlarını analiz ederek en çok gelişime ihtiyacın olan konulardan soru seçer.
-          </div>
-
-          <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-2">Ders (opsiyonel)</label>
-            <select
-              value={subject}
-              onChange={(e) => setSubject(e.target.value)}
-              className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none"
-            >
-              <option value="">Tüm Dersler (AI seçsin)</option>
-              {subjects.map((d) => (
-                <option key={d}>{d}</option>
-              ))}
-            </select>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-2">Soru Sayısı</label>
-              <select
-                value={count}
-                onChange={(e) => setCount(Number(e.target.value))}
-                className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none"
-              >
-                {[5, 10, 15, 20].map((n) => <option key={n} value={n}>{n} Soru</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-2">Zorluk</label>
-              <select
-                value={difficulty}
-                onChange={(e) => setDifficulty(e.target.value)}
-                className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none"
-              >
-                <option value="">Karışık</option>
-                <option value="easy">Kolay</option>
-                <option value="medium">Orta</option>
-                <option value="hard">Zor</option>
-              </select>
-            </div>
-          </div>
-
-          {error && (
-            <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-100 rounded-xl">
-              <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
-              <p className="text-sm text-red-700">{error}</p>
-            </div>
-          )}
-
-          <button
-            onClick={handleGenerate}
-            disabled={generating}
-            className="w-full py-3.5 bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-700 hover:to-purple-600 disabled:opacity-60 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-purple-500/20"
-          >
-            {generating ? (
-              <><Loader2 className="w-4 h-4 animate-spin" /> Test Oluşturuluyor...</>
-            ) : (
-              <><Sparkles className="w-4 h-4" /> {count} Soruluk Test Oluştur</>
-            )}
-          </button>
-        </div>
+    <dialog open>
+      <button type="button" onClick={onClose}>
+        Kapat
+      </button>
+      <h3>Bana özel test</h3>
+      <p>AI, mümkünse zayıf kazanımlarından soru seçer.</p>
+      <div>
+        <label>
+          Ders (opsiyonel)
+          <select value={subject} onChange={(e) => setSubject(e.target.value)}>
+            <option value="">Tüm dersler</option>
+            {subjects.map((d) => (
+              <option key={d}>{d}</option>
+            ))}
+          </select>
+        </label>
       </div>
-    </div>
+      <div>
+        <label>
+          Soru sayısı
+          <select value={count} onChange={(e) => setCount(Number(e.target.value))}>
+            {[5, 10, 15, 20].map((n) => (
+              <option key={n} value={n}>
+                {n}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+      <div>
+        <label>
+          Zorluk
+          <select value={difficulty} onChange={(e) => setDifficulty(e.target.value)}>
+            <option value="">Karışık</option>
+            <option value="easy">Kolay</option>
+            <option value="medium">Orta</option>
+            <option value="hard">Zor</option>
+          </select>
+        </label>
+      </div>
+      {error && (
+        <p>
+          <AlertCircle aria-hidden /> {error}
+        </p>
+      )}
+      <p>
+        <button type="button" onClick={handleGenerate} disabled={generating}>
+          {generating ? (
+            <>
+              <Loader2 aria-hidden /> Oluşturuluyor…
+            </>
+          ) : (
+            `${count} soruluk test oluştur`
+          )}
+        </button>
+      </p>
+    </dialog>
   );
 }
 
-// ─── Kitap PDF Modal ─────────────────────────────────────────────────────────
-const BOOK_COVER_COLORS: Record<string, { bg: string; accent: string; spine: string }> = {
-  'Matematik':     { bg: 'linear-gradient(135deg,#1565c0,#0d47a1)', accent: '#90caf9', spine: '#1a237e' },
-  'Türkçe':        { bg: 'linear-gradient(135deg,#c62828,#b71c1c)', accent: '#ef9a9a', spine: '#7f0000' },
-  'Fen Bilimleri': { bg: 'linear-gradient(135deg,#2e7d32,#1b5e20)', accent: '#a5d6a7', spine: '#1b5e20' },
-  'Fizik':         { bg: 'linear-gradient(135deg,#6a1b9a,#4a148c)', accent: '#ce93d8', spine: '#4a148c' },
-  'Kimya':         { bg: 'linear-gradient(135deg,#ef6c00,#e65100)', accent: '#ffcc80', spine: '#e65100' },
-  'Biyoloji':      { bg: 'linear-gradient(135deg,#00695c,#004d40)', accent: '#80cbc4', spine: '#004d40' },
-  'Tarih':         { bg: 'linear-gradient(135deg,#4e342e,#3e2723)', accent: '#bcaaa4', spine: '#3e2723' },
-  'Coğrafya':      { bg: 'linear-gradient(135deg,#01579b,#0d3349)', accent: '#81d4fa', spine: '#0d3349' },
-  'default':       { bg: 'linear-gradient(135deg,#37474f,#263238)', accent: '#90a4ae', spine: '#263238' },
-}
-
-const DIFF_COLORS: Record<string, { dot: string; label: string }> = {
-  easy:   { dot: '#22c55e', label: 'Kolay' },
-  medium: { dot: '#f59e0b', label: 'Orta' },
-  hard:   { dot: '#ef4444', label: 'Zor' },
+function diffLabel(d?: string): string {
+  if (d === "easy") return "Kolay";
+  if (d === "hard") return "Zor";
+  if (d === "medium") return "Orta";
+  return d ?? "—";
 }
 
 function BookQuestionsModal({
-  subject, title, questions, loading,
-  answerResults, selectedAnswers, answeringId,
+  subject,
+  title,
+  questions,
+  loading,
+  answerResults,
+  selectedAnswers: _selectedAnswers,
+  answeringId,
   loadingSimilar,
-  onAnswer, onSimilar, onClose,
+  onAnswer,
+  onSimilar,
+  onClose,
 }: {
   subject: string;
   title: string;
@@ -885,470 +816,101 @@ function BookQuestionsModal({
   onSimilar?: (questionId: number) => void;
   onClose: () => void;
 }) {
-  const [currentPage, setCurrentPage] = useState(0)
-  const theme = BOOK_COVER_COLORS[subject] ?? BOOK_COVER_COLORS.default
-  const questionsPerPage = 2
-  const totalPages = Math.ceil(questions.length / questionsPerPage)
-  const pageQuestions = questions.slice(currentPage * questionsPerPage, (currentPage + 1) * questionsPerPage)
-  const correctCount = Object.values(answerResults).filter((r) => r.is_correct).length
-  const answeredCount = Object.keys(answerResults).length
+  const [currentPage, setCurrentPage] = useState(0);
+  const questionsPerPage = 2;
+  const totalPages = Math.ceil(questions.length / questionsPerPage);
+  const pageQuestions = questions.slice(
+    currentPage * questionsPerPage,
+    (currentPage + 1) * questionsPerPage
+  );
+  const answeredCount = Object.keys(answerResults).length;
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="book-modal-title"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)' }}
-      onClick={(e) => e.target === e.currentTarget && onClose()}
-    >
-      <div
-        className="flex w-full max-w-5xl"
-        style={{
-          height: 'min(88vh, 760px)',
-          filter: 'drop-shadow(0 40px 80px rgba(0,0,0,0.7))',
-          animation: 'bookOpen 0.5s cubic-bezier(0.34,1.56,0.64,1)',
-        }}
-      >
-        <style>{`
-          @keyframes bookOpen {
-            from { opacity:0; transform: perspective(1200px) rotateY(-20deg) scale(0.92); }
-            to   { opacity:1; transform: perspective(1200px) rotateY(0deg) scale(1); }
-          }
-        `}</style>
-
-        {/* ── SOL KAPAK / SIRT ── */}
-        <div
-          style={{
-            width: '52px',
-            background: theme.spine,
-            borderRadius: '8px 0 0 8px',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '16px 4px',
-            boxShadow: 'inset -4px 0 12px rgba(0,0,0,0.5), -2px 0 8px rgba(0,0,0,0.4)',
-            flexShrink: 0,
-          }}
-        >
-          <div style={{
-            width: '28px', height: '28px',
-            background: theme.accent,
-            borderRadius: '5px',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: '10px', fontWeight: 900, color: theme.spine,
-          }}>3D</div>
-
-          <div style={{
-            writingMode: 'vertical-rl',
-            transform: 'rotate(180deg)',
-            fontSize: '11px', fontWeight: 800,
-            color: 'rgba(255,255,255,0.9)',
-            letterSpacing: '1px',
-            textTransform: 'uppercase',
-          }}>{title} SORU BANKASI</div>
-
-          <div style={{ fontSize: '9px', color: theme.accent, fontWeight: 700 }}>2026</div>
-        </div>
-
-        {/* ── SOL SAYFA (KAPAK) ── */}
-        <div
-          style={{
-            width: '200px',
-            background: theme.bg,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '24px 16px',
-            borderRight: '2px solid rgba(0,0,0,0.3)',
-            boxShadow: 'inset -6px 0 20px rgba(0,0,0,0.3)',
-            flexShrink: 0,
-            position: 'relative',
-            overflow: 'hidden',
-          }}
-        >
-          <div style={{
-            position: 'absolute', inset: 0,
-            background: 'linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 50%)',
-            pointerEvents: 'none',
-          }} />
-
-          <div style={{ textAlign: 'center', position: 'relative', zIndex: 1 }}>
-            <div style={{
-              fontSize: '48px', fontWeight: 900,
-              color: 'rgba(255,255,255,0.15)',
-              lineHeight: 1, marginBottom: '12px',
-              fontStyle: 'italic',
-            }}>3D</div>
-            <div style={{
-              fontSize: '13px', fontWeight: 900,
-              color: '#fff', textTransform: 'uppercase',
-              letterSpacing: '1px', lineHeight: 1.3,
-              textShadow: '0 2px 8px rgba(0,0,0,0.5)',
-            }}>{title}</div>
-            <div style={{ fontSize: '10px', color: theme.accent, marginTop: '6px', fontWeight: 600, letterSpacing: '2px' }}>
-              SORU BANKASI
-            </div>
-          </div>
-
-          <div style={{ width: '100%', position: 'relative', zIndex: 1 }}>
-            <div style={{
-              display: 'flex', justifyContent: 'space-between',
-              fontSize: '10px', color: 'rgba(255,255,255,0.7)',
-              marginBottom: '6px',
-            }}>
-              <span>Çözülen</span>
-              <span>{answeredCount} / {questions.length}</span>
-            </div>
-            <div style={{
-              height: '6px', background: 'rgba(255,255,255,0.2)',
-              borderRadius: '3px', overflow: 'hidden',
-            }}>
-              <div style={{
-                height: '100%',
-                width: questions.length > 0 ? `${(answeredCount / questions.length) * 100}%` : '0%',
-                background: theme.accent, borderRadius: '3px',
-                transition: 'width 0.5s',
-              }} />
-            </div>
-            {answeredCount > 0 && (
-              <div style={{
-                display: 'flex', justifyContent: 'space-between',
-                fontSize: '10px', color: 'rgba(255,255,255,0.6)',
-                marginTop: '6px',
-              }}>
-                <span style={{ color: '#4ade80' }}>✓ {correctCount} Doğru</span>
-                <span style={{ color: '#f87171' }}>✗ {answeredCount - correctCount} Yanlış</span>
-              </div>
-            )}
-          </div>
-
-          <div style={{
-            fontSize: '10px', color: 'rgba(255,255,255,0.4)',
-            position: 'relative', zIndex: 1,
-          }}>
-            Sayfa {currentPage + 1} / {Math.max(totalPages, 1)}
-          </div>
-        </div>
-
-        {/* ── SAĞ SAYFA (SORULAR) ── */}
-        <div
-          style={{
-            flex: 1,
-            background: '#fafaf8',
-            borderRadius: '0 8px 8px 0',
-            display: 'flex',
-            flexDirection: 'column',
-            overflow: 'hidden',
-            position: 'relative',
-          }}
-        >
-          <div style={{
-            position: 'absolute', left: '52px', top: 0, bottom: 0,
-            width: '1px', background: 'rgba(255,100,100,0.3)',
-            pointerEvents: 'none', zIndex: 0,
-          }} />
-
-          {/* Başlık */}
-          <div style={{
-            padding: '14px 20px',
-            borderBottom: '2px solid #e2e8f0',
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            background: '#fff',
-            flexShrink: 0,
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <div style={{
-                width: '32px', height: '32px', borderRadius: '8px',
-                background: theme.bg,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: '12px', fontWeight: 900, color: theme.accent,
-              }}>
-                {subject.slice(0, 2).toUpperCase()}
-              </div>
-              <div>
-                <div style={{ fontSize: '15px', fontWeight: 800, color: '#1e293b' }} id="book-modal-title">
-                  {title} — Sorular
-                </div>
-                <div style={{ fontSize: '11px', color: '#94a3b8' }}>
-                  {questions.length} soru bulundu
-                </div>
-              </div>
-            </div>
+    <dialog open aria-labelledby="book-modal-title">
+      <button type="button" onClick={onClose}>
+        Kapat
+      </button>
+      <h2 id="book-modal-title">
+        {title} — {subject}
+      </h2>
+      <p>
+        Çözülen: {answeredCount} / {questions.length || "—"}
+      </p>
+      {loading ? (
+        <p>Sorular yükleniyor…</p>
+      ) : questions.length === 0 ? (
+        <p>Bu derse ait soru bulunamadı.</p>
+      ) : (
+        <>
+          {pageQuestions.map((soru, idx) => {
+            const result = answerResults[soru.id];
+            const qNum = currentPage * questionsPerPage + idx + 1;
+            return (
+              <article key={soru.id}>
+                <h3>Soru {qNum}</h3>
+                {soru.kazanim_code && <p>Kazanım: {soru.kazanim_code}</p>}
+                <p>Zorluk: {diffLabel(soru.difficulty)}</p>
+                <p>{soru.question_text}</p>
+                <ul>
+                  {soru.options?.map((opt) => (
+                    <li key={opt.id}>
+                      <button
+                        type="button"
+                        disabled={!!result || answeringId === soru.id}
+                        onClick={() => onAnswer(soru, opt.option_letter)}
+                      >
+                        {opt.option_letter}) {opt.option_text}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+                {result && (
+                  <p>
+                    {result.is_correct ? "Doğru" : "Yanlış"}
+                    {result.explanation && <> — {result.explanation}</>}
+                  </p>
+                )}
+                {result?.solution_video && (
+                  <p>
+                    <a href={result.solution_video} target="_blank" rel="noopener noreferrer">
+                      Video çözüm
+                    </a>
+                  </p>
+                )}
+                {result && onSimilar && (
+                  <p>
+                    <button
+                      type="button"
+                      disabled={loadingSimilar === soru.id}
+                      onClick={() => onSimilar(soru.id)}
+                    >
+                      {loadingSimilar === soru.id ? "Yükleniyor…" : "Benzer sorular"}
+                    </button>
+                  </p>
+                )}
+              </article>
+            );
+          })}
+          <p>
             <button
-              onClick={onClose}
-              style={{
-                width: '32px', height: '32px', borderRadius: '8px',
-                background: '#f1f5f9', border: 'none',
-                cursor: 'pointer', fontSize: '16px',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                color: '#64748b',
-              }}
-            >✕</button>
-          </div>
-
-          {/* Sorular */}
-          <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px', position: 'relative', zIndex: 1 }}>
-            {loading ? (
-              <div style={{
-                display: 'flex', flexDirection: 'column',
-                alignItems: 'center', justifyContent: 'center',
-                height: '100%', gap: '12px',
-              }}>
-                <div style={{
-                  width: '40px', height: '40px',
-                  border: '4px solid #e2e8f0',
-                  borderTopColor: theme.spine,
-                  borderRadius: '50%',
-                  animation: 'spin 0.8s linear infinite',
-                }} />
-                <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-                <p style={{ fontSize: '13px', color: '#64748b' }}>Sorular yükleniyor...</p>
-              </div>
-            ) : questions.length === 0 ? (
-              <div style={{
-                display: 'flex', flexDirection: 'column',
-                alignItems: 'center', justifyContent: 'center',
-                height: '100%', gap: '8px',
-              }}>
-                <div style={{ fontSize: '40px' }}>📭</div>
-                <p style={{ fontWeight: 700, color: '#334155' }}>Bu derse ait soru bulunamadı</p>
-                <p style={{ fontSize: '12px', color: '#94a3b8' }}>Yakında eklenecek</p>
-              </div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                {pageQuestions.map((soru, idx) => {
-                  const result = answerResults[soru.id]
-                  const selected = selectedAnswers[soru.id]
-                  const diff = DIFF_COLORS[soru.difficulty ?? 'medium'] ?? DIFF_COLORS.medium
-                  const qNum = currentPage * questionsPerPage + idx + 1
-
-                  return (
-                    <div key={soru.id} style={{
-                      background: '#fff',
-                      borderRadius: '12px',
-                      border: result
-                        ? result.is_correct ? '2px solid #22c55e' : '2px solid #ef4444'
-                        : '2px solid #e2e8f0',
-                      padding: '16px',
-                      boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
-                    }}>
-                      <div style={{
-                        display: 'flex', alignItems: 'center',
-                        gap: '8px', marginBottom: '12px',
-                      }}>
-                        <div style={{
-                          width: '28px', height: '28px', borderRadius: '8px',
-                          background: theme.spine,
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          fontSize: '12px', fontWeight: 900, color: '#fff',
-                          flexShrink: 0,
-                        }}>{qNum}</div>
-
-                        <div style={{ flex: 1 }}>
-                          {soru.kazanim_code && (
-                            <span style={{
-                              fontSize: '10px', fontWeight: 700,
-                              background: `${theme.spine}18`,
-                              color: theme.spine,
-                              padding: '2px 8px', borderRadius: '4px',
-                              marginRight: '6px',
-                            }}>{soru.kazanim_code}</span>
-                          )}
-                          <span style={{
-                            display: 'inline-flex', alignItems: 'center', gap: '4px',
-                            fontSize: '10px', fontWeight: 600, color: diff.dot,
-                          }}>
-                            <span style={{
-                              width: '6px', height: '6px', borderRadius: '50%',
-                              background: diff.dot, display: 'inline-block',
-                            }} />
-                            {diff.label}
-                          </span>
-                        </div>
-
-                        {result && (
-                          <span style={{
-                            fontSize: '11px', fontWeight: 700,
-                            color: result.is_correct ? '#22c55e' : '#ef4444',
-                          }}>
-                            {result.is_correct ? '✓ Doğru' : '✗ Yanlış'}
-                          </span>
-                        )}
-                      </div>
-
-                      <p style={{
-                        fontSize: '14px', fontWeight: 600,
-                        color: '#1e293b', lineHeight: 1.6,
-                        marginBottom: '14px',
-                      }}>{soru.question_text}</p>
-
-                      <div style={{
-                        display: 'grid',
-                        gridTemplateColumns: '1fr 1fr',
-                        gap: '8px',
-                      }}>
-                        {soru.options?.map((opt) => {
-                          const isSelected = selected === opt.option_letter
-                          const isCorrectOpt = result?.correct_option === opt.option_letter
-                          const isWrong = result && isSelected && !result.is_correct
-
-                          let bg = '#f8fafc', border = '#e2e8f0', color = '#334155'
-                          if (isCorrectOpt && result) { bg = '#f0fdf4'; border = '#22c55e'; color = '#15803d' }
-                          else if (isWrong) { bg = '#fef2f2'; border = '#ef4444'; color = '#dc2626' }
-                          else if (isSelected) { bg = '#f0f9ff'; border = theme.spine; color = '#1e40af' }
-
-                          return (
-                            <button
-                              key={opt.id}
-                              type="button"
-                              aria-label={`Şık ${opt.option_letter}: ${opt.option_text}`}
-                              disabled={!!result || answeringId === soru.id}
-                              onClick={() => onAnswer(soru, opt.option_letter)}
-                              style={{
-                                display: 'flex', alignItems: 'center', gap: '8px',
-                                padding: '10px 12px',
-                                background: bg, border: `2px solid ${border}`,
-                                borderRadius: '10px',
-                                cursor: result ? 'default' : 'pointer',
-                                transition: 'all 0.2s',
-                                textAlign: 'left',
-                              }}
-                            >
-                              <span style={{
-                                width: '24px', height: '24px', borderRadius: '6px',
-                                background: isCorrectOpt && result ? '#22c55e' : isWrong ? '#ef4444' : theme.spine,
-                                color: '#fff',
-                                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                fontSize: '12px', fontWeight: 800, flexShrink: 0,
-                              }}>{opt.option_letter}</span>
-                              <span style={{ fontSize: '13px', color, fontWeight: 500, lineHeight: 1.3 }}>
-                                {opt.option_text}
-                              </span>
-                              {isCorrectOpt && result && (
-                                <span style={{ marginLeft: 'auto', color: '#22c55e', fontWeight: 700 }}>✓</span>
-                              )}
-                            </button>
-                          )
-                        })}
-                      </div>
-
-                      {result?.explanation && (
-                        <div style={{
-                          marginTop: '12px', padding: '10px 14px',
-                          background: '#fffbeb', border: '1px solid #fde68a',
-                          borderRadius: '8px',
-                        }}>
-                          <p style={{ fontSize: '12px', color: '#92400e', fontWeight: 600 }}>
-                            💡 {result.explanation}
-                          </p>
-                        </div>
-                      )}
-                      {result?.solution_video && (
-                        <div style={{ marginTop: '10px' }}>
-                          <a
-                            href={result.solution_video}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            style={{
-                              display: 'inline-block',
-                              fontSize: '12px',
-                              fontWeight: 700,
-                              color: theme.spine,
-                              textDecoration: 'underline',
-                            }}
-                          >
-                            Video çözümü aç
-                          </a>
-                        </div>
-                      )}
-                      {result && onSimilar && (
-                        <div style={{ marginTop: '10px' }}>
-                          <button
-                            type="button"
-                            onClick={() => onSimilar(soru.id)}
-                            disabled={loadingSimilar === soru.id}
-                            style={{
-                              padding: '8px 14px',
-                              fontSize: '12px',
-                              fontWeight: 700,
-                              borderRadius: '8px',
-                              border: `1px solid ${theme.spine}`,
-                              background: '#fff',
-                              color: theme.spine,
-                              cursor: loadingSimilar === soru.id ? 'wait' : 'pointer',
-                              opacity: loadingSimilar === soru.id ? 0.7 : 1,
-                            }}
-                          >
-                            {loadingSimilar === soru.id ? 'Benzer sorular yükleniyor…' : 'Benzer sorular'}
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  )
-                })}
-              </div>
-            )}
-          </div>
-
-          {/* Alt navigasyon */}
-          <div style={{
-            padding: '12px 20px',
-            borderTop: '2px solid #e2e8f0',
-            background: '#fff',
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            flexShrink: 0,
-          }}>
-            <button
-              onClick={() => setCurrentPage((p) => Math.max(0, p - 1))}
+              type="button"
               disabled={currentPage === 0}
-              style={{
-                padding: '8px 16px', borderRadius: '10px',
-                background: currentPage === 0 ? '#f1f5f9' : theme.spine,
-                color: currentPage === 0 ? '#94a3b8' : '#fff',
-                border: 'none', cursor: currentPage === 0 ? 'default' : 'pointer',
-                fontSize: '13px', fontWeight: 700,
-              }}
-            >← Önceki</button>
-
-            <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-              {Array.from({ length: Math.min(totalPages, 8) }).map((_, i) => (
-                <button
-                  key={i}
-                  onClick={() => setCurrentPage(i)}
-                  style={{
-                    width: currentPage === i ? '24px' : '8px',
-                    height: '8px', borderRadius: '4px',
-                    background: currentPage === i ? theme.spine : '#cbd5e1',
-                    border: 'none', cursor: 'pointer',
-                    transition: 'all 0.2s',
-                  }}
-                />
-              ))}
-            </div>
-
+              onClick={() => setCurrentPage((p) => Math.max(0, p - 1))}
+            >
+              Önceki
+            </button>{" "}
+            Sayfa {currentPage + 1} / {Math.max(totalPages, 1)}{" "}
             <button
-              onClick={() => setCurrentPage((p) => Math.min(totalPages - 1, p + 1))}
+              type="button"
               disabled={currentPage >= totalPages - 1}
-              style={{
-                padding: '8px 16px', borderRadius: '10px',
-                background: currentPage >= totalPages - 1 ? '#f1f5f9' : theme.spine,
-                color: currentPage >= totalPages - 1 ? '#94a3b8' : '#fff',
-                border: 'none', cursor: currentPage >= totalPages - 1 ? 'default' : 'pointer',
-                fontSize: '13px', fontWeight: 700,
-              }}
-            >Sonraki →</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
+              onClick={() => setCurrentPage((p) => Math.min(totalPages - 1, p + 1))}
+            >
+              Sonraki
+            </button>
+          </p>
+        </>
+      )}
+    </dialog>
+  );
 }
-
-
-
-
-
 

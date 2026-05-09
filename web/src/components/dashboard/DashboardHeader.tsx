@@ -36,6 +36,7 @@ const PATH_MAP: Record<string, { label: string; icon: React.ElementType }> = {
   "/ogrenci/dersler": { label: "Derslerim", icon: BookOpen },
   "/ogrenci/deneme": { label: "Denemeler", icon: FileQuestion },
   "/ogrenci/soru-bankasi": { label: "Soru Bankası", icon: Library },
+  "/ogrenci/canli-ders": { label: "Canlı Ders", icon: Video },
   "/ogrenci/mini-test": { label: "Mini Test", icon: Zap },
   "/ogrenci/video": { label: "Video & PDF", icon: Video },
   "/ogrenci/zayif-kazanim": { label: "Zayıf Kazanım", icon: RefreshCw },

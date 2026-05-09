@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
+import Image from "next/image";
 import { useAuth } from "@/lib/auth-context";
 import { studentApi, type StudentLiveLessonsSummary, type TeacherLesson, type VideoRoom } from "@/lib/api";
 import { VideoCard } from "@/components/VideoCard";
-import { LiveBanner } from "@/components/LiveBanner";
 import { LiveClassRoom } from "@/components/ogrenci/canli-ders/LiveClassRoom";
 import { KpiStrip } from "@/components/ogrenci/canli-ders/KpiStrip";
 import { LiveLessonCard } from "@/components/ogrenci/canli-ders/LiveLessonCard";
@@ -17,14 +17,19 @@ import {
   Play,
   LayoutGrid,
   List,
-  Search,
+  ChevronDown,
 } from "lucide-react";
 
-function isLiveWindow(iso: string, durationMin: number): boolean {
-  const start = new Date(iso).getTime();
-  const end = start + durationMin * 60 * 1000;
-  const now = Date.now();
-  return now >= start && now <= end;
+function startOfDay(d: Date): Date {
+  const x = new Date(d);
+  x.setHours(0, 0, 0, 0);
+  return x;
+}
+
+function endOfDay(d: Date): Date {
+  const x = new Date(d);
+  x.setHours(23, 59, 59, 999);
+  return x;
 }
 
 export default function OgrenciCanliDersPage() {
@@ -38,10 +43,9 @@ export default function OgrenciCanliDersPage() {
   const [activeRoom, setActiveRoom] = useState<VideoRoom | null>(null);
   const [joiningId, setJoiningId] = useState<number | null>(null);
   const [err, setErr] = useState("");
-  const [dismissedBanner, setDismissedBanner] = useState(false);
   const [tab, setTab] = useState<"upcoming" | "past">("upcoming");
   const [view, setView] = useState<"grid" | "list">("grid");
-  const [q, setQ] = useState("");
+  const [filterScope, setFilterScope] = useState<"all" | "today" | "week">("all");
 
   const loadLessons = useCallback(async () => {
     if (!token) {
@@ -97,170 +101,198 @@ export default function OgrenciCanliDersPage() {
     );
   }
 
-  const filteredUpcoming = useMemo(() => {
-    const s = q.trim().toLowerCase();
-    if (!s) return upcoming;
+  const upcomingScoped = useMemo(() => {
+    const now = new Date();
+    if (filterScope === "all") return upcoming;
     return upcoming.filter((l) => {
-      const t = (l.title || l.class_room?.name || "").toLowerCase();
-      const sub = (l.subject_tag || "").toLowerCase();
-      const teach = (l.teacher?.name || "").toLowerCase();
-      return t.includes(s) || sub.includes(s) || teach.includes(s);
+      const iso = l.starts_at ?? l.scheduled_at ?? "";
+      if (!iso) return false;
+      const t = new Date(iso).getTime();
+      if (filterScope === "today") {
+        return t >= startOfDay(now).getTime() && t <= endOfDay(now).getTime();
+      }
+      const weekEnd = new Date(now);
+      weekEnd.setDate(weekEnd.getDate() + 7);
+      return t >= startOfDay(now).getTime() && t <= weekEnd.getTime();
     });
-  }, [upcoming, q]);
+  }, [upcoming, filterScope]);
 
-  const filteredPast = useMemo(() => {
-    const s = q.trim().toLowerCase();
-    if (!s) return past;
-    return past.filter((l) => {
-      const t = (l.title || l.class_room?.name || "").toLowerCase();
-      const sub = (l.subject_tag || "").toLowerCase();
-      const teach = (l.teacher?.name || "").toLowerCase();
-      return t.includes(s) || sub.includes(s) || teach.includes(s);
-    });
-  }, [past, q]);
-
-  const liveLesson = upcoming.find((l) => {
-    if (l.status === "live") return true;
-    const iso = l.starts_at ?? l.scheduled_at ?? "";
-    return !!iso && isLiveWindow(iso, l.duration_minutes ?? 90);
-  });
+  const filteredPast = past;
 
   return (
-    <div className="min-h-screen bg-white">
-      <div className="mx-auto max-w-[1800px] px-6 py-8 lg:px-12">
-        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="mb-2 text-3xl font-bold tracking-tight text-slate-900">Canlı Dersler</h1>
-            <p className="text-slate-600">Öğretmenlerinizle canlı derse katılın</p>
+    <div className="min-h-full bg-[#F9FAFB]">
+      <div className="mx-auto max-w-[1360px] px-5 pb-12 pt-4 sm:px-8 lg:px-10 lg:pt-6">
+        {/* Başlık + yenile */}
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h1 className="text-[28px] font-bold tracking-tight text-slate-900 lg:text-[32px] lg:leading-tight">
+                  Canlı Dersler
+                </h1>
+                <p className="mt-2 max-w-[540px] text-[15px] leading-relaxed text-slate-600">
+                  Öğretmenlerinizle canlı derslere katıl, sorularını sor ve öğrenmeni pekiştir!
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setLoading(true);
+                  loadLessons();
+                }}
+                disabled={loading}
+                className="mt-1 shrink-0 rounded-xl border border-slate-200/80 bg-white p-3 text-slate-500 shadow-sm transition hover:border-slate-300 hover:text-slate-800 disabled:opacity-50"
+                aria-label="Listeyi yenile"
+              >
+                <RefreshCw className={`h-5 w-5 ${loading ? "animate-spin" : ""}`} />
+              </button>
+            </div>
+
+            {/* KPI + hero görsel */}
+            <div className="mt-8 flex flex-col gap-8 xl:flex-row xl:items-stretch">
+              <div className="min-w-0 flex-1">
+                {!loading && token ? (
+                  <KpiStrip summary={summary} />
+                ) : (
+                  <div className="grid gap-4 sm:grid-cols-3">
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="h-[132px] animate-pulse rounded-2xl bg-slate-200/60" />
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div className="relative mx-auto w-full max-w-[380px] shrink-0 xl:mx-0 xl:max-w-[340px]">
+                <Image
+                  src="/images/canli-ders/hero-scene.png"
+                  alt=""
+                  width={680}
+                  height={520}
+                  className="h-auto w-full object-contain object-center drop-shadow-sm"
+                  priority
+                  sizes="(max-width: 1280px) 90vw, 340px"
+                />
+              </div>
+            </div>
           </div>
-          <button
-            type="button"
-            onClick={() => {
-              setLoading(true);
-              loadLessons();
-            }}
-            disabled={loading}
-            className="self-start rounded-xl bg-slate-100 p-3 text-slate-600 transition-all hover:bg-slate-200 hover:text-slate-900 disabled:opacity-50"
-          >
-            <RefreshCw className={`h-5 w-5 ${loading ? "animate-spin" : ""}`} />
-          </button>
         </div>
 
         {err && (
-          <div className="mb-6 flex items-center gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-red-800">
+          <div className="mt-8 flex items-center gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-[14px] text-red-800">
             <AlertCircle className="h-5 w-5 shrink-0" />
             {err}
           </div>
         )}
 
-        {!loading && token && <KpiStrip summary={summary} />}
-
-        {liveLesson && !dismissedBanner && (
-          <div className="mb-8">
-            <LiveBanner
-              lessonTitle={liveLesson.title || liveLesson.class_room?.name || "Canlı Ders"}
-              instructor={liveLesson.teacher?.name}
-              participantCount={
-                typeof liveLesson.participant_count === "number" ? liveLesson.participant_count : undefined
-              }
-              onJoin={() => handleJoin(liveLesson)}
-              onDismiss={() => setDismissedBanner(true)}
-            />
-          </div>
-        )}
-
-        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex rounded-xl border border-slate-200 bg-slate-50 p-1">
+        {/* Sekmeler + görünüm + filtre */}
+        <div className="mt-10 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="inline-flex rounded-xl border border-slate-200/90 bg-slate-100/90 p-1">
             <button
               type="button"
               onClick={() => setTab("upcoming")}
-              className={`rounded-lg px-4 py-2 text-sm font-bold transition-colors ${
-                tab === "upcoming" ? "bg-white text-indigo-700 shadow-sm" : "text-slate-600"
+              className={`rounded-lg px-5 py-2.5 text-[13px] font-bold transition ${
+                tab === "upcoming"
+                  ? "bg-[#6366F1] text-white shadow-md shadow-indigo-500/25"
+                  : "text-slate-600 hover:text-slate-900"
               }`}
             >
-              Yaklaşan
+              Yaklaşan Dersler
             </button>
             <button
               type="button"
               onClick={() => setTab("past")}
-              className={`rounded-lg px-4 py-2 text-sm font-bold transition-colors ${
-                tab === "past" ? "bg-white text-indigo-700 shadow-sm" : "text-slate-600"
+              className={`rounded-lg px-5 py-2.5 text-[13px] font-bold transition ${
+                tab === "past"
+                  ? "bg-[#6366F1] text-white shadow-md shadow-indigo-500/25"
+                  : "text-slate-600 hover:text-slate-900"
               }`}
             >
-              Geçmiş
+              Geçmiş Dersler
             </button>
           </div>
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="relative flex-1 min-w-[200px]">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-              <input
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-                placeholder="Başlık, konu veya öğretmen ara…"
-                className="w-full rounded-xl border border-slate-200 py-2.5 pl-10 pr-3 text-sm outline-none focus:border-indigo-400"
-              />
-            </div>
-            <div className="flex rounded-lg border border-slate-200 p-0.5">
+
+          <div className="flex flex-wrap items-center gap-3 lg:justify-end">
+            {tab === "upcoming" && (
+              <div className="relative">
+                <select
+                  value={filterScope}
+                  onChange={(e) => setFilterScope(e.target.value as typeof filterScope)}
+                  className="appearance-none rounded-xl border border-slate-200 bg-white py-2.5 pl-4 pr-10 text-[13px] font-semibold text-slate-700 shadow-sm outline-none ring-offset-2 focus:ring-2 focus:ring-indigo-400"
+                  aria-label="Filtre"
+                >
+                  <option value="all">Tümü</option>
+                  <option value="today">Bugün</option>
+                  <option value="week">Bu hafta</option>
+                </select>
+                <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              </div>
+            )}
+            <div className="flex rounded-xl border border-slate-200 bg-white p-0.5 shadow-sm">
               <button
                 type="button"
-                title="Izgara"
+                title="Izgara görünümü"
                 onClick={() => setView("grid")}
-                className={`rounded-md p-2 ${view === "grid" ? "bg-indigo-100 text-indigo-700" : "text-slate-500"}`}
+                className={`rounded-lg p-2.5 transition ${
+                  view === "grid" ? "bg-indigo-100 text-[#6366F1]" : "text-slate-400 hover:text-slate-700"
+                }`}
               >
-                <LayoutGrid className="h-4 w-4" />
+                <LayoutGrid className="h-[18px] w-[18px]" />
               </button>
               <button
                 type="button"
-                title="Liste"
+                title="Liste görünümü"
                 onClick={() => setView("list")}
-                className={`rounded-md p-2 ${view === "list" ? "bg-indigo-100 text-indigo-700" : "text-slate-500"}`}
+                className={`rounded-lg p-2.5 transition ${
+                  view === "list" ? "bg-indigo-100 text-[#6366F1]" : "text-slate-400 hover:text-slate-700"
+                }`}
               >
-                <List className="h-4 w-4" />
+                <List className="h-[18px] w-[18px]" />
               </button>
             </div>
           </div>
         </div>
 
         {loading ? (
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="h-96 animate-pulse rounded-2xl bg-slate-100" />
+          <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div key={i} className="h-[420px] animate-pulse rounded-2xl bg-slate-200/50" />
             ))}
           </div>
         ) : !token ? (
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-8 text-center text-slate-600">
+          <div className="mt-10 rounded-2xl border border-slate-200 bg-white p-10 text-center text-[15px] text-slate-600 shadow-sm">
             Canlı dersleri görmek için giriş yapın.
           </div>
-        ) : tab === "upcoming" && filteredUpcoming.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-24 text-center">
-            <div className="mb-6 flex h-24 w-24 items-center justify-center rounded-3xl bg-indigo-50">
-              <Video className="h-12 w-12 text-indigo-500" />
+        ) : tab === "upcoming" && upcomingScoped.length === 0 ? (
+          <div className="mt-14 flex flex-col items-center justify-center py-16 text-center">
+            <div className="mb-6 flex h-[88px] w-[88px] items-center justify-center rounded-3xl bg-indigo-50 shadow-inner">
+              <Video className="h-10 w-10 text-[#6366F1]" />
             </div>
-            <h3 className="mb-2 text-2xl font-bold text-slate-900">Henüz yaklaşan canlı ders yok</h3>
-            <p className="max-w-md text-slate-600">Öğretmeniniz ders oluşturduğunda burada görünür</p>
+            <h3 className="mb-2 text-[22px] font-bold text-slate-900">Henüz yaklaşan canlı ders yok</h3>
+            <p className="max-w-md text-[15px] text-slate-600">Öğretmeniniz ders oluşturduğunda burada görünür.</p>
           </div>
         ) : tab === "past" && filteredPast.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-24 text-center text-slate-600">
+          <div className="mt-14 flex flex-col items-center justify-center py-16 text-center text-slate-600">
             <Play className="mb-4 h-12 w-12 text-slate-300" />
-            <p>Henüz tamamlanmış ders kaydı yok.</p>
+            <p className="text-[15px]">Henüz tamamlanmış ders kaydı yok.</p>
           </div>
         ) : tab === "upcoming" ? (
-          <div>
+          <div className="mt-8">
             <div className="mb-6 flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50">
-                <Wifi className="h-5 w-5 text-indigo-600" />
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white shadow-sm ring-1 ring-slate-100">
+                <Wifi className="h-5 w-5 text-[#6366F1]" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-slate-900">Yaklaşan Dersler</h2>
-                <p className="text-sm text-slate-600">{filteredUpcoming.length} ders</p>
+                <h2 className="text-[22px] font-bold tracking-tight text-slate-900">Yaklaşan Dersler</h2>
+                <p className="text-[13px] text-slate-500">{upcomingScoped.length} ders</p>
               </div>
             </div>
             <div
               className={
-                view === "grid" ? "grid gap-6 sm:grid-cols-2 lg:grid-cols-3" : "flex flex-col gap-4 max-w-3xl mx-auto"
+                view === "grid"
+                  ? "grid gap-6 sm:grid-cols-2 xl:grid-cols-3"
+                  : "mx-auto flex max-w-3xl flex-col gap-5"
               }
             >
-              {filteredUpcoming.map((lesson) => (
+              {upcomingScoped.map((lesson) => (
                 <LiveLessonCard
                   key={lesson.id}
                   lesson={lesson}
@@ -272,21 +304,21 @@ export default function OgrenciCanliDersPage() {
             </div>
           </div>
         ) : (
-          <div>
+          <div className="mt-8">
             <div className="mb-6 flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white shadow-sm ring-1 ring-slate-100">
                 <Play className="h-5 w-5 text-emerald-600" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-slate-900">Geçmiş dersler</h2>
-                <p className="text-sm text-slate-600">Kayıt varsa oynatabilirsiniz</p>
+                <h2 className="text-[22px] font-bold tracking-tight text-slate-900">Geçmiş dersler</h2>
+                <p className="text-[13px] text-slate-500">Kayıt varsa oynatabilirsiniz</p>
               </div>
             </div>
             <div
               className={
                 view === "grid"
-                  ? "grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5"
-                  : "flex flex-col gap-3 max-w-3xl mx-auto"
+                  ? "grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+                  : "mx-auto flex max-w-3xl flex-col gap-3"
               }
             >
               {filteredPast.slice(0, 40).map((lesson) => {
@@ -294,7 +326,7 @@ export default function OgrenciCanliDersPage() {
                 return view === "list" ? (
                   <div
                     key={lesson.id}
-                    className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3"
+                    className="flex items-center justify-between rounded-2xl border border-slate-100 bg-white px-5 py-4 shadow-[0_10px_15px_-3px_rgba(15,23,42,0.05)]"
                   >
                     <div>
                       <p className="font-semibold text-slate-900">{lesson.title || lesson.class_room?.name}</p>
@@ -304,7 +336,7 @@ export default function OgrenciCanliDersPage() {
                       <button
                         type="button"
                         onClick={() => window.open(recording_url, "_blank")}
-                        className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white"
+                        className="rounded-xl bg-emerald-600 px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-emerald-700"
                       >
                         Oynat
                       </button>

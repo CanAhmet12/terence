@@ -1,6 +1,5 @@
 "use client";
 
-import { BarChart3, CheckCircle2, LineChart } from "lucide-react";
 import type { QuestionBankSummary } from "@/lib/api";
 
 function formatInt(n: number): string {
@@ -15,27 +14,18 @@ export function QuestionBankKpiStrip({
   loading: boolean;
 }) {
   const k = summary?.kpis;
-  const items = [
+  const rows = [
     {
       label: "Toplam Soru",
       value: k != null ? formatInt(k.total_questions) : "—",
-      hint: "Kapsamdaki soru sayısı",
-      Icon: LineChart,
-      iconWrap: "bg-violet-50 text-violet-600",
     },
     {
       label: "Çözülen Soru",
       value: k != null ? formatInt(k.answered_distinct) : "—",
-      hint: "Benzersiz çözülen soru",
-      Icon: CheckCircle2,
-      iconWrap: "bg-emerald-50 text-emerald-600",
     },
     {
       label: "Doğru Oranı",
       value: k != null && k.attempts > 0 ? `%${k.accuracy_pct}` : "—",
-      hint: "Tüm deneme girişlerine göre",
-      Icon: LineChart,
-      iconWrap: "bg-orange-50 text-orange-600",
     },
     {
       label: "Net",
@@ -46,39 +36,21 @@ export function QuestionBankKpiStrip({
               minimumFractionDigits: 0,
             }).format(k.net_estimate)
           : "—",
-      hint: "Yanlış başına 0,25 düşüm",
-      Icon: BarChart3,
-      iconWrap: "bg-sky-50 text-sky-600",
     },
   ];
 
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-3.5">
-      {items.map(({ label, value, hint, Icon, iconWrap }) => (
-        <div
-          key={label}
-          className="rounded-[18px] border border-slate-100 bg-white p-[var(--qb-card-pad)] shadow-[var(--qb-card-shadow)]"
-          title={hint}
-        >
-          <div className="flex items-start justify-between gap-2">
-            <div className="min-w-0 flex-1">
-              <p className="text-xs font-medium leading-tight text-slate-500">{label}</p>
-              <p className="mt-1 text-lg font-bold tabular-nums leading-tight tracking-tight text-slate-900 sm:text-xl">
-                {loading ? (
-                  <span className="inline-block h-8 w-16 animate-pulse rounded-lg bg-slate-100" />
-                ) : (
-                  value
-                )}
-              </p>
-            </div>
-            <div
-              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${iconWrap}`}
-            >
-              <Icon className="h-[17px] w-[17px]" strokeWidth={2.25} aria-hidden />
-            </div>
-          </div>
-        </div>
-      ))}
-    </div>
+    <section aria-label="Özet">
+      <table>
+        <tbody>
+          {rows.map(({ label, value }) => (
+            <tr key={label}>
+              <th scope="row">{label}</th>
+              <td>{loading ? "…" : value}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </section>
   );
 }
