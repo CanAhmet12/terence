@@ -79,6 +79,19 @@ const EXAM_TYPES: ExamType[] = [
     badgeColor: "bg-amber-500",
     icon: "⚡",
   },
+  {
+    key: "KPSS",
+    label: "KPSS",
+    desc: "Kamu Personeli Seçme Sınavı",
+    questions: 120,
+    duration: 120,
+    gradient: "from-sky-600 via-blue-700 to-slate-800",
+    shadow: "shadow-sky-500/40",
+    spine: "bg-sky-900",
+    accentColor: "#0284c7",
+    badgeColor: "bg-sky-500",
+    icon: "📋",
+  },
 ];
 
 // ─── Yardımcı bileşenler ─────────────────────────────────────────────────────
@@ -470,8 +483,13 @@ export default function DenemePage() {
 
   const visibleTemplates = useMemo(() => {
     const keys = new Set(availableExamTypes.map((e) => e.key));
-    return templates.filter((t) => keys.has(t.exam_type));
-  }, [templates, availableExamTypes]);
+    const pe = typeof profileExamType === "string" ? profileExamType : undefined;
+    return templates.filter((t) => {
+      if (keys.has(t.exam_type)) return true;
+      if (pe === "TYT-AYT" && (t.exam_type === "TYT" || t.exam_type === "AYT")) return true;
+      return false;
+    });
+  }, [templates, availableExamTypes, profileExamType]);
 
   const loadData = useCallback(async () => {
     setLoading(true);
