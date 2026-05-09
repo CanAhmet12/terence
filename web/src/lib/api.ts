@@ -682,12 +682,54 @@ export interface QuestionBankKpis {
   net_estimate: number
 }
 
+export interface QuestionBankBookDisplay {
+  badge_label?: string | null
+  year_label?: string | null
+  brand_label?: string | null
+  title_override?: string | null
+  footer_label?: string | null
+  cta_label?: string | null
+  cover_hex?: string | null
+}
+
+export interface QuestionBankDisplayRow {
+  id: number
+  subject: string
+  grade: number
+  badge_label?: string | null
+  year_label?: string | null
+  brand_label?: string | null
+  title_override?: string | null
+  footer_label?: string | null
+  cta_label?: string | null
+  cover_hex?: string | null
+  sort_order?: number
+  is_active?: boolean
+  created_at?: string
+  updated_at?: string
+}
+
+export type QuestionBankDisplayInput = {
+  subject: string
+  grade?: number
+  badge_label?: string | null
+  year_label?: string | null
+  brand_label?: string | null
+  title_override?: string | null
+  footer_label?: string | null
+  cta_label?: string | null
+  cover_hex?: string | null
+  sort_order?: number
+  is_active?: boolean
+}
+
 export interface QuestionBankSubjectSummary {
   subject: string
   total: number
   answered: number
   correct_rate: number | null
   cta_deep_link: string
+  book_display?: QuestionBankBookDisplay | null
 }
 
 export interface QuestionBankExamTabRow {
@@ -1861,6 +1903,41 @@ export const adminApi = {
     await api.delete(`/admin/questions/${actualId}`)
   },
 
+  async bulkCreateAdminQuestions(
+    questions: Array<Record<string, unknown>>
+  ): Promise<{ created_ids: number[]; created_count: number; errors: unknown[] }> {
+    const response = await api.post<{ created_ids: number[]; created_count: number; errors: unknown[] }>(
+      '/admin/questions/bulk',
+      { questions }
+    )
+    return response.data
+  },
+
+  async getQuestionBankDisplays(_token?: string): Promise<QuestionBankDisplayRow[]> {
+    const response = await api.get<{ success?: boolean; data?: QuestionBankDisplayRow[] }>('/admin/question-bank-displays')
+    const body = response.data
+    return Array.isArray(body?.data) ? body.data : []
+  },
+
+  async createQuestionBankDisplay(_tokenOrData?: string | QuestionBankDisplayInput, data?: QuestionBankDisplayInput): Promise<QuestionBankDisplayRow> {
+    const actualData = typeof _tokenOrData === 'string' ? data : _tokenOrData
+    const response = await api.post<{ success?: boolean; data: QuestionBankDisplayRow }>('/admin/question-bank-displays', actualData)
+    return response.data.data
+  },
+
+  async updateQuestionBankDisplay(
+    id: number,
+    data: Partial<QuestionBankDisplayInput>
+  ): Promise<QuestionBankDisplayRow> {
+    const response = await api.patch<{ success?: boolean; data: QuestionBankDisplayRow }>(`/admin/question-bank-displays/${id}`, data)
+    return response.data.data
+  },
+
+  async deleteQuestionBankDisplay(_tokenOrId?: string | number, id?: number): Promise<void> {
+    const actualId = typeof _tokenOrId === 'number' ? _tokenOrId : id
+    await api.delete(`/admin/question-bank-displays/${actualId}`)
+  },
+
   async getPendingTeachers(_token?: string): Promise<User[]> {
     const response = await api.get<unknown>('/admin/teachers/pending')
     return normalizeArray<User>(response.data)
@@ -2198,6 +2275,11 @@ Object.assign(api, {
   getAdminQuestions: adminApi.getAdminQuestions.bind(adminApi),
   createAdminQuestion: adminApi.createAdminQuestion.bind(adminApi),
   deleteAdminQuestion: adminApi.deleteAdminQuestion.bind(adminApi),
+  bulkCreateAdminQuestions: adminApi.bulkCreateAdminQuestions.bind(adminApi),
+  getQuestionBankDisplays: adminApi.getQuestionBankDisplays.bind(adminApi),
+  createQuestionBankDisplay: adminApi.createQuestionBankDisplay.bind(adminApi),
+  updateQuestionBankDisplay: adminApi.updateQuestionBankDisplay.bind(adminApi),
+  deleteQuestionBankDisplay: adminApi.deleteQuestionBankDisplay.bind(adminApi),
   getPendingTeachers: adminApi.getPendingTeachers.bind(adminApi),
   approveTeacher: adminApi.approveTeacher.bind(adminApi),
   rejectTeacher: adminApi.rejectTeacher.bind(adminApi),

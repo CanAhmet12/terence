@@ -98,6 +98,7 @@ export function SubjectBankCarousel({
                 subject={row.subject}
                 meta={meta}
                 href={row.cta_deep_link}
+                bookDisplay={row.book_display}
                 onActivate={onSelectSubject ? () => onSelectSubject(row.subject) : undefined}
               />
             );

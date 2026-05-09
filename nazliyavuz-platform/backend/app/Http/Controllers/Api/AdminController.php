@@ -6,15 +6,18 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\Course;
 use App\Models\ExamSession;
-use App\Models\Subscription;
+use App\Models\Payment;
 use App\Models\ContentItem;
 use App\Models\Question;
 use App\Models\QuestionOption;
+use App\Models\QuestionBankDisplay;
 use App\Models\AuditLog;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Carbon\Carbon;
 
 class AdminController extends Controller
@@ -29,9 +32,16 @@ class AdminController extends Controller
         $totalCourses      = Course::where('is_active', true)->count();
         $totalQuestions    = Question::where('is_active', true)->count();
         $totalExams        = ExamSession::where('status', 'completed')->count();
-        $monthlyRevenue    = Subscription::where('status', 'active')
-            ->whereMonth('starts_at', now()->month)->sum('amount_paid');
-        $activeSubscriptions = Subscription::where('status', 'active')->count();
+        $monthlyRevenue    = $this->terenceMonthlyPaymentSum();
+        $activeSubscriptions = User::query()
+            ->where('role', 'student')
+            ->whereNotNull('subscription_plan')
+            ->whereNotIn('subscription_plan', ['free', ''])
+            ->where(function ($q) {
+                $q->whereNull('subscription_expires_at')
+                    ->orWhere('subscription_expires_at', '>', now());
+            })
+            ->count();
 
         return response()->json([
             'success'             => true,
@@ -149,10 +159,7 @@ class AdminController extends Controller
             $date = Carbon::now()->subMonths($monthsAgo);
             return [
                 'label' => $date->format('M'),
-                'value' => (float) Subscription::where('status', 'active')
-                    ->whereYear('starts_at', $date->year)
-                    ->whereMonth('starts_at', $date->month)
-                    ->sum('amount_paid'),
+                'value' => $this->terenceMonthlyPaymentSumForMonth((int) $date->year, (int) $date->month),
             ];
         })->values();
 
@@ -163,10 +170,12 @@ class AdminController extends Controller
         $topSubjects = Question::select('subject', DB::raw('COUNT(*) as count'))
             ->whereNotNull('subject')->groupBy('subject')->orderByDesc('count')->limit(5)->get();
 
-        $subscriptionConversions = Subscription::where('status', 'active')
-            ->join('subscription_plans', 'subscriptions.plan_id', '=', 'subscription_plans.id')
-            ->select('subscription_plans.slug as plan', DB::raw('COUNT(*) as count'))
-            ->groupBy('subscription_plans.slug')->get();
+        $subscriptionConversions = User::query()
+            ->whereNotNull('subscription_plan')
+            ->whereNotIn('subscription_plan', ['free', ''])
+            ->select('subscription_plan as plan', DB::raw('COUNT(*) as count'))
+            ->groupBy('subscription_plan')
+            ->get();
 
         return response()->json([
             'success'                   => true,
@@ -176,10 +185,10 @@ class AdminController extends Controller
             'average_study_time_minutes'=> 0,
             'active_users_today'        => User::whereDate('last_login_at', today())->count(),
             'top_subjects'              => $topSubjects,
-            'subscription_conversions'  => $subscriptionConversions->map(fn($s) => [
+            'subscription_conversions'  => $subscriptionConversions->map(fn ($s) => [
                 'from'  => 'free',
                 'to'    => $s->plan,
-                'count' => $s->count,
+                'count' => (int) $s->count,
             ]),
         ]);
     }
@@ -207,7 +216,11 @@ class AdminController extends Controller
     {
         $q = Question::query();
         if ($request->filled('search')) {
-            $q->where('question_text', 'like', '%' . $request->search . '%');
+            $term = '%' . $request->search . '%';
+            $q->where(function ($qq) use ($term) {
+                $qq->where('question_text', 'like', $term)
+                    ->orWhere('kazanim_code', 'like', $term);
+            });
         }
         if ($request->filled('subject')) {
             $q->where('subject', $request->subject);
@@ -219,7 +232,12 @@ class AdminController extends Controller
         return response()->json([
             'success' => true,
             'data'    => $items->items(),
-            'meta'    => ['total' => $items->total(), 'last_page' => $items->lastPage()],
+            'meta'    => [
+                'total'         => $items->total(),
+                'last_page'     => $items->lastPage(),
+                'current_page'  => $items->currentPage(),
+                'per_page'      => $items->perPage(),
+            ],
         ]);
     }
 
@@ -239,10 +257,11 @@ class AdminController extends Controller
             'correct_option' => 'required|integer|min:0',
             'subject'        => 'required|string',
             'difficulty'     => 'required|in:easy,medium,hard',
+            'type'           => 'nullable|in:classic,new_gen,paragraph',
             'kazanim_code'   => 'nullable|string|max:50',
             'explanation'    => 'nullable|string',
             'grade'          => 'nullable|integer|min:1|max:12',
-            'exam_type'      => 'nullable|string|in:LGS,TYT,AYT,KPSS,Genel,TYT-AYT,all',
+            'exam_type'      => 'nullable|string|in:LGS,TYT,AYT,KPSS,Genel,TYT-AYT,all,Mini',
         ]);
         if ($v->fails()) {
             return response()->json(['error' => true, 'errors' => $v->errors()], 422);
@@ -251,17 +270,23 @@ class AdminController extends Controller
         $data = $v->validated();
         $optionsRaw = $data['options'];
         $correctIdx = (int) $data['correct_option'];
+        $examType = $data['exam_type'] ?? 'Genel';
+        if ($examType === 'Mini') {
+            $examType = 'Genel';
+        }
 
-        $question = DB::transaction(function () use ($data, $optionsRaw, $correctIdx) {
+        $question = DB::transaction(function () use ($data, $optionsRaw, $correctIdx, $examType) {
             $q = Question::create([
                 'question_text'  => $data['question_text'],
                 'subject'        => $data['subject'],
                 'difficulty'     => $data['difficulty'],
+                'type'           => $data['type'] ?? 'classic',
                 'kazanim_code'   => $data['kazanim_code'] ?? null,
                 'solution_text'  => $data['explanation'] ?? null,
                 'grade'          => $data['grade'] ?? null,
-                'exam_type'      => $data['exam_type'] ?? 'Genel',
+                'exam_type'      => $examType,
                 'is_active'      => true,
+                'created_by'     => Auth::id(),
             ]);
 
             foreach ($optionsRaw as $i => $opt) {
@@ -287,6 +312,132 @@ class AdminController extends Controller
         $q = Question::findOrFail($id);
         $q->update(['is_active' => false]);
         return response()->json(['success' => true, 'message' => 'Soru silindi']);
+    }
+
+    // GET /api/admin/question-bank-displays
+    public function questionBankDisplays(): JsonResponse
+    {
+        $rows = QuestionBankDisplay::query()->orderBy('sort_order')->orderBy('subject')->get();
+        return response()->json(['success' => true, 'data' => $rows]);
+    }
+
+    // POST /api/admin/question-bank-displays
+    public function storeQuestionBankDisplay(Request $request): JsonResponse
+    {
+        $v = Validator::make($request->all(), [
+            'subject'        => 'required|string|max:120',
+            'grade'          => 'nullable|integer|min:0|max:12',
+            'badge_label'    => 'nullable|string|max:64',
+            'year_label'     => 'nullable|string|max:16',
+            'brand_label'    => 'nullable|string|max:128',
+            'title_override' => 'nullable|string|max:255',
+            'footer_label'   => 'nullable|string|max:128',
+            'cta_label'      => 'nullable|string|max:64',
+            'cover_hex'      => 'nullable|string|max:7',
+            'sort_order'     => 'nullable|integer|min:0|max:65535',
+            'is_active'      => 'sometimes|boolean',
+        ]);
+        if ($v->fails()) {
+            return response()->json(['error' => true, 'errors' => $v->errors()], 422);
+        }
+        $data = $v->validated();
+        $data['grade'] = (int) ($data['grade'] ?? 0);
+        if (! empty($data['cover_hex']) && $data['cover_hex'][0] !== '#') {
+            $data['cover_hex'] = '#' . ltrim($data['cover_hex'], '#');
+        }
+        try {
+            $row = QuestionBankDisplay::create($data);
+        } catch (\Illuminate\Database\QueryException $e) {
+            if (str_contains((string) $e->getMessage(), 'Duplicate')) {
+                return response()->json(['error' => true, 'message' => 'Bu ders ve sınıf için zaten bir kayıt var.'], 422);
+            }
+            throw $e;
+        }
+        return response()->json(['success' => true, 'data' => $row], 201);
+    }
+
+    // PATCH /api/admin/question-bank-displays/{id}
+    public function updateQuestionBankDisplay(int $id, Request $request): JsonResponse
+    {
+        $row = QuestionBankDisplay::findOrFail($id);
+        $v = Validator::make($request->all(), [
+            'subject'        => 'sometimes|string|max:120',
+            'grade'          => 'sometimes|integer|min:0|max:12',
+            'badge_label'    => 'nullable|string|max:64',
+            'year_label'     => 'nullable|string|max:16',
+            'brand_label'    => 'nullable|string|max:128',
+            'title_override' => 'nullable|string|max:255',
+            'footer_label'   => 'nullable|string|max:128',
+            'cta_label'      => 'nullable|string|max:64',
+            'cover_hex'      => 'nullable|string|max:7',
+            'sort_order'     => 'nullable|integer|min:0|max:65535',
+            'is_active'      => 'sometimes|boolean',
+        ]);
+        if ($v->fails()) {
+            return response()->json(['error' => true, 'errors' => $v->errors()], 422);
+        }
+        $row->update($v->validated());
+        return response()->json(['success' => true, 'data' => $row->fresh()]);
+    }
+
+    // DELETE /api/admin/question-bank-displays/{id}
+    public function destroyQuestionBankDisplay(int $id): JsonResponse
+    {
+        QuestionBankDisplay::findOrFail($id)->delete();
+        return response()->json(['success' => true, 'message' => 'Kayıt silindi']);
+    }
+
+    // POST /api/admin/questions/bulk — JSON ile toplu soru (deneme havuzunu besler)
+    public function bulkCreateQuestions(Request $request): JsonResponse
+    {
+        $v = Validator::make($request->all(), [
+            'questions'   => 'required|array|min:1|max:80',
+        ]);
+        if ($v->fails()) {
+            return response()->json(['error' => true, 'errors' => $v->errors()], 422);
+        }
+        $list = $request->input('questions');
+        $created = [];
+        $errors = [];
+        foreach ($list as $idx => $payload) {
+            if (! is_array($payload)) {
+                $errors[] = ['index' => $idx, 'message' => 'Geçersiz girdi'];
+                continue;
+            }
+            $sub = Validator::make($payload, [
+                'question_text'  => 'required|string',
+                'options'        => 'required|array|min:2',
+                'correct_option' => 'required|integer|min:0',
+                'subject'        => 'required|string',
+                'difficulty'     => 'required|in:easy,medium,hard',
+                'type'           => 'nullable|in:classic,new_gen,paragraph',
+                'kazanim_code'   => 'nullable|string|max:50',
+                'explanation'    => 'nullable|string',
+                'grade'          => 'nullable|integer|min:1|max:12',
+                'exam_type'      => 'nullable|string|in:LGS,TYT,AYT,KPSS,Genel,TYT-AYT,all,Mini',
+            ]);
+            if ($sub->fails()) {
+                $errors[] = ['index' => $idx, 'errors' => $sub->errors()->toArray()];
+                continue;
+            }
+            $req = Request::create('', 'POST', $payload);
+            $res = $this->createQuestion($req);
+            if ($res->getStatusCode() !== 201) {
+                $errors[] = ['index' => $idx, 'body' => $res->getData(true)];
+                continue;
+            }
+            $decoded = $res->getData(true);
+            if (! empty($decoded['question']['id'])) {
+                $created[] = (int) $decoded['question']['id'];
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'created_ids' => $created,
+            'created_count' => count($created),
+            'errors' => $errors,
+        ], 200);
     }
 
     public function pendingTeachers(Request $request): JsonResponse
@@ -407,5 +558,23 @@ class AdminController extends Controller
             ];
         })->values();
         return response()->json(['success' => true, 'data' => $data]);
+    }
+
+    private function terenceMonthlyPaymentSum(): float
+    {
+        return $this->terenceMonthlyPaymentSumForMonth((int) now()->year, (int) now()->month);
+    }
+
+    private function terenceMonthlyPaymentSumForMonth(int $year, int $month): float
+    {
+        if (! Schema::hasTable('payments') || ! Schema::hasColumn('payments', 'plan_type')) {
+            return 0.0;
+        }
+        $q = Payment::query()
+            ->whereIn('status', ['completed', 'success'])
+            ->whereYear('paid_at', $year)
+            ->whereMonth('paid_at', $month);
+
+        return round((float) $q->sum('amount'), 2);
     }
 }

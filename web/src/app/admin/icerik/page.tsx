@@ -52,7 +52,7 @@ export default function AdminIcerikPage() {
       const resObj = res as Record<string, unknown>;
       setItems(Array.isArray(resObj.data) ? resObj.data as AdminContentItem[] : Array.isArray(res) ? res as AdminContentItem[] : []);
     } catch {
-      setError("İçerikler yüklenemedi. API endpoint'i henüz hazır olmayabilir.");
+      setError("İçerikler yüklenemedi.");
     } finally {
       setLoading(false);
     }
@@ -84,6 +84,12 @@ export default function AdminIcerikPage() {
           </Link>
           <h1 className="text-2xl font-bold text-slate-900">İçerik Yönetimi</h1>
           <p className="text-slate-600 mt-1">Video, PDF, soru ve quiz içeriklerini yönetin</p>
+          <Link
+            href="/admin/icerik/yukle"
+            className="inline-flex mt-4 items-center gap-2 px-4 py-2.5 rounded-xl bg-teal-600 text-white text-sm font-semibold hover:bg-teal-700 transition-colors"
+          >
+            Yeni içerik yükle
+          </Link>
         </div>
         <button
           onClick={loadContent}

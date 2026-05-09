@@ -14,6 +14,8 @@ import {
   X,
   UserCheck,
   Tag,
+  Upload,
+  Library,
 } from "lucide-react";
 import Image from "next/image";
 import { AuthGuard } from "@/components/auth/AuthGuard";
@@ -24,7 +26,9 @@ const navItems = [
   { href: "/admin/kullanicilar", icon: Users, label: "Kullanıcılar" },
   { href: "/admin/ogretmen-onay", icon: UserCheck, label: "Öğretmen Onay" },
   { href: "/admin/icerik", icon: BookOpen, label: "İçerik" },
+  { href: "/admin/icerik/yukle", icon: Upload, label: "İçerik yükle" },
   { href: "/admin/sorular", icon: FileQuestion, label: "Soru Havuzu" },
+  { href: "/admin/soru-bankasi-kitaplari", icon: Library, label: "Kitap kapakları" },
   { href: "/admin/kupon", icon: Tag, label: "Kuponlar" },
   { href: "/admin/raporlar", icon: BarChart3, label: "Raporlar" },
   { href: "/admin/ayarlar", icon: Settings, label: "Ayarlar" },

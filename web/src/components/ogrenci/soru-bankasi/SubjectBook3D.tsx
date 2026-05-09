@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import type { QuestionBankBookDisplay } from "@/lib/api";
 
 /** Düz kapak + sırt için hafif ton farkı (belirgin gradient yok) */
 export type SubjectBookTheme = {
@@ -79,12 +80,28 @@ export function subjectToBookTheme(subject: string): SubjectBookTheme {
   return DEFAULT_THEME;
 }
 
+function themeFromCoverHex(hex: string | null | undefined, fallback: SubjectBookTheme): SubjectBookTheme {
+  const h = hex?.trim();
+  if (!h || !/^#[0-9A-Fa-f]{6}$/i.test(h)) {
+    return fallback;
+  }
+  const norm = h.startsWith("#") ? h : `#${h}`;
+  return {
+    cover: norm,
+    spineTop: norm,
+    spineBottom: norm,
+    pages: fallback.pages,
+  };
+}
+
 type SubjectBook3DProps = {
   subject: string;
   meta: string;
   href: string;
   className?: string;
   onActivate?: () => void;
+  /** Admin panelinden gelen kapak metinleri / renk */
+  bookDisplay?: QuestionBankBookDisplay | null;
 };
 
 /** Kapak ölçüleri (px) — tek yerden büyütme */
@@ -92,9 +109,17 @@ const BOOK_W = 210;
 const BOOK_H = 286;
 const SPINE_W = 28;
 
-export function SubjectBook3D({ subject, meta, href, className, onActivate }: SubjectBook3DProps) {
-  const th = subjectToBookTheme(subject);
+export function SubjectBook3D({ subject, meta, href, className, onActivate, bookDisplay }: SubjectBook3DProps) {
+  const baseTheme = subjectToBookTheme(subject);
+  const th = themeFromCoverHex(bookDisplay?.cover_hex ?? null, baseTheme);
   const safeHref = href?.trim() || `/ogrenci/soru-bankasi?subject=${encodeURIComponent(subject)}`;
+
+  const badgeLabel = bookDisplay?.badge_label?.trim() || "Soru Bankası";
+  const yearLabel = bookDisplay?.year_label?.trim() || String(new Date().getFullYear());
+  const brandLabel = bookDisplay?.brand_label?.trim() || "Terence Eğitim";
+  const titleText = bookDisplay?.title_override?.trim() || subject;
+  const footerLabel = bookDisplay?.footer_label?.trim() || "Çöz · İlerle";
+  const ctaLabel = bookDisplay?.cta_label?.trim() || "Aç →";
 
   const cls = cn(
     "group/book relative block w-[248px] shrink-0 select-none focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-50",
@@ -170,23 +195,23 @@ export function SubjectBook3D({ subject, meta, href, className, onActivate }: Su
 
           <div className="relative flex items-start justify-between gap-2">
             <span className="rounded border border-white/25 bg-black/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.18em] text-white/95">
-              Soru Bankası
+              {badgeLabel}
             </span>
-            <span className="text-[11px] font-semibold text-white/70">2026</span>
+            <span className="text-[11px] font-semibold text-white/70">{yearLabel}</span>
           </div>
 
           <div className="relative mt-1">
-            <p className="text-[12px] font-medium uppercase tracking-wide text-white/75">Terence Eğitim</p>
+            <p className="text-[12px] font-medium uppercase tracking-wide text-white/75">{brandLabel}</p>
             <h3 className="mt-2 line-clamp-3 text-[22px] font-bold leading-snug tracking-tight text-white">
-              {subject}
+              {titleText}
             </h3>
             <p className="mt-2 line-clamp-2 text-[13px] leading-relaxed text-white/85">{meta}</p>
           </div>
 
           <div className="relative flex items-center justify-between gap-2 border-t border-white/20 pt-3">
-            <span className="text-[12px] font-medium text-white/75">Çöz · İlerle</span>
+            <span className="text-[12px] font-medium text-white/75">{footerLabel}</span>
             <span className="rounded-full bg-black/15 px-3 py-1 text-[12px] font-semibold text-white transition-colors group-hover/book:bg-black/25">
-              Aç →
+              {ctaLabel}
             </span>
           </div>
         </div>
@@ -200,7 +225,7 @@ export function SubjectBook3D({ subject, meta, href, className, onActivate }: Su
         type="button"
         onClick={onActivate}
         className={cn(cls, "cursor-pointer border-0 bg-transparent p-0")}
-        aria-label={`${subject} soru bankasını aç`}
+        aria-label={`${titleText} soru bankasını aç`}
       >
         {visual}
       </button>

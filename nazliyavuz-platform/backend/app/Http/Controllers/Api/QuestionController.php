@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Question;
 use App\Models\QuestionAnswer;
+use App\Models\QuestionBankDisplay;
 use App\Models\Kazanim;
 use App\Models\XpLog;
 use Illuminate\Http\Request;
@@ -154,7 +155,7 @@ class QuestionController extends Controller
             ->get()
             ->keyBy('subject');
 
-        $subjectRows = $subjects->map(function ($row) use ($answeredBySubject) {
+        $subjectRows = $subjects->map(function ($row) use ($answeredBySubject, $scope) {
             $ab          = $answeredBySubject->get($row->subject);
             $answered    = (int) ($ab->answered ?? 0);
             $att         = (int) ($ab->attempts ?? 0);
@@ -168,6 +169,7 @@ class QuestionController extends Controller
                 'answered'        => $answered,
                 'correct_rate'    => $rate,
                 'cta_deep_link'   => '/ogrenci/soru-bankasi?' . $query,
+                'book_display'    => $this->resolveQuestionBankDisplay($row->subject, (int) $scope['grade']),
             ];
         })->values();
 
@@ -390,6 +392,45 @@ class QuestionController extends Controller
     }
 
     // -------------------------------------------------------
+    /**
+     * Admin tarafından tanımlanan 3D kitap kapak metinleri (grade=0 tüm sınıflar).
+     *
+     * @return array<string, string|null>|null
+     */
+    private function resolveQuestionBankDisplay(string $subject, int $grade): ?array
+    {
+        if (! \Illuminate\Support\Facades\Schema::hasTable('question_bank_displays')) {
+            return null;
+        }
+
+        $exact = QuestionBankDisplay::query()
+            ->where('is_active', true)
+            ->where('subject', $subject)
+            ->where('grade', $grade)
+            ->first();
+
+        $generic = QuestionBankDisplay::query()
+            ->where('is_active', true)
+            ->where('subject', $subject)
+            ->where('grade', 0)
+            ->first();
+
+        $row = $exact ?? $generic;
+        if (! $row) {
+            return null;
+        }
+
+        return [
+            'badge_label'    => $row->badge_label,
+            'year_label'     => $row->year_label,
+            'brand_label'    => $row->brand_label,
+            'title_override' => $row->title_override,
+            'footer_label'   => $row->footer_label,
+            'cta_label'      => $row->cta_label,
+            'cover_hex'      => $row->cover_hex,
+        ];
+    }
+
     private function awardXp(int $userId, int $amount, string $reason, string $type, int $sourceId): void
     {
         XpLog::create([

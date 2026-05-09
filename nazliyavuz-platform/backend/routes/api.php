@@ -569,7 +569,12 @@ Route::middleware(['auth:api'])->group(function () {
         Route::get('/admin/audit-logs', [\App\Http\Controllers\Api\AdminController::class, 'auditLogs']);
         Route::get('/admin/questions', [\App\Http\Controllers\Api\AdminController::class, 'questions']);
         Route::post('/admin/questions', [\App\Http\Controllers\Api\AdminController::class, 'createQuestion']);
+        Route::post('/admin/questions/bulk', [\App\Http\Controllers\Api\AdminController::class, 'bulkCreateQuestions']);
         Route::delete('/admin/questions/{id}', [\App\Http\Controllers\Api\AdminController::class, 'deleteQuestion']);
+        Route::get('/admin/question-bank-displays', [\App\Http\Controllers\Api\AdminController::class, 'questionBankDisplays']);
+        Route::post('/admin/question-bank-displays', [\App\Http\Controllers\Api\AdminController::class, 'storeQuestionBankDisplay']);
+        Route::patch('/admin/question-bank-displays/{id}', [\App\Http\Controllers\Api\AdminController::class, 'updateQuestionBankDisplay']);
+        Route::delete('/admin/question-bank-displays/{id}', [\App\Http\Controllers\Api\AdminController::class, 'destroyQuestionBankDisplay']);
         Route::get('/admin/teachers/pending', [\App\Http\Controllers\Api\AdminController::class, 'pendingTeachers']);
         Route::post('/admin/teachers/{id}/approve', [\App\Http\Controllers\Api\AdminController::class, 'approveTeacher']);
         Route::post('/admin/teachers/{id}/reject', [\App\Http\Controllers\Api\AdminController::class, 'rejectTeacher']);
