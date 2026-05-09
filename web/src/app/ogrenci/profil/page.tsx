@@ -152,13 +152,21 @@ export default function OgrenciProfilPage() {
     setPhotoPreview(URL.createObjectURL(file));
     setPhotoUploading(true);
     try {
-      const res = await api.uploadProfilePhoto(file);
-      const updated = await api.updateProfile({ profile_photo_url: res.url });
-      updateUser(updated);
-    } catch {
+      await api.uploadProfilePhoto(file);
+      const me = await api.getMe();
+      updateUser(me);
+      setPhotoPreview(me.profile_photo_url ?? null);
+    } catch (err) {
       setPhotoPreview(user?.profile_photo_url ?? null);
+      setSaveError(err instanceof Error ? err.message : "Fotoğraf yüklenemedi");
+      setSaveState("error");
+      setTimeout(() => {
+        setSaveState("idle");
+        setSaveError("");
+      }, 5000);
     } finally {
       setPhotoUploading(false);
+      e.target.value = "";
     }
   };
 

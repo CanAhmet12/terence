@@ -1,6 +1,72 @@
 "use client";
 
-import { ChevronLeft, LayoutGrid, BookOpen, GraduationCap } from "lucide-react";
+import {
+  Atom,
+  BookMarked,
+  BookOpen,
+  ChevronLeft,
+  Cpu,
+  Dumbbell,
+  FlaskConical,
+  Globe2,
+  GraduationCap,
+  Languages,
+  LayoutGrid,
+  Microscope,
+  Music,
+  Palette,
+  Landmark,
+} from "lucide-react";
+
+const HERO_ICON_CLASS = "h-10 w-10 md:h-12 md:w-12 shrink-0 text-white";
+
+/** Müfredat ders adına göre banner’daki büyük ikon / sembol */
+function SubjectBannerGlyph({ subjectName }: { subjectName?: string }) {
+  const raw = (subjectName ?? "").trim();
+  if (!raw) {
+    return <BookOpen className={HERO_ICON_CLASS} aria-hidden />;
+  }
+
+  const n = raw.toLocaleLowerCase("tr-TR");
+
+  // Matematik: mevcut ƒ(x) sembolü (yalnızca bu derste)
+  if (n.includes("matematik")) {
+    return (
+      <span className="select-none font-serif tracking-tight" aria-hidden>
+        ƒ(x)<sup className="align-super text-base font-semibold opacity-90 md:text-lg">x</sup>
+      </span>
+    );
+  }
+
+  if (n.includes("fizik")) return <Atom className={HERO_ICON_CLASS} aria-hidden />;
+  if (n.includes("kimya")) return <FlaskConical className={HERO_ICON_CLASS} aria-hidden />;
+  if (n.includes("biyoloji")) return <Microscope className={HERO_ICON_CLASS} aria-hidden />;
+  if (n.includes("fen")) return <FlaskConical className={HERO_ICON_CLASS} aria-hidden />;
+
+  if (n.includes("türkçe")) return <BookOpen className={HERO_ICON_CLASS} aria-hidden />;
+  if (n.includes("ingilizce") || n.includes("yabancı dil") || n.includes("almanca") || n.includes("fransızca")) {
+    return <Languages className={HERO_ICON_CLASS} aria-hidden />;
+  }
+
+  if (n.includes("sosyal") || n.includes("vatandaşlık")) return <Globe2 className={HERO_ICON_CLASS} aria-hidden />;
+  if (n.includes("inkılap") || n.includes("inkilap") || (n.includes("tarih") && !n.includes("coğrafya"))) {
+    return <Landmark className={HERO_ICON_CLASS} aria-hidden />;
+  }
+  if (n.includes("coğrafya") || n.includes("cografya")) return <Globe2 className={HERO_ICON_CLASS} aria-hidden />;
+
+  if (n.includes("din")) return <BookMarked className={HERO_ICON_CLASS} aria-hidden />;
+
+  if (n.includes("beden")) return <Dumbbell className={HERO_ICON_CLASS} aria-hidden />;
+  if (n.includes("müzik")) return <Music className={HERO_ICON_CLASS} aria-hidden />;
+  if (n.includes("görsel") || n.includes("resim") || n.includes("sanat")) return <Palette className={HERO_ICON_CLASS} aria-hidden />;
+
+  if (n.includes("bilişim") || n.includes("bilgisayar") || n.includes("yazılım") || n.includes("teknoloji ve tasarım")) {
+    return <Cpu className={HERO_ICON_CLASS} aria-hidden />;
+  }
+
+  // Tanınmayan ders: nötr kitap (matematik sembolü gösterme)
+  return <BookOpen className={HERO_ICON_CLASS} aria-hidden />;
+}
 
 export function TopicHero({
   topicTitle,
@@ -67,9 +133,7 @@ export function TopicHero({
             className="flex h-[4.5rem] w-[4.5rem] shrink-0 items-center justify-center rounded-2xl border border-white/25 bg-white/10 text-2xl font-bold shadow-inner backdrop-blur-sm md:h-24 md:w-24 md:text-3xl"
             aria-hidden
           >
-            <span className="select-none font-serif tracking-tight">
-              ƒ(x)<sup className="align-super text-base font-semibold opacity-90 md:text-lg">x</sup>
-            </span>
+            <SubjectBannerGlyph subjectName={subjectName} />
           </div>
           <div className="min-w-0 flex-1">
             {unitTitle ? (

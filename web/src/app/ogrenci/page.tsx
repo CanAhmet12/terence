@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useAuth } from "@/lib/auth-context";
 import { api, PlanStats, DailyPlan, PlanTask } from "@/lib/api";
 import { PushPermissionBanner } from "@/components/dashboard/PushPermissionBanner";
@@ -62,11 +63,18 @@ function StatCard({
 }
 
 // Hızlı erişim linkleri
-const QUICK_LINKS = [
+const QUICK_LINKS: Array<{
+  href: string;
+  icon: React.ElementType;
+  label: string;
+  color: string;
+  bg: string;
+  iconSrc?: string;
+}> = [
   { href: "/ogrenci/soru-bankasi", icon: Library, label: "Soru Bankası", color: "text-indigo-600", bg: "bg-indigo-50" },
   { href: "/ogrenci/deneme", icon: FileQuestion, label: "Deneme Başlat", color: "text-violet-600", bg: "bg-violet-50" },
   { href: "/ogrenci/video", icon: Video, label: "Video İzle", color: "text-rose-600", bg: "bg-rose-50" },
-  { href: "/ogrenci/koc", icon: Bot, label: "Koça Sor", color: "text-teal-600", bg: "bg-teal-50" },
+  { href: "/ogrenci/koc", icon: Bot, label: "Koça Sor", color: "text-teal-600", bg: "bg-teal-50", iconSrc: "/dijitalkocicon.png" },
   { href: "/ogrenci/rapor", icon: BarChart3, label: "Raporlarım", color: "text-amber-600", bg: "bg-amber-50" },
   { href: "/ogrenci/rozet", icon: Trophy, label: "Rozetlerim", color: "text-yellow-600", bg: "bg-yellow-50" },
 ];
@@ -533,7 +541,18 @@ export default function StudentDashboardPage() {
                     className="flex flex-col items-center gap-2 p-2.5 rounded-xl border border-slate-100 hover:border-indigo-200 hover:bg-indigo-50/50 transition-all group"
                   >
                     <div className={`w-8 h-8 rounded-xl ${link.bg} flex items-center justify-center group-hover:scale-110 transition-transform`}>
-                      <link.icon className={`w-4 h-4 ${link.color}`} strokeWidth={2} />
+                      {link.iconSrc ? (
+                        <Image
+                          src={link.iconSrc}
+                          alt=""
+                          width={20}
+                          height={20}
+                          className="h-5 w-5 object-contain"
+                          sizes="20px"
+                        />
+                      ) : (
+                        <link.icon className={`w-4 h-4 ${link.color}`} strokeWidth={2} />
+                      )}
                     </div>
                     <span className="text-[10px] font-semibold text-slate-600 group-hover:text-slate-900 text-center leading-tight">
                       {link.label}

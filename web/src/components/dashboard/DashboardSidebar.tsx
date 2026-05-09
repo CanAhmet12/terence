@@ -57,7 +57,7 @@ const studentNavGroups = [
       { href: "/ogrenci/zayif-kazanim", icon: RefreshCw, label: "Zayıf Kazanım" },
       { href: "/ogrenci/rapor", icon: BarChart3, label: "Performans" },
       { href: "/ogrenci/rozet", icon: Trophy, label: "Rozetler" },
-      { href: "/ogrenci/koc", icon: Bot, label: "Dijital Koç" },
+      { href: "/ogrenci/koc", icon: Bot, label: "Dijital Koç", iconSrc: "/dijitalkocicon.png" },
     ],
   },
   {
@@ -274,7 +274,6 @@ export function DashboardSidebar() {
                 const isActive = (item as { exact?: boolean }).exact
                   ? pathname === item.href
                   : pathname === item.href || pathname.startsWith(item.href + "/");
-                const videoPdfActive = role === "student" && isActive && item.href === "/ogrenci/video";
 
                 return (
                   <Link
@@ -282,30 +281,39 @@ export function DashboardSidebar() {
                     href={item.href}
                     className={cn(
                       "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 group",
-                      videoPdfActive
-                        ? "bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-lg shadow-violet-500/30 border-l-0"
-                        : isActive
-                          ? cn(theme.activeItem, theme.activeBorder)
-                          : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                      isActive
+                        ? cn(theme.activeItem, theme.activeBorder)
+                        : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
                     )}
                   >
-                    <item.icon
-                      className={cn(
-                        "w-[17px] h-[17px] shrink-0 transition-colors",
-                        videoPdfActive
-                          ? "text-white"
-                          : isActive
+                    {(item as { iconSrc?: string }).iconSrc ? (
+                      <span className="relative flex h-[17px] w-[17px] shrink-0 items-center justify-center overflow-hidden rounded-md">
+                        <Image
+                          src={(item as { iconSrc?: string }).iconSrc!}
+                          alt=""
+                          width={17}
+                          height={17}
+                          className="object-contain object-center"
+                          sizes="17px"
+                        />
+                      </span>
+                    ) : (
+                      <item.icon
+                        className={cn(
+                          "w-[17px] h-[17px] shrink-0 transition-colors",
+                          isActive
                             ? theme.activeIcon
                             : "text-slate-400 group-hover:text-slate-600"
-                      )}
-                      strokeWidth={isActive || videoPdfActive ? 2.5 : 2}
-                    />
+                        )}
+                        strokeWidth={isActive ? 2.5 : 2}
+                      />
+                    )}
                     <span className="truncate flex-1">{item.label}</span>
                     {isActive && (
                       <span
                         className={cn(
                           "w-1.5 h-1.5 rounded-full shrink-0",
-                          videoPdfActive ? "bg-white" : theme.activeDot
+                          theme.activeDot
                         )}
                       />
                     )}

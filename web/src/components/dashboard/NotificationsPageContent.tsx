@@ -163,8 +163,7 @@ export function NotificationsPageContent() {
       : notifications.filter((n) => getNotifConfig(n.type).category === cat).length;
 
   return (
-    <div className="w-full min-h-full p-6 lg:p-8">
-      <div className="max-w-3xl mx-auto w-full">
+    <div className="w-full min-h-full px-6 py-8 lg:px-8 lg:py-10">
         <div className="mb-6 flex items-start justify-between gap-4">
           <div>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 flex items-center gap-3">
@@ -354,7 +353,6 @@ export function NotificationsPageContent() {
             })}
           </div>
         )}
-      </div>
     </div>
   );
 }

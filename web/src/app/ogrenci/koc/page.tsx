@@ -4,10 +4,11 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { api } from "@/lib/api";
 import {
-  Bot, Send, RefreshCw, Sparkles, BookOpen, Target,
+  Send, RefreshCw, Sparkles, BookOpen, Target,
   TrendingUp, Calendar, ChevronRight, Mic, MicOff,
   Volume2, User, Plus, Trash2, Clock, X
 } from "lucide-react";
+import { DigitalCoachIcon } from "@/components/icons/DigitalCoachIcon";
 
 interface Message {
   role: "user" | "assistant";
@@ -29,8 +30,8 @@ const QUICK_SUGGESTIONS = [
 function TypingIndicator() {
   return (
     <div className="flex items-end gap-3 max-w-[75%]">
-      <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shrink-0 shadow-sm">
-        <Bot className="w-4 h-4 text-white" />
+      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white shadow-sm">
+        <DigitalCoachIcon size={26} />
       </div>
       <div className="bg-white border border-slate-100 rounded-2xl rounded-bl-sm px-4 py-3 shadow-sm">
         <div className="flex gap-1.5 items-center h-4">
@@ -53,12 +54,14 @@ function MessageBubble({ msg, userInitials }: { msg: Message; userInitials: stri
   return (
     <div className={`flex items-end gap-3 ${isUser ? "flex-row-reverse" : ""}`}>
       {/* Avatar */}
-      <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 shadow-sm ${
-        isUser
-          ? "bg-indigo-600 text-white text-xs font-bold"
-          : "bg-gradient-to-br from-indigo-500 to-violet-600 text-white"
-      }`}>
-        {isUser ? userInitials : <Bot className="w-4 h-4" />}
+      <div
+        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl shadow-sm ${
+          isUser
+            ? "bg-indigo-600 text-xs font-bold text-white"
+            : "border border-slate-200 bg-white"
+        }`}
+      >
+        {isUser ? userInitials : <DigitalCoachIcon size={26} />}
       </div>
 
       {/* Balon */}
@@ -211,8 +214,8 @@ export default function KocPage() {
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 bg-white border-b border-slate-100 shrink-0 shadow-[0_1px_0_0_#f1f5f9]">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/25">
-              <Bot className="w-5 h-5 text-white" />
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-white shadow-md shadow-slate-200/60">
+              <DigitalCoachIcon size={34} />
             </div>
             <div>
               <h1 className="font-bold text-slate-900 text-base leading-none">Dijital Koç</h1>

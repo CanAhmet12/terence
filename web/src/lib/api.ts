@@ -137,6 +137,15 @@ api.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }
+    // FormData: varsayılan 'application/json' veya elle 'multipart' boundary'siz header dosyayı sunucuya ulaştırmaz
+    if (typeof FormData !== 'undefined' && config.data instanceof FormData) {
+      const h = config.headers
+      if (h && typeof h === 'object' && 'delete' in h && typeof (h as { delete: (k: string) => void }).delete === 'function') {
+        (h as { delete: (k: string) => void }).delete('Content-Type')
+      } else if (h && typeof h === 'object') {
+        delete (h as Record<string, unknown>)['Content-Type']
+      }
+    }
     return config
   },
   (error) => Promise.reject(error)
@@ -1012,9 +1021,10 @@ export const userApi = {
     const actualFile = typeof _tokenOrFile === 'string' ? file : _tokenOrFile
     const formData = new FormData()
     if (actualFile) formData.append('photo', actualFile)
-    const response = await api.post<{ url: string; profile_photo_url: string }>('/user/photo', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    })
+    const response = await api.post<{ url: string; profile_photo_url: string; success?: boolean }>(
+      '/user/photo',
+      formData
+    )
     return { url: response.data.url ?? response.data.profile_photo_url }
   },
 
@@ -1650,9 +1660,7 @@ export const teacherApi = {
 
   /** Video/PDF’yi müfredat konusuna bağlar. POST /teacher/curriculum-content (multipart) */
   async uploadCurriculumContent(formData: FormData): Promise<TeacherCurriculumUploadResponse> {
-    const response = await api.post<TeacherCurriculumUploadResponse>('/teacher/curriculum-content', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    })
+    const response = await api.post<TeacherCurriculumUploadResponse>('/teacher/curriculum-content', formData)
     return response.data
   },
 }

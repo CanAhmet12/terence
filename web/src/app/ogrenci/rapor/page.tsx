@@ -6,9 +6,10 @@ import { useAuth } from "@/lib/auth-context";
 import { api, StudentStatistics, GoalAnalysis, WeakAchievement } from "@/lib/api";
 import {
   Clock, FileQuestion, TrendingUp, Zap, BarChart3, Target,
-  Brain, AlertTriangle, CheckCircle, Bot, Download, RefreshCw,
+  Brain, AlertTriangle, CheckCircle, Download, RefreshCw,
   ChevronRight, ArrowUp, ArrowDown, Minus, Award
 } from "lucide-react";
+import { DigitalCoachIcon } from "@/components/icons/DigitalCoachIcon";
 
 const DAYS = ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"];
 const PERIOD_OPTIONS = [
@@ -176,9 +177,11 @@ export default function RaporPage() {
             </button>
             <Link
               href="/ogrenci/koc"
-              className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl transition-colors shadow-sm shadow-indigo-500/25"
+              className="flex items-center gap-2.5 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl transition-colors shadow-sm shadow-indigo-500/25"
             >
-              <Bot className="w-4 h-4" />
+              <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/95 shadow-sm ring-1 ring-white/40">
+                <DigitalCoachIcon size={22} />
+              </span>
               Koça Sor
             </Link>
           </div>
@@ -467,8 +470,8 @@ export default function RaporPage() {
             href="/ogrenci/koc"
             className="flex items-center gap-4 p-6 rounded-2xl bg-gradient-to-r from-indigo-50 to-violet-50 border border-indigo-100 hover:shadow-md transition-all group"
           >
-            <div className="w-14 h-14 rounded-2xl bg-indigo-600 flex items-center justify-center shrink-0 shadow-lg shadow-indigo-500/25 group-hover:bg-indigo-700 transition-colors">
-              <Bot className="w-7 h-7 text-white" />
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white shadow-md ring-2 ring-indigo-100">
+              <DigitalCoachIcon size={44} />
             </div>
             <div className="flex-1">
               <p className="font-bold text-indigo-800">Raporu Koçuna Analiz Ettir</p>

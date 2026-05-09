@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { HeaderUserMenu } from "@/components/dashboard/HeaderUserMenu";
@@ -30,7 +31,9 @@ import {
 import { useCallback, useEffect, useRef, Suspense } from "react";
 import { cn } from "@/lib/utils";
 
-const PATH_MAP: Record<string, { label: string; icon: React.ElementType }> = {
+type PathMeta = { label: string; icon: React.ElementType; iconSrc?: string };
+
+const PATH_MAP: Record<string, PathMeta> = {
   "/ogrenci": { label: "Ana Panel", icon: LayoutDashboard },
   "/ogrenci/hedef": { label: "Hedef & Net", icon: Target },
   "/ogrenci/plan": { label: "Günlük Plan", icon: Calendar },
@@ -43,7 +46,7 @@ const PATH_MAP: Record<string, { label: string; icon: React.ElementType }> = {
   "/ogrenci/zayif-kazanim": { label: "Zayıf Kazanım", icon: RefreshCw },
   "/ogrenci/rapor": { label: "Performans", icon: BarChart3 },
   "/ogrenci/rozet": { label: "Rozetler", icon: Trophy },
-  "/ogrenci/koc": { label: "Dijital Koç", icon: Bot },
+  "/ogrenci/koc": { label: "Dijital Koç", icon: Bot, iconSrc: "/dijitalkocicon.png" },
   "/ogrenci/forum": { label: "Forum", icon: MessageSquare },
   "/ogrenci/bildirimler": { label: "Bildirimler", icon: Bell },
   "/ogrenci/profil": { label: "Profil & Ayarlar", icon: UserCircle },
@@ -134,6 +137,7 @@ function DashboardHeaderInner() {
     Object.entries(PATH_MAP).find(([key]) => pathname.startsWith(key + "/"))?.[1] ||
     ({ label: "Panel", icon: Home } as const);
   const PageIcon = currentPage.icon;
+  const coachIconSrc = currentPage.iconSrc;
   const accentIcon =
     hasCenterSearch ? "text-indigo-600" : "text-teal-600";
   const breadcrumbHover = hasCenterSearch ? "hover:text-indigo-600" : "hover:text-teal-600";
@@ -172,9 +176,19 @@ function DashboardHeaderInner() {
               <>
                 <ChevronRight className="h-3 w-3 shrink-0 text-slate-300 sm:h-3.5 sm:w-3.5" strokeWidth={2} />
                 <div className="flex min-w-0 items-center gap-1.5">
-                  {!hasCenterSearch && (
-                    <PageIcon className={`h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4 ${accentIcon}`} />
-                  )}
+                  {!hasCenterSearch &&
+                    (coachIconSrc ? (
+                      <Image
+                        src={coachIconSrc}
+                        alt=""
+                        width={16}
+                        height={16}
+                        className="h-3.5 w-3.5 shrink-0 object-contain sm:h-4 sm:w-4"
+                        sizes="16px"
+                      />
+                    ) : (
+                      <PageIcon className={`h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4 ${accentIcon}`} />
+                    ))}
                   <span className="truncate text-[13px] font-semibold text-slate-800 sm:text-sm">
                     {currentPage.label}
                   </span>
@@ -183,7 +197,18 @@ function DashboardHeaderInner() {
             )}
             {pathname === dashboardHref && (
               <div className="flex min-w-0 items-center gap-1.5 sm:hidden">
-                <PageIcon className={`h-3.5 w-3.5 shrink-0 ${accentIcon}`} />
+                {coachIconSrc ? (
+                  <Image
+                    src={coachIconSrc}
+                    alt=""
+                    width={16}
+                    height={16}
+                    className="h-3.5 w-3.5 shrink-0 object-contain sm:h-4 sm:w-4"
+                    sizes="16px"
+                  />
+                ) : (
+                  <PageIcon className={`h-3.5 w-3.5 shrink-0 ${accentIcon}`} />
+                )}
                 <span className="truncate text-[13px] font-semibold text-slate-800">{currentPage.label}</span>
               </div>
             )}
