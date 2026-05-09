@@ -146,62 +146,61 @@ function OgrenciCanliDersPageInner() {
   return (
     <div className="min-h-full bg-[#F9FAFB]">
       <div className="mx-auto max-w-[1360px] px-4 pb-12 pt-4 sm:px-6 lg:px-8 lg:pt-5">
-        {/* Başlık + yenile */}
-        <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-          <div className="min-w-0 flex-1">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <h1 className="text-[28px] font-bold tracking-tight text-slate-900 lg:text-[32px] lg:leading-tight">
-                  Canlı Dersler
-                </h1>
-                <p className="mt-2 max-w-[540px] text-[15px] leading-relaxed text-slate-600">
-                  Öğretmenlerinizle canlı derslere katıl, sorularını sor ve öğrenmeni pekiştir!
-                </p>
+        {/* Mockup: (1) Hero — başlık + yenile solda, illüstrasyon sağda | (2) Altında KPI üçlüsü tam genişlik */}
+        <section className="space-y-8">
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between lg:gap-10">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h1 className="text-[28px] font-bold tracking-tight text-slate-900 lg:text-[32px] lg:leading-tight">
+                    Canlı Dersler
+                  </h1>
+                  <p className="mt-2 max-w-[560px] text-[15px] leading-relaxed text-slate-600">
+                    Öğretmenlerinizle canlı derslere katıl, sorularını sor ve öğrenmeni pekiştir!
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLoading(true);
+                    loadLessons();
+                  }}
+                  disabled={loading}
+                  className="mt-0.5 shrink-0 rounded-xl border border-slate-200/80 bg-white p-2.5 text-slate-500 shadow-sm transition hover:border-slate-300 hover:text-slate-800 disabled:opacity-50"
+                  aria-label="Listeyi yenile"
+                >
+                  <RefreshCw className={`h-5 w-5 ${loading ? "animate-spin" : ""}`} />
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={() => {
-                  setLoading(true);
-                  loadLessons();
-                }}
-                disabled={loading}
-                className="mt-1 shrink-0 rounded-xl border border-slate-200/80 bg-white p-3 text-slate-500 shadow-sm transition hover:border-slate-300 hover:text-slate-800 disabled:opacity-50"
-                aria-label="Listeyi yenile"
-              >
-                <RefreshCw className={`h-5 w-5 ${loading ? "animate-spin" : ""}`} />
-              </button>
             </div>
-
-            {/* KPI + hero illüstrasyon (şeffaf PNG — ekstra arka plan kutusu yok) */}
-            <div className="mt-8 flex flex-col gap-6 xl:flex-row xl:items-center xl:justify-between xl:gap-10">
-              <div className="min-w-0 flex-1">
-                {!loading && token ? (
-                  <KpiStrip summary={summary} />
-                ) : (
-                  <div className="grid gap-4 sm:grid-cols-3">
-                    {[1, 2, 3].map((i) => (
-                      <div key={i} className="h-[132px] animate-pulse rounded-2xl bg-slate-200/60" />
-                    ))}
-                  </div>
-                )}
-              </div>
-              <div
-                className="relative mx-auto flex w-full max-w-[280px] shrink-0 items-center justify-center sm:max-w-[320px] xl:mx-0 xl:w-auto xl:max-w-[min(100%,300px)] 2xl:max-w-[340px]"
-                aria-hidden
-              >
-                <Image
-                  src="/images/canli-ders/hero-live.png"
-                  alt=""
-                  width={640}
-                  height={480}
-                  className="h-auto w-full max-h-[200px] object-contain object-center sm:max-h-[240px] xl:max-h-[260px] 2xl:max-h-[280px]"
-                  priority
-                  sizes="(max-width: 640px) 85vw, (max-width: 1280px) 280px, 320px"
-                />
-              </div>
+            <div
+              className="relative mx-auto flex w-full max-w-[300px] shrink-0 items-center justify-center sm:max-w-[340px] lg:mx-0 lg:max-w-[min(100%,360px)] xl:max-w-[380px]"
+              aria-hidden
+            >
+              <Image
+                src="/images/canli-ders/hero-live.png"
+                alt=""
+                width={640}
+                height={480}
+                className="h-auto w-full max-h-[220px] object-contain object-center sm:max-h-[260px] lg:max-h-[280px] xl:max-h-[300px]"
+                priority
+                sizes="(max-width: 1024px) 85vw, 360px"
+              />
             </div>
           </div>
-        </div>
+
+          <div className="w-full">
+            {!loading && token ? (
+              <KpiStrip summary={summary} />
+            ) : (
+              <div className="grid gap-4 sm:grid-cols-3">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="h-[132px] animate-pulse rounded-2xl bg-slate-200/60" />
+                ))}
+              </div>
+            )}
+          </div>
+        </section>
 
         {err && (
           <div className="mt-8 flex items-center gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-[14px] text-red-800">
