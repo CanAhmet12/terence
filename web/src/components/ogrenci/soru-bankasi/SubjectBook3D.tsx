@@ -3,107 +3,77 @@
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
+/** Düz kapak + sırt için hafif ton farkı (belirgin gradient yok) */
 export type SubjectBookTheme = {
-  coverFrom: string;
-  coverVia: string;
-  coverTo: string;
+  cover: string;
   spineTop: string;
   spineBottom: string;
-  rimLight: string;
   pages: string;
 };
 
 const DEFAULT_THEME: SubjectBookTheme = {
-  coverFrom: "#4338ca",
-  coverVia: "#312e81",
-  coverTo: "#1e1b4b",
+  cover: "#4f46e5",
   spineTop: "#6366f1",
-  spineBottom: "#1e1b4b",
-  rimLight: "rgba(255,255,255,0.28)",
-  pages: "#f4efe6",
+  spineBottom: "#4338ca",
+  pages: "#f4f1eb",
 };
 
-/** Gerçek soru bankası kapaklarına yakın, CSS ile 3D kitap görünümü */
 export function subjectToBookTheme(subject: string): SubjectBookTheme {
   const s = subject.toLowerCase();
   if (s.includes("matematik"))
     return {
-      coverFrom: "#6d28d9",
-      coverVia: "#4c1d95",
-      coverTo: "#2e1065",
-      spineTop: "#a78bfa",
-      spineBottom: "#1e1b4b",
-      rimLight: "rgba(196,181,253,0.45)",
+      cover: "#6d28d9",
+      spineTop: "#7c3aed",
+      spineBottom: "#5b21b6",
       pages: "#faf5ff",
     };
   if (s.includes("türk") || s.includes("turk"))
     return {
-      coverFrom: "#be123c",
-      coverVia: "#881337",
-      coverTo: "#4c0519",
-      spineTop: "#fb7185",
-      spineBottom: "#450a0a",
-      rimLight: "rgba(254,202,213,0.4)",
+      cover: "#be123c",
+      spineTop: "#e11d48",
+      spineBottom: "#9f1239",
       pages: "#fff1f2",
     };
   if (s.includes("fen"))
     return {
-      coverFrom: "#059669",
-      coverVia: "#047857",
-      coverTo: "#064e3b",
-      spineTop: "#34d399",
-      spineBottom: "#022c22",
-      rimLight: "rgba(167,243,208,0.35)",
+      cover: "#059669",
+      spineTop: "#10b981",
+      spineBottom: "#047857",
       pages: "#ecfdf5",
     };
   if (s.includes("fizik"))
     return {
-      coverFrom: "#0284c7",
-      coverVia: "#0369a1",
-      coverTo: "#0c4a6e",
-      spineTop: "#7dd3fc",
-      spineBottom: "#082f49",
-      rimLight: "rgba(186,230,253,0.45)",
+      cover: "#0369a1",
+      spineTop: "#0ea5e9",
+      spineBottom: "#075985",
       pages: "#f0f9ff",
     };
   if (s.includes("kimya"))
     return {
-      coverFrom: "#d97706",
-      coverVia: "#b45309",
-      coverTo: "#78350f",
-      spineTop: "#fcd34d",
-      spineBottom: "#451a03",
-      rimLight: "rgba(253,230,138,0.4)",
+      cover: "#d97706",
+      spineTop: "#f59e0b",
+      spineBottom: "#b45309",
       pages: "#fffbeb",
     };
   if (s.includes("biyoloji"))
     return {
-      coverFrom: "#65a30d",
-      coverVia: "#4d7c0f",
-      coverTo: "#365314",
-      spineTop: "#bef264",
-      spineBottom: "#1a2e05",
-      rimLight: "rgba(217,249,157,0.35)",
+      cover: "#65a30d",
+      spineTop: "#84cc16",
+      spineBottom: "#4d7c0f",
       pages: "#f7fee7",
     };
   if (s.includes("tarih"))
     return {
-      coverFrom: "#c2410c",
-      coverVia: "#9a3412",
-      coverTo: "#431407",
-      spineTop: "#fdba74",
-      spineBottom: "#431407",
-      rimLight: "rgba(254,215,170,0.4)",
+      cover: "#c2410c",
+      spineTop: "#ea580c",
+      spineBottom: "#9a3412",
       pages: "#fff7ed",
     };
   if (s.includes("coğrafya") || s.includes("cografya"))
     return {
-      coverFrom: "#0891b2",
-      coverVia: "#0e7490",
-      coverTo: "#164e63",
-      spineTop: "#67e8f9",
-      spineBottom: "#083344",
-      rimLight: "rgba(165,243,252,0.4)",
+      cover: "#0e7490",
+      spineTop: "#06b6d4",
+      spineBottom: "#0f766e",
       pages: "#ecfeff",
     };
   return DEFAULT_THEME;
@@ -114,23 +84,27 @@ type SubjectBook3DProps = {
   meta: string;
   href: string;
   className?: string;
-  /** Verildiğinde tıklama doğrudan soru modalını açar (Link yerine buton) */
   onActivate?: () => void;
 };
+
+/** Kapak ölçüleri (px) — tek yerden büyütme */
+const BOOK_W = 210;
+const BOOK_H = 286;
+const SPINE_W = 28;
 
 export function SubjectBook3D({ subject, meta, href, className, onActivate }: SubjectBook3DProps) {
   const th = subjectToBookTheme(subject);
   const safeHref = href?.trim() || `/ogrenci/soru-bankasi?subject=${encodeURIComponent(subject)}`;
 
   const cls = cn(
-    "group/book relative block w-[200px] shrink-0 select-none focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-50",
+    "group/book relative block w-[248px] shrink-0 select-none focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-50",
     className
   );
 
   const visual = (
-    <div className="perspective-[1400px]">
+    <div className="perspective-[1500px]">
       <div
-        className="pointer-events-none absolute -bottom-1 left-1/2 h-5 w-[85%] -translate-x-1/2 rounded-[100%] bg-slate-900/15 blur-xl transition-all duration-500 group-hover/book:w-[92%] group-hover/book:opacity-90"
+        className="pointer-events-none absolute -bottom-1 left-1/2 h-6 w-[85%] -translate-x-1/2 rounded-[100%] bg-slate-900/12 blur-xl transition-all duration-500 group-hover/book:w-[92%]"
         aria-hidden
       />
 
@@ -143,8 +117,10 @@ export function SubjectBook3D({ subject, meta, href, className, onActivate }: Su
         )}
       >
         <div
-          className="pointer-events-none absolute left-0 top-[10px] z-0 h-[calc(100%-20px)] w-[26px] rounded-l-md shadow-[inset_-4px_0_12px_rgba(0,0,0,0.45),inset_3px_0_8px_rgba(255,255,255,0.12)]"
+          className="pointer-events-none absolute left-0 top-[12px] z-0 rounded-l-md shadow-[inset_-3px_0_10px_rgba(0,0,0,0.2)]"
           style={{
+            width: SPINE_W,
+            height: `calc(100% - 24px)`,
             transform: "rotateY(-90deg)",
             transformOrigin: "right center",
             background: `linear-gradient(180deg, ${th.spineTop} 0%, ${th.spineBottom} 100%)`,
@@ -153,62 +129,63 @@ export function SubjectBook3D({ subject, meta, href, className, onActivate }: Su
         />
 
         <div
-          className="pointer-events-none absolute -right-[11px] top-[12px] bottom-[12px] z-[1] w-[14px] overflow-hidden rounded-r-[3px] shadow-[inset_-3px_0_6px_rgba(0,0,0,0.12)]"
+          className="pointer-events-none absolute z-[1] overflow-hidden rounded-r-[3px] shadow-[inset_-2px_0_4px_rgba(0,0,0,0.08)]"
           style={{
-            background: `linear-gradient(90deg, #e7dfd4 0%, ${th.pages} 35%, #cfc4b8 100%)`,
+            width: 15,
+            right: -13,
+            top: 14,
+            bottom: 14,
+            background: th.pages,
             transform: "translateZ(-4px)",
           }}
           aria-hidden
         >
           <div
-            className="absolute inset-y-2 right-1 w-px bg-black/[0.06]"
+            className="absolute inset-y-3 right-1 w-px opacity-40"
             style={{
               backgroundImage: `repeating-linear-gradient(
                   0deg,
-                  rgba(0,0,0,0.07) 0px,
-                  rgba(0,0,0,0.07) 1px,
+                  rgba(0,0,0,0.06) 0px,
+                  rgba(0,0,0,0.06) 1px,
                   transparent 1px,
-                  transparent 5px
+                  transparent 6px
                 )`,
             }}
           />
         </div>
 
         <div
-          className="relative z-[2] flex h-[248px] w-[178px] flex-col justify-between overflow-hidden rounded-r-[14px] border border-white/15 p-4 shadow-[12px_18px_40px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(255,255,255,0.15)]"
+          className="relative z-[2] flex flex-col justify-between overflow-hidden rounded-r-[15px] border border-black/[0.08] p-[18px] shadow-[10px_14px_28px_rgba(15,23,42,0.14)]"
           style={{
-            background: `linear-gradient(155deg, ${th.coverFrom} 0%, ${th.coverVia} 48%, ${th.coverTo} 100%)`,
+            width: BOOK_W,
+            height: BOOK_H,
+            backgroundColor: th.cover,
           }}
         >
+          {/* Çok hafif üst parlama — belirgin gradient yok */}
           <div
-            className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/25 via-transparent to-black/40"
+            className="pointer-events-none absolute inset-0 bg-gradient-to-b from-white/[0.07] via-transparent to-transparent"
             aria-hidden
           />
-          <div
-            className="pointer-events-none absolute -right-10 -top-10 h-36 w-36 rounded-full opacity-50 blur-2xl"
-            style={{ background: th.rimLight }}
-            aria-hidden
-          />
-          <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-1/2 bg-gradient-to-t from-black/35 to-transparent" aria-hidden />
 
           <div className="relative flex items-start justify-between gap-2">
-            <span className="rounded border border-white/20 bg-black/15 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.22em] text-white/85 backdrop-blur-sm">
+            <span className="rounded border border-white/25 bg-black/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.18em] text-white/95">
               Soru Bankası
             </span>
-            <span className="text-[10px] font-semibold text-white/55">2026</span>
+            <span className="text-[11px] font-semibold text-white/70">2026</span>
           </div>
 
           <div className="relative mt-1">
-            <p className="text-[11px] font-medium uppercase tracking-wide text-white/70">Terence Eğitim</p>
-            <h3 className="mt-2 line-clamp-3 text-xl font-bold leading-snug tracking-tight text-white drop-shadow-md">
+            <p className="text-[12px] font-medium uppercase tracking-wide text-white/75">Terence Eğitim</p>
+            <h3 className="mt-2 line-clamp-3 text-[22px] font-bold leading-snug tracking-tight text-white">
               {subject}
             </h3>
-            <p className="mt-2 line-clamp-2 text-xs leading-relaxed text-white/80">{meta}</p>
+            <p className="mt-2 line-clamp-2 text-[13px] leading-relaxed text-white/85">{meta}</p>
           </div>
 
-          <div className="relative flex items-center justify-between gap-2 border-t border-white/15 pt-3">
-            <span className="text-[11px] font-medium text-white/65">Çöz · İlerle</span>
-            <span className="rounded-full bg-white/15 px-2.5 py-1 text-[11px] font-semibold text-white shadow-inner backdrop-blur-md transition-colors group-hover/book:bg-white/25">
+          <div className="relative flex items-center justify-between gap-2 border-t border-white/20 pt-3">
+            <span className="text-[12px] font-medium text-white/75">Çöz · İlerle</span>
+            <span className="rounded-full bg-black/15 px-3 py-1 text-[12px] font-semibold text-white transition-colors group-hover/book:bg-black/25">
               Aç →
             </span>
           </div>

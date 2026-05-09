@@ -90,18 +90,18 @@ export function HeaderUserMenu({
           : "/ogrenci/bildirimler";
 
   return (
-    <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+    <div className="flex shrink-0 items-center gap-0.5 sm:gap-2">
       <Link
         href={notificationsHref}
-        className="relative flex items-center justify-center rounded-xl p-2 text-slate-600 transition-colors hover:bg-slate-100"
+        className="relative flex items-center justify-center rounded-lg p-1.5 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700 sm:p-2"
         aria-label={`${unreadCount} okunmamış bildirim`}
       >
-        <Bell className="h-5 w-5" strokeWidth={2} />
+        <Bell className="h-[18px] w-[18px] sm:h-5 sm:w-5" strokeWidth={2} />
         {unreadCount > 0 && (
           <span
             className={
               notificationBadgeClassName ??
-              "absolute right-0.5 top-0.5 flex h-[18px] min-h-[18px] min-w-[18px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold leading-none text-white"
+              "absolute right-0 top-0 flex h-[16px] min-h-[16px] min-w-[16px] items-center justify-center rounded-full bg-red-500 px-0.5 text-[9px] font-bold leading-none text-white sm:h-[18px] sm:min-h-[18px] sm:min-w-[18px] sm:px-1 sm:text-[10px]"
             }
           >
             {unreadCount > 9 ? "9+" : unreadCount}
@@ -109,29 +109,30 @@ export function HeaderUserMenu({
         )}
       </Link>
 
-      <div className="hidden flex-col items-end text-right leading-tight md:flex">
-        <span className="text-sm font-medium text-slate-800">{user.name}</span>
-        {profileSubtext ? (
-          <span className="text-[11px] font-medium text-slate-500">{profileSubtext}</span>
-        ) : null}
-      </div>
-
       <div className="relative">
         <button
           type="button"
           onClick={() => setDropdownOpen(!dropdownOpen)}
-          className="flex items-center gap-1.5 rounded-xl px-1.5 py-1.5 text-slate-700 transition-colors hover:bg-slate-100 sm:gap-2 sm:px-2"
+          className="flex max-w-[min(100vw-8rem,280px)] items-center gap-2 rounded-xl py-1 pl-1 pr-1.5 text-left text-slate-700 transition-colors hover:bg-slate-50 sm:pl-1.5 sm:pr-2"
           aria-expanded={dropdownOpen}
         >
-          <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-xl border border-violet-200/60 bg-gradient-to-br from-violet-100 to-indigo-100">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full border border-violet-200/70 bg-gradient-to-br from-violet-500 to-indigo-600 shadow-sm ring-2 ring-white">
             {photoUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={photoUrl} alt={user.name} className="h-full w-full object-cover" />
             ) : (
-              <span className="text-xs font-bold text-violet-800">{initials}</span>
+              <span className="text-[11px] font-bold text-white">{initials.slice(0, 1)}</span>
             )}
           </div>
-          <ChevronDown className={`hidden h-4 w-4 transition-transform sm:block ${dropdownOpen ? "rotate-180" : ""}`} />
+          <div className="hidden min-w-0 flex-1 flex-col leading-tight sm:flex">
+            <span className="truncate text-[13px] font-semibold text-slate-900">{user.name}</span>
+            {profileSubtext ? (
+              <span className="truncate text-[11px] font-medium text-slate-500">{profileSubtext}</span>
+            ) : null}
+          </div>
+          <ChevronDown
+            className={`hidden h-4 w-4 shrink-0 text-slate-400 transition-transform sm:block ${dropdownOpen ? "rotate-180" : ""}`}
+          />
         </button>
 
         {dropdownOpen && (

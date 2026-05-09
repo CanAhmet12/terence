@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { ChevronRight, Library } from "lucide-react";
 import type { QuestionBankSubjectSummary } from "@/lib/api";
 import { SubjectBook3D } from "./SubjectBook3D";
@@ -13,13 +12,13 @@ function formatInt(n: number): string {
 export function SubjectBankCarousel({
   subjects,
   onSelectSubject,
+  onOpenLibrary,
 }: {
   subjects: QuestionBankSubjectSummary[];
-  /** Kitap tıklanınca soru seti modalını açmak için (önerilir) */
   onSelectSubject?: (subject: string) => void;
+  /** "Tüm içeriği gör" — kütüphane modalı */
+  onOpenLibrary?: () => void;
 }) {
-  const firstHref = subjects[0]?.cta_deep_link ?? "/ogrenci/soru-bankasi";
-
   if (!subjects.length) {
     return (
       <section
@@ -62,15 +61,16 @@ export function SubjectBankCarousel({
             Her kapak müfredatına göre; üzerine gelince kitap raflarından alınmış gibi hafifçe döner.
           </p>
         </div>
-        <Link
-          href={firstHref}
+        <button
+          type="button"
+          onClick={() => onOpenLibrary?.()}
           className={cn(
             "inline-flex items-center gap-2 self-start rounded-full border border-violet-200 bg-white px-4 py-2 text-sm font-semibold text-violet-800 shadow-sm transition hover:border-violet-300 hover:bg-violet-50"
           )}
         >
           Tüm içeriği gör
           <ChevronRight className="h-4 w-4 opacity-80" aria-hidden />
-        </Link>
+        </button>
       </div>
 
       <div className="relative rounded-[28px] border border-slate-200 bg-gradient-to-b from-white to-slate-50/80 p-5 shadow-sm sm:p-7">

@@ -1,17 +1,15 @@
 "use client";
 
-import { Clock, Crosshair, Zap } from "lucide-react";
+import { Crosshair, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function QuestionBankQuickActions({
   onQuick10,
   onWeakFocus,
-  onTimedPractice,
   disabled,
 }: {
   onQuick10: () => void;
   onWeakFocus: () => void;
-  onTimedPractice: () => void;
   disabled: boolean;
 }) {
   const cards = [
@@ -31,14 +29,6 @@ export function QuestionBankQuickActions({
       gradient: "bg-gradient-to-br from-rose-50 to-violet-50/90 border-rose-100",
       ring: "hover:shadow-md hover:border-rose-200",
     },
-    {
-      title: "Süreli 5 dk",
-      desc: "15 soru · 300 saniye geri sayım.",
-      icon: Clock,
-      onClick: onTimedPractice,
-      gradient: "bg-gradient-to-br from-cyan-50 to-sky-50/90 border-cyan-100",
-      ring: "hover:shadow-md hover:border-cyan-200",
-    },
   ];
 
   return (
@@ -46,7 +36,7 @@ export function QuestionBankQuickActions({
       <legend className="mb-1 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
         Hızlı modlar
       </legend>
-      <div className="grid gap-3 md:grid-cols-3">
+      <div className="grid gap-3 md:grid-cols-2">
         {cards.map(({ title, desc, icon: Icon, onClick, gradient, ring }) => (
           <button
             key={title}
