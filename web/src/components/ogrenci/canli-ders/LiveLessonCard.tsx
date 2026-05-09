@@ -1,16 +1,17 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, type ReactNode } from "react";
 import toast from "react-hot-toast";
 import { studentApi } from "@/lib/api";
 import type { TeacherLesson } from "@/lib/api";
 import {
   Bell,
+  Calendar,
   Clock,
   Loader2,
   MoreHorizontal,
-  Play,
   Users,
+  Video,
 } from "lucide-react";
 
 const PASTEL_GRADIENTS = [
@@ -20,6 +21,16 @@ const PASTEL_GRADIENTS = [
   "from-emerald-100 via-teal-50 to-white",
   "from-rose-100 via-pink-50 to-white",
   "from-amber-100 via-yellow-50 to-white",
+];
+
+/** Etiket renkleri kart gradient’i ile uyumlu */
+const TAG_THEMES: { tag1: string; tag2: string }[] = [
+  { tag1: "bg-orange-100/90 text-orange-900 ring-1 ring-orange-200/50", tag2: "bg-amber-50 text-amber-900 ring-1 ring-amber-200/40" },
+  { tag1: "bg-sky-100/90 text-sky-900 ring-1 ring-sky-200/50", tag2: "bg-blue-50 text-blue-900 ring-1 ring-blue-200/40" },
+  { tag1: "bg-violet-100/90 text-violet-900 ring-1 ring-violet-200/50", tag2: "bg-purple-50 text-purple-900 ring-1 ring-purple-200/40" },
+  { tag1: "bg-emerald-100/90 text-emerald-900 ring-1 ring-emerald-200/50", tag2: "bg-teal-50 text-teal-900 ring-1 ring-teal-200/40" },
+  { tag1: "bg-rose-100/90 text-rose-900 ring-1 ring-rose-200/50", tag2: "bg-pink-50 text-pink-900 ring-1 ring-pink-200/40" },
+  { tag1: "bg-amber-100/90 text-amber-900 ring-1 ring-amber-200/50", tag2: "bg-yellow-50 text-yellow-900 ring-1 ring-yellow-200/40" },
 ];
 
 const EMOJI: Record<string, string> = {
@@ -107,43 +118,48 @@ function CardHero({
   lesson,
   startIso,
   live,
+  themeIndex,
+  menu,
 }: {
   lesson: TeacherLesson;
   startIso: string;
   live?: boolean;
+  themeIndex: number;
+  menu: ReactNode;
 }) {
   const title = lesson.title || lesson.class_room?.name || "Ders";
-  const idx = (lesson.class_room?.id ?? 0) + lesson.id;
-  const grad = PASTEL_GRADIENTS[Math.abs(idx) % PASTEL_GRADIENTS.length];
+  const grad = PASTEL_GRADIENTS[themeIndex % PASTEL_GRADIENTS.length];
   const emoji = heroEmoji(title);
 
   return (
-    <div className={`relative h-[168px] overflow-hidden bg-gradient-to-b ${grad}`}>
+    <div className={`relative flex min-h-[220px] flex-col overflow-hidden bg-gradient-to-b sm:min-h-[240px] ${grad}`}>
       <div
-        className="absolute inset-0 opacity-[0.15]"
+        className="absolute inset-0 opacity-[0.12]"
         style={{
           backgroundImage: `radial-gradient(circle at 1px 1px, rgb(148 163 184) 1px, transparent 0)`,
           backgroundSize: "18px 18px",
         }}
       />
-      <div className="relative flex h-full flex-col justify-between p-3">
+      <div className="relative z-[1] flex flex-1 flex-col justify-between p-4">
         <div className="flex items-start justify-between gap-2">
-          <span className="rounded-full bg-white/95 px-3 py-1 text-[11px] font-semibold text-slate-700 shadow-sm backdrop-blur-sm">
+          <span className="inline-flex items-center gap-1 rounded-full bg-white/95 px-2.5 py-1 text-[11px] font-semibold text-slate-700 shadow-sm backdrop-blur-sm">
+            <Calendar className="h-3 w-3 shrink-0 opacity-70" aria-hidden />
             {startIso ? formatDatePill(startIso) : "—"}
           </span>
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1">
             {startIso && (
-              <span className="rounded-full bg-white/90 px-2.5 py-1 text-[12px] font-bold tabular-nums text-slate-800 shadow-sm">
+              <span className="rounded-full bg-white/95 px-2.5 py-1 text-[12px] font-bold tabular-nums text-slate-800 shadow-sm ring-1 ring-white/80">
                 {formatTimeShort(startIso)}
               </span>
             )}
+            {menu}
           </div>
         </div>
-        <div className="flex flex-1 items-center justify-center pb-2">
-          <span className="select-none text-[72px] leading-none drop-shadow-sm filter">{emoji}</span>
+        <div className="pointer-events-none flex flex-1 items-center justify-center pb-1">
+          <span className="select-none text-[80px] leading-none drop-shadow-sm sm:text-[92px]">{emoji}</span>
         </div>
         {live && (
-          <div className="absolute bottom-3 left-3">
+          <div className="pointer-events-none absolute bottom-3 left-3">
             <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white shadow-md">
               <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-white" aria-hidden />
               Canlı
@@ -207,51 +223,88 @@ export function LiveLessonCard({
   const title = lesson.title || lesson.class_room?.name || "Canlı Ders";
   const teacherName = lesson.teacher?.name ?? "Öğretmen";
   const subjectLine = subjectForTeacher(lesson);
+  const themeIndex = Math.abs((lesson.class_room?.id ?? 0) + lesson.id) % PASTEL_GRADIENTS.length;
+  const tagTheme = TAG_THEMES[themeIndex % TAG_THEMES.length];
+
+  const menuEl = (
+    <div ref={menuRef} className="relative shrink-0">
+      <button
+        type="button"
+        className="rounded-full bg-white/95 p-1.5 text-slate-600 shadow-sm ring-1 ring-slate-200/80 backdrop-blur-sm transition hover:bg-white"
+        aria-expanded={menuOpen}
+        aria-label="Ders seçenekleri"
+        onClick={(e) => {
+          e.stopPropagation();
+          setMenuOpen((v) => !v);
+        }}
+      >
+        <MoreHorizontal className="h-4 w-4" />
+      </button>
+      {menuOpen && (
+        <div className="absolute right-0 top-full z-20 mt-1 min-w-[160px] rounded-xl border border-slate-100 bg-white py-1 text-sm shadow-lg">
+          <button
+            type="button"
+            className="block w-full px-3 py-2 text-left text-slate-700 hover:bg-slate-50"
+            onClick={() => {
+              setMenuOpen(false);
+              void navigator.clipboard.writeText(`${title} · ${startIso}`);
+              toast.success("Bilgi panoya kopyalandı");
+            }}
+          >
+            Kısayolu kopyala
+          </button>
+        </div>
+      )}
+    </div>
+  );
 
   const inner = (
     <>
-      {!compact && <CardHero lesson={lesson} startIso={startIso} live={live} />}
+      {!compact && (
+        <CardHero lesson={lesson} startIso={startIso} live={live} themeIndex={themeIndex} menu={menuEl} />
+      )}
 
-      <div className={`relative bg-white ${compact ? "p-4" : "px-5 pb-5 pt-4"}`}>
-        <div className="mb-3 flex flex-wrap gap-2">
-          <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-semibold text-slate-600">{tag1}</span>
-          <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-semibold text-slate-600">{tag2}</span>
+      <div className={`relative bg-white ${compact ? "p-4" : "px-6 pb-6 pt-5"}`}>
+        <h3 className="mb-3 line-clamp-2 text-[18px] font-bold leading-snug tracking-tight text-slate-900 sm:text-[19px]">{title}</h3>
+
+        <div className="mb-5 flex flex-wrap gap-2">
+          <span className={`rounded-full px-3 py-1 text-[11px] font-semibold ${tagTheme.tag1}`}>{tag1}</span>
+          <span className={`rounded-full px-3 py-1 text-[11px] font-semibold ${tagTheme.tag2}`}>{tag2}</span>
         </div>
 
-        <h3 className="mb-3 line-clamp-2 text-[17px] font-bold leading-snug tracking-tight text-slate-900">{title}</h3>
-
-        <div className="mb-4 flex items-center gap-2 text-[13px] text-slate-700">
-          {lesson.teacher?.profile_photo_url ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={lesson.teacher.profile_photo_url}
-              alt=""
-              className="h-9 w-9 shrink-0 rounded-full object-cover ring-2 ring-slate-100"
-            />
-          ) : (
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-[13px] font-bold text-indigo-700">
-              {teacherName.slice(0, 1).toUpperCase()}
+        <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex min-w-0 flex-1 items-center gap-2.5">
+            {lesson.teacher?.profile_photo_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={lesson.teacher.profile_photo_url}
+                alt=""
+                className="h-11 w-11 shrink-0 rounded-full object-cover ring-2 ring-slate-100"
+              />
+            ) : (
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 text-[14px] font-bold text-white shadow-sm">
+                {teacherName.slice(0, 1).toUpperCase()}
+              </div>
+            )}
+            <div className="min-w-0 leading-tight">
+              <p className="truncate text-[14px] font-semibold text-slate-900">{teacherName}</p>
+              <p className="truncate text-[12px] text-slate-500">{subjectLine} Öğretmeni</p>
             </div>
-          )}
-          <div className="min-w-0 leading-tight">
-            <p className="truncate font-semibold text-slate-900">{teacherName}</p>
-            <p className="truncate text-[12px] text-slate-500">{subjectLine} Öğretmeni</p>
           </div>
-        </div>
-
-        <div className="mb-5 flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px] text-slate-500">
-          {lesson.duration_minutes != null && (
-            <span className="inline-flex items-center gap-1.5">
-              <Clock className="h-3.5 w-3.5 shrink-0 text-slate-400" aria-hidden />
-              {lesson.duration_minutes} dk
-            </span>
-          )}
-          {typeof lesson.participant_count === "number" && (
-            <span className="inline-flex items-center gap-1.5">
-              <Users className="h-3.5 w-3.5 shrink-0 text-slate-400" aria-hidden />
-              {lesson.participant_count} Katılımcı
-            </span>
-          )}
+          <div className="flex shrink-0 flex-wrap items-center gap-3 text-[12px] text-slate-500 sm:justify-end">
+            {lesson.duration_minutes != null && (
+              <span className="inline-flex items-center gap-1 whitespace-nowrap">
+                <Clock className="h-3.5 w-3.5 shrink-0 text-slate-400" aria-hidden />
+                <span className="font-medium text-slate-600">{lesson.duration_minutes} dk</span>
+              </span>
+            )}
+            {typeof lesson.participant_count === "number" ? (
+              <span className="inline-flex items-center gap-1 whitespace-nowrap">
+                <Users className="h-3.5 w-3.5 shrink-0 text-slate-400" aria-hidden />
+                <span className="font-medium text-slate-600">{lesson.participant_count} Katılımcı</span>
+              </span>
+            ) : null}
+          </div>
         </div>
 
         {canJoin ? (
@@ -259,7 +312,7 @@ export function LiveLessonCard({
             type="button"
             onClick={onJoin}
             disabled={joining}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#6366F1] py-3.5 text-[14px] font-bold text-white shadow-[0_8px_20px_-6px_rgba(99,102,241,0.55)] transition hover:bg-indigo-600 disabled:opacity-70"
+            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#6366F1] py-4 text-[15px] font-bold text-white shadow-[0_12px_32px_-12px_rgba(99,102,241,0.55)] transition hover:bg-indigo-600 hover:shadow-[0_14px_36px_-12px_rgba(99,102,241,0.5)] active:scale-[0.99] disabled:opacity-70"
           >
             {joining ? (
               <>
@@ -267,7 +320,7 @@ export function LiveLessonCard({
               </>
             ) : (
               <>
-                <Play className="h-4 w-4 shrink-0 fill-white" aria-hidden />
+                <Video className="h-4 w-4 shrink-0" aria-hidden strokeWidth={2.25} />
                 Derse Katıl
               </>
             )}
@@ -278,7 +331,7 @@ export function LiveLessonCard({
               <button
                 type="button"
                 onClick={() => setRemindOpen(true)}
-                className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-[#6366F1] bg-white py-3.5 text-[14px] font-bold text-[#6366F1] transition hover:bg-indigo-50"
+                className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-[#6366F1] bg-white py-4 text-[15px] font-bold text-[#6366F1] transition hover:bg-indigo-50 active:scale-[0.99]"
               >
                 <Bell className="h-4 w-4 shrink-0" aria-hidden />
                 Hatırlatıcı Kur
@@ -319,49 +372,18 @@ export function LiveLessonCard({
 
   if (compact) {
     return (
-      <div className="flex gap-4 overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-[0_10px_15px_-3px_rgba(15,23,42,0.06)]">
-        <div className="relative h-[120px] w-[132px] shrink-0 sm:w-[148px]">
-          <CardHero lesson={lesson} startIso={startIso} live={live} />
+      <div className="flex gap-0 overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-[0_16px_40px_-20px_rgba(15,23,42,0.14)] transition hover:shadow-[0_20px_44px_-18px_rgba(15,23,42,0.16)]">
+        <div className="relative min-h-[200px] w-[148px] shrink-0 sm:min-h-[220px] sm:w-[168px]">
+          <CardHero lesson={lesson} startIso={startIso} live={live} themeIndex={themeIndex} menu={menuEl} />
         </div>
-        <div className="min-w-0 flex-1 py-3 pr-3">{inner}</div>
+        <div className="min-w-0 flex-1">{inner}</div>
       </div>
     );
   }
 
   return (
-    <article className="relative overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-[0_10px_15px_-3px_rgba(15,23,42,0.06)] transition hover:shadow-[0_14px_22px_-6px_rgba(15,23,42,0.08)]">
-      <div className="relative">
-        <div ref={menuRef} className="absolute right-3 top-3 z-10">
-          <button
-            type="button"
-            className="rounded-lg bg-white/90 p-1.5 text-slate-600 shadow-sm backdrop-blur hover:bg-white"
-            aria-expanded={menuOpen}
-            aria-label="Ders seçenekleri"
-            onClick={(e) => {
-              e.stopPropagation();
-              setMenuOpen((v) => !v);
-            }}
-          >
-            <MoreHorizontal className="h-4 w-4" />
-          </button>
-          {menuOpen && (
-            <div className="absolute right-0 top-full z-20 mt-1 min-w-[140px] rounded-xl border border-slate-100 bg-white py-1 text-sm shadow-lg">
-              <button
-                type="button"
-                className="block w-full px-3 py-2 text-left text-slate-700 hover:bg-slate-50"
-                onClick={() => {
-                  setMenuOpen(false);
-                  void navigator.clipboard.writeText(`${title} · ${startIso}`);
-                  toast.success("Bilgi panoya kopyalandı");
-                }}
-              >
-                Kısayolu kopyala
-              </button>
-            </div>
-          )}
-        </div>
-        {inner}
-      </div>
+    <article className="relative flex h-full flex-col overflow-hidden rounded-3xl border border-slate-200/70 bg-white shadow-[0_16px_40px_-20px_rgba(15,23,42,0.14)] ring-1 ring-slate-900/[0.03] transition hover:-translate-y-0.5 hover:shadow-[0_22px_48px_-20px_rgba(15,23,42,0.18)]">
+      {inner}
     </article>
   );
 }

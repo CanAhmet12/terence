@@ -142,28 +142,30 @@ function OgrenciCanliDersPageInner() {
   }, [past, headerQuery]);
 
   return (
-    <div className="min-h-full bg-[#F9FAFB]">
-      <div className="mx-auto max-w-[1360px] px-4 pb-12 pt-4 sm:px-6 lg:px-8 lg:pt-5">
-        <section className="space-y-8">
-          <div className="min-w-0">
-            <h1 className="text-[28px] font-bold tracking-tight text-slate-900 lg:text-[32px] lg:leading-tight">
-              Canlı Dersler
-            </h1>
-            <p className="mt-2 max-w-[560px] text-[15px] leading-relaxed text-slate-600">
-              Öğretmenlerinizle canlı derslere katıl, sorularını sor ve öğrenmeni pekiştir!
-            </p>
-          </div>
-
-          <div className="w-full">
-            {!loading && token ? (
-              <KpiStrip summary={summary} />
-            ) : (
-              <div className="grid gap-4 sm:grid-cols-3">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="h-[132px] animate-pulse rounded-2xl bg-slate-200/60" />
-                ))}
-              </div>
-            )}
+    <div className="min-h-full bg-gradient-to-b from-slate-50 via-[#F4F6FA] to-slate-100/90">
+      <div className="mx-auto w-full max-w-[min(100%,1680px)] px-4 pb-16 pt-5 sm:px-6 lg:px-10 xl:px-12">
+        {/* Üst bölüm: sol başlık — sağ kompakt KPI (geniş ekranda sağa yaslı) */}
+        <section className="border-b border-slate-200/80 pb-8">
+          <div className="flex w-full flex-col gap-6 xl:flex-row xl:items-start xl:justify-between xl:gap-12">
+            <div className="min-w-0 shrink-0 xl:max-w-[46%]">
+              <h1 className="text-[28px] font-bold tracking-tight text-slate-900 sm:text-[30px] lg:text-[32px] lg:leading-tight">
+                Canlı Dersler
+              </h1>
+              <p className="mt-2 max-w-xl text-[15px] leading-relaxed text-slate-600">
+                Öğretmenlerinizle canlı derslere katıl, sorularını sor ve öğrenmeni pekiştir!
+              </p>
+            </div>
+            <div className="w-full min-w-0 xl:flex-1 xl:max-w-[min(100%,720px)] xl:self-center">
+              {!loading && token ? (
+                <KpiStrip summary={summary} />
+              ) : (
+                <div className="grid grid-cols-3 gap-2 sm:gap-3">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="h-[72px] animate-pulse rounded-xl bg-slate-200/50 sm:h-[76px]" />
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </section>
 
@@ -174,8 +176,8 @@ function OgrenciCanliDersPageInner() {
           </div>
         )}
 
-        {/* Sekmeler + görünüm + filtre */}
-        <div className="mt-10 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        {/* Sekmeler + filtre: tam genişlik, sol-sağ */}
+        <div className="mt-9 flex w-full flex-col gap-4 sm:mt-10 sm:flex-row sm:items-center sm:justify-between">
           <div className="inline-flex rounded-xl border border-slate-200/90 bg-slate-100/90 p-1">
             <button
               type="button"
@@ -201,7 +203,7 @@ function OgrenciCanliDersPageInner() {
             </button>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3 lg:justify-end">
+          <div className="flex flex-wrap items-center gap-3 sm:justify-end">
             {tab === "upcoming" && (
               <div className="relative">
                 <select
@@ -243,9 +245,9 @@ function OgrenciCanliDersPageInner() {
         </div>
 
         {loading ? (
-          <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+          <div className="mt-10 grid w-full grid-cols-1 gap-8 md:grid-cols-2 md:gap-9 2xl:grid-cols-3 2xl:gap-10">
             {[1, 2, 3, 4, 5, 6].map((i) => (
-              <div key={i} className="h-[430px] animate-pulse rounded-2xl bg-slate-200/50" />
+              <div key={i} className="h-[520px] animate-pulse rounded-3xl bg-slate-200/45" />
             ))}
           </div>
         ) : !token ? (
@@ -266,12 +268,12 @@ function OgrenciCanliDersPageInner() {
             <p className="text-[15px]">Henüz tamamlanmış ders kaydı yok.</p>
           </div>
         ) : tab === "upcoming" ? (
-          <div className="mt-8">
+          <div className="mt-10 w-full">
             <div
               className={
                 view === "grid"
-                  ? "grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3"
-                  : "mx-auto flex max-w-3xl flex-col gap-5"
+                  ? "grid w-full grid-cols-1 gap-8 md:grid-cols-2 md:gap-9 2xl:grid-cols-3 2xl:gap-10"
+                  : "flex w-full flex-col gap-6 lg:gap-7"
               }
             >
               {upcomingScoped.map((lesson) => (
@@ -286,21 +288,18 @@ function OgrenciCanliDersPageInner() {
             </div>
           </div>
         ) : (
-          <div className="mt-8">
-            <div className="mb-6 flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white shadow-sm ring-1 ring-slate-100">
-                <Play className="h-5 w-5 text-emerald-600" />
-              </div>
+          <div className="mt-10 w-full">
+            <div className="mb-6 flex w-full flex-col gap-1 border-b border-slate-200/70 pb-4 sm:flex-row sm:items-end sm:justify-between">
               <div>
-                <h2 className="text-[22px] font-bold tracking-tight text-slate-900">Geçmiş dersler</h2>
+                <h2 className="text-xl font-bold tracking-tight text-slate-900">Geçmiş dersler</h2>
                 <p className="text-[13px] text-slate-500">Kayıt varsa oynatabilirsiniz</p>
               </div>
             </div>
             <div
               className={
                 view === "grid"
-                  ? "grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3"
-                  : "mx-auto flex max-w-3xl flex-col gap-3"
+                  ? "grid w-full grid-cols-1 gap-6 md:grid-cols-2 md:gap-8 2xl:grid-cols-3"
+                  : "flex w-full flex-col gap-3"
               }
             >
               {filteredPast.slice(0, 40).map((lesson) => {
@@ -358,12 +357,12 @@ export default function OgrenciCanliDersPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-full bg-[#F9FAFB]">
-          <div className="mx-auto max-w-[1360px] px-4 py-8 sm:px-6 lg:px-8">
+        <div className="min-h-full bg-gradient-to-b from-slate-50 via-[#F4F6FA] to-slate-100/90">
+          <div className="mx-auto w-full max-w-[min(100%,1680px)] px-4 py-8 sm:px-6 lg:px-10 xl:px-12">
             <div className="h-10 w-48 animate-pulse rounded-lg bg-slate-200/70" />
-            <div className="mt-8 grid gap-6 sm:grid-cols-3">
+            <div className="mt-8 grid grid-cols-3 gap-2">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="h-[132px] animate-pulse rounded-2xl bg-slate-200/60" />
+                <div key={i} className="h-[72px] animate-pulse rounded-xl bg-slate-200/50" />
               ))}
             </div>
           </div>
