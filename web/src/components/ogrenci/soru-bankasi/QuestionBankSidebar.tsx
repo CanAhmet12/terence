@@ -48,19 +48,19 @@ function WeekStrip() {
   });
 
   return (
-    <ul className="flex justify-between gap-1">
+    <ul className="flex justify-between gap-0.5">
       {days.map((d) => (
-        <li key={d.lab} className="flex-1 text-center">
+        <li key={d.lab} className="min-w-0 flex-1 text-center">
           <div
             className={cn(
-              "rounded-xl border px-1 py-2 text-[10px] font-semibold uppercase tracking-wide sm:text-xs",
+              "rounded-lg border px-0.5 py-1.5 text-[9px] font-semibold uppercase tracking-wide sm:rounded-xl sm:px-1 sm:py-2 sm:text-[10px]",
               d.isToday
-                ? "border-violet-500/50 bg-violet-500/20 text-white shadow-[0_0_20px_rgba(139,92,246,0.25)]"
-                : "border-white/[0.06] bg-white/[0.03] text-slate-500"
+                ? "border-violet-300 bg-violet-100 text-violet-900 shadow-sm"
+                : "border-slate-200 bg-white text-slate-500"
             )}
           >
             <div>{d.lab}</div>
-            <div className="mt-1 text-base font-bold tabular-nums text-slate-200">{d.date}</div>
+            <div className="mt-0.5 text-sm font-bold tabular-nums text-slate-800 sm:text-base">{d.date}</div>
           </div>
         </li>
       ))}
@@ -87,22 +87,22 @@ export function QuestionBankSidebar({
     total > 0 ? Math.min(100, Math.round((done / Math.max(total, 1)) * 100)) : done > 0 ? 100 : 0;
 
   return (
-    <aside aria-label="Yan bilgi" className="flex flex-col gap-6">
+    <aside aria-label="Yan bilgi" className="flex flex-col gap-4">
       {!hidePersonalTestCard && (
-        <section className="rounded-3xl border border-white/[0.08] bg-gradient-to-br from-violet-950/60 to-slate-950/95 p-6 shadow-xl backdrop-blur-md">
+        <section className="rounded-3xl border border-violet-100 bg-gradient-to-br from-violet-50 to-white p-5 shadow-sm">
           <div className="flex items-center gap-3">
-            <span className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-black/40">
-              <ClipboardList className="h-5 w-5 text-violet-300" aria-hidden />
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl border border-violet-100 bg-white shadow-sm">
+              <ClipboardList className="h-5 w-5 text-violet-600" aria-hidden />
             </span>
             <div>
-              <h2 className="font-bold text-white">Bana özel test</h2>
-              <p className="text-xs text-slate-400">Zorluk ve adet senin elinde</p>
+              <h2 className="font-bold text-slate-900">Bana özel test</h2>
+              <p className="text-xs text-slate-600">Zorluk ve adet senin elinde</p>
             </div>
           </div>
           <button
             type="button"
             onClick={onPersonalTest}
-            className="mt-5 w-full rounded-2xl bg-white py-3 text-sm font-bold text-slate-900 shadow-lg transition hover:bg-violet-100"
+            className="mt-4 w-full rounded-2xl bg-violet-600 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-violet-700"
           >
             Test oluştur
           </button>
@@ -111,32 +111,29 @@ export function QuestionBankSidebar({
 
       <section
         aria-labelledby="qb-history-heading"
-        className="rounded-3xl border border-white/[0.07] bg-slate-950/80 p-6 shadow-xl backdrop-blur-md"
+        className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm"
       >
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <History className="h-4 w-4 text-slate-500" aria-hidden />
-            <h2 id="qb-history-heading" className="font-bold text-white">
+            <History className="h-4 w-4 text-slate-400" aria-hidden />
+            <h2 id="qb-history-heading" className="font-bold text-slate-900">
               Son denemeler
             </h2>
           </div>
-          <Link
-            href="/ogrenci/deneme"
-            className="text-xs font-semibold text-violet-400 hover:text-violet-300"
-          >
+          <Link href="/ogrenci/deneme" className="text-xs font-semibold text-violet-700 hover:text-violet-900">
             Tümü
           </Link>
         </div>
         {loading ? (
-          <div className="mt-4 space-y-3">
+          <div className="mt-3 space-y-2">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="h-16 animate-pulse rounded-xl bg-white/5" />
+              <div key={i} className="h-14 animate-pulse rounded-xl bg-slate-100" />
             ))}
           </div>
         ) : examHistory.length === 0 ? (
-          <p className="mt-4 text-sm text-slate-500">Henüz kayıtlı deneme yok.</p>
+          <p className="mt-3 text-sm text-slate-500">Henüz kayıtlı deneme yok.</p>
         ) : (
-          <ul className="mt-4 space-y-3">
+          <ul className="mt-3 space-y-2">
             {examHistory.slice(0, 5).map((ex) => {
               const progress = examProgressPct(ex);
               const answered = examAnswered(ex);
@@ -144,21 +141,21 @@ export function QuestionBankSidebar({
               return (
                 <li
                   key={ex.id}
-                  className="rounded-2xl border border-white/[0.06] bg-white/[0.03] px-4 py-3 transition hover:border-violet-500/25"
+                  className="rounded-2xl border border-slate-100 bg-slate-50/80 px-3 py-2.5 transition hover:border-violet-200"
                 >
                   <div className="flex items-start justify-between gap-2">
-                    <strong className="font-semibold text-slate-100">{ex.title ?? ex.exam_type ?? "Deneme"}</strong>
-                    <span className="shrink-0 rounded-full bg-violet-500/15 px-2 py-0.5 text-xs font-bold tabular-nums text-violet-200">
+                    <strong className="font-semibold text-slate-900">{ex.title ?? ex.exam_type ?? "Deneme"}</strong>
+                    <span className="shrink-0 rounded-full bg-violet-100 px-2 py-0.5 text-xs font-bold tabular-nums text-violet-800">
                       {examScoreLabel(ex)}
                     </span>
                   </div>
-                  <div className="mt-2 flex items-center justify-between text-xs text-slate-500">
+                  <div className="mt-1.5 flex items-center justify-between text-xs text-slate-500">
                     <span>
                       {answered}/{totalQ || "—"} soru
                     </span>
                     <span>%{progress}</span>
                   </div>
-                  <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-black/40">
+                  <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-slate-200">
                     <div
                       className="h-full rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500"
                       style={{ width: `${progress}%` }}
@@ -171,60 +168,55 @@ export function QuestionBankSidebar({
         )}
       </section>
 
-      <section
-        aria-labelledby="qb-cal-heading"
-        className="rounded-3xl border border-white/[0.07] bg-slate-950/80 p-6 shadow-xl backdrop-blur-md"
-      >
+      <section aria-labelledby="qb-cal-heading" className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <CalendarDays className="h-4 w-4 text-slate-500" aria-hidden />
-            <h2 id="qb-cal-heading" className="font-bold text-white">
+            <CalendarDays className="h-4 w-4 text-slate-400" aria-hidden />
+            <h2 id="qb-cal-heading" className="font-bold text-slate-900">
               Çalışma haftası
             </h2>
           </div>
-          <span className="flex gap-1 opacity-40">
+          <span className="flex gap-1 text-slate-300">
             <ChevronLeft className="h-4 w-4" aria-hidden />
             <ChevronRight className="h-4 w-4" aria-hidden />
           </span>
         </div>
-        <div className="mt-5">
+        <div className="mt-4">
           <WeekStrip />
         </div>
       </section>
 
       <section
         aria-labelledby="qb-goal-heading"
-        className="rounded-3xl border border-white/[0.07] bg-gradient-to-b from-slate-900 to-slate-950 p-6 shadow-xl"
+        className="rounded-3xl border border-slate-200 bg-gradient-to-b from-slate-50 to-white p-5 shadow-sm"
       >
         <div className="flex items-center justify-between gap-2">
-          <h2 id="qb-goal-heading" className="font-bold text-white">
+          <h2 id="qb-goal-heading" className="font-bold text-slate-900">
             Günlük hedef
           </h2>
-          <Link href="/ogrenci/plan" className="text-xs font-semibold text-violet-400 hover:text-violet-300">
+          <Link href="/ogrenci/plan" className="text-xs font-semibold text-violet-700 hover:text-violet-900">
             Düzenle
           </Link>
         </div>
         {loading && !planStats ? (
-          <div className="mt-4 h-20 animate-pulse rounded-xl bg-white/5" />
+          <div className="mt-3 h-16 animate-pulse rounded-xl bg-slate-100" />
         ) : planStats && (planStats.tasks_total_today ?? 0) <= 0 ? (
-          <p className="mt-4 text-sm text-slate-500">Bugün için planda görev yok.</p>
+          <p className="mt-3 text-sm text-slate-500">Bugün için planda görev yok.</p>
         ) : (
           <>
-            <p className="mt-3 text-3xl font-bold tabular-nums text-white">
+            <p className="mt-2 text-3xl font-bold tabular-nums text-slate-900">
               {done}{" "}
-              <span className="text-lg font-semibold text-slate-500">
-                / {total > 0 ? total : 1}
-              </span>
+              <span className="text-lg font-semibold text-slate-400">/ {total > 0 ? total : 1}</span>
             </p>
-            <div className="mt-3 h-2 overflow-hidden rounded-full bg-black/50">
+            <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-200">
               <div
-                className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-violet-500 transition-all duration-500"
+                className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-violet-600 transition-all duration-500"
                 style={{ width: `${pct}%` }}
               />
             </div>
             <Link
               href="/ogrenci/plan"
-              className="mt-5 inline-flex text-sm font-semibold text-slate-400 hover:text-white"
+              className="mt-4 inline-flex text-sm font-semibold text-slate-600 hover:text-violet-700"
             >
               Plana git →
             </Link>

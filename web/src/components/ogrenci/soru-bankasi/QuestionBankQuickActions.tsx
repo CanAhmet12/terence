@@ -20,33 +20,33 @@ export function QuestionBankQuickActions({
       desc: "Rastgele 10 soruluk set — akışa gir.",
       icon: Zap,
       onClick: onQuick10,
-      gradient: "from-amber-500/25 via-orange-950/40 to-slate-950",
-      ring: "hover:shadow-[0_0_40px_rgba(251,191,36,0.15)]",
+      gradient: "bg-gradient-to-br from-amber-50 to-orange-50/90 border-amber-100",
+      ring: "hover:shadow-md hover:border-amber-200",
     },
     {
       title: "Zayıf kazanım seti",
       desc: "İlk zayıf konundan başlayarak otomatik yükle.",
       icon: Crosshair,
       onClick: onWeakFocus,
-      gradient: "from-rose-500/20 via-violet-950/50 to-slate-950",
-      ring: "hover:shadow-[0_0_40px_rgba(244,63,94,0.15)]",
+      gradient: "bg-gradient-to-br from-rose-50 to-violet-50/90 border-rose-100",
+      ring: "hover:shadow-md hover:border-rose-200",
     },
     {
       title: "Süreli 5 dk",
       desc: "15 soru · 300 saniye geri sayım.",
       icon: Clock,
       onClick: onTimedPractice,
-      gradient: "from-cyan-500/20 via-slate-900/60 to-slate-950",
-      ring: "hover:shadow-[0_0_40px_rgba(34,211,238,0.12)]",
+      gradient: "bg-gradient-to-br from-cyan-50 to-sky-50/90 border-cyan-100",
+      ring: "hover:shadow-md hover:border-cyan-200",
     },
   ];
 
   return (
-    <fieldset className="space-y-4 border-0 p-0">
-      <legend className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+    <fieldset className="space-y-3 border-0 p-0">
+      <legend className="mb-1 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
         Hızlı modlar
       </legend>
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-3 md:grid-cols-3">
         {cards.map(({ title, desc, icon: Icon, onClick, gradient, ring }) => (
           <button
             key={title}
@@ -54,23 +54,22 @@ export function QuestionBankQuickActions({
             disabled={disabled}
             onClick={onClick}
             className={cn(
-              "group relative overflow-hidden rounded-2xl border border-white/[0.08] bg-gradient-to-br p-5 text-left shadow-xl transition focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#070712]",
+              "group relative overflow-hidden rounded-2xl border p-4 text-left shadow-sm transition focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-50",
               "disabled:pointer-events-none disabled:opacity-45",
               gradient,
               ring,
-              "hover:-translate-y-0.5 hover:border-white/15"
+              "hover:-translate-y-0.5"
             )}
           >
-            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-70" />
-            <div className="relative flex flex-col gap-4">
-              <span className="inline-flex h-12 w-12 items-center justify-center rounded-xl border border-white/10 bg-black/35 text-white shadow-inner backdrop-blur-sm">
-                <Icon className="h-6 w-6" aria-hidden />
+            <div className="relative flex flex-col gap-3">
+              <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-white/90 bg-white text-violet-700 shadow-sm">
+                <Icon className="h-5 w-5" aria-hidden />
               </span>
               <div>
-                <span className="text-base font-bold text-white">{title}</span>
-                <p className="mt-1.5 text-sm leading-relaxed text-slate-400">{desc}</p>
+                <span className="text-base font-bold text-slate-900">{title}</span>
+                <p className="mt-1 text-sm leading-relaxed text-slate-600">{desc}</p>
               </div>
-              <span className="text-xs font-semibold uppercase tracking-wider text-violet-300/90 opacity-0 transition group-hover:opacity-100">
+              <span className="text-xs font-semibold uppercase tracking-wider text-violet-600 opacity-0 transition group-hover:opacity-100">
                 Başlat →
               </span>
             </div>

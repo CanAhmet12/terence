@@ -25,24 +25,24 @@ export function QuestionBankHero({
   onOpenPersonalTest,
 }: QuestionBankHeroProps) {
   return (
-    <section className="relative overflow-hidden rounded-[28px] border border-white/[0.09] bg-gradient-to-br from-violet-950/90 via-[#12081f] to-slate-950 p-6 shadow-[0_28px_100px_rgba(76,29,149,0.35)] sm:p-8 lg:p-10">
-      <div className="pointer-events-none absolute -left-24 top-0 h-72 w-72 rounded-full bg-violet-500/25 blur-[100px]" />
-      <div className="pointer-events-none absolute -right-16 bottom-0 h-64 w-64 rounded-full bg-fuchsia-600/20 blur-[90px]" />
-      <div className="pointer-events-none absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23ffffff\' fill-opacity=\'0.03\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-80" />
+    <section className="relative overflow-hidden rounded-3xl border border-violet-100 bg-white p-6 shadow-[0_8px_40px_rgba(99,102,241,0.08)] sm:p-8 lg:p-10">
+      <div className="pointer-events-none absolute -left-20 top-0 h-64 w-64 rounded-full bg-violet-200/40 blur-3xl" />
+      <div className="pointer-events-none absolute -right-16 bottom-0 h-56 w-56 rounded-full bg-fuchsia-200/35 blur-3xl" />
+      <div className="pointer-events-none absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%236366f1\' fill-opacity=\'0.04\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-90" />
 
-      <div className="relative grid gap-10 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-center lg:gap-12">
+      <div className="relative grid gap-8 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-center lg:gap-10">
         <div>
-          <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-black/25 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-violet-200/90 backdrop-blur-md">
-            <Sparkles className="h-3.5 w-3.5 text-amber-300" aria-hidden />
+          <div className="inline-flex items-center gap-2 rounded-full border border-violet-200 bg-violet-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-violet-700">
+            <Sparkles className="h-3.5 w-3.5 text-amber-500" aria-hidden />
             Öğrenci · Soru Bankası
           </div>
-          <h1 className="mt-5 text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-[3.25rem] lg:leading-[1.08]">
+          <h1 className="mt-5 text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl lg:text-[3.25rem] lg:leading-[1.08]">
             Sorularla{" "}
-            <span className="bg-gradient-to-r from-violet-200 via-white to-fuchsia-200 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-violet-600 via-fuchsia-600 to-violet-600 bg-clip-text text-transparent">
               netini inşa et
             </span>
           </h1>
-          <p className="mt-4 max-w-xl text-base leading-relaxed text-slate-300 sm:text-lg">
+          <p className="mt-4 max-w-xl text-base leading-relaxed text-slate-600 sm:text-lg">
             Sınıfına ve sınav hedefine göre filtrelenmiş binlerce soru; zayıf kazanımlarına özel setler ve sesli çözüm
             asistanı tek ekranda.
           </p>
@@ -51,7 +51,7 @@ export function QuestionBankHero({
             <div
               role="group"
               aria-label="Kapsam"
-              className="inline-flex rounded-2xl border border-white/10 bg-black/30 p-1 shadow-inner backdrop-blur-md"
+              className="inline-flex rounded-2xl border border-slate-200 bg-slate-100/80 p-1 shadow-inner"
             >
               <button
                 type="button"
@@ -59,8 +59,8 @@ export function QuestionBankHero({
                 className={cn(
                   "rounded-xl px-4 py-2 text-sm font-semibold transition",
                   scopeMode === "class"
-                    ? "bg-white text-slate-900 shadow-lg"
-                    : "text-slate-400 hover:text-white"
+                    ? "bg-white text-slate-900 shadow-md"
+                    : "text-slate-600 hover:text-slate-900"
                 )}
               >
                 Sınıf müfredatı
@@ -71,8 +71,8 @@ export function QuestionBankHero({
                 className={cn(
                   "rounded-xl px-4 py-2 text-sm font-semibold transition",
                   scopeMode === "exam"
-                    ? "bg-white text-slate-900 shadow-lg"
-                    : "text-slate-400 hover:text-white"
+                    ? "bg-white text-slate-900 shadow-md"
+                    : "text-slate-600 hover:text-slate-900"
                 )}
               >
                 Sınav odaklı
@@ -82,7 +82,7 @@ export function QuestionBankHero({
             <button
               type="button"
               onClick={onOpenVoice}
-              className="inline-flex items-center gap-2 rounded-2xl border border-violet-400/35 bg-violet-600/25 px-4 py-2 text-sm font-semibold text-white backdrop-blur-md transition hover:border-violet-300/60 hover:bg-violet-500/35"
+              className="inline-flex items-center gap-2 rounded-2xl border border-violet-200 bg-violet-50 px-4 py-2 text-sm font-semibold text-violet-800 transition hover:border-violet-300 hover:bg-violet-100"
             >
               <Mic className="h-4 w-4" aria-hidden />
               Sesli çözüm
@@ -103,8 +103,8 @@ export function QuestionBankHero({
                     className={cn(
                       "rounded-full border px-4 py-2 text-sm font-semibold transition",
                       activeExamTab === tab
-                        ? "border-violet-400/60 bg-violet-500/25 text-white shadow-[0_0_20px_rgba(139,92,246,0.35)]"
-                        : "border-white/10 bg-white/5 text-slate-400 hover:border-white/20 hover:text-white"
+                        ? "border-violet-400 bg-violet-100 text-violet-900 shadow-sm"
+                        : "border-slate-200 bg-white text-slate-600 hover:border-violet-200 hover:text-slate-900"
                     )}
                   >
                     {tab === "ORTAK" ? "Ortak" : tab}
@@ -115,28 +115,28 @@ export function QuestionBankHero({
           )}
         </div>
 
-        <aside className="relative rounded-3xl border border-white/10 bg-gradient-to-br from-white/[0.07] to-transparent p-6 backdrop-blur-xl">
-          <div className="pointer-events-none absolute inset-0 rounded-3xl ring-1 ring-inset ring-white/10" />
+        <aside className="relative rounded-3xl border border-violet-100 bg-gradient-to-br from-violet-50/90 to-white p-6 shadow-sm">
+          <div className="pointer-events-none absolute inset-0 rounded-3xl ring-1 ring-inset ring-violet-100/80" />
           <div className="relative">
             <div className="flex items-center gap-3">
-              <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500 to-fuchsia-600 shadow-lg">
+              <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-600 to-fuchsia-600 shadow-md">
                 <Wand2 className="h-5 w-5 text-white" aria-hidden />
               </span>
               <div>
-                <h2 className="text-lg font-bold text-white">Bana özel test</h2>
-                <p className="text-sm text-slate-400">Seviyene uygun AI destekli set</p>
+                <h2 className="text-lg font-bold text-slate-900">Bana özel test</h2>
+                <p className="text-sm text-slate-600">Seviyene uygun AI destekli set</p>
               </div>
             </div>
-            <p className="mt-4 text-sm leading-relaxed text-slate-300">
+            <p className="mt-4 text-sm leading-relaxed text-slate-600">
               Zayıf kazanımlarından başlayarak soru seçilir; süreyi ve zorluğu sen belirlersin.
             </p>
             <button
               type="button"
               onClick={onOpenPersonalTest}
-              className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-white py-3.5 text-sm font-bold text-slate-900 shadow-xl transition hover:bg-violet-100"
+              className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-violet-600 py-3.5 text-sm font-bold text-white shadow-md transition hover:bg-violet-700"
             >
               Test oluştur
-              <Sparkles className="h-4 w-4 text-violet-600" aria-hidden />
+              <Sparkles className="h-4 w-4 text-violet-100" aria-hidden />
             </button>
           </div>
         </aside>

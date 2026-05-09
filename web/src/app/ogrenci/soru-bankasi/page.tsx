@@ -104,7 +104,7 @@ function VoiceAssistantModal({ token, onClose }: { token: string | null; onClose
     <div className="fixed inset-0 z-[100] flex items-end justify-center p-4 sm:items-center sm:p-6">
       <button
         type="button"
-        className="absolute inset-0 bg-black/70 backdrop-blur-md"
+        className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
         aria-label="Kapat"
         onClick={onClose}
       />
@@ -112,28 +112,28 @@ function VoiceAssistantModal({ token, onClose }: { token: string | null; onClose
         role="dialog"
         aria-modal="true"
         aria-labelledby="voice-assistant-title"
-        className="relative z-10 max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-3xl border border-white/10 bg-gradient-to-b from-slate-900 to-[#0a0612] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.65)] sm:p-8"
+        className="relative z-10 max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-3xl border border-slate-200 bg-white p-6 shadow-xl sm:p-8"
       >
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h3 id="voice-assistant-title" className="text-xl font-bold text-white">
+            <h3 id="voice-assistant-title" className="text-xl font-bold text-slate-900">
               Sesli soru asistanı
             </h3>
-            <p className="mt-2 text-sm leading-relaxed text-slate-400">
+            <p className="mt-2 text-sm leading-relaxed text-slate-600">
               Soruyu sesli oku; yapay zeka kısaca açıklasın.
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-xl border border-white/10 bg-white/5 px-3 py-1.5 text-sm font-semibold text-slate-300 hover:bg-white/10"
+            className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm font-semibold text-slate-700 hover:bg-slate-100"
           >
             Kapat
           </button>
         </div>
 
         {!supported && (
-          <p className="mt-6 flex items-center gap-2 rounded-xl border border-amber-500/25 bg-amber-950/40 px-4 py-3 text-sm text-amber-100">
+          <p className="mt-6 flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
             <AlertCircle className="h-4 w-4 shrink-0" aria-hidden /> Bu tarayıcı ses tanımayı desteklemiyor.
           </p>
         )}
@@ -161,15 +161,15 @@ function VoiceAssistantModal({ token, onClose }: { token: string | null; onClose
         </p>
 
         {transcript && (
-          <div className="mt-8 rounded-2xl border border-white/[0.06] bg-black/30 p-4">
+          <div className="mt-8 rounded-2xl border border-slate-200 bg-slate-50 p-4">
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Duyulan soru</p>
-            <p className="mt-2 text-slate-100">{transcript}</p>
+            <p className="mt-2 text-slate-900">{transcript}</p>
             <div className="mt-4 flex flex-wrap gap-2">
               <button
                 type="button"
                 onClick={askAI}
                 disabled={loading}
-                className="rounded-xl bg-white px-4 py-2 text-sm font-bold text-slate-900 disabled:opacity-50"
+                className="rounded-xl bg-violet-600 px-4 py-2 text-sm font-bold text-white disabled:opacity-50"
               >
                 {loading ? (
                   <>
@@ -185,7 +185,7 @@ function VoiceAssistantModal({ token, onClose }: { token: string | null; onClose
                   setTranscript("");
                   setAiAnswer(null);
                 }}
-                className="rounded-xl border border-white/15 px-4 py-2 text-sm font-semibold text-slate-300"
+                className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
               >
                 Temizle
               </button>
@@ -194,14 +194,14 @@ function VoiceAssistantModal({ token, onClose }: { token: string | null; onClose
         )}
 
         {aiAnswer && (
-          <div className="mt-6 rounded-2xl border border-violet-500/20 bg-violet-950/30 p-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-violet-300/80">AI cevabı</p>
+          <div className="mt-6 rounded-2xl border border-violet-200 bg-violet-50 p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-violet-800">AI cevabı</p>
             <div className="mt-3 flex flex-wrap gap-2">
               {speaking ? (
                 <button
                   type="button"
                   onClick={stopSpeaking}
-                  className="inline-flex items-center gap-2 rounded-xl border border-white/15 px-3 py-2 text-sm text-slate-200"
+                  className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800"
                 >
                   <MicOff aria-hidden /> Okumayı durdur
                 </button>
@@ -223,12 +223,12 @@ function VoiceAssistantModal({ token, onClose }: { token: string | null; onClose
                 </button>
               )}
             </div>
-            <p className="mt-4 text-sm leading-relaxed text-slate-200">{aiAnswer}</p>
+            <p className="mt-4 text-sm leading-relaxed text-slate-800">{aiAnswer}</p>
           </div>
         )}
 
         {error && (
-          <p className="mt-6 flex items-center gap-2 rounded-xl border border-red-500/30 bg-red-950/40 px-4 py-3 text-sm text-red-100">
+          <p className="mt-6 flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
             <AlertCircle aria-hidden /> {error}
           </p>
         )}
@@ -253,8 +253,8 @@ export default function SoruBankasiPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex min-h-[50vh] items-center justify-center bg-[#05050a]">
-          <Loader2 className="h-10 w-10 animate-spin text-violet-500" aria-hidden />
+        <div className="flex min-h-[40vh] items-center justify-center bg-slate-50">
+          <Loader2 className="h-10 w-10 animate-spin text-violet-600" aria-hidden />
         </div>
       }
     >
@@ -647,19 +647,19 @@ function SoruBankasiPageInner({
   }, [loadQuestions, qParam, kazanimFromUrl, subject, effectiveExamTab]);
 
   return (
-    <div className="relative min-h-screen overflow-x-hidden bg-[#05050a] text-slate-100">
+    <div className="relative overflow-x-hidden bg-slate-50 text-slate-900">
       <div
-        className="pointer-events-none fixed inset-0 bg-[radial-gradient(ellipse_90%_55%_at_50%_-18%,rgba(109,40,217,0.26),transparent)]"
+        className="pointer-events-none fixed inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-10%,rgba(139,92,246,0.09),transparent)]"
         aria-hidden
       />
       <div
-        className="pointer-events-none fixed inset-0 bg-[radial-gradient(ellipse_45%_42%_at_95%_15%,rgba(59,130,246,0.11),transparent)]"
+        className="pointer-events-none fixed inset-0 bg-[radial-gradient(ellipse_50%_40%_at_100%_0%,rgba(59,130,246,0.06),transparent)]"
         aria-hidden
       />
 
-      <div className="relative mx-auto max-w-[min(100%,1680px)] px-4 pb-16 pt-6 sm:px-6 lg:px-8 lg:pt-8">
-        <div className="flex flex-col gap-10 xl:flex-row xl:items-start xl:gap-12">
-          <div className="min-w-0 flex-1 space-y-10">
+      <div className="relative mx-auto max-w-[min(100%,1680px)] px-4 pb-8 pt-5 sm:px-6 lg:px-8 lg:pt-6">
+        <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_300px] xl:items-start xl:gap-8">
+          <div className="min-w-0 space-y-6">
             <QuestionBankHero
               scopeMode={scopeMode}
               onScopeModeChange={(m) => {
@@ -683,10 +683,10 @@ function SoruBankasiPageInner({
               <div
                 role="status"
                 aria-live="polite"
-                className="rounded-2xl border border-cyan-400/35 bg-cyan-950/35 px-5 py-4 text-center text-sm font-semibold text-cyan-50 shadow-[0_0_40px_rgba(34,211,238,0.12)]"
+                className="rounded-2xl border border-cyan-200 bg-cyan-50 px-4 py-3 text-center text-sm font-semibold text-cyan-900 shadow-sm"
               >
                 Süreli pratik: kalan{" "}
-                <span className="tabular-nums text-lg text-white">{timedRemaining}</span> sn
+                <span className="tabular-nums text-lg text-cyan-950">{timedRemaining}</span> sn
               </div>
             )}
 
@@ -705,10 +705,9 @@ function SoruBankasiPageInner({
               goalHint={goalHint}
               loading={sidebarLoading}
             />
-            <StudyMotivationBanner onStartQuick={onQuick10} />
           </div>
 
-          <div className="shrink-0 xl:sticky xl:top-6 xl:w-[380px] xl:self-start">
+          <div className="min-w-0 xl:sticky xl:top-20 xl:self-start">
             <QuestionBankSidebar
               examHistory={examHistory}
               planStats={planStats}
@@ -717,6 +716,10 @@ function SoruBankasiPageInner({
               hidePersonalTestCard
             />
           </div>
+        </div>
+
+        <div className="mt-6">
+          <StudyMotivationBanner onStartQuick={onQuick10} />
         </div>
       </div>
 
@@ -797,24 +800,24 @@ function PersonalTestModal({
     <div className="fixed inset-0 z-[100] flex items-end justify-center p-4 sm:items-center sm:p-6">
       <button
         type="button"
-        className="absolute inset-0 bg-black/70 backdrop-blur-md"
+        className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
         aria-label="Kapat"
         onClick={onClose}
       />
       <div
         role="dialog"
         aria-modal="true"
-        className="relative z-10 max-h-[90vh] w-full max-w-md overflow-y-auto rounded-3xl border border-white/10 bg-gradient-to-b from-slate-900 to-[#0a0612] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.65)] sm:p-8"
+        className="relative z-10 max-h-[90vh] w-full max-w-md overflow-y-auto rounded-3xl border border-slate-200 bg-white p-6 shadow-xl sm:p-8"
       >
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h3 className="text-xl font-bold text-white">Bana özel test</h3>
-            <p className="mt-2 text-sm text-slate-400">AI mümkünse zayıf kazanımlarından soru seçer.</p>
+            <h3 className="text-xl font-bold text-slate-900">Bana özel test</h3>
+            <p className="mt-2 text-sm text-slate-600">AI mümkünse zayıf kazanımlarından soru seçer.</p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-xl border border-white/10 bg-white/5 px-3 py-1.5 text-sm font-semibold text-slate-300 hover:bg-white/10"
+            className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm font-semibold text-slate-700 hover:bg-slate-100"
           >
             Kapat
           </button>
@@ -826,7 +829,7 @@ function PersonalTestModal({
             <select
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
-              className="mt-2 w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white focus:border-violet-500/50 focus:outline-none focus:ring-2 focus:ring-violet-500/30"
+              className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-200"
             >
               <option value="">Tüm dersler</option>
               {subjects.map((d) => (
@@ -842,7 +845,7 @@ function PersonalTestModal({
             <select
               value={count}
               onChange={(e) => setCount(Number(e.target.value))}
-              className="mt-2 w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white focus:border-violet-500/50 focus:outline-none focus:ring-2 focus:ring-violet-500/30"
+              className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-200"
             >
               {[5, 10, 15, 20].map((n) => (
                 <option key={n} value={n}>
@@ -857,7 +860,7 @@ function PersonalTestModal({
             <select
               value={difficulty}
               onChange={(e) => setDifficulty(e.target.value)}
-              className="mt-2 w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white focus:border-violet-500/50 focus:outline-none focus:ring-2 focus:ring-violet-500/30"
+              className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-200"
             >
               <option value="">Karışık</option>
               <option value="easy">Kolay</option>
@@ -868,7 +871,7 @@ function PersonalTestModal({
         </div>
 
         {error && (
-          <p className="mt-6 flex items-center gap-2 rounded-xl border border-red-500/30 bg-red-950/40 px-4 py-3 text-sm text-red-100">
+          <p className="mt-6 flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
             <AlertCircle aria-hidden /> {error}
           </p>
         )}
@@ -877,7 +880,7 @@ function PersonalTestModal({
           type="button"
           onClick={handleGenerate}
           disabled={generating}
-          className="mt-8 flex w-full items-center justify-center gap-2 rounded-2xl bg-white py-4 text-sm font-bold text-slate-900 shadow-xl transition hover:bg-violet-100 disabled:opacity-50"
+          className="mt-8 flex w-full items-center justify-center gap-2 rounded-2xl bg-violet-600 py-4 text-sm font-bold text-white shadow-md transition hover:bg-violet-700 disabled:opacity-50"
         >
           {generating ? (
             <>
@@ -937,7 +940,7 @@ function BookQuestionsModal({
     <div className="fixed inset-0 z-[100] flex items-end justify-center p-4 sm:items-center sm:p-6">
       <button
         type="button"
-        className="absolute inset-0 bg-black/75 backdrop-blur-md"
+        className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
         aria-label="Kapat"
         onClick={onClose}
       />
@@ -945,17 +948,17 @@ function BookQuestionsModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="book-modal-title"
-        className="relative z-10 flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-b from-[#0f0d18] to-[#06060d] shadow-[0_32px_100px_rgba(0,0,0,0.75)]"
+        className="relative z-10 flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xl"
       >
-        <header className="flex shrink-0 flex-wrap items-start justify-between gap-4 border-b border-white/[0.06] bg-black/30 px-6 py-5 sm:px-8">
+        <header className="flex shrink-0 flex-wrap items-start justify-between gap-4 border-b border-slate-100 bg-slate-50/80 px-5 py-4 sm:px-7">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-violet-300/80">{subject}</p>
-            <h2 id="book-modal-title" className="mt-1 text-2xl font-bold text-white">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-violet-600">{subject}</p>
+            <h2 id="book-modal-title" className="mt-1 text-2xl font-bold text-slate-900">
               {title}
             </h2>
-            <p className="mt-2 text-sm text-slate-400">
+            <p className="mt-2 text-sm text-slate-600">
               Çözülen:{" "}
-              <span className="font-semibold text-white">
+              <span className="font-semibold text-slate-900">
                 {answeredCount} / {questions.length || "—"}
               </span>
             </p>
@@ -963,60 +966,60 @@ function BookQuestionsModal({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-white/10"
+            className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
           >
             Kapat
           </button>
         </header>
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-6 py-6 sm:px-8">
+        <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5 sm:px-7">
           {loading ? (
-            <div className="flex flex-col items-center justify-center gap-4 py-20">
-              <Loader2 className="h-10 w-10 animate-spin text-violet-500" aria-hidden />
-              <p className="text-sm text-slate-400">Sorular yükleniyor…</p>
+            <div className="flex flex-col items-center justify-center gap-4 py-16">
+              <Loader2 className="h-10 w-10 animate-spin text-violet-600" aria-hidden />
+              <p className="text-sm text-slate-500">Sorular yükleniyor…</p>
             </div>
           ) : questions.length === 0 ? (
-            <p className="rounded-2xl border border-dashed border-white/10 bg-white/[0.02] px-6 py-12 text-center text-slate-400">
+            <p className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-6 py-10 text-center text-slate-500">
               Bu derse ait soru bulunamadı.
             </p>
           ) : (
             <>
-              <div className="space-y-8">
+              <div className="space-y-6">
                 {pageQuestions.map((soru, idx) => {
                   const result = answerResults[soru.id];
                   const qNum = currentPage * questionsPerPage + idx + 1;
                   return (
                     <article
                       key={soru.id}
-                      className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 shadow-inner sm:p-6"
+                      className="rounded-2xl border border-slate-200 bg-slate-50/50 p-5 sm:p-6"
                     >
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="rounded-full bg-violet-600/30 px-3 py-1 text-xs font-bold text-violet-100">
+                        <span className="rounded-full bg-violet-100 px-3 py-1 text-xs font-bold text-violet-900">
                           Soru {qNum}
                         </span>
                         {soru.kazanim_code && (
-                          <span className="rounded-full border border-white/10 px-2.5 py-0.5 text-[11px] text-slate-400">
+                          <span className="rounded-full border border-slate-200 bg-white px-2.5 py-0.5 text-[11px] text-slate-600">
                             {soru.kazanim_code}
                           </span>
                         )}
-                        <span className="rounded-full border border-white/10 px-2.5 py-0.5 text-[11px] text-slate-500">
+                        <span className="rounded-full border border-slate-200 bg-white px-2.5 py-0.5 text-[11px] text-slate-500">
                           {diffLabel(soru.difficulty)}
                         </span>
                       </div>
-                      <p className="mt-4 text-base leading-relaxed text-slate-100">{soru.question_text}</p>
-                      <ul className="mt-5 space-y-2">
+                      <p className="mt-4 text-base leading-relaxed text-slate-900">{soru.question_text}</p>
+                      <ul className="mt-4 space-y-2">
                         {soru.options?.map((opt) => (
                           <li key={opt.id}>
                             <button
                               type="button"
                               disabled={!!result || answeringId === soru.id}
                               onClick={() => onAnswer(soru, opt.option_letter)}
-                              className="flex w-full items-start gap-3 rounded-xl border border-white/[0.08] bg-black/25 px-4 py-3 text-left text-sm transition hover:border-violet-500/40 hover:bg-violet-500/10 disabled:pointer-events-none disabled:opacity-60"
+                              className="flex w-full items-start gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-left text-sm transition hover:border-violet-300 hover:bg-violet-50 disabled:pointer-events-none disabled:opacity-60"
                             >
-                              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-white/10 font-bold text-violet-200">
+                              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-violet-100 font-bold text-violet-800">
                                 {opt.option_letter}
                               </span>
-                              <span className="text-slate-200">{opt.option_text}</span>
+                              <span className="text-slate-800">{opt.option_text}</span>
                             </button>
                           </li>
                         ))}
@@ -1025,12 +1028,12 @@ function BookQuestionsModal({
                         <div
                           className={`mt-4 rounded-xl border px-4 py-3 text-sm ${
                             result.is_correct
-                              ? "border-emerald-500/30 bg-emerald-950/40 text-emerald-100"
-                              : "border-rose-500/30 bg-rose-950/40 text-rose-100"
+                              ? "border-emerald-200 bg-emerald-50 text-emerald-900"
+                              : "border-rose-200 bg-rose-50 text-rose-900"
                           }`}
                         >
                           <span className="font-semibold">{result.is_correct ? "Doğru" : "Yanlış"}</span>
-                          {result.explanation && <span className="mt-1 block text-slate-300">{result.explanation}</span>}
+                          {result.explanation && <span className="mt-1 block text-slate-700">{result.explanation}</span>}
                         </div>
                       )}
                       {result?.solution_video && (
@@ -1039,7 +1042,7 @@ function BookQuestionsModal({
                             href={result.solution_video}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-sm font-semibold text-violet-300 underline-offset-4 hover:text-violet-200 hover:underline"
+                            className="text-sm font-semibold text-violet-700 underline-offset-4 hover:text-violet-900 hover:underline"
                           >
                             Video çözüm
                           </a>
@@ -1051,7 +1054,7 @@ function BookQuestionsModal({
                             type="button"
                             disabled={loadingSimilar === soru.id}
                             onClick={() => onSimilar(soru.id)}
-                            className="rounded-xl border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-white/10 disabled:opacity-50"
+                            className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50 disabled:opacity-50"
                           >
                             {loadingSimilar === soru.id ? "Yükleniyor…" : "Benzer sorular"}
                           </button>
@@ -1062,18 +1065,18 @@ function BookQuestionsModal({
                 })}
               </div>
 
-              <div className="mt-10 flex flex-wrap items-center justify-between gap-4 border-t border-white/[0.06] pt-6">
+              <div className="mt-8 flex flex-wrap items-center justify-between gap-4 border-t border-slate-100 pt-5">
                 <button
                   type="button"
                   disabled={currentPage === 0}
                   onClick={() => setCurrentPage((p) => Math.max(0, p - 1))}
-                  className="rounded-xl border border-white/15 px-5 py-2.5 text-sm font-semibold text-slate-200 disabled:opacity-30"
+                  className="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-800 disabled:opacity-30"
                 >
                   Önceki
                 </button>
                 <p className="text-sm text-slate-500">
                   Sayfa{" "}
-                  <span className="font-semibold text-white">
+                  <span className="font-semibold text-slate-900">
                     {currentPage + 1} / {Math.max(totalPages, 1)}
                   </span>
                 </p>
@@ -1081,7 +1084,7 @@ function BookQuestionsModal({
                   type="button"
                   disabled={currentPage >= totalPages - 1}
                   onClick={() => setCurrentPage((p) => Math.min(totalPages - 1, p + 1))}
-                  className="rounded-xl border border-white/15 px-5 py-2.5 text-sm font-semibold text-slate-200 disabled:opacity-30"
+                  className="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-800 disabled:opacity-30"
                 >
                   Sonraki
                 </button>

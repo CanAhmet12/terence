@@ -123,14 +123,14 @@ export function SubjectBook3D({ subject, meta, href, className }: SubjectBook3DP
     <Link
       href={href}
       className={cn(
-        "group/book relative block w-[200px] shrink-0 select-none focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/80 focus-visible:ring-offset-2 focus-visible:ring-offset-[#070712]",
+        "group/book relative block w-[200px] shrink-0 select-none focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-50",
         className
       )}
     >
       <div className="perspective-[1400px]">
         {/* Masaya düşen gölge */}
         <div
-          className="pointer-events-none absolute -bottom-1 left-1/2 h-6 w-[88%] -translate-x-1/2 rounded-[100%] bg-black/55 blur-xl transition-all duration-500 group-hover/book:w-[95%] group-hover/book:opacity-90"
+          className="pointer-events-none absolute -bottom-1 left-1/2 h-5 w-[85%] -translate-x-1/2 rounded-[100%] bg-slate-900/15 blur-xl transition-all duration-500 group-hover/book:w-[92%] group-hover/book:opacity-90"
           aria-hidden
         />
 
