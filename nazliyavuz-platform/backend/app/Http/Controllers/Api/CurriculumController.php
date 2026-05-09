@@ -9,6 +9,7 @@ use App\Models\CurriculumSubject;
 use App\Models\CurriculumTopic;
 use App\Models\CurriculumTopicProgress;
 use App\Models\Topic;
+use App\Services\CurriculumThumbnailService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -17,6 +18,10 @@ class CurriculumController extends Controller
 {
     /** @var array<string, Collection<int, ContentItem>> */
     private array $mediaCatalogTitleMatchItemsCache = [];
+
+    public function __construct(
+        private CurriculumThumbnailService $thumbnailService,
+    ) {}
 
     /**
      * content_items.type alanındaki varyasyonları (Video, LINK, url vb.) katalog için video|pdf|text'e indirger.
@@ -115,7 +120,7 @@ class CurriculumController extends Controller
             $q->where('is_active', true)->orderBy('sort_order')
               ->with(['topics' => function ($tq) {
                   $tq->where('is_active', true)->orderBy('sort_order')
-                    ->with(['linkedTopic.contentItems']);
+                    ->with(['linkedTopic.contentItems.video']);
               }]);
         }]);
 
@@ -254,6 +259,7 @@ class CurriculumController extends Controller
                             'id'                    => (int) $ci->id,
                             'title'                 => $ci->title,
                             'url'                   => $this->resolveMediaCatalogItemUrl($ci, $canonicalType),
+                            'thumbnail_url'         => $this->resolveMediaCatalogDisplayThumbnail($ci, $canonicalType),
                             'duration_seconds'      => $ci->duration_seconds ?? ($ci->video?->duration_seconds ?? null),
                             'is_free'               => (bool) $ci->is_free,
                             'subject_slug'          => $subject->slug,
@@ -578,5 +584,28 @@ class CurriculumController extends Controller
         }
 
         return ($v && $v->cdn_url) ? $v->cdn_url : $ci->url;
+    }
+
+    /**
+     * Medya kartı için kapak: content_items.thumbnail_url > Video.thumbnail_url > YouTube otomatik.
+     */
+    private function resolveMediaCatalogDisplayThumbnail(ContentItem $ci, string $canonicalType): ?string
+    {
+        if ($canonicalType !== 'video') {
+            return null;
+        }
+        $direct = isset($ci->thumbnail_url) ? trim((string) $ci->thumbnail_url) : '';
+        if ($direct !== '') {
+            return $direct;
+        }
+        $v = $ci->relationLoaded('video') ? $ci->video : null;
+        if ($v === null) {
+            $v = $ci->video()->first();
+        }
+        if ($v && ! empty($v->thumbnail_url)) {
+            return $v->thumbnail_url;
+        }
+
+        return $this->thumbnailService->youtubeThumbnailFromVideoUrl($ci->url);
     }
 }

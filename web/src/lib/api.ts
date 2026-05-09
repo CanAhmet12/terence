@@ -449,6 +449,8 @@ export interface CurriculumContentItem {
   type: 'video' | 'pdf' | 'quiz' | 'text'
   title: string
   url?: string
+  /** Özel kapak veya CDN; yoksa istemci YouTube vb. için türetir */
+  thumbnail_url?: string | null
   is_free?: boolean
   duration_seconds?: number
 }
@@ -514,6 +516,8 @@ export interface MediaCatalogItem {
   unit_title: string
   topic_status: string
   sort_order: number
+  /** Sunucunun çözdüğü kapak (özel > video kaydı > YouTube) */
+  thumbnail_url?: string | null
 }
 
 export interface MediaCatalogSubjectSummary {
@@ -880,6 +884,8 @@ export interface ContentItem {
   type?: 'video' | 'pdf' | 'text' | 'quiz'
   title?: string
   url?: string
+  /** content_items.thumbnail_url — video.kapak ve YouTube’dan öncelikli */
+  thumbnail_url?: string | null
   duration_seconds?: number
   topic_id?: number
   sort_order?: number
@@ -1016,6 +1022,7 @@ export interface TeacherCurriculumUploadResponse {
     type: string
     title: string
     url?: string | null
+    thumbnail_url?: string | null
     is_free?: boolean
   }
   curriculum_topic_id?: number
@@ -2479,12 +2486,11 @@ export function getVideoThumbnail(url: string | null, thumbnailUrl?: string | nu
   // 2. No URL provided
   if (!url) return null;
   
-  // 3. Extract YouTube thumbnail
+  // 3. Extract YouTube thumbnail (hqdefault: backend ile aynı, yaygın ve stabil)
   if (url.includes('youtube.com') || url.includes('youtu.be')) {
     const id = extractYouTubeId(url);
     if (id) {
-      // Try maxresdefault first (1920x1080), fallback to hqdefault (480x360)
-      return `https://img.youtube.com/vi/${id}/maxresdefault.jpg`;
+      return `https://img.youtube.com/vi/${id}/hqdefault.jpg`;
     }
   }
   

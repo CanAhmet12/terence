@@ -4,7 +4,7 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { api } from "@/lib/api";
 import type { Question, TeacherCurriculumTopicRow } from "@/lib/api";
-import { Video, FileText, FileQuestion, Upload, CheckCircle, Loader2, X, AlertCircle, Sparkles, Bot, RefreshCw, Search } from "lucide-react";
+import { Video, FileText, FileQuestion, Upload, CheckCircle, Loader2, X, AlertCircle, Sparkles, Bot, RefreshCw, Search, ImageIcon } from "lucide-react";
 
 type ContentType = "video" | "pdf" | "soru";
 
@@ -216,6 +216,9 @@ export default function IcerikYuklemePage() {
   const [displayTitle, setDisplayTitle] = useState("");
   const [mediaUrl, setMediaUrl] = useState("");
   const [file, setFile] = useState<File | null>(null);
+  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
+  const [thumbnailUrlField, setThumbnailUrlField] = useState("");
+  const [thumbObjectUrl, setThumbObjectUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploaded, setUploaded] = useState(false);
   const [error, setError] = useState("");
@@ -223,6 +226,16 @@ export default function IcerikYuklemePage() {
   const [showAIModal, setShowAIModal] = useState(false);
 
   const fileRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!thumbnailFile) {
+      setThumbObjectUrl(null);
+      return;
+    }
+    const u = URL.createObjectURL(thumbnailFile);
+    setThumbObjectUrl(u);
+    return () => URL.revokeObjectURL(u);
+  }, [thumbnailFile]);
 
   const handleFile = (f: File | null) => {
     if (!f) return;
@@ -301,6 +314,11 @@ export default function IcerikYuklemePage() {
       if (mediaUrl.trim()) fd.append("url", mediaUrl.trim());
       fd.append("is_free", "1");
       if (file) fd.append("file", file);
+      if (secim === "video") {
+        if (thumbnailFile) fd.append("thumbnail", thumbnailFile);
+        const tu = thumbnailUrlField.trim();
+        if (tu) fd.append("thumbnail_url", tu);
+      }
 
       const res = await api.uploadCurriculumContent(fd);
       if (!res.success && (res as { error?: boolean }).error) {
@@ -320,6 +338,8 @@ export default function IcerikYuklemePage() {
     setDisplayTitle("");
     setMediaUrl("");
     setFile(null);
+    setThumbnailFile(null);
+    setThumbnailUrlField("");
     setUploaded(false);
     setError("");
   };
@@ -381,6 +401,8 @@ export default function IcerikYuklemePage() {
               onClick={() => {
                 setSecim(key);
                 setFile(null);
+                setThumbnailFile(null);
+                setThumbnailUrlField("");
                 setError("");
               }}
               className={`flex items-center gap-2 px-5 py-3 rounded-xl font-semibold transition-all ${
@@ -531,6 +553,49 @@ export default function IcerikYuklemePage() {
                     )}
                   </div>
                 </div>
+
+                {secim === "video" && (
+                  <div className="rounded-2xl border border-violet-100 bg-violet-50/40 p-5 space-y-3">
+                    <p className="text-sm font-bold text-slate-800 flex items-center gap-2">
+                      <ImageIcon className="w-4 h-4 text-violet-600" /> Kapak görseli (isteğe bağlı)
+                    </p>
+                    <p className="text-xs text-slate-600">
+                      YouTube URL&apos;si kullanıyorsanız boş bırakabilirsiniz; kapak otomatik alınır. Özel görsel yüklemek sunucuda sıkıştırılır.
+                    </p>
+                    <div>
+                      <label className={labelCls}>Kapak görseli URL</label>
+                      <input
+                        type="url"
+                        value={thumbnailUrlField}
+                        onChange={(e) => setThumbnailUrlField(e.target.value)}
+                        placeholder="https://..."
+                        className={inputCls}
+                        disabled={!!thumbnailFile}
+                      />
+                    </div>
+                    <div>
+                      <label className={labelCls}>Kapak dosyası (JPEG / PNG / WebP)</label>
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        disabled={thumbnailUrlField.trim().length > 0}
+                        onChange={(e) => setThumbnailFile(e.target.files?.[0] ?? null)}
+                        className={`${inputCls} py-2 file:mr-3 file:rounded-lg file:border-0 file:bg-violet-100 file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-violet-800`}
+                      />
+                    </div>
+                    {(thumbObjectUrl || (thumbnailUrlField.trim().startsWith("http") && thumbnailUrlField.trim().length > 12)) && (
+                      <div className="relative aspect-video w-full max-w-sm overflow-hidden rounded-xl border border-slate-200 shadow-sm">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={thumbObjectUrl || thumbnailUrlField.trim()}
+                          alt="Kapak önizleme"
+                          className="h-full w-full object-cover object-center"
+                          loading="lazy"
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {error && (
                   <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-100 rounded-xl">

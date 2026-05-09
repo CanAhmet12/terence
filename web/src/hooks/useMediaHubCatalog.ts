@@ -33,7 +33,7 @@ function mapCatalogRow(row: MediaCatalogItem): UnifiedMediaItem {
     title: row.title,
     url,
     playbackUrl,
-    thumbnailUrl: ct === "video" ? getVideoThumbnail(url, null) : null,
+    thumbnailUrl: ct === "video" ? getVideoThumbnail(url, row.thumbnail_url ?? null) : null,
     durationSeconds: row.duration_seconds ?? 0,
     isFree: row.is_free,
     subjectSlug: row.subject_slug,
@@ -73,7 +73,10 @@ function mapCourseContentItem(
       : item.duration_seconds ?? 0;
   const thumb =
     contentType === "video"
-      ? getVideoThumbnail(playbackUrl, item.video?.thumbnail_url ?? null)
+      ? getVideoThumbnail(
+          playbackUrl,
+          (item.thumbnail_url && String(item.thumbnail_url).trim()) || item.video?.thumbnail_url || null,
+        )
       : null;
   return {
     key: `course-${course.id}-${topic.id}-${item.id}`,

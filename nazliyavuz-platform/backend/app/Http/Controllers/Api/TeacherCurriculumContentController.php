@@ -9,6 +9,7 @@ use App\Models\CurriculumTopic;
 use App\Models\Topic;
 use App\Models\Unit;
 use App\Services\CacheService;
+use App\Services\CurriculumThumbnailService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -19,7 +20,10 @@ use Illuminate\Support\Str;
 
 class TeacherCurriculumContentController extends Controller
 {
-    public function __construct(private CacheService $cache) {}
+    public function __construct(
+        private CacheService $cache,
+        private CurriculumThumbnailService $thumbnailService,
+    ) {}
 
     /**
      * Öğretmenin müfredat konusu araması (içerik yükleme seçici).
@@ -77,6 +81,8 @@ class TeacherCurriculumContentController extends Controller
             'file' => 'sometimes|nullable|file|max:51200',
             'content_type' => 'required|in:video,pdf',
             'is_free' => 'sometimes|boolean',
+            'thumbnail' => 'sometimes|nullable|image|mimes:jpeg,jpg,png,webp|max:10240',
+            'thumbnail_url' => 'sometimes|nullable|string|max:2048',
         ]);
 
         if ($v->fails()) {
@@ -122,10 +128,20 @@ class TeacherCurriculumContentController extends Controller
             ], 422);
         }
 
+        $thumbUrlInput = trim((string) $request->input('thumbnail_url', ''));
+        if ($thumbUrlInput !== '' && ! filter_var($thumbUrlInput, FILTER_VALIDATE_URL)) {
+            return response()->json([
+                'error' => true,
+                'message' => 'Kapak görseli URL\'si geçersiz.',
+            ], 422);
+        }
+
         $title = trim((string) ($data['title'] ?? '')) ?: ($cTopic->title.' — '.($contentType === 'video' ? 'Video' : 'PDF'));
 
+        $thumbService = $this->thumbnailService;
+
         try {
-            $result = DB::transaction(function () use ($request, $cTopic, $cUnit, $cSubject, $teacher, $contentType, $title, $isFree, $urlInput) {
+            $result = DB::transaction(function () use ($request, $cTopic, $cUnit, $cSubject, $teacher, $contentType, $title, $isFree, $urlInput, $thumbUrlInput, $thumbService) {
                 $lTopic = $this->resolveLinkedTopic($cTopic, $cUnit, $cSubject, $teacher->id);
 
                 $url = $urlInput;
@@ -141,6 +157,17 @@ class TeacherCurriculumContentController extends Controller
                     throw new \RuntimeException('İçerik URL\'si oluşturulamadı.');
                 }
 
+                $thumbnailUrl = null;
+                if ($contentType === 'video') {
+                    if ($request->hasFile('thumbnail')) {
+                        $thumbnailUrl = $thumbService->storeOptimizedCover($request->file('thumbnail'), $request, (int) $lTopic->id);
+                    } elseif ($thumbUrlInput !== '') {
+                        $thumbnailUrl = $thumbUrlInput;
+                    } else {
+                        $thumbnailUrl = $thumbService->youtubeThumbnailFromVideoUrl($url);
+                    }
+                }
+
                 $maxOrder = (int) ContentItem::where('topic_id', $lTopic->id)->max('sort_order');
 
                 $item = ContentItem::create([
@@ -148,6 +175,7 @@ class TeacherCurriculumContentController extends Controller
                     'type' => $contentType,
                     'title' => $title,
                     'url' => $url,
+                    'thumbnail_url' => $thumbnailUrl,
                     'duration_seconds' => null,
                     'size_bytes' => $request->hasFile('file') ? $request->file('file')->getSize() : null,
                     'sort_order' => $maxOrder + 1,
@@ -175,6 +203,7 @@ class TeacherCurriculumContentController extends Controller
                 'type' => $result['item']->type,
                 'title' => $result['item']->title,
                 'url' => $result['item']->url,
+                'thumbnail_url' => $result['item']->thumbnail_url,
                 'is_free' => $result['item']->is_free,
             ],
             'curriculum_topic_id' => $cTopic->id,

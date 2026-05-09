@@ -10,6 +10,7 @@ use App\Models\ContentItem;
 use App\Models\StudentProgress;
 use App\Models\CourseEnrollment;
 use App\Services\CacheService;
+use App\Services\CurriculumThumbnailService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
@@ -17,7 +18,10 @@ use Illuminate\Support\Facades\Validator;
 
 class CourseController extends Controller
 {
-    public function __construct(private CacheService $cache) {}
+    public function __construct(
+        private CacheService $cache,
+        private CurriculumThumbnailService $thumbnailService,
+    ) {}
 
     // GET /api/courses — tüm kursları listele
     public function index(Request $request): JsonResponse
@@ -93,7 +97,7 @@ class CourseController extends Controller
                         'topics' => function ($q2) {
                             $q2->where('is_active', true)->orderBy('sort_order')->with([
                                 'contentItems' => function ($q3) {
-                                    $q3->where('is_active', true)->orderBy('sort_order');
+                                    $q3->where('is_active', true)->orderBy('sort_order')->with('video');
                                 }
                             ]);
                         }
@@ -241,7 +245,7 @@ class CourseController extends Controller
             ->with(['video'])
             ->get();
 
-        $data = $contentItems->map(function($item) {
+        $data = $contentItems->map(function ($item) {
             $result = [
                 'id' => $item->id,
                 'type' => $item->type,
@@ -249,6 +253,8 @@ class CourseController extends Controller
                 'description' => $item->description,
                 'sort_order' => $item->sort_order,
                 'is_active' => $item->is_active,
+                'url' => $item->url,
+                'thumbnail_url' => $item->thumbnail_url,
             ];
 
             if ($item->type === 'video' && $item->video) {
@@ -260,8 +266,15 @@ class CourseController extends Controller
                     'duration_seconds' => $item->video->duration_seconds,
                     'thumbnail_url' => $item->video->thumbnail_url,
                 ];
+                if (empty($result['thumbnail_url'])) {
+                    $result['thumbnail_url'] = $item->video->thumbnail_url
+                        ?: $this->thumbnailService->youtubeThumbnailFromVideoUrl($item->video->cdn_url ?: $item->url);
+                }
+            } elseif ($item->type === 'video') {
+                if (empty($result['thumbnail_url'])) {
+                    $result['thumbnail_url'] = $this->thumbnailService->youtubeThumbnailFromVideoUrl($item->url);
+                }
             }
-
 
             return $result;
         });

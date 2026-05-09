@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { api, type TeacherCurriculumTopicRow } from "@/lib/api";
-import { ArrowLeft, Upload, Video, FileText, Loader2, Search, CheckCircle, AlertCircle } from "lucide-react";
+import { ArrowLeft, Upload, Video, FileText, Loader2, Search, CheckCircle, AlertCircle, ImageIcon } from "lucide-react";
 
 function useDebouncedValue<T>(value: T, delay: number): T {
   const [debounced, setDebounced] = useState(value);
@@ -26,8 +26,21 @@ export default function AdminIcerikYuklePage() {
   const [title, setTitle] = useState("");
   const [url, setUrl] = useState("");
   const [file, setFile] = useState<File | null>(null);
+  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
+  const [thumbnailUrlField, setThumbnailUrlField] = useState("");
+  const [thumbObjectUrl, setThumbObjectUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [msg, setMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
+
+  useEffect(() => {
+    if (!thumbnailFile) {
+      setThumbObjectUrl(null);
+      return;
+    }
+    const u = URL.createObjectURL(thumbnailFile);
+    setThumbObjectUrl(u);
+    return () => URL.revokeObjectURL(u);
+  }, [thumbnailFile]);
 
   const search = useCallback(async () => {
     if (!token || debounced.trim().length < 2) {
@@ -68,9 +81,16 @@ export default function AdminIcerikYuklePage() {
       if (url.trim()) fd.append("url", url.trim());
       fd.append("is_free", "1");
       if (file) fd.append("file", file);
+      if (contentType === "video") {
+        if (thumbnailFile) fd.append("thumbnail", thumbnailFile);
+        const tu = thumbnailUrlField.trim();
+        if (tu) fd.append("thumbnail_url", tu);
+      }
       await api.uploadCurriculumContent(fd);
       setMsg({ type: "ok", text: "İçerik yüklendi." });
       setFile(null);
+      setThumbnailFile(null);
+      setThumbnailUrlField("");
       setUrl("");
       setTitle("");
     } catch (e) {
@@ -124,10 +144,10 @@ export default function AdminIcerikYuklePage() {
         </div>
 
         <div className="flex gap-2">
-          <button type="button" onClick={() => setContentType("video")} className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border text-sm font-semibold ${contentType === "video" ? "border-teal-500 bg-teal-50 text-teal-800" : "border-slate-200"}`}>
+          <button type="button" onClick={() => { setContentType("video"); setThumbnailFile(null); setThumbnailUrlField(""); }} className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border text-sm font-semibold ${contentType === "video" ? "border-teal-500 bg-teal-50 text-teal-800" : "border-slate-200"}`}>
             <Video className="w-4 h-4" /> Video
           </button>
-          <button type="button" onClick={() => setContentType("pdf")} className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border text-sm font-semibold ${contentType === "pdf" ? "border-amber-500 bg-amber-50 text-amber-900" : "border-slate-200"}`}>
+          <button type="button" onClick={() => { setContentType("pdf"); setThumbnailFile(null); setThumbnailUrlField(""); }} className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border text-sm font-semibold ${contentType === "pdf" ? "border-amber-500 bg-amber-50 text-amber-900" : "border-slate-200"}`}>
             <FileText className="w-4 h-4" /> PDF
           </button>
         </div>
@@ -145,6 +165,45 @@ export default function AdminIcerikYuklePage() {
           <input type="file" accept={contentType === "video" ? "video/*" : "application/pdf"} onChange={(e) => setFile(e.target.files?.[0] ?? null)} className="mt-1 w-full text-sm" />
         </div>
 
+        {contentType === "video" && (
+          <div className="rounded-xl border border-slate-100 bg-slate-50/80 p-4 space-y-3">
+            <p className="text-xs font-bold text-slate-700 flex items-center gap-2">
+              <ImageIcon className="w-3.5 h-3.5" /> Kapak görseli (isteğe bağlı)
+            </p>
+            <p className="text-[11px] text-slate-500">Boş bırakırsanız YouTube bağlantılarında otomatik kapak kullanılır. Dosya yüklemesi sunucuda optimize edilir.</p>
+            <div>
+              <label className="text-xs font-semibold text-slate-600">Kapak URL</label>
+              <input
+                value={thumbnailUrlField}
+                onChange={(e) => setThumbnailUrlField(e.target.value)}
+                className="mt-1 w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm"
+                placeholder="https://... görsel adresi"
+                disabled={!!thumbnailFile}
+              />
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-slate-600">Kapak dosyası (JPEG / PNG / WebP)</label>
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                disabled={thumbnailUrlField.trim().length > 0}
+                onChange={(e) => setThumbnailFile(e.target.files?.[0] ?? null)}
+                className="mt-1 w-full text-sm"
+              />
+            </div>
+            {(thumbObjectUrl || (thumbnailUrlField.trim().startsWith("http") && thumbnailUrlField.trim().length > 12)) && (
+              <div className="relative aspect-video w-full max-w-xs overflow-hidden rounded-lg border border-slate-200 bg-black/5">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={thumbObjectUrl || thumbnailUrlField.trim()}
+                  alt="Kapak önizleme"
+                  className="h-full w-full object-cover object-center"
+                  loading="lazy"
+                />
+              </div>
+            )}
+          </div>
+        )}
         <button
           type="button"
           onClick={upload}

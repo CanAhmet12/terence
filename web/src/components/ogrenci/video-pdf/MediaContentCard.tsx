@@ -92,7 +92,13 @@ export function MediaContentCard({ item, subscriptionPlan, onOpen, cardIndex = 0
         ) : thumb ? (
           <>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={thumb} alt="" className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-[1.04]" />
+            <img
+              src={thumb}
+              alt=""
+              className="absolute inset-0 h-full w-full object-cover object-center transition duration-500 group-hover:scale-[1.04]"
+              loading="lazy"
+              decoding="async"
+            />
             <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/15 to-transparent" />
           </>
         ) : (
