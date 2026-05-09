@@ -35,7 +35,14 @@ class StudentLiveSessionController extends Controller
             });
 
         if ($scope === 'upcoming') {
-            $q->whereIn('status', ['scheduled', 'live']);
+            // Canlı veya (planlı ve henüz takvimde “geçerli” sayılabilecek zaman — çok eski scheduled kayıtları listeleme)
+            $q->where(function ($w) {
+                $w->where('status', 'live')
+                    ->orWhere(function ($s) {
+                        $s->where('status', 'scheduled')
+                            ->where('scheduled_at', '>=', Carbon::now()->subDay()->startOfDay());
+                    });
+            });
         } elseif ($scope === 'past') {
             $q->where('status', 'ended');
         }
@@ -84,7 +91,13 @@ class StudentLiveSessionController extends Controller
             });
 
         $upcomingThisWeek = (clone $baseVisible)
-            ->whereIn('status', ['scheduled', 'live'])
+            ->where(function ($w) {
+                $w->where('status', 'live')
+                    ->orWhere(function ($s) {
+                        $s->where('status', 'scheduled')
+                            ->where('scheduled_at', '>=', Carbon::now()->subDay()->startOfDay());
+                    });
+            })
             ->where('scheduled_at', '>=', $weekStart)
             ->where('scheduled_at', '<=', Carbon::now()->endOfWeek())
             ->count();
