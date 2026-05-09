@@ -52,9 +52,7 @@ class ExamController extends Controller
         try {
             // QuestionController ile aynı kapsam (sınıf + sınav türü) + en az bir şık
             $qQuery = Question::query()
-                ->with(['options' => function ($q) {
-                    $q->orderBy('sort_order')->orderBy('id');
-                }])
+                ->with('options')
                 ->where('is_active', true);
 
             if ($user->isStudent()) {

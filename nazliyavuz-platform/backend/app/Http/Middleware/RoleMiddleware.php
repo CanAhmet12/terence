@@ -19,8 +19,9 @@ class RoleMiddleware
      */
     public function handle(Request $request, Closure $next, string ...$roles): Response
     {
-        // Check if user is authenticated
-        if (!auth()->check()) {
+        // JWT/Sanctum: Route önce auth:api ile çözülür; auth()->check() varsayılan guard ile uyumsuz kalabilir
+        $user = $request->user();
+        if (!$user) {
             return response()->json([
                 'error' => [
                     'code' => 'UNAUTHORIZED',
@@ -29,8 +30,6 @@ class RoleMiddleware
             ], 401);
         }
 
-        $user = auth()->user();
-        
         // Check if user is suspended
         if ($user->suspended_at && (!$user->suspended_until || now()->lessThan($user->suspended_until))) {
             return response()->json([

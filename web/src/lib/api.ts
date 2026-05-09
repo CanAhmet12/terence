@@ -2,12 +2,22 @@ import axios, { AxiosError, AxiosRequestConfig, AxiosResponse } from 'axios'
 import toast from 'react-hot-toast'
 import type { StudentGoalDashboard, RiskTier } from './goal-dashboard'
 
+/** NEXT_PUBLIC_API_URL bazen .../api/v1 ile biter; istekler /v1/... kullanınca çift /v1/v1 oluşur. */
+function normalizeApiBaseUrl(raw: string): string {
+  let u = raw.trim().replace(/\/+$/, '')
+  if (u.endsWith('/v1')) {
+    u = u.slice(0, -3).replace(/\/+$/, '')
+  }
+  return u
+}
+
 // Önce NEXT_PUBLIC_API_URL (build / runtime). Yoksa: development → yerel Laravel, production → canlı site (deploy’da env unutulursa kırılmaz).
-const API_BASE_URL =
+const API_BASE_URL = normalizeApiBaseUrl(
   process.env.NEXT_PUBLIC_API_URL ||
-  (process.env.NODE_ENV === 'development'
-    ? 'http://localhost:8000/api'
-    : 'https://terenceegitim.com/api')
+    (process.env.NODE_ENV === 'development'
+      ? 'http://localhost:8000/api'
+      : 'https://terenceegitim.com/api')
+)
 
 export const api = axios.create({
   baseURL: API_BASE_URL,
@@ -93,6 +103,18 @@ function extractApiError(error: AxiosError): ApiErrorPayload {
   }
 
   if (status === 500) {
+    const serverMsg =
+      typeof data.message === 'string' && data.message.trim().length > 0
+        ? data.message.trim()
+        : ''
+    // Laravel Handler / controller bazen anlamlı mesaj döner; kullanıcıya göster
+    if (serverMsg && serverMsg.length < 400 && !serverMsg.includes('<')) {
+      return {
+        message: serverMsg,
+        code,
+        status,
+      }
+    }
     return {
       message: 'Sunucuda gecici bir hata olustu. Lutfen biraz sonra tekrar dene.',
       code,
