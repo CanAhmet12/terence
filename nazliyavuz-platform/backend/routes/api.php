@@ -474,7 +474,10 @@ Route::middleware(['auth:api'])->group(function () {
     });
 
     // â”€â”€ Abonelik / Ã–deme â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-    Route::post('/payment/initiate', [\App\Http\Controllers\Api\PaymentController::class, 'initiate']);
+    Route::middleware('role:student,parent')->group(function () {
+        Route::post('/payment/initiate', [\App\Http\Controllers\Api\PaymentController::class, 'initiate']);
+        Route::post('/payment/apply-coupon', [\App\Http\Controllers\Api\PaymentController::class, 'applyCoupon']);
+    });
     Route::get('/subscription/status', [\App\Http\Controllers\Api\PaymentController::class, 'status']);
 
     // â”€â”€ Ã–ÄŸrenci Gamification â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -515,10 +518,7 @@ Route::middleware(['auth:api'])->group(function () {
     Route::get('/ai/coach/history', [\App\Http\Controllers\Api\AiController::class, 'coachHistory']);
     Route::delete('/ai/coach/history', [\App\Http\Controllers\Api\AiController::class, 'clearCoachHistory']);
 
-    // -- Kupon
-    Route::post('/payment/apply-coupon', [\App\Http\Controllers\Api\PaymentController::class, 'applyCoupon']);
-
-    // â”€â”€ Ã–ÄŸretmen â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // â"€â"€ Ã–ÄŸretmen â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
     Route::middleware('role:teacher,admin')->group(function () {
         Route::get('/teacher/stats', [\App\Http\Controllers\Api\TeacherController::class, 'stats']);
         Route::get('/teacher/classes', [\App\Http\Controllers\Api\TeacherController::class, 'classes']);

@@ -214,6 +214,7 @@ export function DashboardSidebar() {
 
   const role = (user?.role ?? "student") as keyof typeof ROLE_THEMES;
   const theme = ROLE_THEMES[role] ?? ROLE_THEMES.student;
+  const isTeacher = role === "teacher";
   const isFreePlan = !user?.subscription_plan || user.subscription_plan === "free";
   const isPro = !isFreePlan;
 
@@ -325,8 +326,26 @@ export function DashboardSidebar() {
         ))}
       </nav>
 
-      {/* ── Ücretsiz plan upsell ── */}
-      {isFreePlan && role !== "admin" && (
+      {/* ── Öğretmen: abonelik satışı yok ── */}
+      {isTeacher && role !== "admin" && (
+        <div className="px-3 pb-3">
+          <div className="rounded-2xl border border-teal-100 bg-gradient-to-br from-teal-50 to-emerald-50/90 p-4">
+            <p className="text-xs font-bold text-teal-900 leading-snug">Öğretmen hesabı</p>
+            <p className="mt-1 text-[10px] leading-relaxed text-teal-800/90">
+              Ders ve sınıf araçları için ek abonelik ücreti alınmaz. Ücretli paketler yalnızca öğrenci hesapları içindir.
+            </p>
+            <Link
+              href="/ogretmen"
+              className="mt-2.5 flex w-full items-center justify-center rounded-xl border border-teal-200 bg-white py-2 text-[11px] font-semibold text-teal-800 transition-colors hover:bg-teal-50"
+            >
+              Öğretmen paneli
+            </Link>
+          </div>
+        </div>
+      )}
+
+      {/* ── Ücretsiz plan upsell (öğrenci / veli) ── */}
+      {isFreePlan && role !== "admin" && !isTeacher && (
         <div className="px-3 pb-3">
           <div className="relative overflow-hidden rounded-2xl border border-violet-100 bg-gradient-to-br from-violet-50 via-indigo-50/80 to-purple-50 p-4">
             <div className="absolute -right-3 -top-3 h-16 w-16 rounded-full bg-violet-300/20 blur-xl pointer-events-none" />
@@ -351,8 +370,8 @@ export function DashboardSidebar() {
         </div>
       )}
 
-      {/* ── Pro plan badge ── */}
-      {isPro && (
+      {/* ── Pro plan badge (öğrenci / veli; öğretmende abonelik rozeti gösterme) ── */}
+      {isPro && !isTeacher && (
         <div className="px-3 pb-3">
           <div className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200">
             <Crown className="w-4 h-4 text-amber-500 shrink-0" />

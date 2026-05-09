@@ -5,8 +5,8 @@ import { useAuth } from "@/lib/auth-context";
 import { api } from "@/lib/api";
 import Link from "next/link";
 import {
-  Check, Zap, Video, FileText, Users, Shield, ArrowRight,
-  CheckCircle, Loader2, Star, Crown, Tag, X, ChevronDown
+  Zap, Video, FileText, Users, Shield, ArrowRight,
+  CheckCircle, Loader2, Star, Crown, Tag, X, ChevronDown, GraduationCap
 } from "lucide-react";
 
 // ─── FAQ Accordion ────────────────────────────────────────────────────────────
@@ -352,6 +352,7 @@ export default function PaketlerPage() {
   }, [user]);
 
   const handleSelectPlan = useCallback(async (plan: Plan) => {
+    if (user?.role === "teacher") return;
     if (plan.key === "free") {
       window.location.href = "/kayit";
       return;
@@ -364,11 +365,84 @@ export default function PaketlerPage() {
     setLoadingPlan(plan.key);
     setSelectedPlan(plan);
     setLoadingPlan(null);
-  }, [token, currentPlan]);
+  }, [token, currentPlan, user?.role]);
 
   // Yıllık hesap: %20 indirim
   const discountedPrice = (price: number) =>
     billing === "yearly" ? Math.round(price * 12 * 0.8) : price;
+
+  const isTeacher = user?.role === "teacher";
+
+  if (isTeacher) {
+    const teacherFeatures = [
+      "Sınıf ve öğrenci yönetimi",
+      "Ödev, test ve içerik yükleme",
+      "Canlı ders oluşturma ve yönetimi",
+      "Analiz merkezi ve mesajlaşma",
+    ];
+    return (
+      <>
+        <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
+          <div className="pt-16 sm:pt-20 pb-10 sm:pb-14 text-center px-3 sm:px-4 min-w-0">
+            <p className="inline-block text-teal-600 font-bold text-xs sm:text-sm uppercase tracking-widest mb-4 px-3 py-1 bg-teal-50 rounded-full">
+              Öğretmen hesabı
+            </p>
+            <h1 className="text-2xl min-[400px]:text-3xl sm:text-4xl font-extrabold text-slate-900 mb-4 text-balance px-1">
+              Öğretmenler için{" "}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-600 to-teal-400">
+                abonelik ücreti yok
+              </span>
+            </h1>
+            <p className="text-base sm:text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed">
+              Bronze, Plus ve Pro paketleri yalnızca <strong className="text-slate-800">öğrenci</strong> (ve gerekirse{" "}
+              <strong className="text-slate-800">veli</strong>) hesapları içindir. Öğretmen panelindeki ders, sınıf, ödev ve canlı ders
+              araçları hesabınıza dahildir; bu sayfadan öğrenci paketi satın almanız gerekmez.
+            </p>
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+              <Link
+                href="/ogretmen"
+                className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-teal-600 to-teal-500 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-teal-500/25 transition hover:from-teal-700 hover:to-teal-600"
+              >
+                Öğretmen paneline dön
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+              <Link
+                href="/iletisim"
+                className="inline-flex items-center gap-2 rounded-xl border-2 border-slate-200 bg-white px-6 py-3 text-sm font-semibold text-slate-700 transition hover:border-teal-300 hover:text-teal-800"
+              >
+                Soru sor
+              </Link>
+            </div>
+          </div>
+
+          <div className="max-w-xl mx-auto px-4 sm:px-6 pb-20">
+            <div className="rounded-3xl border-2 border-teal-100 bg-white p-6 sm:p-8 shadow-sm">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-teal-100 text-teal-700">
+                  <GraduationCap className="w-6 h-6" />
+                </div>
+                <div className="text-left">
+                  <h2 className="font-bold text-lg text-slate-900">Hesabınıza dahil olanlar</h2>
+                  <p className="text-xs text-slate-500">Ek ödeme veya paket seçimi gerekmez</p>
+                </div>
+              </div>
+              <ul className="space-y-3">
+                {teacherFeatures.map((text) => (
+                  <li key={text} className="flex items-start gap-2.5 text-sm text-slate-700">
+                    <CheckCircle className="w-4 h-4 text-teal-500 shrink-0 mt-0.5" strokeWidth={2.5} />
+                    {text}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <p className="mt-8 text-center text-sm text-slate-500">
+              Öğrencilerinizin tam içerikten yararlanması için kendi hesaplarından paket seçmeleri gerekir.
+            </p>
+          </div>
+        </div>
+      </>
+    );
+  }
 
   return (
     <>

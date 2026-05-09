@@ -199,11 +199,15 @@ export default function ProfilPage() {
                   <p className="text-slate-500">
                     {user.role === "student" ? "Öğrenci" : user.role === "teacher" ? "Öğretmen" : user.role === "parent" ? "Veli" : "Admin"}
                   </p>
-                  {user.subscription_plan && (
+                  {user.role === "teacher" ? (
+                    <span className="inline-flex items-center mt-1 px-2.5 py-1 bg-slate-100 text-slate-700 text-xs font-semibold rounded-full">
+                      Öğretmen hesabı — abonelik ücreti yok
+                    </span>
+                  ) : user.subscription_plan && user.subscription_plan !== "free" ? (
                     <span className="inline-flex items-center mt-1 px-2.5 py-1 bg-teal-50 text-teal-700 text-xs font-semibold rounded-full capitalize">
                       {user.subscription_plan} paketi
                     </span>
-                  )}
+                  ) : null}
                 </div>
               </div>
             </div>

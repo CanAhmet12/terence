@@ -33,6 +33,14 @@ class PaymentController extends Controller
         }
 
         $user = Auth::user();
+
+        if (in_array($user->role, ['teacher', 'admin'], true)) {
+            return response()->json([
+                'error' => true,
+                'message' => 'Öğretmen ve yönetici hesapları için abonelik satın alınamaz.',
+            ], 403);
+        }
+
         $planType = $request->plan_type;
         $billingPeriod = $request->billing_period;
 

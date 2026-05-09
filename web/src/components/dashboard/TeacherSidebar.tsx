@@ -3,7 +3,6 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { useAuth } from "@/lib/auth-context";
 import {
   LayoutDashboard,
   BookOpen,
@@ -16,7 +15,6 @@ import {
   ChevronLeft,
   UserCircle,
   Bell,
-  Sparkles,
   CalendarDays,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -57,9 +55,6 @@ const teacherNavGroups = [
 
 export function TeacherSidebar() {
   const pathname = usePathname();
-  const { user } = useAuth();
-
-  const isFreePlan = !user?.subscription_plan || user.subscription_plan === "free";
 
   return (
     <aside className="w-64 min-h-screen bg-white border-r border-slate-200/80 flex flex-col">
@@ -104,27 +99,11 @@ export function TeacherSidebar() {
         ))}
       </nav>
 
-      {isFreePlan && (
-        <div className="px-3 pb-3">
-          <div className="bg-gradient-to-br from-teal-50 to-emerald-50 border border-teal-100 rounded-xl p-3">
-            <div className="flex items-center gap-2 mb-1.5">
-              <div className="w-6 h-6 rounded-lg bg-teal-100 flex items-center justify-center">
-                <Sparkles className="w-3.5 h-3.5 text-teal-600" />
-              </div>
-              <span className="text-xs font-bold text-teal-800">Ücretsiz Plan</span>
-            </div>
-            <p className="text-[11px] text-teal-700 mb-2 leading-relaxed">
-              AI soru üretimi ve gelişmiş analitik için yükseltin.
-            </p>
-            <Link
-              href="/paketler"
-              className="block w-full text-center text-xs font-semibold text-white bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-700 hover:to-teal-600 rounded-lg py-2 transition-all"
-            >
-              Pro&apos;ya Geç →
-            </Link>
-          </div>
-        </div>
-      )}
+      <div className="px-3 pb-2">
+        <p className="text-center text-[10px] leading-relaxed text-slate-500">
+          Öğretmen hesapları için ek abonelik yok; tüm öğretmen araçları hesabınıza dahildir.
+        </p>
+      </div>
 
       <div className="p-3 border-t border-slate-100">
         <Link
