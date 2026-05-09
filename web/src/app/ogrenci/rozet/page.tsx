@@ -315,7 +315,7 @@ export default function RozetPage() {
 
   return (
     <div className="min-h-full bg-white text-slate-900 antialiased">
-      <div className="mx-auto w-full max-w-6xl px-4 pb-16 pt-8 sm:px-6 lg:px-8 lg:pb-20 lg:pt-10">
+      <div className="w-full px-4 pb-16 pt-8 sm:px-6 lg:px-8 lg:pb-20 lg:pt-10">
         {/* Üst başlık */}
         <header className="mb-8 flex flex-col gap-6 border-b border-slate-100 pb-8 sm:flex-row sm:items-end sm:justify-between">
           <div className="space-y-2">
