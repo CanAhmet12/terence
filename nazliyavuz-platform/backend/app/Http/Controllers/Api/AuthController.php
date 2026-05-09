@@ -331,15 +331,27 @@ class AuthController extends Controller
     public function uploadProfilePhoto(Request $request): JsonResponse
     {
         $user = Auth::user();
+        // image: jpeg/png/gif/webp/bmp; mimes ile gif dislanmasin diye ayri mimes kullanilmadi
         $v = Validator::make($request->all(), [
-            'photo' => 'required|image|max:2048|mimes:jpg,jpeg,png,webp',
+            'photo' => 'required|image|max:5120',
         ]);
         if ($v->fails()) {
             return $this->validationError($v, $request);
         }
-        $path = $request->file('photo')->store('profile-photos', 'public');
+        try {
+            $path = $request->file('photo')->store('profile-photos', 'public');
+        } catch (\Throwable $e) {
+            Log::error('uploadProfilePhoto store failed', ['e' => $e->getMessage()]);
+
+            return response()->json([
+                'error'   => true,
+                'code'    => 'UPLOAD_FAILED',
+                'message' => 'Dosya kaydedilemedi. Sunucu depolama ayarlarını kontrol edin.',
+            ], 500);
+        }
         $url = asset('storage/' . $path);
         $user->update(['profile_photo_url' => $url]);
+
         return response()->json([
             'success' => true,
             'url'     => $url,

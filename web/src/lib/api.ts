@@ -40,7 +40,6 @@ function translateApiMessage(raw?: string, code?: string): string {
   const normalized = (raw ?? '').trim()
   const map: Record<string, string> = {
     INVALID_CREDENTIALS: 'E-posta veya sifre hatali.',
-    VALIDATION_ERROR: 'Girdigin bilgileri kontrol et ve tekrar dene.',
     FORBIDDEN: 'Bu islem icin yetkin bulunmuyor.',
     UNAUTHORIZED: 'Oturum suresi doldu. Lutfen tekrar giris yap.',
     ACCOUNT_SUSPENDED: 'Hesabin askiya alinmistir.',
@@ -53,11 +52,24 @@ function translateApiMessage(raw?: string, code?: string): string {
     'The email field must be a valid email address': 'Gecerli bir e-posta adresi gir.',
     'The password field must be at least 8 characters.': 'Sifre en az 8 karakter olmalidir.',
     'The password field must be at least 8 characters': 'Sifre en az 8 karakter olmalidir.',
+    'The photo field is required.': 'Lutfen bir fotograf sec.',
+    'The photo field is required': 'Lutfen bir fotograf sec.',
+    'The photo must be an image.': 'Dosya bir resim olmali (JPEG, PNG, GIF veya WebP).',
+    'The photo must be an image': 'Dosya bir resim olmali (JPEG, PNG, GIF veya WebP).',
+    'The photo failed to upload.': 'Fotograf yuklenemedi. Baglantiyi ve dosya boyutunu kontrol et.',
+    'The photo failed to upload': 'Fotograf yuklenemedi. Baglantiyi ve dosya boyutunu kontrol et.',
+    'The photo must not be greater than 2048 kilobytes.': 'Dosya en fazla 5 MB olabilir.',
+    'The photo must not be greater than 5120 kilobytes.': 'Dosya en fazla 5 MB olabilir.',
   }
 
-  if (code && map[code]) return map[code]
+  // Oncelik: Laravel / sunucunun dondugu somut mesaj (422 alan hatalari dahil)
   if (map[normalized]) return map[normalized]
-  return normalized || 'Bir hata olustu. Lutfen tekrar dene.'
+  if (normalized.length > 0) return normalized
+
+  // Mesaj yoksa kod ile genel metin
+  if (code === 'VALIDATION_ERROR') return 'Girdigin bilgileri kontrol et ve tekrar dene.'
+  if (code && map[code]) return map[code]
+  return 'Bir hata olustu. Lutfen tekrar dene.'
 }
 
 function extractApiError(error: AxiosError): ApiErrorPayload {
@@ -1019,13 +1031,69 @@ export const userApi = {
 
   async uploadProfilePhoto(_tokenOrFile?: string | File, file?: File): Promise<{ url: string }> {
     const actualFile = typeof _tokenOrFile === 'string' ? file : _tokenOrFile
-    const formData = new FormData()
-    if (actualFile) formData.append('photo', actualFile)
-    const response = await api.post<{ url: string; profile_photo_url: string; success?: boolean }>(
-      '/user/photo',
-      formData
-    )
-    return { url: response.data.url ?? response.data.profile_photo_url }
+    if (!actualFile) throw new Error('Dosya secilmedi')
+
+    const postPhoto = async (authToken: string | null) => {
+      const fd = new FormData()
+      fd.append('photo', actualFile)
+      return fetch(`${API_BASE_URL}/user/photo`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          Accept: 'application/json',
+          ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+        },
+        body: fd,
+      })
+    }
+
+    let token = getAccessToken()
+    let res = await postPhoto(token)
+
+    if (res.status === 401 && token) {
+      try {
+        const refreshResponse = await axios.post(
+          `${API_BASE_URL}/v1/auth/refresh`,
+          {},
+          { withCredentials: true }
+        )
+        const newToken =
+          refreshResponse.data?.token?.access_token ||
+          refreshResponse.data?.access_token
+        if (newToken) {
+          setAccessToken(newToken)
+          res = await postPhoto(newToken)
+        }
+      } catch {
+        /* tek deneme */
+      }
+    }
+
+    const data = (await res.json().catch(() => ({}))) as Record<string, unknown>
+
+    if (!res.ok) {
+      const errors = (data.errors && typeof data.errors === 'object')
+        ? (data.errors as Record<string, string[]>)
+        : undefined
+      let raw =
+        (typeof data.message === 'string' && data.message.trim()) ||
+        ''
+      if (!raw && errors) {
+        const firstKey = Object.keys(errors)[0]
+        const arr = firstKey ? errors[firstKey] : undefined
+        raw = Array.isArray(arr) ? arr[0] : ''
+      }
+      const msg = translateApiMessage(raw || undefined, data.code as string | undefined)
+      const err = new Error(msg) as Error & ApiErrorPayload
+      err.name = 'ApiError'
+      err.status = res.status
+      err.fieldErrors = errors
+      throw err
+    }
+
+    const url = (data.url as string | undefined) ?? (data.profile_photo_url as string | undefined)
+    if (!url) throw new Error('Sunucu fotograf adresi dondurmedi')
+    return { url }
   },
 
   async updateNotificationPreferences(_tokenOrData?: string | Record<string, boolean>, data?: Record<string, boolean>): Promise<void> {
