@@ -182,8 +182,8 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-indigo-50/30 to-violet-50/20">
-      <div className="max-w-2xl mx-auto px-4 py-10">
+    <div className="min-h-screen min-w-0 overflow-x-hidden bg-gradient-to-br from-slate-50 via-indigo-50/30 to-violet-50/20">
+      <div className="max-w-2xl mx-auto px-3 py-8 sm:px-4 sm:py-10">
 
         {/* Üst başlık */}
         <div className="text-center mb-10">

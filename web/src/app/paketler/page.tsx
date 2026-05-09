@@ -32,13 +32,13 @@ function FaqAccordion() {
           <div key={i} className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
             <button
               onClick={() => setOpen(open === i ? null : i)}
-              className="w-full flex items-center justify-between px-6 py-4 text-left font-semibold text-slate-900 hover:bg-slate-50 transition-colors"
+              className="w-full flex items-start sm:items-center justify-between px-4 sm:px-6 py-3 sm:py-4 text-left font-semibold text-slate-900 hover:bg-slate-50 transition-colors gap-2 min-w-0"
             >
-              <span>{item.q}</span>
+              <span className="min-w-0 pr-2 text-sm sm:text-base">{item.q}</span>
               <ChevronDown className={`w-5 h-5 text-slate-400 shrink-0 ml-4 transition-transform duration-300 ${open === i ? "rotate-180" : ""}`} />
             </button>
             <div className={`overflow-hidden transition-all duration-300 ${open === i ? "max-h-48" : "max-h-0"}`}>
-              <p className="px-6 pb-5 text-sm text-slate-600 leading-relaxed">{item.a}</p>
+              <p className="px-4 sm:px-6 pb-5 text-sm text-slate-600 leading-relaxed">{item.a}</p>
             </div>
           </div>
         ))}
@@ -251,9 +251,9 @@ function PaymentModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
       <div className="bg-white rounded-3xl shadow-2xl w-full max-w-xl overflow-hidden">
         {/* Başlık */}
-        <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100">
-          <div>
-            <h3 className="font-bold text-lg text-slate-900">{plan.name} — {discount ? discount.finalPrice : basePrice}₺{billing === "yearly" ? "/yıl" : "/ay"}</h3>
+        <div className="flex items-start sm:items-center justify-between gap-3 px-4 sm:px-6 py-4 sm:py-5 border-b border-slate-100">
+          <div className="min-w-0 flex-1">
+            <h3 className="font-bold text-sm sm:text-lg text-slate-900 leading-snug break-words">{plan.name} — {discount ? discount.finalPrice : basePrice}₺{billing === "yearly" ? "/yıl" : "/ay"}</h3>
             <p className="text-sm text-slate-500 mt-0.5">Güvenli ödeme — PayTR</p>
           </div>
           <button
@@ -265,7 +265,7 @@ function PaymentModal({
         </div>
 
         {/* İçerik */}
-        <div className="p-6 space-y-4">
+        <div className="p-4 sm:p-6 space-y-4">
           {/* Promosyon kodu */}
           {!couponApplied ? (
             <div className="space-y-2">
@@ -314,7 +314,7 @@ function PaymentModal({
             </div>
           ) : iframeToken ? (
             <div className="space-y-3">
-              <div className="w-full h-[380px] rounded-2xl overflow-hidden border border-slate-200">
+              <div className="w-full min-h-[260px] sm:min-h-[320px] md:h-[380px] rounded-2xl overflow-hidden border border-slate-200">
                 <iframe
                   src={`https://www.paytr.com/odeme/guvenli/${iframeToken}`}
                   allow="payment"
@@ -374,11 +374,11 @@ export default function PaketlerPage() {
     <>
       <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
         {/* Hero */}
-        <div className="pt-20 pb-16 text-center px-4">
-          <p className="inline-block text-teal-600 font-bold text-sm uppercase tracking-widest mb-4 px-3 py-1 bg-teal-50 rounded-full">
+        <div className="pt-16 sm:pt-20 pb-12 sm:pb-16 text-center px-3 sm:px-4 min-w-0">
+          <p className="inline-block text-teal-600 font-bold text-xs sm:text-sm uppercase tracking-widest mb-4 px-3 py-1 bg-teal-50 rounded-full">
             Paketler & Fiyatlandırma
           </p>
-          <h1 className="text-4xl sm:text-5xl font-extrabold text-slate-900 mb-5">
+          <h1 className="text-2xl min-[400px]:text-3xl sm:text-5xl font-extrabold text-slate-900 mb-5 text-balance px-1">
             Hedefine Uygun{" "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-600 to-teal-400">
               Paketi Seç
@@ -389,7 +389,7 @@ export default function PaketlerPage() {
           </p>
 
           {/* Aylık / Yıllık toggle */}
-          <div className="inline-flex items-center bg-slate-100 rounded-2xl p-1.5 gap-1">
+          <div className="inline-flex flex-wrap items-center justify-center bg-slate-100 rounded-2xl p-1.5 gap-1 max-w-full">
             {(["monthly", "yearly"] as const).map((b) => (
               <button
                 key={b}
@@ -421,8 +421,8 @@ export default function PaketlerPage() {
               return (
                 <div
                   key={plan.key}
-                  className={`relative rounded-3xl border-2 p-7 transition-all duration-300 ${c.ring} ${c.bg} ${
-                    plan.popular ? "scale-[1.02] lg:scale-[1.03]" : ""
+                  className={`relative rounded-3xl border-2 p-5 sm:p-7 transition-all duration-300 ${c.ring} ${c.bg} ${
+                    plan.popular ? "sm:scale-[1.02] lg:scale-[1.03]" : ""
                   }`}
                 >
                   {/* Badge */}

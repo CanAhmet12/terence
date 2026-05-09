@@ -68,15 +68,15 @@ export default function SifreDegistirPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-start justify-center py-16 px-4">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen bg-slate-50 flex items-start justify-center py-10 sm:py-16 px-3 sm:px-4 min-w-0">
+      <div className="w-full max-w-md min-w-0">
         <Link href={backHref} className="inline-flex items-center gap-2 text-slate-500 hover:text-teal-600 text-sm mb-6 transition-colors">
           <ArrowLeft className="w-4 h-4" />
           Profile dön
         </Link>
 
         <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
-          <div className="p-8 border-b border-slate-100 bg-gradient-to-br from-slate-50 to-white flex items-center gap-4">
+          <div className="p-5 sm:p-8 border-b border-slate-100 bg-gradient-to-br from-slate-50 to-white flex items-center gap-3 sm:gap-4 min-w-0">
             <div className="w-12 h-12 rounded-2xl bg-teal-50 flex items-center justify-center">
               <Shield className="w-6 h-6 text-teal-600" />
             </div>
@@ -86,7 +86,7 @@ export default function SifreDegistirPage() {
             </div>
           </div>
 
-          <form onSubmit={handleSubmit} className="p-8 space-y-5">
+          <form onSubmit={handleSubmit} className="p-5 sm:p-8 space-y-5">
             {success && (
               <div className="flex items-center gap-3 p-4 bg-teal-50 border border-teal-100 rounded-xl text-teal-700 text-sm font-medium">
                 <CheckCircle className="w-5 h-5 shrink-0" />

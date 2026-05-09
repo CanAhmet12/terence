@@ -142,7 +142,7 @@ function OgrenciCanliDersPageInner() {
   }, [past, headerQuery]);
 
   return (
-    <div className="min-h-full bg-gradient-to-b from-slate-50 via-[#F4F6FA] to-slate-100/90">
+    <div className="min-h-full min-w-0 overflow-x-hidden bg-gradient-to-b from-slate-50 via-[#F4F6FA] to-slate-100/90">
       <div className="mx-auto w-full max-w-[min(100%,1680px)] px-4 pb-16 pt-5 sm:px-6 lg:px-10 xl:px-12">
         {/* Üst bölüm: sol başlık — sağ kompakt KPI (geniş ekranda sağa yaslı) */}
         <section className="border-b border-slate-200/80 pb-8">

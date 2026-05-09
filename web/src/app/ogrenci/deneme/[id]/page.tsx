@@ -220,7 +220,7 @@ export default function ExamSessionPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
+    <div className="min-h-screen min-w-0 overflow-x-hidden bg-slate-50 flex flex-col">
       {/* Üst Bar */}
       <div className="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between sticky top-0 z-10">
         <div className="flex items-center gap-4">

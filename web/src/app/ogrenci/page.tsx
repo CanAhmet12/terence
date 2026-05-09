@@ -177,14 +177,14 @@ export default function StudentDashboardPage() {
   const targetNet = user?.target_net ?? (stats as Record<string, unknown>)?.target_net ?? 0;
 
   return (
-    <div className="bg-slate-50 min-h-full">
-      <div className="w-full px-6 py-8 space-y-8">
+    <div className="bg-slate-50 min-h-full min-w-0 overflow-x-hidden">
+      <div className="w-full px-3 py-6 space-y-6 sm:px-4 sm:py-8 lg:px-6 lg:space-y-8">
 
         {/* ── Push Banner ── */}
         <PushPermissionBanner />
 
         {/* ── Hero Banner ── */}
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-cyan-600 via-teal-600 to-emerald-700 p-8 text-white shadow-xl shadow-cyan-500/25">
+        <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-br from-cyan-600 via-teal-600 to-emerald-700 p-5 text-white shadow-xl shadow-cyan-500/25 sm:p-8">
           {/* Dekoratif daireler */}
           <div className="absolute -right-12 -top-12 w-48 h-48 bg-white/5 rounded-full blur-2xl pointer-events-none" />
           <div className="absolute right-20 bottom-0 w-32 h-32 bg-emerald-500/20 rounded-full blur-xl pointer-events-none" />
@@ -269,7 +269,7 @@ export default function StudentDashboardPage() {
         </div>
 
         {/* ── İstatistik Kartları ── */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <StatCard
             icon={Flame}
             label="Günlük Seri"

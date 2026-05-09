@@ -7,10 +7,10 @@ export default function KullanimKosullariPage() {
   return (
     <>
       <Header />
-      <main className="pt-24 pb-16 min-h-screen">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6">
-          <h1 className="text-3xl font-bold text-slate-900 mb-8">Kullanım Koşulları</h1>
-          <div className="prose prose-slate max-w-none space-y-6 text-slate-600">
+      <main className="pt-24 pb-16 min-h-screen overflow-x-hidden">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 min-w-0">
+          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-8">Kullanım Koşulları</h1>
+          <div className="prose prose-slate max-w-none space-y-6 text-slate-600 break-words">
             <p className="leading-relaxed">
               TERENCE EĞİTİM platformunu kullanarak aşağıdaki koşulları kabul etmiş sayılırsınız.
             </p>

@@ -206,12 +206,12 @@ export function FeaturesSection() {
                 {"items" in feat.preview && feat.preview.items && (
                   <div className="space-y-3">
                     {feat.preview.items.map((item) => (
-                      <div key={item.label} className="flex items-center justify-between p-3.5 rounded-xl bg-slate-50 border border-slate-100">
-                        <div className="flex items-center gap-2.5">
-                          <span className="text-base">{item.badge}</span>
-                          <span className="text-xs font-medium text-slate-500">{item.label}</span>
+                      <div key={item.label} className="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:justify-between p-3 sm:p-3.5 rounded-xl bg-slate-50 border border-slate-100 min-w-0">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <span className="text-base shrink-0">{item.badge}</span>
+                          <span className="text-xs font-medium text-slate-500 truncate">{item.label}</span>
                         </div>
-                        <span className="text-sm font-bold text-slate-800">{item.value}</span>
+                        <span className="text-xs sm:text-sm font-bold text-slate-800 sm:text-right break-words">{item.value}</span>
                       </div>
                     ))}
                   </div>
@@ -309,7 +309,7 @@ export function FeaturesSection() {
         </div>
 
         {/* Mobil: grid kartlar */}
-        <div className="lg:hidden grid sm:grid-cols-2 gap-5">
+        <div className="lg:hidden grid grid-cols-1 min-[480px]:grid-cols-2 gap-4 sm:gap-5">
           {features.map((feature) => {
             const fc = colorMap[feature.color] || colorMap.cyan; // OLD: colorMap.teal
             return (

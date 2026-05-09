@@ -152,7 +152,7 @@ export default function RaporPage() {
 
   return (
     <div className="bg-slate-50 min-h-full print:bg-white">
-      <div className="w-full px-6 py-8 space-y-8 print:px-0 print:py-4">
+      <div className="w-full px-3 py-6 space-y-6 sm:px-4 sm:py-8 lg:px-6 lg:space-y-8 print:px-0 print:py-4">
 
         {/* ── Başlık ── */}
         <div className="flex items-start justify-between gap-4 print:hidden">
@@ -188,7 +188,7 @@ export default function RaporPage() {
         </div>
 
         {/* ── KPI Kartları ── */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <KpiCard
             icon={Clock}
             label="Bu Hafta Çalışma"

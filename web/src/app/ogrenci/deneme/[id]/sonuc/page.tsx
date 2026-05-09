@@ -70,7 +70,7 @@ export default function ExamResultPage() {
   const netColor = (result.net_score ?? 0) >= 70 ? "text-emerald-600" : (result.net_score ?? 0) >= 40 ? "text-amber-600" : "text-red-600";
 
   return (
-    <div className="p-6 lg:p-10 max-w-4xl mx-auto">
+    <div className="p-4 sm:p-6 lg:p-10 max-w-4xl mx-auto min-w-0">
       {/* Başlık */}
       <div className="text-center mb-10">
         <div className="w-20 h-20 rounded-full bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center mx-auto mb-4 shadow-lg shadow-teal-200">
@@ -83,7 +83,7 @@ export default function ExamResultPage() {
       </div>
 
       {/* Ana Sonuç Kartı */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-8 mb-6">
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 sm:p-8 mb-6">
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 text-center">
           <div>
             <p className={`text-4xl font-black ${netColor}`}>{result.net_score?.toFixed(2) ?? "—"}</p>
@@ -122,7 +122,7 @@ export default function ExamResultPage() {
 
       {/* Ders Bazlı Dağılım */}
       {subjects.length > 0 && (
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-8 mb-6">
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 sm:p-8 mb-6">
           <h2 className="font-bold text-slate-900 mb-6 flex items-center gap-2">
             <BarChart3 className="w-5 h-5 text-teal-600" /> Ders Bazlı Analiz
           </h2>
@@ -157,7 +157,7 @@ export default function ExamResultPage() {
 
       {/* Kazanım Bazlı Zayıf Analiz */}
       {(weakLoading || weakAchievements.length > 0) && (
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-8 mb-6">
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 sm:p-8 mb-6">
           <h2 className="font-bold text-slate-900 mb-6 flex items-center gap-2">
             <BookOpen className="w-5 h-5 text-red-500" /> Zayıf Kazanım Analizi
           </h2>

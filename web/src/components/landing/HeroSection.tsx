@@ -41,7 +41,7 @@ const floatingCards = [
 
 export function HeroSection() {
   return (
-    <section className="relative pt-28 pb-16 lg:pt-36 lg:pb-24 overflow-hidden">
+    <section className="relative pt-24 pb-12 sm:pt-28 sm:pb-16 lg:pt-36 lg:pb-24 overflow-x-hidden">
       {/* Arka plan dekoratörleri */}
       <div className="absolute inset-0 gradient-hero-mesh" />
       {/* OLD: bg-teal-300/10 */}
@@ -49,17 +49,17 @@ export function HeroSection() {
       <div className="absolute bottom-0 left-0 w-[500px] h-[500px] rounded-full bg-amber-300/8 blur-3xl translate-y-1/3 -translate-x-1/4" />
       <div className="absolute inset-0 pattern-dots opacity-[0.07]" />
 
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 min-w-0">
+        <div className="grid lg:grid-cols-2 gap-10 lg:gap-16 items-center min-w-0">
           {/* Sol: Metin içerik */}
-          <div className="text-center lg:text-left">
+          <div className="text-center lg:text-left min-w-0">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/90 backdrop-blur-sm border border-slate-200/80 text-slate-700 text-sm font-semibold mb-6 shadow-sm">
               {/* OLD: text-amber-500 */}
               <Sparkles className="w-4 h-4 text-cyan-500" />
               Hedefine Özel Akıllı Öğrenme Platformu
             </div>
 
-            <h1 className="text-4xl sm:text-5xl lg:text-5xl xl:text-6xl font-extrabold text-slate-900 leading-[1.08] tracking-tight">
+            <h1 className="text-[1.65rem] min-[400px]:text-3xl sm:text-5xl lg:text-5xl xl:text-6xl font-extrabold text-slate-900 leading-[1.08] tracking-tight text-balance">
               Hedef Okulunu{" "}
               <span className="relative inline-block">
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-slate-900 via-cyan-600 to-cyan-500">
@@ -70,7 +70,7 @@ export function HeroSection() {
               İçin Akıllı Plan
             </h1>
 
-            <p className="mt-6 text-lg text-slate-600 leading-relaxed max-w-xl">
+            <p className="mt-6 text-base sm:text-lg text-slate-600 leading-relaxed max-w-xl mx-auto lg:mx-0">
               LGS, TYT, AYT, KPSS hazırlığında hedef okulunu seç. Sistem gerekli neti hesaplasın,
               kalan günlere bölsün. AI koçun ile zayıf noktalarını hızla kapat.
             </p>
@@ -89,16 +89,21 @@ export function HeroSection() {
             </div>
 
             {/* Rol bazlı CTA'lar */}
-            <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center lg:justify-start">
+            <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center lg:justify-start w-full max-w-xl mx-auto lg:max-w-none lg:mx-0">
               {roles.map((role) => (
                 <Link
                   key={role.label}
                   href={role.href}
-                  className="group flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl border-2 border-slate-200 bg-white hover:border-cyan-400 hover:bg-cyan-50/50 font-semibold text-slate-800 hover:text-cyan-800 transition-all duration-300 shadow-sm hover:shadow-lg text-sm"
+                  className="group flex flex-col sm:flex-row sm:items-center sm:justify-center gap-1 sm:gap-2 px-4 sm:px-5 py-3 sm:py-3.5 rounded-2xl border-2 border-slate-200 bg-white hover:border-cyan-400 hover:bg-cyan-50/50 font-semibold text-slate-800 hover:text-cyan-800 transition-all duration-300 shadow-sm hover:shadow-lg text-sm text-center sm:text-left min-w-0"
                 >
-                  <role.icon className="w-4 h-4 text-slate-700" />
-                  {role.label}
-                  <span className="text-slate-400 font-normal">— {role.desc}</span>
+                  <span className="inline-flex items-center justify-center gap-2">
+                    <role.icon className="w-4 h-4 text-slate-700 shrink-0" />
+                    {role.label}
+                  </span>
+                  <span className="text-slate-400 font-normal text-xs sm:text-sm">
+                    <span className="hidden sm:inline">— </span>
+                    {role.desc}
+                  </span>
                 </Link>
               ))}
             </div>

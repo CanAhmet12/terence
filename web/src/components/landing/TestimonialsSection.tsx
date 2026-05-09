@@ -79,8 +79,8 @@ export function TestimonialsSection() {
           onMouseEnter={() => setIsPaused(true)}
           onMouseLeave={() => setIsPaused(false)}
         >
-          <div className="relative p-8 md:p-12 rounded-3xl bg-slate-50/80 border border-slate-200/80 shadow-lg transition-all duration-300">
-            <Quote className="absolute top-6 right-6 w-12 h-12 text-teal-100" />
+          <div className="relative p-5 sm:p-8 md:p-12 rounded-2xl sm:rounded-3xl bg-slate-50/80 border border-slate-200/80 shadow-lg transition-all duration-300 min-w-0">
+            <Quote className="absolute top-4 right-4 sm:top-6 sm:right-6 w-8 h-8 sm:w-12 sm:h-12 text-teal-100" />
 
             {/* Yıldız rating */}
             <div className="flex items-center gap-1 mb-5">
@@ -89,12 +89,12 @@ export function TestimonialsSection() {
               ))}
             </div>
 
-            <p className="text-lg md:text-xl text-slate-700 leading-relaxed mb-8 relative z-10 font-medium">
+            <p className="text-base sm:text-lg md:text-xl text-slate-700 leading-relaxed mb-6 sm:mb-8 relative z-10 font-medium min-w-0">
               &ldquo;{t.quote}&rdquo;
             </p>
 
-            <div className="flex items-center justify-between flex-wrap gap-4">
-              <div className="flex items-center gap-4">
+            <div className="flex items-center justify-between flex-wrap gap-3 min-w-0">
+              <div className="flex items-center gap-3 sm:gap-4 min-w-0">
                 <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${t.color} flex items-center justify-center text-white font-bold text-sm shadow-lg`}>
                   {t.avatar}
                 </div>
@@ -104,7 +104,7 @@ export function TestimonialsSection() {
                 </div>
               </div>
               {/* Achievement badge */}
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-teal-50 border border-teal-100 text-teal-700 text-xs font-bold">
+              <span className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-teal-50 border border-teal-100 text-teal-700 text-[10px] sm:text-xs font-bold max-w-full text-center sm:text-left">
                 🏆 {t.badge}
               </span>
             </div>
@@ -143,7 +143,7 @@ export function TestimonialsSection() {
           </div>
 
           {/* Mini önizleme kartları */}
-          <div className="grid grid-cols-4 gap-3 mt-6">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mt-4 sm:mt-6">
             {testimonials.map((item, i) => (
               <button
                 key={i}

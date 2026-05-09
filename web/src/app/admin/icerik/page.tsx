@@ -75,7 +75,7 @@ export default function AdminIcerikPage() {
   };
 
   return (
-    <div className="p-8 lg:p-12">
+    <div className="p-4 sm:p-6 lg:p-8 xl:p-12 min-w-0 overflow-x-hidden">
       <div className="flex items-start justify-between gap-4 mb-8">
         <div>
           <Link href="/admin" className="inline-flex items-center gap-2 text-slate-500 hover:text-teal-600 text-sm mb-4 transition-colors">

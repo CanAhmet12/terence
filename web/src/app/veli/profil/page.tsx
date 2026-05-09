@@ -128,7 +128,7 @@ export default function VeliProfilPage() {
   );
 
   return (
-    <div className="p-6 lg:p-10 max-w-5xl">
+    <div className="p-4 sm:p-6 lg:p-10 max-w-5xl min-w-0 overflow-x-hidden">
       <div className="mb-8">
         <h1 className="text-3xl font-extrabold text-slate-900">Profilim</h1>
         <p className="text-slate-600 mt-1">Hesap bilgilerinizi ve tercihlerinizi yönetin</p>

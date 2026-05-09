@@ -123,7 +123,7 @@ export default function VideoPage() {
 
   if (!token) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white px-4 py-16">
+      <div className="min-h-screen min-w-0 overflow-x-hidden bg-gradient-to-b from-slate-50 to-white px-3 py-10 sm:px-4 sm:py-16">
         <div className="mx-auto max-w-lg rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-lg">
           <Film className="mx-auto mb-4 h-14 w-14 text-indigo-400" aria-hidden />
           <h1 className="text-xl font-bold text-slate-900">Giriş gerekli</h1>
@@ -150,7 +150,7 @@ export default function VideoPage() {
         />
       )}
 
-      <div className="min-h-screen bg-[#f4f5f8]">
+      <div className="min-h-screen min-w-0 overflow-x-hidden bg-[#f4f5f8]">
         <MediaHubPageHeader search={search} onSearchChange={setSearch} />
 
         <div className="mx-auto w-full max-w-[1800px] space-y-3 px-4 py-4 sm:px-6 lg:space-y-4 lg:px-8 lg:py-5">

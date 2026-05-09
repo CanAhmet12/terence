@@ -70,9 +70,9 @@ export function WhyTerenceSection() {
           ))}
         </div>
 
-        <div className="flex flex-wrap justify-center gap-6 lg:gap-10">
+        <div className="flex flex-col sm:flex-row flex-wrap justify-center gap-4 sm:gap-6 lg:gap-10 px-2">
           {trust.map((t) => (
-            <div key={t.text} className="flex items-center gap-3 text-slate-400">
+            <div key={t.text} className="flex items-center justify-center sm:justify-start gap-3 text-slate-400 text-center sm:text-left text-sm sm:text-base max-w-md">
               {/* OLD: text-teal-400 */}
               <t.icon className="w-5 h-5 text-cyan-400 shrink-0" />
               <span className="font-medium">{t.text}</span>

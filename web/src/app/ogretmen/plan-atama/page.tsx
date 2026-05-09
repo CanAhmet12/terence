@@ -178,7 +178,7 @@ export default function OgretmenPlanAtamaPage() {
 
   return (
     <div className="min-h-full bg-slate-50">
-      <div className="w-full space-y-6 px-6 py-8">
+      <div className="w-full min-w-0 space-y-6 overflow-x-hidden px-3 py-6 sm:px-4 sm:py-8 lg:px-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <Link

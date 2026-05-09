@@ -19,15 +19,15 @@ export function CtaSection() {
           {/* OLD: bg-teal-400/10 */}
           <div className="absolute bottom-0 left-0 w-96 h-96 bg-cyan-400/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
           
-          <div className="relative p-12 lg:p-16 flex flex-col lg:flex-row items-center justify-between gap-10">
-            <div className="text-center lg:text-left">
-              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white leading-tight">
+          <div className="relative p-6 sm:p-10 lg:p-16 flex flex-col lg:flex-row items-center justify-between gap-8 lg:gap-10 min-w-0">
+            <div className="text-center lg:text-left min-w-0 w-full">
+              <h2 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold text-white leading-tight text-balance">
                 Hedefine Doğru İlk Adımı At
               </h2>
-              <p className="mt-4 text-lg text-white/90 max-w-xl">
+              <p className="mt-4 text-base sm:text-lg text-white/90 max-w-xl mx-auto lg:mx-0">
                 Binlerce öğrenci gibi sen de 7 gün ücretsiz deneyerek başla.
               </p>
-              <ul className="mt-6 flex flex-wrap justify-center lg:justify-start gap-4">
+              <ul className="mt-6 flex flex-col sm:flex-row sm:flex-wrap justify-center lg:justify-start gap-3 sm:gap-4">
                 {benefits.map((b) => (
                   <li key={b} className="flex items-center gap-2 text-white/95 text-sm font-medium">
                     {/* OLD: text-teal-300 */}
@@ -40,7 +40,7 @@ export function CtaSection() {
             {/* OLD: text-teal-700 */}
             <Link
               href="/kayit"
-              className="shrink-0 inline-flex items-center gap-2 px-10 py-4 bg-white text-slate-900 font-bold rounded-2xl hover:bg-slate-50 transition-all duration-300 shadow-2xl shadow-black/20 hover:shadow-xl hover:-translate-y-1"
+              className="w-full sm:w-auto shrink-0 inline-flex items-center justify-center gap-2 px-8 sm:px-10 py-3.5 sm:py-4 bg-white text-slate-900 font-bold rounded-2xl hover:bg-slate-50 transition-all duration-300 shadow-2xl shadow-black/20 hover:shadow-xl hover:-translate-y-1"
             >
               7 Gün Ücretsiz Başla
               <ArrowRight className="w-5 h-5" />

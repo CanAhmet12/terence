@@ -329,11 +329,11 @@ export default function GunlukPlanPageContent() {
   const progress = totalCount > 0 ? (doneCount / totalCount) * 100 : 0;
 
   return (
-    <div className="min-h-full bg-slate-50">
-      <div className="w-full space-y-6 px-6 py-8">
-        <div className="flex items-start justify-between gap-4">
+    <div className="min-h-full min-w-0 overflow-x-hidden bg-slate-50">
+      <div className="w-full space-y-6 px-3 py-6 sm:space-y-6 sm:px-4 sm:py-8 lg:px-6">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
           <div>
-            <h1 className="text-3xl font-black tracking-tight text-slate-900">
+            <h1 className="text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">
               Günlük Plan
             </h1>
             <p className="mt-1 font-medium capitalize text-slate-500">

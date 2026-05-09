@@ -30,9 +30,9 @@ export default function IletisimPage() {
   return (
     <>
       <Header />
-      <main className="pt-24 pb-20 min-h-screen bg-slate-50/80">
+      <main className="pt-20 sm:pt-24 pb-12 sm:pb-20 min-h-screen bg-slate-50/80 overflow-x-hidden">
         {/* Hero alanı */}
-        <div className="relative py-16 lg:py-20 overflow-hidden">
+        <div className="relative py-10 sm:py-16 lg:py-20 overflow-hidden">
           <div className="absolute inset-0 gradient-hero-mesh" />
           <div className="absolute top-0 right-0 w-96 h-96 bg-teal-300/10 rounded-full blur-3xl" />
           <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -40,7 +40,7 @@ export default function IletisimPage() {
               <p className="text-teal-600 font-semibold text-sm uppercase tracking-widest mb-4">
                 İletişim
               </p>
-              <h1 className="text-4xl lg:text-5xl font-extrabold text-slate-900 leading-tight">
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-slate-900 leading-tight text-balance">
                 Sorularınız İçin{" "}
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-600 to-teal-500">
                   Bize Ulaşın
@@ -53,8 +53,8 @@ export default function IletisimPage() {
           </div>
         </div>
 
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 -mt-8">
-          <div className="grid lg:grid-cols-3 gap-8">
+        <div className="max-w-6xl mx-auto px-3 sm:px-6 lg:px-8 -mt-6 sm:-mt-8 min-w-0">
+          <div className="grid lg:grid-cols-3 gap-6 sm:gap-8">
             {/* İletişim kartları */}
             <div className="lg:col-span-1 space-y-4">
               <a
@@ -96,7 +96,7 @@ export default function IletisimPage() {
 
             {/* Form */}
             <div className="lg:col-span-2">
-              <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-8 lg:p-10">
+              <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5 sm:p-8 lg:p-10 min-w-0">
                 <div className="flex items-center gap-3 mb-8">
                   <div className="w-12 h-12 rounded-xl bg-teal-50 flex items-center justify-center">
                     <MessageCircle className="w-6 h-6 text-teal-600" />

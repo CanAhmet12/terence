@@ -133,20 +133,20 @@ export default function PaymentFlow() {
     : selectedPlanData?.price || 0
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 py-12 px-4">
-      <div className="max-w-6xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 py-8 sm:py-12 px-3 sm:px-4 overflow-x-hidden">
+      <div className="max-w-6xl mx-auto min-w-0">
         {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+        <div className="text-center mb-8 sm:mb-12 px-1">
+          <h1 className="text-2xl sm:text-4xl font-bold text-gray-900 mb-3 sm:mb-4 text-balance">
             Planını Seç, Başarıya Başla
           </h1>
-          <p className="text-gray-600 text-lg">
+          <p className="text-gray-600 text-base sm:text-lg">
             7 gün ücretsiz deneme, istediğin zaman iptal edebilirsin
           </p>
         </div>
 
         {/* Billing Toggle */}
-        <div className="flex items-center justify-center gap-4 mb-12">
+        <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-4 mb-8 sm:mb-12">
           <button
             onClick={() => setBillingPeriod('monthly')}
             className={`px-6 py-3 rounded-lg font-medium transition-all ${
@@ -177,7 +177,7 @@ export default function PaymentFlow() {
           {plans.map((plan) => (
             <div
               key={plan.id}
-              className={`bg-white rounded-2xl shadow-xl overflow-hidden transition-all hover:scale-105 ${
+              className={`bg-white rounded-2xl shadow-xl overflow-hidden transition-all hover:scale-[1.02] sm:hover:scale-105 ${
                 plan.popular ? 'ring-4 ring-blue-500' : ''
               }`}
             >
@@ -187,7 +187,7 @@ export default function PaymentFlow() {
                 </div>
               )}
 
-              <div className="p-8">
+              <div className="p-5 sm:p-8">
                 <h3 className="text-2xl font-bold text-gray-900 mb-2">{plan.name}</h3>
                 <div className="mb-6">
                   <span className="text-4xl font-bold text-gray-900">
@@ -223,13 +223,13 @@ export default function PaymentFlow() {
         </div>
 
         {/* Checkout Button */}
-        <div className="bg-white rounded-2xl shadow-xl p-8">
-          <div className="flex items-center justify-between mb-6">
+        <div className="bg-white rounded-2xl shadow-xl p-5 sm:p-8 min-w-0">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
             <div>
               <h3 className="text-lg font-bold text-gray-900">Seçilen Plan</h3>
               <p className="text-gray-600">{selectedPlanData?.name} - {billingPeriod === 'yearly' ? 'Yıllık' : 'Aylık'}</p>
             </div>
-            <div className="text-right">
+            <div className="text-left sm:text-right w-full sm:w-auto">
               <p className="text-3xl font-bold text-blue-600">₺{finalPrice}</p>
               <p className="text-sm text-gray-600">
                 {billingPeriod === 'yearly' && `₺${(finalPrice / 12).toFixed(0)} / ay`}
@@ -261,7 +261,7 @@ export default function PaymentFlow() {
         </div>
 
         {/* FAQ */}
-        <div className="mt-12 bg-white rounded-2xl shadow-xl p-8">
+        <div className="mt-12 bg-white rounded-2xl shadow-xl p-5 sm:p-8 min-w-0">
           <h3 className="text-2xl font-bold text-gray-900 mb-6">Sık Sorulan Sorular</h3>
           <div className="space-y-4">
             <div>

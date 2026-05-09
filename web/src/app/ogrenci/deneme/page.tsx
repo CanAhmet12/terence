@@ -580,7 +580,7 @@ export default function DenemePage() {
   }, [history, paletteQuery]);
 
   return (
-    <div className="bg-slate-50 min-h-full">
+    <div className="bg-slate-50 min-h-full min-w-0 overflow-x-hidden">
       {paletteOpen && (
         <div
           className="fixed inset-0 z-50 flex items-start justify-center pt-[12vh] px-4 bg-slate-900/40 backdrop-blur-sm"

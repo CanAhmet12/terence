@@ -144,8 +144,8 @@ function DogrulamaContent() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-white p-6">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center p-4 sm:p-6 bg-white min-w-0">
+      <div className="w-full max-w-md min-w-0 px-1">
         <Link href="/giris" className="inline-flex items-center gap-2 text-slate-500 hover:text-slate-700 text-sm font-medium mb-8 transition-colors">
           <ArrowLeft className="w-4 h-4" />
           Giriş sayfasına dön
@@ -180,7 +180,10 @@ function DogrulamaContent() {
         <form onSubmit={handleSubmit} className="space-y-8">
           <div>
             <label className="block text-sm font-semibold text-slate-700 mb-4">Doğrulama Kodu</label>
-            <div className="flex gap-3" onPaste={handlePaste}>
+            <div
+              className="grid grid-cols-6 gap-1.5 sm:flex sm:flex-wrap sm:justify-center sm:gap-3 w-full max-w-[300px] sm:max-w-none mx-auto sm:mx-0"
+              onPaste={handlePaste}
+            >
               {Array(CODE_LENGTH)
                 .fill(null)
                 .map((_, i) => (
@@ -194,7 +197,7 @@ function DogrulamaContent() {
                     onChange={(e) => handleInput(i, e.target.value)}
                     onKeyDown={(e) => handleKeyDown(i, e)}
                     disabled={loading}
-                    className={`w-full aspect-square text-center text-2xl font-bold border-2 rounded-2xl outline-none transition-all disabled:opacity-50 ${
+                    className={`w-full aspect-square min-h-[2.75rem] text-center text-lg sm:text-2xl font-bold border-2 rounded-xl sm:rounded-2xl outline-none transition-all disabled:opacity-50 sm:size-14 sm:max-w-[3.5rem] ${
                       code[i]
                         ? "border-teal-500 bg-teal-50 text-teal-700"
                         : "border-slate-200 bg-slate-50 text-slate-900 focus:border-teal-400 focus:bg-white"

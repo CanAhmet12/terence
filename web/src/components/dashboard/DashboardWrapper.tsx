@@ -68,7 +68,7 @@ export function DashboardWrapper({ sidebar, header, children }: Props) {
           </div>
         </div>
         {header}
-        <main className="min-h-0 w-full min-w-0 flex-1">{children}</main>
+        <main className="min-h-0 w-full min-w-0 flex-1 overflow-x-hidden overflow-y-auto">{children}</main>
       </div>
     </div>
   );

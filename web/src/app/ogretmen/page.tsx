@@ -178,11 +178,11 @@ export default function OgretmenDashboardPage() {
   const warningRisk  = riskStudents.filter((s) => s.risk_level === "yellow").slice(0, 5);
 
   return (
-    <div className="bg-slate-50 min-h-full">
-      <div className="w-full px-6 py-8 space-y-8">
+    <div className="bg-slate-50 min-h-full min-w-0 overflow-x-hidden">
+      <div className="w-full min-w-0 space-y-6 overflow-x-hidden px-3 py-6 sm:space-y-8 sm:px-4 sm:py-8 lg:px-6">
 
         {/* ── Hero ── */}
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-600 via-indigo-700 to-violet-800 p-8 text-white shadow-xl shadow-indigo-500/20">
+        <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-br from-blue-600 via-indigo-700 to-violet-800 p-5 text-white shadow-xl shadow-indigo-500/20 sm:p-8">
           <div className="absolute -right-12 -top-12 w-48 h-48 bg-white/5 rounded-full blur-2xl pointer-events-none" />
           <div className="relative z-10 flex flex-col sm:flex-row sm:items-center gap-6">
             <div className="flex-1">

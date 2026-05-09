@@ -74,7 +74,7 @@ export default function OgretmenDerslerPage() {
 
   return (
     <div className="bg-slate-50 min-h-full">
-      <div className="w-full px-6 py-8">
+      <div className="w-full min-w-0 overflow-x-hidden px-3 py-6 sm:px-4 sm:py-8 lg:px-6">
 
         <div className="mb-8 flex items-center justify-between">
           <div>

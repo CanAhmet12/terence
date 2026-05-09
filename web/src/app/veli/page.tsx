@@ -89,7 +89,7 @@ export default function VeliDashboardPage() {
   const recentExams: RecentExam[] = (summary?.recent_exams as unknown as RecentExam[]) ?? [];
 
   return (
-    <div className="p-6 lg:p-10">
+    <div className="p-4 sm:p-6 lg:p-10 min-w-0 overflow-x-hidden">
       <div className="mb-8 flex flex-col sm:flex-row sm:items-center gap-4 justify-between">
         <div>
           <h1 className="text-3xl font-extrabold text-slate-900">Veli Paneli</h1>

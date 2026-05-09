@@ -89,8 +89,8 @@ export default function VeliRaporPage() {
   ];
 
   return (
-    <div className="p-8 lg:p-12 space-y-8">
-      <div className="flex items-center justify-between">
+    <div className="p-4 sm:p-8 lg:p-12 space-y-6 sm:space-y-8 min-w-0 overflow-x-hidden">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Detaylı Performans Raporu</h1>
           <p className="text-slate-600 mt-1">

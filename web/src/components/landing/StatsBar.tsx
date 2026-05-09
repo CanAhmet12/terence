@@ -57,17 +57,17 @@ function StatItem({ stat }: { stat: (typeof stats)[0] }) {
   }, []);
 
   return (
-    <div ref={ref} className="flex items-center gap-4 lg:gap-5">
+    <div ref={ref} className="flex items-center gap-3 sm:gap-4 lg:gap-5 min-w-0">
       {/* OLD: from-teal-50 to-emerald-50 border-teal-100 */}
       <div className="w-12 h-12 lg:w-14 lg:h-14 rounded-2xl bg-gradient-to-br from-cyan-50 to-cyan-100 border border-cyan-200 flex items-center justify-center shrink-0">
         {/* OLD: text-teal-600 */}
         <stat.icon className="w-6 h-6 lg:w-7 lg:h-7 text-cyan-600" strokeWidth={2} />
       </div>
       <div>
-        <p className="text-2xl lg:text-3xl font-extrabold text-slate-900 tracking-tight tabular-nums">
+        <p className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-slate-900 tracking-tight tabular-nums">
           {stat.suffix.startsWith("M") ? `${count === stat.value ? "1" : "0"}${stat.suffix}` : `${count.toLocaleString("tr-TR")}${stat.suffix}`}
         </p>
-        <p className="text-sm lg:text-base text-slate-600 font-medium">{stat.label}</p>
+        <p className="text-xs sm:text-sm lg:text-base text-slate-600 font-medium leading-snug">{stat.label}</p>
       </div>
     </div>
   );
@@ -80,8 +80,8 @@ export function StatsBar() {
     <section className="border-y border-slate-200/80 bg-white overflow-hidden">
       {/* Stats grid */}
       <div className="relative py-8 lg:py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 min-w-0">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-8 lg:gap-12">
             {stats.map((stat) => (
               <StatItem key={stat.label} stat={stat} />
             ))}

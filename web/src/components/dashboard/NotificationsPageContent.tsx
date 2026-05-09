@@ -163,8 +163,8 @@ export function NotificationsPageContent() {
       : notifications.filter((n) => getNotifConfig(n.type).category === cat).length;
 
   return (
-    <div className="w-full min-h-full px-6 py-8 lg:px-8 lg:py-10">
-        <div className="mb-6 flex items-start justify-between gap-4">
+    <div className="w-full min-h-full min-w-0 overflow-x-hidden px-3 py-6 sm:px-4 sm:py-8 lg:px-8 lg:py-10">
+        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 flex items-center gap-3">
               <div className="relative w-12 h-12 rounded-xl bg-teal-50 border border-teal-100 flex items-center justify-center shrink-0">

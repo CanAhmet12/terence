@@ -206,13 +206,13 @@ export default function KocPage() {
   }, [input]);
 
   return (
-    <div className="flex h-[calc(100vh-64px)] bg-slate-50 overflow-hidden">
+    <div className="flex min-h-0 h-[calc(100dvh-4rem)] max-h-[calc(100dvh-4rem)] bg-slate-50 overflow-hidden sm:h-[calc(100vh-64px)] sm:max-h-[calc(100vh-64px)]">
 
       {/* ── Ana chat alanı ── */}
       <div className="flex-1 flex flex-col min-w-0">
 
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 bg-white border-b border-slate-100 shrink-0 shadow-[0_1px_0_0_#f1f5f9]">
+        <div className="flex items-center justify-between px-3 py-3 sm:px-6 sm:py-4 bg-white border-b border-slate-100 shrink-0 shadow-[0_1px_0_0_#f1f5f9]">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-white shadow-md shadow-slate-200/60">
               <DigitalCoachIcon size={34} />

@@ -149,16 +149,16 @@ export default function ProfilPage() {
   return (
     <>
       <Header />
-      <main className="pt-24 pb-20 min-h-screen bg-slate-50/80">
-        <div className="max-w-2xl mx-auto px-4 sm:px-6">
-          <div className="mb-10">
-            <h1 className="text-3xl font-extrabold text-slate-900">Profil Düzenle</h1>
+      <main className="pt-20 sm:pt-24 pb-12 sm:pb-20 min-h-screen bg-slate-50/80 overflow-x-hidden">
+        <div className="max-w-2xl mx-auto px-3 sm:px-6 min-w-0">
+          <div className="mb-8 sm:mb-10">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900">Profil Düzenle</h1>
             <p className="text-slate-600 mt-1">Hesap bilgilerinizi ve tercihlerinizi güncelleyin</p>
           </div>
 
           <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
             {/* Avatar */}
-            <div className="p-8 border-b border-slate-100 bg-gradient-to-br from-slate-50 to-white">
+            <div className="p-5 sm:p-8 border-b border-slate-100 bg-gradient-to-br from-slate-50 to-white">
               <div className="flex flex-col sm:flex-row items-center gap-6">
                 <div className="relative group">
                   <div className="w-24 h-24 rounded-2xl overflow-hidden bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center shadow-lg shadow-teal-500/25">
@@ -208,7 +208,7 @@ export default function ProfilPage() {
               </div>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-8 space-y-6">
+            <form onSubmit={handleSubmit} className="p-5 sm:p-8 space-y-6">
               {/* Geri bildirim */}
               {saveState === "success" && (
                 <div className="flex items-center gap-3 p-4 bg-teal-50 border border-teal-100 rounded-xl text-teal-700 text-sm font-medium">

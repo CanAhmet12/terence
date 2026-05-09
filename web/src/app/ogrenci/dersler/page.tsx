@@ -248,7 +248,7 @@ export default function DerslerimPage() {
   }
 
   return (
-    <div className="flex w-full flex-col bg-[#f8f9fb]">
+    <div className="flex w-full min-w-0 flex-col overflow-x-hidden bg-[#f8f9fb]">
       <header className="sticky top-0 z-[60] border-b border-slate-200/90 bg-white shadow-sm">
         <div className="flex w-full flex-col gap-2.5 px-3 py-2.5 sm:px-4 lg:flex-row lg:items-center lg:gap-5 lg:px-5 lg:py-3">
           <div className="flex w-full min-w-0 flex-col gap-2.5 lg:flex-row lg:items-center lg:gap-5">

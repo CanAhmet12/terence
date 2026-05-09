@@ -124,7 +124,7 @@ export default function VeliBildirimPage() {
   ];
 
   return (
-    <div className="p-8 lg:p-12 max-w-3xl">
+    <div className="p-4 sm:p-8 lg:p-12 max-w-3xl min-w-0 overflow-x-hidden">
       <Link href="/veli" className="inline-flex items-center gap-2 text-slate-600 hover:text-teal-600 mb-8 transition-colors">
         <ArrowLeft className="w-4 h-4" />
         Panele dön

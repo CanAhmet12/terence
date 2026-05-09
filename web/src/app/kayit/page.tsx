@@ -112,18 +112,18 @@ function StepIndicator({ step, role }: { step: Step; role: Role }) {
     { n: 3, label: role === "student" ? "Hedef & Sınıf" : role === "teacher" ? "Profil Bilgileri" : "Çocuk Bağlantısı" },
   ];
   return (
-    <div className="flex items-center gap-0 mb-8">
+    <div className="flex items-center gap-0 mb-6 sm:mb-8 overflow-x-auto pb-1 -mx-1 px-1">
       {steps.map((s, i) => (
-        <div key={s.n} className="flex items-center flex-1">
-          <div className="flex flex-col items-center flex-1">
-            <div className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300 ${
+        <div key={s.n} className="flex items-center flex-1 min-w-0">
+          <div className="flex flex-col items-center flex-1 min-w-0">
+            <div className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center font-bold text-xs sm:text-sm transition-all duration-300 ${
               step > s.n ? `${c.badge} text-white` :
               step === s.n ? `border-2 ${c.border} ${c.text} bg-white` :
               "border-2 border-slate-200 text-slate-400 bg-white"
             }`}>
               {step > s.n ? <CheckCircle className="w-5 h-5" /> : s.n}
             </div>
-            <span className={`text-xs mt-1.5 font-medium transition-colors ${step >= s.n ? c.text : "text-slate-400"}`}>
+            <span className={`text-[10px] sm:text-xs mt-1.5 font-medium transition-colors text-center px-0.5 leading-tight line-clamp-2 ${step >= s.n ? c.text : "text-slate-400"}`}>
               {s.label}
             </span>
           </div>
@@ -220,16 +220,16 @@ export default function RegisterPage() {
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
       {/* Top bar */}
-      <header className="bg-white border-b border-slate-200/80 px-6 py-4 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-3 group">
-          <div className="w-10 h-10 rounded-xl overflow-hidden shadow">
+      <header className="bg-white border-b border-slate-200/80 px-4 sm:px-6 py-3 sm:py-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between min-w-0">
+        <Link href="/" className="flex items-center gap-2 sm:gap-3 group min-w-0 shrink">
+          <div className="w-10 h-10 rounded-xl overflow-hidden shadow shrink-0">
             <Image src="/logo.png" alt="Terence Eğitim" width={40} height={40} />
           </div>
-          <span className="font-bold text-slate-900">
+          <span className="font-bold text-slate-900 text-sm sm:text-base truncate">
             TERENCE <span className="text-teal-600">EĞİTİM</span>
           </span>
         </Link>
-        <p className="text-sm text-slate-500">
+        <p className="text-xs sm:text-sm text-slate-500 shrink-0">
           Hesabın var mı?{" "}
           <Link href="/giris" className="text-teal-600 font-semibold hover:underline">
             Giriş yap
@@ -237,7 +237,7 @@ export default function RegisterPage() {
         </p>
       </header>
 
-      <main className="flex-1 flex items-start justify-center py-10 px-4">
+      <main className="flex-1 flex items-start justify-center py-6 sm:py-10 px-3 sm:px-4 min-w-0">
         <div className="w-full max-w-3xl">
 
           {/* ─── ADIM 1: ROL SEÇİMİ ─────────────────────────────────── */}
@@ -324,7 +324,7 @@ export default function RegisterPage() {
           {/* ─── ADIM 2: HESAP BİLGİLERİ ────────────────────────────── */}
           {step === 2 && (
             <div className="animate-fade-in">
-              <div className="max-w-lg mx-auto bg-white rounded-3xl shadow-sm border border-slate-200/80 p-8 md:p-10">
+              <div className="max-w-lg mx-auto bg-white rounded-3xl shadow-sm border border-slate-200/80 p-5 sm:p-8 md:p-10 min-w-0">
                 <StepIndicator step={2} role={role} />
 
                 <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full ${c.bg} ${c.text} text-sm font-semibold mb-6`}>
@@ -420,13 +420,13 @@ export default function RegisterPage() {
                   </div>
                 </div>
 
-                <div className="flex gap-3 mt-8">
+                <div className="flex flex-col-reverse sm:flex-row gap-3 mt-8">
                   <button type="button" onClick={goBack}
-                    className="flex items-center gap-2 px-5 py-3.5 rounded-xl border border-slate-200 text-slate-600 font-semibold hover:bg-slate-50 transition-colors">
+                    className="flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl border border-slate-200 text-slate-600 font-semibold hover:bg-slate-50 transition-colors sm:w-auto">
                     <ArrowLeft className="w-4 h-4" /> Geri
                   </button>
                   <button type="button" onClick={goNext} disabled={!step2Valid}
-                    className={`flex-1 py-3.5 bg-gradient-to-r ${c.btn} disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold rounded-xl transition-all shadow-lg ${c.shadow} flex items-center justify-center gap-2`}>
+                    className={`flex-1 min-h-[3rem] py-3.5 bg-gradient-to-r ${c.btn} disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold rounded-xl transition-all shadow-lg ${c.shadow} flex items-center justify-center gap-2`}>
                     Devam et <ArrowRight className="w-4 h-4" />
                   </button>
                 </div>
@@ -437,7 +437,7 @@ export default function RegisterPage() {
           {/* ─── ADIM 3: ROL'E ÖZEL BİLGİLER ───────────────────────── */}
           {step === 3 && (
             <div className="animate-fade-in">
-              <div className="max-w-lg mx-auto bg-white rounded-3xl shadow-sm border border-slate-200/80 p-8 md:p-10">
+              <div className="max-w-lg mx-auto bg-white rounded-3xl shadow-sm border border-slate-200/80 p-5 sm:p-8 md:p-10 min-w-0">
                 <StepIndicator step={3} role={role} />
 
                 {/* ── ÖĞRENCİ ── */}
@@ -463,7 +463,7 @@ export default function RegisterPage() {
                         <label className="block text-sm font-semibold text-slate-700 mb-3">
                           Hangi sınıftasın? <span className="text-red-500">*</span>
                         </label>
-                        <div className="grid grid-cols-3 gap-2">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                           {STUDENT_GRADES.map(g => (
                             <button key={g.value} type="button" onClick={() => setGrade(g.value)}
                               className={`py-2.5 px-3 rounded-xl text-sm font-semibold border-2 transition-all ${
@@ -556,13 +556,13 @@ export default function RegisterPage() {
                       )}
                     </div>
 
-                    <div className="flex gap-3 mt-8">
+                    <div className="flex flex-col-reverse sm:flex-row gap-3 mt-8">
                       <button type="button" onClick={goBack}
-                        className="flex items-center gap-2 px-5 py-3.5 rounded-xl border border-slate-200 text-slate-600 font-semibold hover:bg-slate-50 transition-colors">
+                        className="flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl border border-slate-200 text-slate-600 font-semibold hover:bg-slate-50 transition-colors sm:w-auto">
                         <ArrowLeft className="w-4 h-4" /> Geri
                       </button>
                       <button type="submit" disabled={loading || !grade || !targetExam}
-                        className="flex-1 py-3.5 bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-700 hover:to-teal-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold rounded-xl transition-all shadow-lg shadow-teal-500/25 flex items-center justify-center gap-2">
+                        className="flex-1 min-h-[3rem] py-3.5 bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-700 hover:to-teal-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold rounded-xl transition-all shadow-lg shadow-teal-500/25 flex items-center justify-center gap-2">
                         {loading ? (
                           <span className="flex items-center gap-2"><span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> Kaydediliyor...</span>
                         ) : (
@@ -599,7 +599,7 @@ export default function RegisterPage() {
                         <label className="block text-sm font-semibold text-slate-700 mb-3">
                           Branşın / Dersin <span className="text-red-500">*</span>
                         </label>
-                        <div className="grid grid-cols-3 gap-2">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                           {TEACHER_SUBJECTS.map(s => (
                             <button key={s} type="button" onClick={() => setSubject(s)}
                               className={`py-2.5 px-3 rounded-xl text-sm font-semibold border-2 transition-all ${
@@ -633,13 +633,13 @@ export default function RegisterPage() {
                       </div>
                     </div>
 
-                    <div className="flex gap-3 mt-8">
+                    <div className="flex flex-col-reverse sm:flex-row gap-3 mt-8">
                       <button type="button" onClick={goBack}
-                        className="flex items-center gap-2 px-5 py-3.5 rounded-xl border border-slate-200 text-slate-600 font-semibold hover:bg-slate-50 transition-colors">
+                        className="flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl border border-slate-200 text-slate-600 font-semibold hover:bg-slate-50 transition-colors sm:w-auto">
                         <ArrowLeft className="w-4 h-4" /> Geri
                       </button>
                       <button type="submit" disabled={loading || !subject}
-                        className="flex-1 py-3.5 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold rounded-xl transition-all shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2">
+                        className="flex-1 min-h-[3rem] py-3.5 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold rounded-xl transition-all shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2">
                         {loading ? (
                           <span className="flex items-center gap-2"><span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> Kaydediliyor...</span>
                         ) : (
@@ -711,13 +711,13 @@ export default function RegisterPage() {
                       </div>
                     </div>
 
-                    <div className="flex gap-3 mt-8">
+                    <div className="flex flex-col-reverse sm:flex-row gap-3 mt-8">
                       <button type="button" onClick={goBack}
-                        className="flex items-center gap-2 px-5 py-3.5 rounded-xl border border-slate-200 text-slate-600 font-semibold hover:bg-slate-50 transition-colors">
+                        className="flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl border border-slate-200 text-slate-600 font-semibold hover:bg-slate-50 transition-colors sm:w-auto">
                         <ArrowLeft className="w-4 h-4" /> Geri
                       </button>
                       <button type="submit" disabled={loading}
-                        className="flex-1 py-3.5 bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-700 hover:to-purple-600 disabled:opacity-50 text-white font-bold rounded-xl transition-all shadow-lg shadow-purple-500/25 flex items-center justify-center gap-2">
+                        className="flex-1 min-h-[3rem] py-3.5 bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-700 hover:to-purple-600 disabled:opacity-50 text-white font-bold rounded-xl transition-all shadow-lg shadow-purple-500/25 flex items-center justify-center gap-2">
                         {loading ? (
                           <span className="flex items-center gap-2"><span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> Kaydediliyor...</span>
                         ) : (

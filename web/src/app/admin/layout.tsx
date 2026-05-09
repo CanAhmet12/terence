@@ -130,7 +130,7 @@ export default function AdminLayout({
             </div>
           </div>
           <DashboardHeader />
-          <main className="flex-1 overflow-auto">{children}</main>
+          <main className="flex-1 overflow-x-hidden overflow-y-auto min-w-0">{children}</main>
         </div>
       </div>
     </AuthGuard>

@@ -124,14 +124,14 @@ export default function AICoachInterface() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-6xl mx-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div className="min-h-screen bg-gray-50 p-3 sm:p-6 overflow-x-hidden">
+      <div className="max-w-6xl mx-auto min-w-0">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
           {/* Chat Interface */}
-          <div className="lg:col-span-2">
-            <div className="bg-white rounded-lg shadow-lg overflow-hidden flex flex-col h-[700px]">
+          <div className="lg:col-span-2 min-w-0">
+            <div className="bg-white rounded-lg shadow-lg overflow-hidden flex flex-col min-h-[min(70dvh,36rem)] sm:h-[560px] lg:h-[700px] max-h-[85dvh]">
               {/* Header */}
-              <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6">
+              <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-4 sm:p-6 shrink-0">
                 <div className="flex items-center gap-3">
                   <div className="p-3 bg-white bg-opacity-20 rounded-full">
                     <Bot className="w-8 h-8" />
@@ -167,7 +167,7 @@ export default function AICoachInterface() {
                     )}
                     
                     <div
-                      className={`max-w-[70%] rounded-2xl px-4 py-3 ${
+                      className={`max-w-[min(92%,24rem)] sm:max-w-[70%] rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3 min-w-0 ${
                         message.role === 'user'
                           ? 'bg-blue-600 text-white'
                           : 'bg-gray-100 text-gray-900'
@@ -208,41 +208,41 @@ export default function AICoachInterface() {
 
               {/* Input */}
               <div className="border-t border-gray-200 p-4">
-                <div className="flex gap-2 mb-3">
+                <div className="flex flex-wrap gap-2 mb-3">
                   <button
                     onClick={() => handleQuickAction('explain')}
-                    className="px-3 py-1 text-sm bg-blue-100 text-blue-600 rounded-full hover:bg-blue-200 transition-colors"
+                    className="px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm bg-blue-100 text-blue-600 rounded-full hover:bg-blue-200 transition-colors"
                   >
                     📖 Hatalarımı Açıkla
                   </button>
                   <button
                     onClick={() => handleQuickAction('practice')}
-                    className="px-3 py-1 text-sm bg-purple-100 text-purple-600 rounded-full hover:bg-purple-200 transition-colors"
+                    className="px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm bg-purple-100 text-purple-600 rounded-full hover:bg-purple-200 transition-colors"
                   >
                     🎯 Pratik Öner
                   </button>
                   <button
                     onClick={() => handleQuickAction('review')}
-                    className="px-3 py-1 text-sm bg-green-100 text-green-600 rounded-full hover:bg-green-200 transition-colors"
+                    className="px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm bg-green-100 text-green-600 rounded-full hover:bg-green-200 transition-colors"
                   >
                     📅 Bugün Ne Çalışayım?
                   </button>
                 </div>
 
-                <div className="flex gap-2">
+                <div className="flex gap-2 min-w-0">
                   <input
                     type="text"
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && handleSend()}
                     placeholder="Mesajını yaz..."
-                    className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="flex-1 min-w-0 px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                     disabled={isLoading}
                   />
                   <button
                     onClick={handleSend}
                     disabled={!input.trim() || isLoading}
-                    className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="shrink-0 px-4 sm:px-6 py-2.5 sm:py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     <Send className="w-5 h-5" />
                   </button>

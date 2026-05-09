@@ -94,13 +94,13 @@ export function PackagesSection() {
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-6">
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-6">
           {packages.map((pkg) => (
             <div
               key={pkg.name}
-              className={`relative rounded-2xl border-2 p-8 bg-white transition-all duration-300 ${
+              className={`relative rounded-2xl border-2 p-5 sm:p-8 bg-white transition-all duration-300 min-w-0 ${
                 pkg.popular
-                  ? "border-cyan-500 shadow-2xl shadow-cyan-500/15 scale-[1.02] lg:scale-[1.03] ring-2 ring-cyan-500/20"
+                  ? "border-cyan-500 shadow-2xl shadow-cyan-500/15 sm:scale-[1.02] lg:scale-[1.03] ring-2 ring-cyan-500/20"
                   : "border-slate-200 hover:border-cyan-300 hover:shadow-xl"
               }`}
             >

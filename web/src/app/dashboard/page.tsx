@@ -172,11 +172,11 @@ export default function StudentDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-gray-50 p-3 sm:p-6 overflow-x-hidden">
+      <div className="max-w-7xl mx-auto min-w-0">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Panelim</h1>
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Panelim</h1>
           <p className="text-gray-600">Başarı yolculuğunu takip et</p>
         </div>
 
@@ -214,7 +214,7 @@ export default function StudentDashboard() {
         {/* Tabs */}
         <div className="bg-white rounded-lg shadow-lg mb-8">
           <div className="border-b border-gray-200">
-            <div className="flex gap-4 p-4">
+            <div className="flex flex-wrap gap-2 sm:gap-4 p-3 sm:p-4 overflow-x-auto">
               <button
                 onClick={() => setSelectedTab('overview')}
                 className={`px-4 py-2 rounded-lg font-medium transition-colors ${
@@ -248,7 +248,7 @@ export default function StudentDashboard() {
             </div>
           </div>
 
-          <div className="p-6">
+          <div className="p-4 sm:p-6 overflow-x-hidden min-w-0">
             {selectedTab === 'overview' && (
               <div className="space-y-6">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

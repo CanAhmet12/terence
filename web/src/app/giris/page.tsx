@@ -68,10 +68,10 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex overflow-x-hidden">
       {/* Sol: Form */}
-      <div className="flex-1 flex items-center justify-center p-8 bg-white">
-        <div className="w-full max-w-md">
+      <div className="flex-1 flex items-center justify-center p-4 sm:p-8 bg-white min-w-0">
+        <div className="w-full max-w-md min-w-0">
           <Link href="/" className="inline-flex items-center gap-3 text-slate-900 mb-10 group">
             <div className="w-12 h-12 rounded-2xl overflow-hidden shadow-lg shadow-teal-500/20 group-hover:shadow-teal-500/30 transition-shadow">
               <Image src="/logo.png" alt="Terence Eğitim" width={48} height={48} />

@@ -62,7 +62,7 @@ export default function AdminAyarlarPage() {
   };
 
   return (
-    <div className="p-8 lg:p-12">
+    <div className="p-4 sm:p-6 lg:p-8 xl:p-12 min-w-0 overflow-x-hidden">
       <Link href="/admin" className="inline-flex items-center gap-2 text-slate-500 hover:text-teal-600 text-sm mb-8 transition-colors">
         <ArrowLeft className="w-4 h-4" />
         Panele dön

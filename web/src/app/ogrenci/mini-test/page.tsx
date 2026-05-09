@@ -285,7 +285,7 @@ export default function MiniTestPage() {
   const timeColor = sure <= 60 ? "text-red-600" : sure <= 120 ? "text-amber-600" : "text-teal-600";
 
   return (
-    <div className="p-8 lg:p-12">
+    <div className="p-4 sm:p-8 lg:p-12 min-w-0">
       {/* Üst bar */}
       <div className="flex items-center justify-between mb-6">
         <button

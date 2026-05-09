@@ -28,8 +28,8 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-8 bg-slate-50">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center p-4 sm:p-8 bg-slate-50 min-w-0">
+      <div className="w-full max-w-md min-w-0">
         <Link href="/" className="inline-flex items-center gap-2 text-slate-900 mb-8">
           <div className="w-10 h-10 rounded-xl overflow-hidden">
             <Image src="/logo.png" alt="Terence Eğitim" width={40} height={40} />
@@ -37,7 +37,7 @@ export default function ForgotPasswordPage() {
           <span className="font-bold text-xl">TERENCE EĞİTİM</span>
         </Link>
 
-        <div className="bg-white rounded-2xl shadow-xl border border-slate-100 p-8">
+        <div className="bg-white rounded-2xl shadow-xl border border-slate-100 p-5 sm:p-8">
           <h1 className="text-2xl font-bold text-slate-900 mb-2">Şifreni sıfırla</h1>
           <p className="text-slate-600 mb-8">
             E-posta adresini gir. Sana şifre sıfırlama linki göndereceğiz.
