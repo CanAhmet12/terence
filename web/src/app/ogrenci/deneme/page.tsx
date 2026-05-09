@@ -643,8 +643,8 @@ export default function DenemePage() {
         </div>
       )}
 
-      <div className="w-full px-4 sm:px-6 py-8 max-w-[1400px] mx-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_300px] gap-8 items-start">
+      <div className="w-full min-w-0 px-3 py-8 sm:px-4 lg:px-5">
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(260px,300px)] gap-6 lg:gap-8 items-start">
           <div className="space-y-8">
             {/* Hero */}
             <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-600 via-violet-600 to-teal-600 text-white px-6 py-10 sm:px-10 sm:py-12">
