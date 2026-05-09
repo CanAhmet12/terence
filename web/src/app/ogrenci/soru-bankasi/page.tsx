@@ -646,6 +646,24 @@ function SoruBankasiPageInner({
     });
   }, [loadQuestions, qParam, kazanimFromUrl, subject, effectiveExamTab]);
 
+  const openBookForSubject = useCallback(
+    (subjectName: string) => {
+      setSubject(subjectName);
+      setBookModalTitle(subjectName);
+      setBookModalSubject(subjectName);
+      setSelectedAnswers({});
+      setAnswerResults({});
+      void loadQuestions({
+        page: 1,
+        q: qParam,
+        kazanimCode: kazanimFromUrl || undefined,
+        subject: subjectName,
+        examType: effectiveExamTab,
+      });
+    },
+    [loadQuestions, qParam, kazanimFromUrl, effectiveExamTab]
+  );
+
   return (
     <div className="relative overflow-x-hidden bg-slate-50 text-slate-900">
       <div
@@ -657,68 +675,73 @@ function SoruBankasiPageInner({
         aria-hidden
       />
 
-      <div className="relative mx-auto max-w-[min(100%,1680px)] px-4 pb-8 pt-5 sm:px-6 lg:px-8 lg:pt-6">
-        <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_300px] xl:items-start xl:gap-8">
-          <div className="min-w-0 space-y-6">
-            <QuestionBankHero
-              scopeMode={scopeMode}
-              onScopeModeChange={(m) => {
-                setScopeMode(m);
-                if (m === "class") {
-                  setActiveExamTab("ALL");
-                  setSubject("");
-                }
-              }}
-              examTabs={examTabs}
-              activeExamTab={activeExamTab}
-              onExamTabChange={(tab) => {
-                setActiveExamTab(tab);
+      <div className="relative mx-auto max-w-[min(100%,1680px)] px-4 pb-6 pt-4 sm:px-6 lg:px-8">
+        <div className="flex flex-col gap-4">
+          <QuestionBankHero
+            scopeMode={scopeMode}
+            onScopeModeChange={(m) => {
+              setScopeMode(m);
+              if (m === "class") {
+                setActiveExamTab("ALL");
                 setSubject("");
-              }}
-              onOpenVoice={() => setShowVoice(true)}
-              onOpenPersonalTest={() => setShowPersonalTest(true)}
-            />
+              }
+            }}
+            examTabs={examTabs}
+            activeExamTab={activeExamTab}
+            onExamTabChange={(tab) => {
+              setActiveExamTab(tab);
+              setSubject("");
+            }}
+            onOpenVoice={() => setShowVoice(true)}
+            onOpenPersonalTest={() => setShowPersonalTest(true)}
+          />
 
-            {typeof timedRemaining === "number" && timedRemaining > 0 && (
-              <div
-                role="status"
-                aria-live="polite"
-                className="rounded-2xl border border-cyan-200 bg-cyan-50 px-4 py-3 text-center text-sm font-semibold text-cyan-900 shadow-sm"
-              >
-                Süreli pratik: kalan{" "}
-                <span className="tabular-nums text-lg text-cyan-950">{timedRemaining}</span> sn
-              </div>
-            )}
+          {typeof timedRemaining === "number" && timedRemaining > 0 && (
+            <div
+              role="status"
+              aria-live="polite"
+              className="rounded-xl border border-cyan-200 bg-cyan-50 px-4 py-2.5 text-center text-sm font-semibold text-cyan-900 shadow-sm"
+            >
+              Süreli pratik: kalan{" "}
+              <span className="tabular-nums text-base text-cyan-950">{timedRemaining}</span> sn
+            </div>
+          )}
 
-            <QuestionBankKpiStrip summary={bankSummary} loading={bankSummaryLoading} />
-            <SubjectBankCarousel subjects={bankSummary?.subjects ?? []} />
-            <QuestionBankQuickActions
-              onQuick10={onQuick10}
-              onWeakFocus={onWeakFocus}
-              onTimedPractice={onTimedPractice}
-              disabled={loading || !token}
-            />
-            <QuestionBankInsightsRow
-              subjects={bankSummary?.subjects ?? []}
-              weakPreview={weakPreview}
-              badgeData={badgeData}
-              goalHint={goalHint}
-              loading={sidebarLoading}
-            />
+          <QuestionBankKpiStrip summary={bankSummary} loading={bankSummaryLoading} />
+
+          <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_280px] xl:items-start xl:gap-6">
+            <div className="min-w-0 space-y-4">
+              <SubjectBankCarousel
+                subjects={bankSummary?.subjects ?? []}
+                onSelectSubject={openBookForSubject}
+              />
+              <QuestionBankQuickActions
+                onQuick10={onQuick10}
+                onWeakFocus={onWeakFocus}
+                onTimedPractice={onTimedPractice}
+                disabled={loading || !token}
+              />
+            </div>
+
+            <div className="min-w-0 xl:sticky xl:top-20 xl:self-start">
+              <QuestionBankSidebar
+                examHistory={examHistory}
+                planStats={planStats}
+                loading={sidebarLoading}
+                onPersonalTest={() => setShowPersonalTest(true)}
+                hidePersonalTestCard
+              />
+            </div>
           </div>
 
-          <div className="min-w-0 xl:sticky xl:top-20 xl:self-start">
-            <QuestionBankSidebar
-              examHistory={examHistory}
-              planStats={planStats}
-              loading={sidebarLoading}
-              onPersonalTest={() => setShowPersonalTest(true)}
-              hidePersonalTestCard
-            />
-          </div>
-        </div>
+          <QuestionBankInsightsRow
+            subjects={bankSummary?.subjects ?? []}
+            weakPreview={weakPreview}
+            badgeData={badgeData}
+            goalHint={goalHint}
+            loading={sidebarLoading}
+          />
 
-        <div className="mt-6">
           <StudyMotivationBanner onStartQuick={onQuick10} />
         </div>
       </div>
@@ -753,7 +776,10 @@ function SoruBankasiPageInner({
           loadingSimilar={loadingSimilar}
           onAnswer={handleAnswer}
           onSimilar={handleSimilar}
-          onClose={() => setBookModalSubject(null)}
+          onClose={() => {
+            setBookModalSubject(null);
+            setSubject("");
+          }}
         />
       )}
     </div>

@@ -10,7 +10,14 @@ function formatInt(n: number): string {
   return new Intl.NumberFormat("tr-TR").format(n);
 }
 
-export function SubjectBankCarousel({ subjects }: { subjects: QuestionBankSubjectSummary[] }) {
+export function SubjectBankCarousel({
+  subjects,
+  onSelectSubject,
+}: {
+  subjects: QuestionBankSubjectSummary[];
+  /** Kitap tıklanınca soru seti modalını açmak için (önerilir) */
+  onSelectSubject?: (subject: string) => void;
+}) {
   const firstHref = subjects[0]?.cta_deep_link ?? "/ogrenci/soru-bankasi";
 
   if (!subjects.length) {
@@ -86,7 +93,13 @@ export function SubjectBankCarousel({ subjects }: { subjects: QuestionBankSubjec
                 : `${formatInt(row.total)} soru`;
 
             return (
-              <SubjectBook3D key={row.subject} subject={row.subject} meta={meta} href={row.cta_deep_link} />
+              <SubjectBook3D
+                key={row.subject}
+                subject={row.subject}
+                meta={meta}
+                href={row.cta_deep_link}
+                onActivate={onSelectSubject ? () => onSelectSubject(row.subject) : undefined}
+              />
             );
           })}
         </div>

@@ -48,10 +48,10 @@ export function QuestionBankInsightsRow({
   }));
 
   return (
-    <div className="grid gap-5 lg:grid-cols-12 lg:gap-6">
+    <div className="grid gap-4 lg:grid-cols-12 lg:gap-5">
       <section
         aria-labelledby="qb-rec-heading"
-        className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm lg:col-span-4"
+        className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm lg:col-span-4"
       >
         <div className="flex items-center gap-2 text-violet-700">
           <Sparkles className="h-4 w-4" aria-hidden />
@@ -103,7 +103,7 @@ export function QuestionBankInsightsRow({
 
       <section
         aria-labelledby="qb-radar-heading"
-        className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-5 shadow-sm lg:col-span-5"
+        className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-sm lg:col-span-5"
       >
         <div className="pointer-events-none absolute -right-8 top-6 h-32 w-32 rounded-full bg-violet-100/80 blur-3xl" />
         <div className="relative flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -197,7 +197,7 @@ export function QuestionBankInsightsRow({
 
       <section
         aria-labelledby="qb-badges-heading"
-        className="rounded-3xl border border-slate-200 bg-gradient-to-b from-amber-50/50 to-white p-5 shadow-sm lg:col-span-3"
+        className="rounded-2xl border border-slate-200 bg-gradient-to-b from-amber-50/50 to-white p-4 shadow-sm lg:col-span-3"
       >
         <div className="flex items-center gap-2 text-amber-800">
           <Medal className="h-4 w-4" aria-hidden />
