@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, Suspense } from "react";
 import Image from "next/image";
+import { useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
-import { studentApi, type StudentLiveLessonsSummary, type TeacherLesson, type VideoRoom } from "@/lib/api";
+import { studentApi, type TeacherLesson, type StudentLiveLessonsSummary, type VideoRoom } from "@/lib/api";
 import { VideoCard } from "@/components/VideoCard";
 import { LiveClassRoom } from "@/components/ogrenci/canli-ders/LiveClassRoom";
 import { KpiStrip } from "@/components/ogrenci/canli-ders/KpiStrip";
@@ -11,7 +12,6 @@ import { LiveLessonCard } from "@/components/ogrenci/canli-ders/LiveLessonCard";
 import { StudentLiveHelpBanner } from "@/components/ogrenci/canli-ders/StudentLiveHelpBanner";
 import {
   Video,
-  Wifi,
   AlertCircle,
   RefreshCw,
   Play,
@@ -32,8 +32,25 @@ function endOfDay(d: Date): Date {
   return x;
 }
 
-export default function OgrenciCanliDersPage() {
+function lessonMatchesQuery(lesson: TeacherLesson, q: string): boolean {
+  const needle = q.trim().toLowerCase();
+  if (!needle) return true;
+  const hay = [
+    lesson.title,
+    lesson.class_room?.name,
+    lesson.teacher?.name,
+    lesson.subject_tag,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+  return hay.includes(needle);
+}
+
+function OgrenciCanliDersPageInner() {
   const { token } = useAuth();
+  const searchParams = useSearchParams();
+  const headerQuery = (searchParams.get("q") ?? "").trim();
 
   const [upcoming, setUpcoming] = useState<TeacherLesson[]>([]);
   const [past, setPast] = useState<TeacherLesson[]>([]);
@@ -103,25 +120,32 @@ export default function OgrenciCanliDersPage() {
 
   const upcomingScoped = useMemo(() => {
     const now = new Date();
-    if (filterScope === "all") return upcoming;
-    return upcoming.filter((l) => {
-      const iso = l.starts_at ?? l.scheduled_at ?? "";
-      if (!iso) return false;
-      const t = new Date(iso).getTime();
-      if (filterScope === "today") {
-        return t >= startOfDay(now).getTime() && t <= endOfDay(now).getTime();
-      }
-      const weekEnd = new Date(now);
-      weekEnd.setDate(weekEnd.getDate() + 7);
-      return t >= startOfDay(now).getTime() && t <= weekEnd.getTime();
-    });
-  }, [upcoming, filterScope]);
+    let list =
+      filterScope === "all"
+        ? upcoming
+        : upcoming.filter((l) => {
+            const iso = l.starts_at ?? l.scheduled_at ?? "";
+            if (!iso) return false;
+            const t = new Date(iso).getTime();
+            if (filterScope === "today") {
+              return t >= startOfDay(now).getTime() && t <= endOfDay(now).getTime();
+            }
+            const weekEnd = new Date(now);
+            weekEnd.setDate(weekEnd.getDate() + 7);
+            return t >= startOfDay(now).getTime() && t <= weekEnd.getTime();
+          });
+    if (headerQuery) list = list.filter((l) => lessonMatchesQuery(l, headerQuery));
+    return list;
+  }, [upcoming, filterScope, headerQuery]);
 
-  const filteredPast = past;
+  const filteredPast = useMemo(() => {
+    if (!headerQuery) return past;
+    return past.filter((l) => lessonMatchesQuery(l, headerQuery));
+  }, [past, headerQuery]);
 
   return (
     <div className="min-h-full bg-[#F9FAFB]">
-      <div className="mx-auto max-w-[1360px] px-5 pb-12 pt-4 sm:px-8 lg:px-10 lg:pt-6">
+      <div className="mx-auto max-w-[1360px] px-4 pb-12 pt-4 sm:px-6 lg:px-8 lg:pt-5">
         {/* Başlık + yenile */}
         <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
           <div className="min-w-0 flex-1">
@@ -148,8 +172,8 @@ export default function OgrenciCanliDersPage() {
               </button>
             </div>
 
-            {/* KPI + hero görsel */}
-            <div className="mt-8 flex flex-col gap-8 xl:flex-row xl:items-stretch">
+            {/* KPI + hero illüstrasyon (şeffaf PNG — ekstra arka plan kutusu yok) */}
+            <div className="mt-8 flex flex-col gap-6 xl:flex-row xl:items-center xl:justify-between xl:gap-10">
               <div className="min-w-0 flex-1">
                 {!loading && token ? (
                   <KpiStrip summary={summary} />
@@ -161,15 +185,18 @@ export default function OgrenciCanliDersPage() {
                   </div>
                 )}
               </div>
-              <div className="relative mx-auto w-full max-w-[380px] shrink-0 xl:mx-0 xl:max-w-[340px]">
+              <div
+                className="relative mx-auto flex w-full max-w-[280px] shrink-0 items-center justify-center sm:max-w-[320px] xl:mx-0 xl:w-auto xl:max-w-[min(100%,300px)] 2xl:max-w-[340px]"
+                aria-hidden
+              >
                 <Image
-                  src="/images/canli-ders/hero-scene.png"
+                  src="/images/canli-ders/hero-live.png"
                   alt=""
-                  width={680}
-                  height={520}
-                  className="h-auto w-full object-contain object-center drop-shadow-sm"
+                  width={640}
+                  height={480}
+                  className="h-auto w-full max-h-[200px] object-contain object-center sm:max-h-[240px] xl:max-h-[260px] 2xl:max-h-[280px]"
                   priority
-                  sizes="(max-width: 1280px) 90vw, 340px"
+                  sizes="(max-width: 640px) 85vw, (max-width: 1280px) 280px, 320px"
                 />
               </div>
             </div>
@@ -252,9 +279,9 @@ export default function OgrenciCanliDersPage() {
         </div>
 
         {loading ? (
-          <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
             {[1, 2, 3, 4, 5, 6].map((i) => (
-              <div key={i} className="h-[420px] animate-pulse rounded-2xl bg-slate-200/50" />
+              <div key={i} className="h-[430px] animate-pulse rounded-2xl bg-slate-200/50" />
             ))}
           </div>
         ) : !token ? (
@@ -276,19 +303,10 @@ export default function OgrenciCanliDersPage() {
           </div>
         ) : tab === "upcoming" ? (
           <div className="mt-8">
-            <div className="mb-6 flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white shadow-sm ring-1 ring-slate-100">
-                <Wifi className="h-5 w-5 text-[#6366F1]" />
-              </div>
-              <div>
-                <h2 className="text-[22px] font-bold tracking-tight text-slate-900">Yaklaşan Dersler</h2>
-                <p className="text-[13px] text-slate-500">{upcomingScoped.length} ders</p>
-              </div>
-            </div>
             <div
               className={
                 view === "grid"
-                  ? "grid gap-6 sm:grid-cols-2 xl:grid-cols-3"
+                  ? "grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3"
                   : "mx-auto flex max-w-3xl flex-col gap-5"
               }
             >
@@ -317,7 +335,7 @@ export default function OgrenciCanliDersPage() {
             <div
               className={
                 view === "grid"
-                  ? "grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+                  ? "grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3"
                   : "mx-auto flex max-w-3xl flex-col gap-3"
               }
             >
@@ -369,5 +387,26 @@ export default function OgrenciCanliDersPage() {
         <StudentLiveHelpBanner />
       </div>
     </div>
+  );
+}
+
+export default function OgrenciCanliDersPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-full bg-[#F9FAFB]">
+          <div className="mx-auto max-w-[1360px] px-4 py-8 sm:px-6 lg:px-8">
+            <div className="h-10 w-48 animate-pulse rounded-lg bg-slate-200/70" />
+            <div className="mt-8 grid gap-6 sm:grid-cols-3">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="h-[132px] animate-pulse rounded-2xl bg-slate-200/60" />
+              ))}
+            </div>
+          </div>
+        </div>
+      }
+    >
+      <OgrenciCanliDersPageInner />
+    </Suspense>
   );
 }
