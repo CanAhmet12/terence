@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo, Suspense } from "react";
-import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { studentApi, type TeacherLesson, type StudentLiveLessonsSummary, type VideoRoom } from "@/lib/api";
@@ -13,7 +12,6 @@ import { StudentLiveHelpBanner } from "@/components/ogrenci/canli-ders/StudentLi
 import {
   Video,
   AlertCircle,
-  RefreshCw,
   Play,
   LayoutGrid,
   List,
@@ -146,47 +144,14 @@ function OgrenciCanliDersPageInner() {
   return (
     <div className="min-h-full bg-[#F9FAFB]">
       <div className="mx-auto max-w-[1360px] px-4 pb-12 pt-4 sm:px-6 lg:px-8 lg:pt-5">
-        {/* Mockup: (1) Hero — başlık + yenile solda, illüstrasyon sağda | (2) Altında KPI üçlüsü tam genişlik */}
         <section className="space-y-8">
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between lg:gap-10">
-            <div className="min-w-0 flex-1">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <h1 className="text-[28px] font-bold tracking-tight text-slate-900 lg:text-[32px] lg:leading-tight">
-                    Canlı Dersler
-                  </h1>
-                  <p className="mt-2 max-w-[560px] text-[15px] leading-relaxed text-slate-600">
-                    Öğretmenlerinizle canlı derslere katıl, sorularını sor ve öğrenmeni pekiştir!
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setLoading(true);
-                    loadLessons();
-                  }}
-                  disabled={loading}
-                  className="mt-0.5 shrink-0 rounded-xl border border-slate-200/80 bg-white p-2.5 text-slate-500 shadow-sm transition hover:border-slate-300 hover:text-slate-800 disabled:opacity-50"
-                  aria-label="Listeyi yenile"
-                >
-                  <RefreshCw className={`h-5 w-5 ${loading ? "animate-spin" : ""}`} />
-                </button>
-              </div>
-            </div>
-            <div
-              className="relative mx-auto flex w-full max-w-[300px] shrink-0 items-center justify-center sm:max-w-[340px] lg:mx-0 lg:max-w-[min(100%,360px)] xl:max-w-[380px]"
-              aria-hidden
-            >
-              <Image
-                src="/images/canli-ders/hero-live.png"
-                alt=""
-                width={640}
-                height={480}
-                className="h-auto w-full max-h-[220px] object-contain object-center sm:max-h-[260px] lg:max-h-[280px] xl:max-h-[300px]"
-                priority
-                sizes="(max-width: 1024px) 85vw, 360px"
-              />
-            </div>
+          <div className="min-w-0">
+            <h1 className="text-[28px] font-bold tracking-tight text-slate-900 lg:text-[32px] lg:leading-tight">
+              Canlı Dersler
+            </h1>
+            <p className="mt-2 max-w-[560px] text-[15px] leading-relaxed text-slate-600">
+              Öğretmenlerinizle canlı derslere katıl, sorularını sor ve öğrenmeni pekiştir!
+            </p>
           </div>
 
           <div className="w-full">
