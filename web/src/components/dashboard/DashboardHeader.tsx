@@ -28,6 +28,7 @@ import {
   Search,
 } from "lucide-react";
 import { useCallback, useEffect, useRef, Suspense } from "react";
+import { cn } from "@/lib/utils";
 
 const PATH_MAP: Record<string, { label: string; icon: React.ElementType }> = {
   "/ogrenci": { label: "Ana Panel", icon: LayoutDashboard },
@@ -149,7 +150,15 @@ function DashboardHeaderInner() {
       }`}
     >
       <div className="flex w-full flex-col gap-3 px-3 py-2.5 sm:px-4 sm:py-2.5 lg:px-5 lg:py-3">
-        <div className="grid w-full grid-cols-[1fr_auto] items-center gap-x-3 gap-y-2 lg:grid-cols-[minmax(0,1fr)_minmax(220px,420px)_minmax(0,1fr)] lg:gap-x-6">
+        <div
+          className={cn(
+            "grid w-full items-center gap-x-3 gap-y-2",
+            /* Arama yokken 2 çocuk var; lg'de 3 sütun kullanırsak 2. çocuk orta (arama) sütununa düşer — sağda boşluk kalır */
+            hasCenterSearch
+              ? "grid-cols-[1fr_auto] lg:grid-cols-[minmax(0,1fr)_minmax(220px,420px)_minmax(0,1fr)] lg:gap-x-6"
+              : "grid-cols-[minmax(0,1fr)_auto]"
+          )}
+        >
           {/* Sol: breadcrumb */}
           <div className="flex min-w-0 items-center gap-1.5 sm:gap-2 lg:justify-self-start">
             <Link
