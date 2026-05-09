@@ -101,93 +101,139 @@ function VoiceAssistantModal({ token, onClose }: { token: string | null; onClose
   }, []);
 
   return (
-    <dialog open>
-      <button type="button" onClick={onClose}>
-        Kapat
-      </button>
-      <h3>Sesli soru çözüm asistanı</h3>
-      <p>Soruyu sesli oku; yapay zeka kısaca açıklasın.</p>
-      {!supported && (
-        <p>
-          <AlertCircle aria-hidden /> Bu tarayıcı ses tanımayı desteklemiyor.
-        </p>
-      )}
-      <p>
-        <button type="button" onClick={isListening ? stopListening : startListening} disabled={!supported}>
-          {isListening ? (
-            <>
-              <MicOff aria-hidden /> Durdur
-            </>
-          ) : (
-            <>
-              <Mic aria-hidden /> Dinle
-            </>
-          )}
-        </button>
-      </p>
-      <p>{isListening ? "Dinleniyor." : "Soruyu sesli okumak için Dinle’ye bas."}</p>
-      {transcript && (
-        <div>
-          <p>
-            <strong>Duyulan soru</strong>
+    <div className="fixed inset-0 z-[100] flex items-end justify-center p-4 sm:items-center sm:p-6">
+      <button
+        type="button"
+        className="absolute inset-0 bg-black/70 backdrop-blur-md"
+        aria-label="Kapat"
+        onClick={onClose}
+      />
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="voice-assistant-title"
+        className="relative z-10 max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-3xl border border-white/10 bg-gradient-to-b from-slate-900 to-[#0a0612] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.65)] sm:p-8"
+      >
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h3 id="voice-assistant-title" className="text-xl font-bold text-white">
+              Sesli soru asistanı
+            </h3>
+            <p className="mt-2 text-sm leading-relaxed text-slate-400">
+              Soruyu sesli oku; yapay zeka kısaca açıklasın.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-xl border border-white/10 bg-white/5 px-3 py-1.5 text-sm font-semibold text-slate-300 hover:bg-white/10"
+          >
+            Kapat
+          </button>
+        </div>
+
+        {!supported && (
+          <p className="mt-6 flex items-center gap-2 rounded-xl border border-amber-500/25 bg-amber-950/40 px-4 py-3 text-sm text-amber-100">
+            <AlertCircle className="h-4 w-4 shrink-0" aria-hidden /> Bu tarayıcı ses tanımayı desteklemiyor.
           </p>
-          <p>{transcript}</p>
-          <p>
-            <button type="button" onClick={askAI} disabled={loading}>
-              {loading ? (
-                <>
-                  <Loader2 aria-hidden /> Yanıt alınıyor…
-                </>
+        )}
+
+        <div className="mt-8 flex flex-wrap gap-3">
+          <button
+            type="button"
+            onClick={isListening ? stopListening : startListening}
+            disabled={!supported}
+            className="inline-flex items-center gap-2 rounded-2xl bg-violet-600 px-5 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-violet-500 disabled:opacity-40"
+          >
+            {isListening ? (
+              <>
+                <MicOff aria-hidden /> Durdur
+              </>
+            ) : (
+              <>
+                <Mic aria-hidden /> Dinle
+              </>
+            )}
+          </button>
+        </div>
+        <p className="mt-3 text-sm text-slate-500">
+          {isListening ? "Dinleniyor…" : "Soruyu sesli okumak için Dinle’ye bas."}
+        </p>
+
+        {transcript && (
+          <div className="mt-8 rounded-2xl border border-white/[0.06] bg-black/30 p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Duyulan soru</p>
+            <p className="mt-2 text-slate-100">{transcript}</p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={askAI}
+                disabled={loading}
+                className="rounded-xl bg-white px-4 py-2 text-sm font-bold text-slate-900 disabled:opacity-50"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="inline h-4 w-4 animate-spin" aria-hidden /> Yanıt alınıyor…
+                  </>
+                ) : (
+                  "Yapay zekadan cevap al"
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setTranscript("");
+                  setAiAnswer(null);
+                }}
+                className="rounded-xl border border-white/15 px-4 py-2 text-sm font-semibold text-slate-300"
+              >
+                Temizle
+              </button>
+            </div>
+          </div>
+        )}
+
+        {aiAnswer && (
+          <div className="mt-6 rounded-2xl border border-violet-500/20 bg-violet-950/30 p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-violet-300/80">AI cevabı</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {speaking ? (
+                <button
+                  type="button"
+                  onClick={stopSpeaking}
+                  className="inline-flex items-center gap-2 rounded-xl border border-white/15 px-3 py-2 text-sm text-slate-200"
+                >
+                  <MicOff aria-hidden /> Okumayı durdur
+                </button>
               ) : (
-                "Yapay zekadan cevap al"
+                <button
+                  type="button"
+                  onClick={() => {
+                    if ("speechSynthesis" in window) {
+                      const u = new SpeechSynthesisUtterance(aiAnswer);
+                      u.lang = "tr-TR";
+                      u.onstart = () => setSpeaking(true);
+                      u.onend = () => setSpeaking(false);
+                      window.speechSynthesis.speak(u);
+                    }
+                  }}
+                  className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-3 py-2 text-sm font-semibold text-white"
+                >
+                  <Volume2 aria-hidden /> Sesli oku
+                </button>
               )}
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setTranscript("");
-                setAiAnswer(null);
-              }}
-            >
-              Temizle
-            </button>
+            </div>
+            <p className="mt-4 text-sm leading-relaxed text-slate-200">{aiAnswer}</p>
+          </div>
+        )}
+
+        {error && (
+          <p className="mt-6 flex items-center gap-2 rounded-xl border border-red-500/30 bg-red-950/40 px-4 py-3 text-sm text-red-100">
+            <AlertCircle aria-hidden /> {error}
           </p>
-        </div>
-      )}
-      {aiAnswer && (
-        <div>
-          <p>
-            <strong>AI cevabı</strong>
-          </p>
-          {speaking ? (
-            <button type="button" onClick={stopSpeaking}>
-              <MicOff aria-hidden /> Okumayı durdur
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={() => {
-                if ("speechSynthesis" in window) {
-                  const u = new SpeechSynthesisUtterance(aiAnswer);
-                  u.lang = "tr-TR";
-                  u.onstart = () => setSpeaking(true);
-                  u.onend = () => setSpeaking(false);
-                  window.speechSynthesis.speak(u);
-                }
-              }}
-            >
-              <Volume2 aria-hidden /> Sesli oku
-            </button>
-          )}
-          <p>{aiAnswer}</p>
-        </div>
-      )}
-      {error && (
-        <p>
-          <AlertCircle aria-hidden /> {error}
-        </p>
-      )}
-    </dialog>
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -205,7 +251,13 @@ const DEFAULT_SUBJECT_OPTIONS = [
 
 export default function SoruBankasiPage() {
   return (
-    <Suspense fallback={<p>Yükleniyor…</p>}>
+    <Suspense
+      fallback={
+        <div className="flex min-h-[50vh] items-center justify-center bg-[#05050a]">
+          <Loader2 className="h-10 w-10 animate-spin text-violet-500" aria-hidden />
+        </div>
+      }
+    >
       <SoruBankasiPageWithSearchParams />
     </Suspense>
   );
@@ -595,60 +647,78 @@ function SoruBankasiPageInner({
   }, [loadQuestions, qParam, kazanimFromUrl, subject, effectiveExamTab]);
 
   return (
-    <div>
-      <div>
-        <QuestionBankHero
-          scopeMode={scopeMode}
-          onScopeModeChange={(m) => {
-            setScopeMode(m);
-            if (m === "class") {
-              setActiveExamTab("ALL");
-              setSubject("");
-            }
-          }}
-          examTabs={examTabs}
-          activeExamTab={activeExamTab}
-          onExamTabChange={(tab) => {
-            setActiveExamTab(tab);
-            setSubject("");
-          }}
-          onOpenVoice={() => setShowVoice(true)}
-          onOpenPersonalTest={() => setShowPersonalTest(true)}
-        />
-
-        {typeof timedRemaining === "number" && timedRemaining > 0 && (
-          <p role="status" aria-live="polite">
-            Süreli pratik: kalan {timedRemaining} sn
-          </p>
-        )}
-
-        <QuestionBankKpiStrip summary={bankSummary} loading={bankSummaryLoading} />
-        <SubjectBankCarousel subjects={bankSummary?.subjects ?? []} />
-        <QuestionBankQuickActions
-          onQuick10={onQuick10}
-          onWeakFocus={onWeakFocus}
-          onTimedPractice={onTimedPractice}
-          disabled={loading || !token}
-        />
-        <div>
-          <QuestionBankInsightsRow
-            subjects={bankSummary?.subjects ?? []}
-            weakPreview={weakPreview}
-            badgeData={badgeData}
-            goalHint={goalHint}
-            loading={sidebarLoading}
-          />
-        </div>
-        <StudyMotivationBanner onStartQuick={onQuick10} />
-      </div>
-
-      <QuestionBankSidebar
-        examHistory={examHistory}
-        planStats={planStats}
-        loading={sidebarLoading}
-        onPersonalTest={() => setShowPersonalTest(true)}
-        hidePersonalTestCard
+    <div className="relative min-h-screen overflow-x-hidden bg-[#05050a] text-slate-100">
+      <div
+        className="pointer-events-none fixed inset-0 bg-[radial-gradient(ellipse_90%_55%_at_50%_-18%,rgba(109,40,217,0.26),transparent)]"
+        aria-hidden
       />
+      <div
+        className="pointer-events-none fixed inset-0 bg-[radial-gradient(ellipse_45%_42%_at_95%_15%,rgba(59,130,246,0.11),transparent)]"
+        aria-hidden
+      />
+
+      <div className="relative mx-auto max-w-[min(100%,1680px)] px-4 pb-16 pt-6 sm:px-6 lg:px-8 lg:pt-8">
+        <div className="flex flex-col gap-10 xl:flex-row xl:items-start xl:gap-12">
+          <div className="min-w-0 flex-1 space-y-10">
+            <QuestionBankHero
+              scopeMode={scopeMode}
+              onScopeModeChange={(m) => {
+                setScopeMode(m);
+                if (m === "class") {
+                  setActiveExamTab("ALL");
+                  setSubject("");
+                }
+              }}
+              examTabs={examTabs}
+              activeExamTab={activeExamTab}
+              onExamTabChange={(tab) => {
+                setActiveExamTab(tab);
+                setSubject("");
+              }}
+              onOpenVoice={() => setShowVoice(true)}
+              onOpenPersonalTest={() => setShowPersonalTest(true)}
+            />
+
+            {typeof timedRemaining === "number" && timedRemaining > 0 && (
+              <div
+                role="status"
+                aria-live="polite"
+                className="rounded-2xl border border-cyan-400/35 bg-cyan-950/35 px-5 py-4 text-center text-sm font-semibold text-cyan-50 shadow-[0_0_40px_rgba(34,211,238,0.12)]"
+              >
+                Süreli pratik: kalan{" "}
+                <span className="tabular-nums text-lg text-white">{timedRemaining}</span> sn
+              </div>
+            )}
+
+            <QuestionBankKpiStrip summary={bankSummary} loading={bankSummaryLoading} />
+            <SubjectBankCarousel subjects={bankSummary?.subjects ?? []} />
+            <QuestionBankQuickActions
+              onQuick10={onQuick10}
+              onWeakFocus={onWeakFocus}
+              onTimedPractice={onTimedPractice}
+              disabled={loading || !token}
+            />
+            <QuestionBankInsightsRow
+              subjects={bankSummary?.subjects ?? []}
+              weakPreview={weakPreview}
+              badgeData={badgeData}
+              goalHint={goalHint}
+              loading={sidebarLoading}
+            />
+            <StudyMotivationBanner onStartQuick={onQuick10} />
+          </div>
+
+          <div className="shrink-0 xl:sticky xl:top-6 xl:w-[380px] xl:self-start">
+            <QuestionBankSidebar
+              examHistory={examHistory}
+              planStats={planStats}
+              loading={sidebarLoading}
+              onPersonalTest={() => setShowPersonalTest(true)}
+              hidePersonalTestCard
+            />
+          </div>
+        </div>
+      </div>
 
       {showVoice && (
         <VoiceAssistantModal token={token} onClose={() => setShowVoice(false)} />
@@ -724,63 +794,101 @@ function PersonalTestModal({
   };
 
   return (
-    <dialog open>
-      <button type="button" onClick={onClose}>
-        Kapat
-      </button>
-      <h3>Bana özel test</h3>
-      <p>AI, mümkünse zayıf kazanımlarından soru seçer.</p>
-      <div>
-        <label>
-          Ders (opsiyonel)
-          <select value={subject} onChange={(e) => setSubject(e.target.value)}>
-            <option value="">Tüm dersler</option>
-            {subjects.map((d) => (
-              <option key={d}>{d}</option>
-            ))}
-          </select>
-        </label>
-      </div>
-      <div>
-        <label>
-          Soru sayısı
-          <select value={count} onChange={(e) => setCount(Number(e.target.value))}>
-            {[5, 10, 15, 20].map((n) => (
-              <option key={n} value={n}>
-                {n}
-              </option>
-            ))}
-          </select>
-        </label>
-      </div>
-      <div>
-        <label>
-          Zorluk
-          <select value={difficulty} onChange={(e) => setDifficulty(e.target.value)}>
-            <option value="">Karışık</option>
-            <option value="easy">Kolay</option>
-            <option value="medium">Orta</option>
-            <option value="hard">Zor</option>
-          </select>
-        </label>
-      </div>
-      {error && (
-        <p>
-          <AlertCircle aria-hidden /> {error}
-        </p>
-      )}
-      <p>
-        <button type="button" onClick={handleGenerate} disabled={generating}>
+    <div className="fixed inset-0 z-[100] flex items-end justify-center p-4 sm:items-center sm:p-6">
+      <button
+        type="button"
+        className="absolute inset-0 bg-black/70 backdrop-blur-md"
+        aria-label="Kapat"
+        onClick={onClose}
+      />
+      <div
+        role="dialog"
+        aria-modal="true"
+        className="relative z-10 max-h-[90vh] w-full max-w-md overflow-y-auto rounded-3xl border border-white/10 bg-gradient-to-b from-slate-900 to-[#0a0612] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.65)] sm:p-8"
+      >
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h3 className="text-xl font-bold text-white">Bana özel test</h3>
+            <p className="mt-2 text-sm text-slate-400">AI mümkünse zayıf kazanımlarından soru seçer.</p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-xl border border-white/10 bg-white/5 px-3 py-1.5 text-sm font-semibold text-slate-300 hover:bg-white/10"
+          >
+            Kapat
+          </button>
+        </div>
+
+        <div className="mt-8 space-y-5">
+          <label className="block">
+            <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Ders (opsiyonel)</span>
+            <select
+              value={subject}
+              onChange={(e) => setSubject(e.target.value)}
+              className="mt-2 w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white focus:border-violet-500/50 focus:outline-none focus:ring-2 focus:ring-violet-500/30"
+            >
+              <option value="">Tüm dersler</option>
+              {subjects.map((d) => (
+                <option key={d} value={d}>
+                  {d}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="block">
+            <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Soru sayısı</span>
+            <select
+              value={count}
+              onChange={(e) => setCount(Number(e.target.value))}
+              className="mt-2 w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white focus:border-violet-500/50 focus:outline-none focus:ring-2 focus:ring-violet-500/30"
+            >
+              {[5, 10, 15, 20].map((n) => (
+                <option key={n} value={n}>
+                  {n}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="block">
+            <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Zorluk</span>
+            <select
+              value={difficulty}
+              onChange={(e) => setDifficulty(e.target.value)}
+              className="mt-2 w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white focus:border-violet-500/50 focus:outline-none focus:ring-2 focus:ring-violet-500/30"
+            >
+              <option value="">Karışık</option>
+              <option value="easy">Kolay</option>
+              <option value="medium">Orta</option>
+              <option value="hard">Zor</option>
+            </select>
+          </label>
+        </div>
+
+        {error && (
+          <p className="mt-6 flex items-center gap-2 rounded-xl border border-red-500/30 bg-red-950/40 px-4 py-3 text-sm text-red-100">
+            <AlertCircle aria-hidden /> {error}
+          </p>
+        )}
+
+        <button
+          type="button"
+          onClick={handleGenerate}
+          disabled={generating}
+          className="mt-8 flex w-full items-center justify-center gap-2 rounded-2xl bg-white py-4 text-sm font-bold text-slate-900 shadow-xl transition hover:bg-violet-100 disabled:opacity-50"
+        >
           {generating ? (
             <>
-              <Loader2 aria-hidden /> Oluşturuluyor…
+              <Loader2 className="h-5 w-5 animate-spin" aria-hidden /> Oluşturuluyor…
             </>
           ) : (
             `${count} soruluk test oluştur`
           )}
         </button>
-      </p>
-    </dialog>
+      </div>
+    </div>
   );
 }
 
@@ -826,91 +934,163 @@ function BookQuestionsModal({
   const answeredCount = Object.keys(answerResults).length;
 
   return (
-    <dialog open aria-labelledby="book-modal-title">
-      <button type="button" onClick={onClose}>
-        Kapat
-      </button>
-      <h2 id="book-modal-title">
-        {title} — {subject}
-      </h2>
-      <p>
-        Çözülen: {answeredCount} / {questions.length || "—"}
-      </p>
-      {loading ? (
-        <p>Sorular yükleniyor…</p>
-      ) : questions.length === 0 ? (
-        <p>Bu derse ait soru bulunamadı.</p>
-      ) : (
-        <>
-          {pageQuestions.map((soru, idx) => {
-            const result = answerResults[soru.id];
-            const qNum = currentPage * questionsPerPage + idx + 1;
-            return (
-              <article key={soru.id}>
-                <h3>Soru {qNum}</h3>
-                {soru.kazanim_code && <p>Kazanım: {soru.kazanim_code}</p>}
-                <p>Zorluk: {diffLabel(soru.difficulty)}</p>
-                <p>{soru.question_text}</p>
-                <ul>
-                  {soru.options?.map((opt) => (
-                    <li key={opt.id}>
-                      <button
-                        type="button"
-                        disabled={!!result || answeringId === soru.id}
-                        onClick={() => onAnswer(soru, opt.option_letter)}
-                      >
-                        {opt.option_letter}) {opt.option_text}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-                {result && (
-                  <p>
-                    {result.is_correct ? "Doğru" : "Yanlış"}
-                    {result.explanation && <> — {result.explanation}</>}
-                  </p>
-                )}
-                {result?.solution_video && (
-                  <p>
-                    <a href={result.solution_video} target="_blank" rel="noopener noreferrer">
-                      Video çözüm
-                    </a>
-                  </p>
-                )}
-                {result && onSimilar && (
-                  <p>
-                    <button
-                      type="button"
-                      disabled={loadingSimilar === soru.id}
-                      onClick={() => onSimilar(soru.id)}
+    <div className="fixed inset-0 z-[100] flex items-end justify-center p-4 sm:items-center sm:p-6">
+      <button
+        type="button"
+        className="absolute inset-0 bg-black/75 backdrop-blur-md"
+        aria-label="Kapat"
+        onClick={onClose}
+      />
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="book-modal-title"
+        className="relative z-10 flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-b from-[#0f0d18] to-[#06060d] shadow-[0_32px_100px_rgba(0,0,0,0.75)]"
+      >
+        <header className="flex shrink-0 flex-wrap items-start justify-between gap-4 border-b border-white/[0.06] bg-black/30 px-6 py-5 sm:px-8">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-violet-300/80">{subject}</p>
+            <h2 id="book-modal-title" className="mt-1 text-2xl font-bold text-white">
+              {title}
+            </h2>
+            <p className="mt-2 text-sm text-slate-400">
+              Çözülen:{" "}
+              <span className="font-semibold text-white">
+                {answeredCount} / {questions.length || "—"}
+              </span>
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-white/10"
+          >
+            Kapat
+          </button>
+        </header>
+
+        <div className="min-h-0 flex-1 overflow-y-auto px-6 py-6 sm:px-8">
+          {loading ? (
+            <div className="flex flex-col items-center justify-center gap-4 py-20">
+              <Loader2 className="h-10 w-10 animate-spin text-violet-500" aria-hidden />
+              <p className="text-sm text-slate-400">Sorular yükleniyor…</p>
+            </div>
+          ) : questions.length === 0 ? (
+            <p className="rounded-2xl border border-dashed border-white/10 bg-white/[0.02] px-6 py-12 text-center text-slate-400">
+              Bu derse ait soru bulunamadı.
+            </p>
+          ) : (
+            <>
+              <div className="space-y-8">
+                {pageQuestions.map((soru, idx) => {
+                  const result = answerResults[soru.id];
+                  const qNum = currentPage * questionsPerPage + idx + 1;
+                  return (
+                    <article
+                      key={soru.id}
+                      className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 shadow-inner sm:p-6"
                     >
-                      {loadingSimilar === soru.id ? "Yükleniyor…" : "Benzer sorular"}
-                    </button>
-                  </p>
-                )}
-              </article>
-            );
-          })}
-          <p>
-            <button
-              type="button"
-              disabled={currentPage === 0}
-              onClick={() => setCurrentPage((p) => Math.max(0, p - 1))}
-            >
-              Önceki
-            </button>{" "}
-            Sayfa {currentPage + 1} / {Math.max(totalPages, 1)}{" "}
-            <button
-              type="button"
-              disabled={currentPage >= totalPages - 1}
-              onClick={() => setCurrentPage((p) => Math.min(totalPages - 1, p + 1))}
-            >
-              Sonraki
-            </button>
-          </p>
-        </>
-      )}
-    </dialog>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="rounded-full bg-violet-600/30 px-3 py-1 text-xs font-bold text-violet-100">
+                          Soru {qNum}
+                        </span>
+                        {soru.kazanim_code && (
+                          <span className="rounded-full border border-white/10 px-2.5 py-0.5 text-[11px] text-slate-400">
+                            {soru.kazanim_code}
+                          </span>
+                        )}
+                        <span className="rounded-full border border-white/10 px-2.5 py-0.5 text-[11px] text-slate-500">
+                          {diffLabel(soru.difficulty)}
+                        </span>
+                      </div>
+                      <p className="mt-4 text-base leading-relaxed text-slate-100">{soru.question_text}</p>
+                      <ul className="mt-5 space-y-2">
+                        {soru.options?.map((opt) => (
+                          <li key={opt.id}>
+                            <button
+                              type="button"
+                              disabled={!!result || answeringId === soru.id}
+                              onClick={() => onAnswer(soru, opt.option_letter)}
+                              className="flex w-full items-start gap-3 rounded-xl border border-white/[0.08] bg-black/25 px-4 py-3 text-left text-sm transition hover:border-violet-500/40 hover:bg-violet-500/10 disabled:pointer-events-none disabled:opacity-60"
+                            >
+                              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-white/10 font-bold text-violet-200">
+                                {opt.option_letter}
+                              </span>
+                              <span className="text-slate-200">{opt.option_text}</span>
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                      {result && (
+                        <div
+                          className={`mt-4 rounded-xl border px-4 py-3 text-sm ${
+                            result.is_correct
+                              ? "border-emerald-500/30 bg-emerald-950/40 text-emerald-100"
+                              : "border-rose-500/30 bg-rose-950/40 text-rose-100"
+                          }`}
+                        >
+                          <span className="font-semibold">{result.is_correct ? "Doğru" : "Yanlış"}</span>
+                          {result.explanation && <span className="mt-1 block text-slate-300">{result.explanation}</span>}
+                        </div>
+                      )}
+                      {result?.solution_video && (
+                        <p className="mt-3">
+                          <a
+                            href={result.solution_video}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm font-semibold text-violet-300 underline-offset-4 hover:text-violet-200 hover:underline"
+                          >
+                            Video çözüm
+                          </a>
+                        </p>
+                      )}
+                      {result && onSimilar && (
+                        <div className="mt-4">
+                          <button
+                            type="button"
+                            disabled={loadingSimilar === soru.id}
+                            onClick={() => onSimilar(soru.id)}
+                            className="rounded-xl border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-white/10 disabled:opacity-50"
+                          >
+                            {loadingSimilar === soru.id ? "Yükleniyor…" : "Benzer sorular"}
+                          </button>
+                        </div>
+                      )}
+                    </article>
+                  );
+                })}
+              </div>
+
+              <div className="mt-10 flex flex-wrap items-center justify-between gap-4 border-t border-white/[0.06] pt-6">
+                <button
+                  type="button"
+                  disabled={currentPage === 0}
+                  onClick={() => setCurrentPage((p) => Math.max(0, p - 1))}
+                  className="rounded-xl border border-white/15 px-5 py-2.5 text-sm font-semibold text-slate-200 disabled:opacity-30"
+                >
+                  Önceki
+                </button>
+                <p className="text-sm text-slate-500">
+                  Sayfa{" "}
+                  <span className="font-semibold text-white">
+                    {currentPage + 1} / {Math.max(totalPages, 1)}
+                  </span>
+                </p>
+                <button
+                  type="button"
+                  disabled={currentPage >= totalPages - 1}
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages - 1, p + 1))}
+                  className="rounded-xl border border-white/15 px-5 py-2.5 text-sm font-semibold text-slate-200 disabled:opacity-30"
+                >
+                  Sonraki
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }
 
