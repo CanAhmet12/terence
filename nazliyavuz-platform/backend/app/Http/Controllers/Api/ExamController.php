@@ -12,11 +12,12 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
 class ExamController extends Controller
 {
-    // POST /api/exams/start — yeni deneme başlat
+    // POST /api/v1/exams/start — yeni deneme başlat
     public function start(Request $request): JsonResponse
     {
         $v = Validator::make($request->all(), [
@@ -31,8 +32,12 @@ class ExamController extends Controller
         }
 
         $user     = Auth::user();
+        if (! $user) {
+            return response()->json(['error' => true, 'message' => 'Oturum bulunamadı.'], 401);
+        }
+
         $examType = $request->exam_type;
-        if ($user && $user->isStudent()) {
+        if ($user->isStudent()) {
             $allowedExamTypes = $user->allowedExamTypes();
             if ($examType !== 'Mini' && !in_array($examType, $allowedExamTypes, true)) {
                 return response()->json([
@@ -41,75 +46,104 @@ class ExamController extends Controller
                 ], 422);
             }
         }
-        $count    = $request->get('question_count', $this->defaultQuestionCount($examType));
-        $duration = $request->get('duration_minutes', $this->defaultDuration($examType));
+        $count    = (int) $request->get('question_count', $this->defaultQuestionCount($examType));
+        $duration = (int) $request->get('duration_minutes', $this->defaultDuration($examType));
 
-        // Sorular seç
-        $qQuery = Question::where('is_active', true);
-        if ($user && $user->isStudent()) {
-            $scope = $user->learningScope();
-            $allowedExamTypes = $user->allowedExamTypes();
-            $requestedExamTypes = $examType === 'Mini'
-                ? $allowedExamTypes
-                : [$examType, 'Genel', 'all'];
-            $qQuery->where('grade', $scope['grade'])
-                ->where(function ($query) use ($allowedExamTypes, $requestedExamTypes) {
-                    $query->whereIn('exam_type', array_values(array_unique(array_merge($allowedExamTypes, $requestedExamTypes))))
-                        ->orWhere('exam_type', 'Genel');
-                });
-        } elseif ($examType !== 'Mini') {
-            $qQuery->where('exam_type', $examType);
-        }
-        if ($request->filled('subject')) {
-            $qQuery->where('subject', $request->subject);
-        }
-        $selectedQuestions = $qQuery->inRandomOrder()->limit($count)->get();
+        try {
+            // QuestionController ile aynı kapsam (sınıf + sınav türü) + en az bir şık
+            $qQuery = Question::query()
+                ->with(['options' => function ($q) {
+                    $q->orderBy('sort_order')->orderBy('id');
+                }])
+                ->where('is_active', true);
 
-        if ($selectedQuestions->isEmpty()) {
+            if ($user->isStudent()) {
+                $scope = $user->learningScope();
+                $allowedExamTypes = $user->allowedExamTypes();
+                $qQuery->where('grade', $scope['grade']);
+                if ($examType === 'Mini') {
+                    $qQuery->where(function ($scopeQuery) use ($allowedExamTypes) {
+                        $scopeQuery->whereIn('exam_type', $allowedExamTypes)
+                            ->orWhere('exam_type', 'Genel');
+                    });
+                } else {
+                    $typesForExam = array_values(array_unique(array_merge(
+                        $allowedExamTypes,
+                        [$examType]
+                    )));
+                    $qQuery->where(function ($scopeQuery) use ($typesForExam) {
+                        $scopeQuery->whereIn('exam_type', $typesForExam)
+                            ->orWhere('exam_type', 'Genel');
+                    });
+                }
+            } elseif ($examType !== 'Mini') {
+                $qQuery->where('exam_type', $examType);
+            }
+            if ($request->filled('subject')) {
+                $qQuery->where('subject', $request->subject);
+            }
+
+            $poolSize = min(max($count * 4, 40), 400);
+            $candidates = $qQuery->inRandomOrder()->limit($poolSize)->get();
+            $withOptions = $candidates->filter(fn ($q) => $q->options->isNotEmpty())->values();
+            $selectedQuestions = $withOptions->take($count)->values();
+
+            if ($selectedQuestions->isEmpty()) {
+                return response()->json([
+                    'error'   => true,
+                    'code'    => 'NO_QUESTIONS',
+                    'message' => 'Bu sınav türü için yeterli soru bulunamadı',
+                ], 404);
+            }
+
+            $session = ExamSession::create([
+                'user_id'          => $user->id,
+                'title'            => $request->get('title', $examType . ' Denemesi'),
+                'exam_type'        => $examType,
+                'status'            => 'in_progress',
+                'duration_minutes' => $duration,
+                'started_at'       => now(),
+                'total_questions'  => $selectedQuestions->count(),
+            ]);
+
+            foreach ($selectedQuestions as $i => $q) {
+                ExamSessionQuestion::create([
+                    'exam_session_id' => $session->id,
+                    'question_id'     => $q->id,
+                    'sort_order'      => $i + 1,
+                    'section'         => $q->subject,
+                ]);
+            }
+
+            return response()->json([
+                'success'   => true,
+                'session'   => $session,
+                'questions' => $selectedQuestions->map(fn ($q) => [
+                    'id'            => $q->id,
+                    'question_text' => $q->question_text,
+                    'image_url'     => $q->question_image_url,
+                    'type'          => $q->type,
+                    'difficulty'    => $q->difficulty,
+                    'subject'       => $q->subject,
+                    'options'       => $q->options->map(fn ($o) => [
+                        'letter' => $o->option_letter,
+                        'text'   => $o->option_text,
+                        'image'  => $o->option_image_url,
+                    ]),
+                ]),
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('ExamController::start', [
+                'message' => $e->getMessage(),
+                'file'    => $e->getFile() . ':' . $e->getLine(),
+            ]);
+
             return response()->json([
                 'error'   => true,
-                'code'    => 'NO_QUESTIONS',
-                'message' => 'Bu sınav türü için yeterli soru bulunamadı',
-            ], 404);
+                'code'    => 'EXAM_START_FAILED',
+                'message' => config('app.debug') ? $e->getMessage() : 'Deneme başlatılamadı. Lütfen tekrar deneyin.',
+            ], 500);
         }
-
-        $session = ExamSession::create([
-            'user_id'          => $user->id,
-            'title'            => $request->get('title', $examType . ' Denemesi'),
-            'exam_type'        => $examType,
-            'status'           => 'in_progress',
-            'duration_minutes' => $duration,
-            'started_at'       => now(),
-            'total_questions'  => $selectedQuestions->count(),
-        ]);
-
-        // Soru-oturum eşleşmesi kaydet
-        foreach ($selectedQuestions as $i => $q) {
-            ExamSessionQuestion::create([
-                'exam_session_id' => $session->id,
-                'question_id'     => $q->id,
-                'sort_order'      => $i + 1,
-                'section'         => $q->subject,
-            ]);
-        }
-
-        return response()->json([
-            'success'   => true,
-            'session'   => $session,
-            'questions' => $selectedQuestions->map(fn($q) => [
-                'id'            => $q->id,
-                'question_text' => $q->question_text,
-                'image_url'     => $q->question_image_url,
-                'type'          => $q->type,
-                'difficulty'    => $q->difficulty,
-                'subject'       => $q->subject,
-                'options'       => $q->options->map(fn($o) => [
-                    'letter' => $o->option_letter,
-                    'text'   => $o->option_text,
-                    'image'  => $o->option_image_url,
-                ]),
-            ]),
-        ]);
     }
 
     // POST /api/exams/{id}/answer — cevap gönder

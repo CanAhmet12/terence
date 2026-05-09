@@ -1107,17 +1107,20 @@ export function normalizeExamSessionFromApi(payload: unknown): ExamSession {
 export const examApi = {
   async startExam(_tokenOrData?: string | { exam_type: string; subject?: string; question_count?: number; difficulty?: string; duration_minutes?: number }, data?: { exam_type: string; subject?: string; question_count?: number; difficulty?: string; duration_minutes?: number }): Promise<ExamSession & { session?: ExamSession; questions?: Question[] }> {
     const actualData = typeof _tokenOrData === 'string' ? data : _tokenOrData
-    const response = await api.post<ExamSession & { session?: ExamSession; questions?: Question[] }>('/exams/start', actualData)
+    const response = await api.post<ExamSession & { session?: ExamSession; questions?: Question[] }>(
+      '/v1/exams/start',
+      actualData
+    )
     return response.data
   },
 
   async getExamHistory(_token?: string): Promise<ExamSession[]> {
-    const response = await api.get<unknown>('/exams/history')
+    const response = await api.get<unknown>('/v1/exams/history')
     return normalizeArray<ExamSession>(response.data)
   },
 
   async getExamSummary(_token?: string): Promise<ExamSummaryStats> {
-    const response = await api.get<unknown>('/exams/summary')
+    const response = await api.get<unknown>('/v1/exams/summary')
     const d = (response.data && typeof response.data === 'object' ? response.data : {}) as Record<string, unknown>
     return {
       total_completed: Number(d.total_completed ?? 0),
@@ -1131,18 +1134,18 @@ export const examApi = {
   async answerExamQuestion(_tokenOrId?: string | number, idOrData?: number | ExamAnswerPayload, data?: ExamAnswerPayload): Promise<void> {
     const actualId = typeof _tokenOrId === 'number' ? _tokenOrId : (typeof idOrData === 'number' ? idOrData : undefined)
     const actualData = typeof _tokenOrId === 'number' ? (idOrData as ExamAnswerPayload) : data
-    await api.post(`/exams/${actualId}/answer`, actualData)
+    await api.post(`/v1/exams/${actualId}/answer`, actualData)
   },
 
   async finishExam(_tokenOrId?: string | number, id?: number): Promise<ExamSession> {
     const actualId = typeof _tokenOrId === 'number' ? _tokenOrId : id
-    const response = await api.post<unknown>(`/exams/${actualId}/finish`)
+    const response = await api.post<unknown>(`/v1/exams/${actualId}/finish`)
     return normalizeExamSessionFromApi(response.data)
   },
 
   async getExamResult(_tokenOrId?: string | number, id?: number | string): Promise<ExamSession> {
     const actualId = typeof _tokenOrId === 'string' && id !== undefined ? id : (typeof _tokenOrId === 'number' ? _tokenOrId : id)
-    const response = await api.get<unknown>(`/exams/${actualId}/result`)
+    const response = await api.get<unknown>(`/v1/exams/${actualId}/result`)
     return normalizeExamSessionFromApi(response.data)
   },
 }

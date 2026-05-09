@@ -161,6 +161,16 @@ Route::prefix('v1')->group(function () {
             Route::post('/favorites/{teacher}', [TeacherController::class, 'addToFavorites']);
             Route::delete('/favorites/{teacher}', [TeacherController::class, 'removeFromFavorites']);
         });
+
+        // Deneme sınavı (Terence — frontend /api + /v1/exams ile uyumlu)
+        Route::middleware(['role:student', 'student_grade'])->group(function () {
+            Route::post('/exams/start', [\App\Http\Controllers\Api\ExamController::class, 'start']);
+            Route::get('/exams/history', [\App\Http\Controllers\Api\ExamController::class, 'history']);
+            Route::get('/exams/summary', [\App\Http\Controllers\Api\ExamController::class, 'summary']);
+            Route::post('/exams/{id}/answer', [\App\Http\Controllers\Api\ExamController::class, 'answer']);
+            Route::post('/exams/{id}/finish', [\App\Http\Controllers\Api\ExamController::class, 'finish']);
+            Route::get('/exams/{id}/result', [\App\Http\Controllers\Api\ExamController::class, 'result']);
+        });
         
         // Notifications
         Route::get('/notifications', [NotificationController::class, 'index']);
