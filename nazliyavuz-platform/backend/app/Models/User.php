@@ -59,6 +59,7 @@ class User extends Authenticatable implements JWTSubject
         'daily_reminder_time',
         'subscription_plan',
         'subscription_expires_at',
+        'onboarding_completed',
     ];
 
     /**
@@ -85,6 +86,7 @@ class User extends Authenticatable implements JWTSubject
             'suspended_until' => 'datetime',
             'last_login_at' => 'datetime',
             'exam_date' => 'date',
+            'onboarding_completed' => 'boolean',
             'approved_at' => 'datetime',
             'password' => 'hashed',
             'fcm_tokens' => 'array',

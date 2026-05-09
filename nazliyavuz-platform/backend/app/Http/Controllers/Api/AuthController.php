@@ -199,9 +199,14 @@ class AuthController extends Controller
     {
         $user = Auth::user();
 
-        // Students cannot change grade or target_exam after registration
-        // These fields can only be set during onboarding or by admin
-        if ($user->isStudent() && ($request->has('grade') || $request->has('target_exam'))) {
+        // Öğrenci müfredatını ilk kez seçiyorsa (onboarding / eksik profil) sınıf ve sınav tipi gönderilebilir.
+        // Tamamlanmış profilde bu alanlar kilitli kalır (support/admin başka kanaldan günceller).
+        $learningProfileLocked = $user->isStudent()
+            && (bool) ($user->onboarding_completed ?? false)
+            && $user->grade !== null && $user->grade !== ''
+            && filled($user->target_exam);
+
+        if ($learningProfileLocked && ($request->has('grade') || $request->has('target_exam'))) {
             return response()->json([
                 'error' => true,
                 'code' => 'FORBIDDEN',
@@ -230,6 +235,13 @@ class AuthController extends Controller
         }
 
         $user->update($v->validated());
+
+        $user->refresh();
+        if ($user->isStudent() && $user->grade !== null && $user->grade !== '' && filled($user->target_exam)) {
+            if (! ($user->onboarding_completed ?? false)) {
+                $user->forceFill(['onboarding_completed' => true])->save();
+            }
+        }
 
         return response()->json([
             'success' => true,
