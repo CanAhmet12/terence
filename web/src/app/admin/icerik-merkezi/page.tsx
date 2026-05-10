@@ -43,22 +43,32 @@ const cards = [
 
 export default function AdminIcerikMerkeziPage() {
   return (
-    <div className="p-4 sm:p-6 lg:p-8 xl:p-12 min-w-0 overflow-x-hidden max-w-4xl">
-      <Link href="/admin" className="inline-flex items-center gap-2 text-slate-600 hover:text-teal-600 mb-6 font-medium text-sm">
-        <ArrowLeft className="w-4 h-4" />
-        Panele dön
-      </Link>
+    <div className="w-full min-w-0 max-w-none px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8 xl:px-10 xl:py-10 overflow-x-hidden">
+      <div className="mb-8 flex w-full min-w-0 items-center justify-between gap-4">
+        <Link
+          href="/admin"
+          className="inline-flex w-fit shrink-0 items-center gap-2 text-slate-600 hover:text-teal-600 font-medium text-sm"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Panele dön
+        </Link>
+        <span className="hidden shrink-0 text-right text-[11px] font-semibold uppercase tracking-wider text-slate-400 sm:block">
+          İçerik yönetimi
+        </span>
+      </div>
 
-      <div className="flex items-start gap-4 mb-10">
-        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-teal-500 to-teal-700 text-white shadow-lg shadow-teal-500/25 shrink-0">
-          <BookOpen className="w-7 h-7" />
-        </div>
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">İçerik merkezi</h1>
-          <p className="text-slate-600 mt-2 text-sm sm:text-base leading-relaxed max-w-2xl">
-            Tüm yükleme ve içerik yönetimi akışları buradan dallanır. Medya yalnızca dosya ile gelir; öğretmen paneli de aynı kurala geçirildi. Çok sayfalı kitabı PDF olarak tek dosya
-            yükleyebilirsiniz; sayfa sayfa ayrıştırma ve soru-PDF OCR için altyapı ayrıca genişletilecektir.
-          </p>
+      <div className="mb-10 flex w-full min-w-0 flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+        <div className="flex min-w-0 flex-1 items-start gap-4">
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-teal-500 to-teal-700 text-white shadow-lg shadow-teal-500/25">
+            <BookOpen className="w-7 h-7" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">İçerik merkezi</h1>
+            <p className="text-slate-600 mt-2 text-sm sm:text-base leading-relaxed">
+              Tüm yükleme ve içerik yönetimi akışları buradan dallanır. Medya yalnızca dosya ile gelir; öğretmen paneli de aynı kurala geçirildi. Çok sayfalı kitabı PDF olarak tek dosya
+              yükleyebilirsiniz; sayfa sayfa ayrıştırma ve soru-PDF OCR için altyapı ayrıca genişletilecektir.
+            </p>
+          </div>
         </div>
       </div>
 

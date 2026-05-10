@@ -90,7 +90,7 @@ export default function AdminRaporlarPage() {
     n >= 1000 ? `₺${(n / 1000).toFixed(1)}K` : `₺${n}`;
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 xl:p-12 min-w-0 overflow-x-hidden">
+    <div className="w-full min-w-0 max-w-none px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8 xl:px-10 xl:py-10 overflow-x-hidden">
       <div className="flex items-start justify-between gap-4 mb-8">
         <div>
           <Link href="/admin" className="inline-flex items-center gap-2 text-slate-500 hover:text-teal-600 text-sm mb-4 transition-colors">

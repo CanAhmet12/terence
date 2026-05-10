@@ -116,23 +116,25 @@ export default function AdminSoruBankasiKitaplariPage() {
   };
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 xl:p-12 min-w-0 overflow-x-hidden max-w-5xl">
+    <div className="w-full min-w-0 max-w-none px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8 xl:px-10 xl:py-10 overflow-x-hidden">
       <Link href="/admin/icerik-merkezi" className="inline-flex items-center gap-2 text-slate-600 hover:text-teal-600 mb-6 font-medium">
         <ArrowLeft className="w-4 h-4" />
         İçerik merkezine dön
       </Link>
 
-      <div className="flex items-start gap-4 mb-8">
-        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-100 text-violet-700 shrink-0">
-          <Library className="w-6 h-6" />
-        </div>
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Soru bankası — 3D kitap görünümü</h1>
-          <p className="text-slate-600 mt-1 text-sm max-w-2xl">
-            Öğrenci soru bankasındaki ders kartlarının kapak metinleri ve isteğe bağlı düz renk buradan yönetilir.
-            <strong className="font-semibold text-slate-800"> Ders adı</strong>, soru kayıtlarındaki <code className="text-xs bg-slate-100 px-1 rounded">subject</code> ile birebir eşleşmelidir.
-            Sınıf <code className="text-xs bg-slate-100 px-1 rounded">0</code> tüm sınıflar için varsayılan kayıttır; belirli sınıf için ayrı satır açabilirsiniz.
-          </p>
+      <div className="mb-8 flex w-full min-w-0 flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex min-w-0 flex-1 items-start gap-4">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-100 text-violet-700 shrink-0">
+            <Library className="w-6 h-6" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <h1 className="text-2xl font-bold text-slate-900">Soru bankası — 3D kitap görünümü</h1>
+            <p className="text-slate-600 mt-1 text-sm">
+              Öğrenci soru bankasındaki ders kartlarının kapak metinleri ve isteğe bağlı düz renk buradan yönetilir.
+              <strong className="font-semibold text-slate-800"> Ders adı</strong>, soru kayıtlarındaki <code className="text-xs bg-slate-100 px-1 rounded">subject</code> ile birebir eşleşmelidir.
+              Sınıf <code className="text-xs bg-slate-100 px-1 rounded">0</code> tüm sınıflar için varsayılan kayıttır; belirli sınıf için ayrı satır açabilirsiniz.
+            </p>
+          </div>
         </div>
       </div>
 

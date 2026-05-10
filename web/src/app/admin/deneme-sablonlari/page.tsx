@@ -203,21 +203,23 @@ export default function AdminDenemeSablonlariPage() {
   const selected = rows.find((r) => r.id === selectedId);
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 xl:p-12 min-w-0 overflow-x-hidden max-w-6xl">
+    <div className="w-full min-w-0 max-w-none px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8 xl:px-10 xl:py-10 overflow-x-hidden">
       <Link href="/admin/icerik-merkezi" className="inline-flex items-center gap-2 text-slate-600 hover:text-teal-600 mb-6 font-medium">
         <ArrowLeft className="w-4 h-4" />
         İçerik merkezine dön
       </Link>
 
-      <div className="flex items-start gap-3 mb-8">
-        <div className="w-12 h-12 rounded-2xl bg-teal-100 flex items-center justify-center shrink-0">
-          <ClipboardList className="w-6 h-6 text-teal-700" />
-        </div>
-        <div>
-          <h1 className="text-2xl font-black text-slate-900 tracking-tight">Deneme şablonları</h1>
-          <p className="text-slate-600 text-sm mt-1 max-w-2xl">
-            Sabit soru seti ve sırası tanımlayın. Öğrenci panelinde &quot;Hazır denemeler&quot; olarak listelenir; çözüm sırası şablondaki gibidir.
-          </p>
+      <div className="mb-8 flex w-full min-w-0 flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex min-w-0 flex-1 items-start gap-3">
+          <div className="w-12 h-12 rounded-2xl bg-teal-100 flex items-center justify-center shrink-0">
+            <ClipboardList className="w-6 h-6 text-teal-700" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <h1 className="text-2xl font-black text-slate-900 tracking-tight">Deneme şablonları</h1>
+            <p className="text-slate-600 text-sm mt-1">
+              Sabit soru seti ve sırası tanımlayın. Öğrenci panelinde &quot;Hazır denemeler&quot; olarak listelenir; çözüm sırası şablondaki gibidir.
+            </p>
+          </div>
         </div>
       </div>
 

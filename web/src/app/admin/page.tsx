@@ -108,7 +108,7 @@ export default function AdminDashboardPage() {
   ];
 
   return (
-    <div className="p-4 sm:p-6 lg:p-10 min-w-0 overflow-x-hidden">
+    <div className="w-full max-w-none px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-10 xl:px-10 xl:py-12 overflow-x-hidden">
       <div className="mb-10 flex items-start justify-between gap-4">
         <div>
           <h1 className="text-3xl font-extrabold text-slate-900">Yönetim Paneli</h1>

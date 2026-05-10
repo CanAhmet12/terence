@@ -1020,6 +1020,12 @@ export interface TeacherCurriculumTopicRow {
   exam_type?: string | null
 }
 
+export type SearchCurriculumTopicsOptions = {
+  limit?: number
+  grade?: string
+  exam_type?: string
+}
+
 export interface TeacherCurriculumUploadResponse {
   success: boolean
   content_item?: {
@@ -1028,11 +1034,38 @@ export interface TeacherCurriculumUploadResponse {
     title: string
     url?: string | null
     thumbnail_url?: string | null
+    description?: string | null
     is_free?: boolean
   }
   curriculum_topic_id?: number
+  curriculum_topic_title?: string
+  linked_course?: {
+    id: number
+    title: string
+    grade?: string | number | null
+    exam_type?: string | null
+    subject?: string | null
+  } | null
   error?: boolean
   message?: string
+}
+
+/** Admin içerik listesi satırı (GET /admin/content) */
+export interface AdminContentItem {
+  id: number
+  type: string
+  title: string
+  thumbnail_url?: string | null
+  description?: string | null
+  size_bytes?: number | null
+  created_at?: string | null
+  is_free?: boolean
+  topic_title?: string | null
+  unit?: string | null
+  subject?: string | null
+  course_title?: string | null
+  course_grade?: string | number | null
+  course_exam_type?: string | null
 }
 
 // ─── Auth API ────────────────────────────────────────────────────────────────
@@ -1834,9 +1867,24 @@ export const teacherApi = {
   },
 
   /** Müfredat konusu araması (içerik yükleme seçici). GET /teacher/curriculum/topics */
-  async searchCurriculumTopics(q: string, limit = 40): Promise<TeacherCurriculumTopicRow[]> {
+  async searchCurriculumTopics(
+    q: string,
+    limitOrOptions: number | SearchCurriculumTopicsOptions = 40,
+  ): Promise<TeacherCurriculumTopicRow[]> {
+    const options: SearchCurriculumTopicsOptions =
+      typeof limitOrOptions === 'number' ? { limit: limitOrOptions } : limitOrOptions ?? {}
+    const limit = Math.min(80, Math.max(5, options.limit ?? 40))
+    const params: Record<string, string | number> = { q: q.trim(), limit }
+    const g = options.grade?.trim()
+    if (g && g !== 'all') {
+      params.grade = g
+    }
+    const e = options.exam_type?.trim()
+    if (e && e !== 'all') {
+      params.exam_type = e
+    }
     const response = await api.get<{ success?: boolean; topics?: TeacherCurriculumTopicRow[] }>('/teacher/curriculum/topics', {
-      params: { q: q.trim(), limit },
+      params,
     })
     const topics = response.data?.topics
     return Array.isArray(topics) ? topics : []

@@ -83,7 +83,7 @@ export default function AdminSorularPage() {
   };
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 xl:p-12 min-w-0 overflow-x-hidden">
+    <div className="w-full min-w-0 max-w-none px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8 xl:px-10 xl:py-10 overflow-x-hidden">
       <Link href="/admin" className="inline-flex items-center gap-2 text-slate-600 hover:text-teal-600 mb-8 font-medium transition-colors">
         <ArrowLeft className="w-4 h-4" />
         Panele dön

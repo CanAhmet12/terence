@@ -134,7 +134,7 @@ export default function AdminProfilPage() {
   );
 
   return (
-    <div className="p-4 sm:p-6 lg:p-10 max-w-5xl min-w-0 overflow-x-hidden">
+    <div className="w-full min-w-0 max-w-none px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8 xl:px-10 xl:py-10 overflow-x-hidden">
       <div className="mb-8">
         <h1 className="text-3xl font-extrabold text-slate-900">Admin Profili</h1>
         <p className="text-slate-600 mt-1">Yönetici hesap bilgilerinizi ve sistem tercihlerinizi yönetin</p>

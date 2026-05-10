@@ -140,18 +140,64 @@ class AdminController extends Controller
     // GET /api/admin/content
     public function content(Request $request): JsonResponse
     {
-        $q = ContentItem::with('topic:id,title')->where('is_active', true);
+        $q = ContentItem::query()
+            ->where('is_active', true)
+            ->with([
+                'topic' => function ($tq) {
+                    $tq->select('id', 'title', 'unit_id')
+                        ->with(['unit' => function ($uq) {
+                            $uq->select('id', 'title', 'course_id')
+                                ->with(['course' => function ($cq) {
+                                    $cq->select('id', 'title', 'grade', 'exam_type', 'subject');
+                                }]);
+                        }]);
+                },
+            ]);
         if ($request->filled('search')) {
-            $q->where('title', 'like', '%' . $request->search . '%');
+            $term = '%'.$request->search.'%';
+            $q->where(function ($qq) use ($term) {
+                $qq->where('title', 'like', $term);
+                if (Schema::hasColumn('content_items', 'description')) {
+                    $qq->orWhere('description', 'like', $term);
+                }
+            });
         }
         if ($request->filled('type')) {
             $q->where('type', $request->type);
         }
         $items = $q->orderByDesc('created_at')->paginate(30);
+
+        $data = collect($items->items())->map(function (ContentItem $ci) {
+            $topic = $ci->topic;
+            $unit = $topic?->unit;
+            $course = $unit?->course;
+
+            return [
+                'id' => $ci->id,
+                'type' => $ci->type,
+                'title' => $ci->title,
+                'thumbnail_url' => $ci->thumbnail_url,
+                'description' => $ci->description,
+                'size_bytes' => $ci->size_bytes,
+                'created_at' => $ci->created_at?->toIso8601String(),
+                'is_free' => (bool) $ci->is_free,
+                'topic_title' => $topic?->title,
+                'unit' => $unit?->title,
+                'subject' => $course?->subject,
+                'course_title' => $course?->title,
+                'course_grade' => $course?->grade,
+                'course_exam_type' => $course?->exam_type,
+            ];
+        })->values();
+
         return response()->json([
             'success' => true,
-            'data'    => $items->items(),
-            'meta'    => ['total' => $items->total()],
+            'data' => $data,
+            'meta' => [
+                'total' => $items->total(),
+                'current_page' => $items->currentPage(),
+                'last_page' => $items->lastPage(),
+            ],
         ]);
     }
 

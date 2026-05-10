@@ -123,7 +123,7 @@ export default function AdminKuponPage() {
   };
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 xl:p-12 min-w-0 overflow-x-hidden">
+    <div className="w-full min-w-0 max-w-none px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8 xl:px-10 xl:py-10 overflow-x-hidden">
       <div className="mb-8">
         <Link href="/admin" className="inline-flex items-center gap-2 text-slate-500 hover:text-teal-600 text-sm font-medium mb-5 transition-colors">
           <ArrowLeft className="w-4 h-4" /> Dashboard'a Dön
@@ -157,16 +157,18 @@ export default function AdminKuponPage() {
         </div>
       </div>
 
-      {/* Arama */}
-      <div className="relative mb-6 max-w-sm">
-        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-        <input
-          type="text"
-          value={search}
-          onChange={(e) => setSearch(e.target.value.toUpperCase())}
-          placeholder="Kupon kodu ara..."
-          className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-teal-500 outline-none"
-        />
+      {/* Arama — tam genişlikte sol, dar ekranda alt alta */}
+      <div className="mb-6 flex w-full min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="relative min-w-0 w-full sm:max-w-md sm:flex-1">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value.toUpperCase())}
+            placeholder="Kupon kodu ara..."
+            className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-teal-500 outline-none"
+          />
+        </div>
       </div>
 
       {error && (

@@ -33,16 +33,42 @@ class TeacherCurriculumContentController extends Controller
     {
         $q = trim((string) $request->query('q', ''));
         $limit = min(80, max(5, (int) $request->query('limit', 40)));
+        $gradeFilter = trim((string) $request->query('grade', ''));
+        $examFilter = trim((string) $request->query('exam_type', ''));
+        $hasAudienceFilter = $gradeFilter !== '' || $examFilter !== '';
+
+        if (mb_strlen($q) < 2 && ! $hasAudienceFilter) {
+            return response()->json(['success' => true, 'topics' => []]);
+        }
 
         $topics = CurriculumTopic::query()
             ->where('is_active', true)
             ->with(['unit.subject'])
             ->whereHas('unit', fn ($uq) => $uq->where('is_active', true))
             ->whereHas('unit.subject', fn ($sq) => $sq->where('is_active', true))
-            ->when($q !== '', function ($query) use ($q) {
+            ->when(mb_strlen($q) >= 2, function ($query) use ($q) {
                 $query->where(function ($qq) use ($q) {
                     $qq->where('title', 'like', '%'.$q.'%')
                         ->orWhere('meb_code', 'like', '%'.$q.'%');
+                });
+            })
+            ->when($gradeFilter !== '' && $gradeFilter !== 'all', function ($query) use ($gradeFilter) {
+                $g = $gradeFilter;
+                $query->whereHas('unit.subject', function ($sq) use ($g) {
+                    $sq->where(function ($q2) use ($g) {
+                        $q2->where('grade', 'all')
+                            ->orWhere('grade', $g)
+                            ->orWhere('grade', (string) (int) $g);
+                    });
+                });
+            })
+            ->when($examFilter !== '' && ! in_array($examFilter, ['all', 'any'], true), function ($query) use ($examFilter) {
+                $e = $examFilter;
+                $query->whereHas('unit.subject', function ($sq) use ($e) {
+                    $sq->where(function ($q2) use ($e) {
+                        $q2->whereIn('exam_type', ['all', 'Genel'])
+                            ->orWhere('exam_type', $e);
+                    });
                 });
             })
             ->orderBy('id', 'desc')
@@ -77,6 +103,7 @@ class TeacherCurriculumContentController extends Controller
         $v = Validator::make($request->all(), [
             'curriculum_topic_id' => 'required|integer|exists:curriculum_topics,id',
             'title' => 'sometimes|nullable|string|max:255',
+            'description' => 'sometimes|nullable|string|max:8000',
             'file' => 'required|file|max:51200',
             'content_type' => 'required|in:video,pdf',
             'is_free' => 'sometimes|boolean',
@@ -105,11 +132,15 @@ class TeacherCurriculumContentController extends Controller
         }
 
         $title = trim((string) ($data['title'] ?? '')) ?: ($cTopic->title.' — '.($contentType === 'video' ? 'Video' : 'PDF'));
+        $description = array_key_exists('description', $data) ? trim((string) $data['description']) : null;
+        if ($description === '') {
+            $description = null;
+        }
 
         $thumbService = $this->thumbnailService;
 
         try {
-            $result = DB::transaction(function () use ($request, $cTopic, $cUnit, $cSubject, $teacher, $contentType, $title, $isFree, $thumbService) {
+            $result = DB::transaction(function () use ($request, $cTopic, $cUnit, $cSubject, $teacher, $contentType, $title, $description, $isFree, $thumbService) {
                 $lTopic = $this->resolveLinkedTopic($cTopic, $cUnit, $cSubject, $teacher->id);
 
                 $file = $request->file('file');
@@ -135,6 +166,7 @@ class TeacherCurriculumContentController extends Controller
                     'topic_id' => $lTopic->id,
                     'type' => $contentType,
                     'title' => $title,
+                    'description' => $description,
                     'url' => $url,
                     'storage_path' => $path,
                     'thumbnail_url' => $thumbnailUrl,
@@ -162,17 +194,31 @@ class TeacherCurriculumContentController extends Controller
             ProcessContentItemPdfPagesJob::dispatch((int) $result['item']->id);
         }
 
+        $itemFresh = $result['item']->fresh();
+        $course = Course::query()
+            ->whereKey((int) $result['course_id'])
+            ->first(['id', 'title', 'grade', 'exam_type', 'subject']);
+
         return response()->json([
             'success' => true,
             'content_item' => [
-                'id' => $result['item']->id,
-                'type' => $result['item']->type,
-                'title' => $result['item']->title,
-                'url' => $result['item']->url,
-                'thumbnail_url' => $result['item']->thumbnail_url,
-                'is_free' => $result['item']->is_free,
+                'id' => $itemFresh->id,
+                'type' => $itemFresh->type,
+                'title' => $itemFresh->title,
+                'url' => $itemFresh->url,
+                'thumbnail_url' => $itemFresh->thumbnail_url,
+                'description' => $itemFresh->description,
+                'is_free' => $itemFresh->is_free,
             ],
             'curriculum_topic_id' => $cTopic->id,
+            'curriculum_topic_title' => $cTopic->title,
+            'linked_course' => $course ? [
+                'id' => $course->id,
+                'title' => $course->title,
+                'grade' => $course->grade,
+                'exam_type' => $course->exam_type,
+                'subject' => $course->subject,
+            ] : null,
         ], 201);
     }
 

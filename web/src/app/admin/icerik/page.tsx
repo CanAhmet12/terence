@@ -2,9 +2,10 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowLeft, Video, FileText, HelpCircle, Trash2, Search, RefreshCw, BookOpen } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
-import { api, AdminContentItem } from "@/lib/api";
+import { api, type AdminContentItem } from "@/lib/api";
 
 const TYPE_ICONS: Record<string, React.ReactNode> = {
   video: <Video className="w-4 h-4 text-teal-600" />,
@@ -28,6 +29,17 @@ function formatSize(bytes?: number) {
   if (!bytes) return "—";
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
   return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+}
+
+function formatCourseAudience(grade?: string | number | null, exam?: string | null): string {
+  const g = grade != null && String(grade).trim() !== "" && String(grade) !== "all" ? `${String(grade).replace(/\.0$/, "")}. sınıf` : "Sınıf: tümü";
+  const e = exam && String(exam).trim() !== "" ? String(exam) : "—";
+  return `${g} · ${e}`;
+}
+
+function thumbSrc(url?: string | null): string | null {
+  if (!url || !String(url).trim()) return null;
+  return String(url).trim();
 }
 
 export default function AdminIcerikPage() {
@@ -75,7 +87,7 @@ export default function AdminIcerikPage() {
   };
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 xl:p-12 min-w-0 overflow-x-hidden">
+    <div className="w-full min-w-0 max-w-none px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8 xl:px-10 xl:py-10 overflow-x-hidden">
       <div className="flex items-start justify-between gap-4 mb-8">
         <div>
           <Link href="/admin/icerik-merkezi" className="inline-flex items-center gap-2 text-teal-600 hover:text-teal-700 text-sm mb-2 font-medium transition-colors">
@@ -150,35 +162,73 @@ export default function AdminIcerikPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-slate-200 bg-slate-50">
-                  <th className="text-left py-4 px-5 font-semibold text-slate-700">Tür</th>
-                  <th className="text-left py-4 px-5 font-semibold text-slate-700">Başlık</th>
-                  <th className="text-left py-4 px-5 font-semibold text-slate-700">Ders / Ünite</th>
-                  <th className="text-left py-4 px-5 font-semibold text-slate-700">Boyut</th>
-                  <th className="text-left py-4 px-5 font-semibold text-slate-700">Eklenme</th>
-                  <th className="w-16 py-4 px-5"></th>
+                  <th className="w-20 py-4 pl-5 pr-2 font-semibold text-slate-700">Kapak</th>
+                  <th className="text-left py-4 px-3 font-semibold text-slate-700">Tür</th>
+                  <th className="text-left py-4 px-3 font-semibold text-slate-700">Başlık</th>
+                  <th className="text-left py-4 px-3 font-semibold text-slate-700 min-w-[140px]">Kurs (sınıf / sınav)</th>
+                  <th className="text-left py-4 px-3 font-semibold text-slate-700">Ders / Konu</th>
+                  <th className="text-left py-4 px-3 font-semibold text-slate-700">Boyut</th>
+                  <th className="text-left py-4 px-3 font-semibold text-slate-700">Eklenme</th>
+                  <th className="w-16 py-4 pr-5 pl-2"></th>
                 </tr>
               </thead>
               <tbody>
                 {items.map((item) => (
                   <tr key={item.id} className="border-b border-slate-100 hover:bg-slate-50/50 transition-colors">
-                    <td className="py-4 px-5">
+                    <td className="py-3 pl-5 pr-2 align-middle">
+                      {thumbSrc(item.thumbnail_url) ? (
+                        <div className="relative h-14 w-14 overflow-hidden rounded-lg border border-slate-200 bg-slate-100">
+                          <Image
+                            src={thumbSrc(item.thumbnail_url)!}
+                            alt=""
+                            fill
+                            className="object-cover"
+                            sizes="56px"
+                            unoptimized
+                          />
+                        </div>
+                      ) : (
+                        <div className="flex h-14 w-14 items-center justify-center rounded-lg border border-dashed border-slate-200 bg-slate-50 text-slate-300">
+                          {TYPE_ICONS[item.type] ?? <BookOpen className="h-5 w-5" />}
+                        </div>
+                      )}
+                    </td>
+                    <td className="py-4 px-3 align-top">
                       <span className="flex items-center gap-2">
                         {TYPE_ICONS[item.type] ?? <BookOpen className="w-4 h-4 text-slate-400" />}
                         <span className="capitalize">{TYPE_LABELS[item.type] ?? item.type}</span>
                       </span>
                     </td>
-                    <td className="py-4 px-5 font-medium text-slate-900 max-w-[260px] truncate" title={item.title}>
-                      {item.title}
+                    <td className="py-4 px-3 align-top">
+                      <p className="max-w-[min(280px,28vw)] font-medium text-slate-900 truncate" title={item.title}>
+                        {item.title}
+                      </p>
+                      {item.description ? (
+                        <p className="mt-1 line-clamp-2 max-w-xs text-xs text-slate-500" title={item.description}>
+                          {item.description}
+                        </p>
+                      ) : null}
                     </td>
-                    <td className="py-4 px-5 text-slate-600">
-                      {item.subject ?? "—"}
-                      {item.unit ? <span className="text-slate-400 text-xs ml-1">/ {item.unit}</span> : null}
+                    <td className="py-4 px-3 align-top text-sm text-slate-700">
+                      <span className="font-medium text-teal-800">{formatCourseAudience(item.course_grade, item.course_exam_type)}</span>
+                      <p className="mt-0.5 text-xs text-slate-500 line-clamp-2" title={item.course_title ?? ""}>
+                        {item.course_title ?? "—"}
+                      </p>
                     </td>
-                    <td className="py-4 px-5 text-slate-500">{formatSize(item.size_bytes)}</td>
-                    <td className="py-4 px-5 text-slate-500">
+                    <td className="py-4 px-3 align-top text-slate-600 text-sm">
+                      <span className="font-medium text-slate-800">{item.subject ?? "—"}</span>
+                      {item.topic_title ? (
+                        <p className="mt-0.5 text-xs text-slate-500 line-clamp-2" title={item.topic_title}>
+                          {item.topic_title}
+                        </p>
+                      ) : null}
+                      {item.unit ? <p className="text-xs text-slate-400">{item.unit}</p> : null}
+                    </td>
+                    <td className="py-4 px-3 align-top text-slate-500 text-sm">{formatSize(item.size_bytes)}</td>
+                    <td className="py-4 px-3 align-top text-slate-500 text-sm">
                       {item.created_at ? new Date(item.created_at).toLocaleDateString("tr-TR") : "—"}
                     </td>
-                    <td className="py-4 px-5 text-right">
+                    <td className="py-4 pr-5 pl-2 text-right align-top">
                       {deletingId === item.id ? (
                         <div className="w-4 h-4 border-2 border-red-400 border-t-transparent rounded-full animate-spin inline-block" />
                       ) : (

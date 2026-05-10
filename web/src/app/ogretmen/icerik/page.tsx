@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
+import Image from "next/image";
 import { useAuth } from "@/lib/auth-context";
 import { api } from "@/lib/api";
-import type { Question, TeacherCurriculumTopicRow } from "@/lib/api";
+import type { Question, TeacherCurriculumTopicRow, TeacherCurriculumUploadResponse } from "@/lib/api";
 import { Video, FileText, Upload, CheckCircle, Loader2, X, AlertCircle, Sparkles, Bot, RefreshCw, Search, ImageIcon } from "lucide-react";
 
 type ContentType = "video" | "pdf";
@@ -19,6 +20,16 @@ function useDebouncedValue<T>(value: T, delay: number): T {
     return () => clearTimeout(t);
   }, [value, delay]);
   return debounced;
+}
+
+function formatLinkedCourseTeacher(lc: NonNullable<TeacherCurriculumUploadResponse["linked_course"]>): string {
+  const g =
+    lc.grade != null && String(lc.grade).trim() !== "" && String(lc.grade) !== "all"
+      ? `${String(lc.grade).replace(/\.0$/, "")}. sınıf`
+      : "Sınıf: tümü";
+  const ex = lc.exam_type && String(lc.exam_type).trim() !== "" ? lc.exam_type : "—";
+  const sub = lc.subject && String(lc.subject).trim() !== "" ? lc.subject : "—";
+  return `${g} · ${ex} · ${sub}`;
 }
 
 // ─── AI Soru Üretme Modalı (yalnızca taslak; soru bankasına otomatik yazılmaz) ─
@@ -244,6 +255,7 @@ export default function IcerikYuklemePage() {
   const [thumbObjectUrl, setThumbObjectUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploaded, setUploaded] = useState(false);
+  const [uploadDetail, setUploadDetail] = useState<TeacherCurriculumUploadResponse | null>(null);
   const [error, setError] = useState("");
   const [dragOver, setDragOver] = useState(false);
   const [showAIModal, setShowAIModal] = useState(false);
@@ -339,6 +351,7 @@ export default function IcerikYuklemePage() {
       if (!res.success && (res as { error?: boolean }).error) {
         throw new Error((res as { message?: string }).message || "Yükleme başarısız.");
       }
+      setUploadDetail(res);
       setUploaded(true);
     } catch (e) {
       setError((e as Error).message || "Yükleme sırasında hata oluştu.");
@@ -354,6 +367,7 @@ export default function IcerikYuklemePage() {
     setFile(null);
     setThumbnailFile(null);
     setUploaded(false);
+    setUploadDetail(null);
     setError("");
   };
 
@@ -363,17 +377,41 @@ export default function IcerikYuklemePage() {
   ];
 
   if (uploaded) {
+    const ci = uploadDetail?.content_item;
+    const lc = uploadDetail?.linked_course;
     return (
       <div className="p-8 lg:p-12">
-        <div className="max-w-lg mx-auto text-center py-16">
-          <div className="w-20 h-20 rounded-full bg-teal-100 flex items-center justify-center mx-auto mb-6">
-            <CheckCircle className="w-10 h-10 text-teal-600" />
+        <div className="mx-auto max-w-lg py-10">
+          <div className="mb-6 flex w-20 items-center justify-center rounded-full bg-teal-100 mx-auto h-20">
+            <CheckCircle className="h-10 w-10 text-teal-600" />
           </div>
-          <h2 className="text-2xl font-bold text-slate-900 mb-2">İçerik müfredata bağlandı</h2>
-          <p className="text-slate-600 mb-8">
-            {secim === "video" ? "Video" : "PDF"} kaydı oluşturuldu. Kapak görseli sunucuda otomatik oluşturuldu; isterseniz bir sonraki yüklemede özel kapak
-            yükleyebilirsiniz.
+          <h2 className="text-center text-2xl font-bold text-slate-900 mb-2">İçerik müfredata bağlandı</h2>
+          <p className="text-center text-slate-600 mb-6 text-sm">
+            {secim === "video" ? "Video" : "PDF"} kaydı oluşturuldu. Öğrenci aynı içeriği <strong>Derslerim</strong> (konu altı) ve <strong>Video &amp; PDF</strong> sayfasında görür; ikisi de aynı müfredat bağlantısından beslenir.
           </p>
+          {ci && (
+            <div className="mb-6 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+              <div className="relative aspect-video w-full bg-slate-100">
+                {ci.thumbnail_url ? (
+                  <Image src={ci.thumbnail_url} alt="" fill className="object-cover" sizes="(max-width:512px) 100vw, 512px" unoptimized />
+                ) : (
+                  <div className="flex h-full min-h-[140px] items-center justify-center text-slate-400 text-sm">Kapak oluşturuluyor veya yok</div>
+                )}
+              </div>
+              <div className="p-4 text-sm">
+                <p className="font-semibold text-slate-900">{ci.title}</p>
+                {uploadDetail?.curriculum_topic_title ? (
+                  <p className="mt-1 text-slate-600 text-xs">Konu: {uploadDetail.curriculum_topic_title}</p>
+                ) : null}
+                {lc ? (
+                  <p className="mt-2 rounded-lg bg-teal-50 px-2 py-1.5 text-xs text-teal-950 ring-1 ring-teal-100">
+                    Kurs: {formatLinkedCourseTeacher(lc)}
+                    <span className="mt-0.5 block font-normal text-teal-900/90">{lc.title}</span>
+                  </p>
+                ) : null}
+              </div>
+            </div>
+          )}
           <div className="flex justify-center gap-3">
             <button
               type="button"

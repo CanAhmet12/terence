@@ -62,7 +62,7 @@ export default function AdminAyarlarPage() {
   };
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 xl:p-12 min-w-0 overflow-x-hidden">
+    <div className="w-full min-w-0 max-w-none px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8 xl:px-10 xl:py-10 overflow-x-hidden">
       <Link href="/admin" className="inline-flex items-center gap-2 text-slate-500 hover:text-teal-600 text-sm mb-8 transition-colors">
         <ArrowLeft className="w-4 h-4" />
         Panele dön
@@ -70,7 +70,8 @@ export default function AdminAyarlarPage() {
       <h1 className="text-2xl font-bold text-slate-900 mb-1">Sistem Ayarları</h1>
       <p className="text-slate-600 mb-8">Dil, bakım modu, API bilgisi ve güvenlik logları</p>
 
-      <div className="space-y-6 max-w-2xl">
+      <div className="grid w-full gap-8 xl:grid-cols-2 xl:items-start">
+        <div className="min-w-0 space-y-6">
         {/* Dil seçenekleri */}
         <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
           <h2 className="font-semibold text-slate-900 flex items-center gap-2 mb-4">
@@ -141,8 +142,9 @@ export default function AdminAyarlarPage() {
         >
           {saving ? "Kaydediliyor..." : "Ayarları Kaydet"}
         </button>
+        </div>
 
-        {/* Güvenlik logları */}
+        <div className="min-w-0 xl:sticky xl:top-4">
         <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-semibold text-slate-900 flex items-center gap-2">
@@ -180,6 +182,7 @@ export default function AdminAyarlarPage() {
               ))}
             </div>
           )}
+        </div>
         </div>
       </div>
     </div>

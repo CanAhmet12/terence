@@ -125,7 +125,7 @@ export default function OgretmenOnayPage() {
   };
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 xl:p-12 min-w-0 overflow-x-hidden">
+    <div className="w-full min-w-0 max-w-none px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8 xl:px-10 xl:py-10 overflow-x-hidden">
       <div className="mb-8">
         <Link href="/admin/kullanicilar" className="inline-flex items-center gap-2 text-slate-500 hover:text-teal-600 text-sm font-medium mb-5 transition-colors">
           <ArrowLeft className="w-4 h-4" /> Kullanıcılara Dön
