@@ -103,13 +103,13 @@ function BadgeCard({
   const [hovered, setHovered] = useState(false);
   const pct = badge.earned
     ? 100
-    : badge.progress !== undefined && (badge as Record<string, unknown>).required !== undefined
-      ? Math.round((badge.progress! / ((badge as Record<string, unknown>).required as number)) * 100)
+    : badge.progress !== undefined && badge.required !== undefined && badge.required > 0
+      ? Math.round((badge.progress / badge.required) * 100)
       : 0;
 
-  const tier = ((badge as Record<string, unknown>).tier as string) ?? "default";
+  const tier = badge.tier ?? "default";
   const tierStyle = TIER_STYLES[tier as keyof typeof TIER_STYLES] ?? TIER_STYLES.default;
-  const emoji = ((badge as Record<string, unknown>).emoji as string) ?? "🏅";
+  const emoji = badge.emoji ?? "🏅";
 
   return (
     <div
@@ -281,8 +281,8 @@ export default function RozetPage() {
       const board = await api.getLeaderboard("monthly");
       const filtered = Array.isArray(board)
         ? board.filter((entry) => {
-            if (examFilter && (entry as Record<string, unknown>).exam_type !== examFilter) return false;
-            if (gradeFilter && String((entry as Record<string, unknown>).grade ?? "") !== gradeFilter) return false;
+            if (examFilter && entry.exam_type !== examFilter) return false;
+            if (gradeFilter && String(entry.grade ?? "") !== gradeFilter) return false;
             return true;
           })
         : [];

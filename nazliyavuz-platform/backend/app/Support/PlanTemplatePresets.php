@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use App\Models\User;
+use App\Services\StudentLearningProfileService;
 
 /**
  * Sınav/kademe ile uyumlu hazır günlük plan şablonları (DB yerine kod haritası — faz 4 minimum).
@@ -14,20 +15,11 @@ final class PlanTemplatePresets
      */
     public static function forUser(User $user): array
     {
-        $exam = $user->target_exam ?? $user->exam_goal;
-        $grade = (int) ($user->grade ?? 0);
-
-        if ($exam === 'LGS' || ($grade >= 7 && $grade <= 8)) {
-            return self::lgsPack();
-        }
-        if (in_array($exam, ['TYT', 'AYT', 'TYT-AYT', 'KPSS'], true) || $grade >= 9) {
-            return self::yksPack();
-        }
-        if ($grade >= 1 && $grade <= 6 && $exam !== 'LGS') {
-            return self::primaryPack();
-        }
-
-        return self::yksPack();
+        return match (StudentLearningProfileService::resolveGoalTemplate($user)) {
+            'school_primary' => self::primaryPack(),
+            'exam_lgs' => self::lgsPack(),
+            default => self::yksPack(),
+        };
     }
 
     private static function lgsPack(): array

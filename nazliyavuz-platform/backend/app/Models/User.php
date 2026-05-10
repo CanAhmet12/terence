@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\StudentLearningProfileService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -156,13 +157,7 @@ class User extends Authenticatable implements JWTSubject
      */
     public function allowedExamTypes(): array
     {
-        $examType = $this->target_exam ?: 'all';
-
-        return match ($examType) {
-            'TYT-AYT' => ['TYT', 'AYT', 'TYT-AYT', 'Genel', 'all'],
-            'all' => ['all', 'Genel'],
-            default => [$examType, 'Genel', 'all'],
-        };
+        return StudentLearningProfileService::allowedExamTypesForUser($this);
     }
 
     public function matchesExamType(?string $examType): bool

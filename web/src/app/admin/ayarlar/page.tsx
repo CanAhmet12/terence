@@ -29,8 +29,7 @@ export default function AdminAyarlarPage() {
     setLogsLoading(true);
     try {
       const res = await api.getAdminAuditLogs({ per_page: 10 });
-      const resObj = res as Record<string, unknown>;
-      setLogs(Array.isArray(resObj.data) ? resObj.data as Record<string, unknown>[] : Array.isArray(res) ? res as Record<string, unknown>[] : []);
+      setLogs(Array.isArray(res) ? res : []);
     } catch {
       // Loglar yüklenemedi — sessizce geç
     } finally {

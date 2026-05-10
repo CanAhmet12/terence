@@ -3,10 +3,13 @@
 import { Flame, Play } from "lucide-react";
 
 export function StudyMotivationBanner({
+  tone = "exam",
   onStartQuick,
 }: {
+  tone?: "exam" | "school";
   onStartQuick: () => void;
 }) {
+  const school = tone === "school";
   return (
     <aside
       aria-label="Çalışma hatırlatması"
@@ -20,9 +23,13 @@ export function StudyMotivationBanner({
             <Flame className="h-6 w-6 text-orange-500" aria-hidden />
           </span>
           <div>
-            <p className="text-lg font-bold text-slate-900 sm:text-xl">Bugün bir set daha</p>
+            <p className="text-lg font-bold text-slate-900 sm:text-xl">
+              {school ? "Bugün bir pratik turu" : "Bugün bir set daha"}
+            </p>
             <p className="mt-1 max-w-xl text-sm leading-relaxed text-slate-600">
-              Netini yükselten şey düzenli tekrar. Hızlı set ile ısın, sonra zayıf konuya dal.
+              {school
+                ? "Düzenli tekrar, okul derslerinde fark yaratır. Kısa setle ısın, sonra zayıf konuna odaklan."
+                : "Netini yükselten şey düzenli tekrar. Hızlı set ile ısın, sonra zayıf konuya dal."}
             </p>
           </div>
         </div>

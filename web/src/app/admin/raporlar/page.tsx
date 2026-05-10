@@ -201,15 +201,17 @@ export default function AdminRaporlarPage() {
       </div>
 
       {/* En çok çalışılan dersler */}
-      {!loading && reports?.top_subjects && reports.top_subjects.length > 0 && (
+      {!loading && reports?.top_subjects && reports.top_subjects.length > 0 && (() => {
+        const topSubjects = reports.top_subjects;
+        return (
         <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
           <h2 className="font-semibold text-slate-900 mb-5 flex items-center gap-2">
             <BookOpen className="w-5 h-5 text-teal-600" />
             En Çok Çalışılan Dersler
           </h2>
           <div className="space-y-3">
-            {reports.top_subjects.map((s) => {
-              const maxCount = Math.max(...reports.top_subjects.map((x) => x.count), 1);
+            {topSubjects.map((s) => {
+              const maxCount = Math.max(...topSubjects.map((x) => x.count), 1);
               return (
                 <div key={s.subject}>
                   <div className="flex justify-between mb-1">
@@ -227,7 +229,8 @@ export default function AdminRaporlarPage() {
             })}
           </div>
         </div>
-      )}
+        );
+      })()}
 
       {/* Paket dönüşümleri — sadece gerçek veri varsa göster */}
       {!loading && reports?.subscription_conversions && reports.subscription_conversions.length > 0 && (
@@ -237,11 +240,11 @@ export default function AdminRaporlarPage() {
             {reports.subscription_conversions.map((c, i) => (
               <div key={i} className="flex items-center justify-between py-2 border-b border-slate-100 last:border-0">
                 <span className="text-sm text-slate-700">
-                  <span className="font-semibold capitalize">{c.from}</span>
+                  <span className="font-semibold capitalize">{c.from ?? "—"}</span>
                   <span className="mx-2 text-slate-400">→</span>
-                  <span className="font-semibold capitalize">{c.to}</span>
+                  <span className="font-semibold capitalize">{c.to ?? "—"}</span>
                 </span>
-                <span className="text-sm font-bold text-teal-600">{c.count} dönüşüm</span>
+                <span className="text-sm font-bold text-teal-600">{c.count ?? 0} dönüşüm</span>
               </div>
             ))}
           </div>

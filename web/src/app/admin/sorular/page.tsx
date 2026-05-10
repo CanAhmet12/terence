@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/lib/auth-context";
-import { api, Question } from "@/lib/api";
+import { api, Question, type PaginatedResponse } from "@/lib/api";
 import { ArrowLeft, Search, Plus, RefreshCw, Trash2, AlertCircle, Loader2, BookOpen } from "lucide-react";
 
 const DIFFICULTY_LABELS: Record<string, { label: string; cls: string }> = {
@@ -46,18 +46,16 @@ export default function AdminSorularPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await api.getAdminQuestions({
+      const res: PaginatedResponse<Question> = await api.getAdminQuestions({
         search: debouncedSearch || undefined,
         difficulty: difficulty || undefined,
         per_page: 20,
         page,
       });
-      const resObj = res as Record<string, unknown>;
-      const metaObj = (resObj.meta as Record<string, number>) ?? {};
-      setQuestions(Array.isArray(resObj.data) ? resObj.data as Question[] : []);
-      setTotal(metaObj.total ?? (Array.isArray(resObj.data) ? (resObj.data as Question[]).length : 0));
-      setCurrentPage(metaObj.current_page ?? 1);
-      setLastPage(metaObj.last_page ?? 1);
+      setQuestions(res.data);
+      setTotal(res.total);
+      setCurrentPage(res.current_page);
+      setLastPage(res.last_page);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Sorular yüklenemedi.");
       setQuestions([]);

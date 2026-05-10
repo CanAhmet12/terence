@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/lib/auth-context";
-import { api } from "@/lib/api";
+import { api, type TeacherAnalyticsResponse } from "@/lib/api";
 import { BarChart3, AlertCircle, Clock, TrendingDown, RefreshCw, MessageCircle, Filter, Users, Loader2, CheckCircle } from "lucide-react";
 
 type StudentRow = {
@@ -20,21 +20,70 @@ type KazanimError = {
   subject?: string;
   error_count?: number;
   error_rate?: number;
-  [key: string]: unknown;
 };
 
 type HardTopic = {
   topic?: string;
   subject?: string;
   wrong_rate?: number;
-  [key: string]: unknown;
 };
 
 type TimeAnalysis = {
   subject?: string;
   avg_seconds?: number;
-  [key: string]: unknown;
 };
+
+function parseKazanimErrors(res: TeacherAnalyticsResponse): KazanimError[] {
+  const raw = res.data;
+  if (!Array.isArray(raw)) return [];
+  const out: KazanimError[] = [];
+  for (const x of raw) {
+    if (typeof x !== "object" || x === null || Array.isArray(x)) continue;
+    const o = x as Record<string, unknown>;
+    const ec = o.error_count;
+    const er = o.error_rate;
+    out.push({
+      kazanim_code: typeof o.kazanim_code === "string" ? o.kazanim_code : undefined,
+      subject: typeof o.subject === "string" ? o.subject : undefined,
+      error_count: typeof ec === "number" ? ec : typeof ec === "string" ? Number(ec) : undefined,
+      error_rate: typeof er === "number" ? er : typeof er === "string" ? Number(er) : undefined,
+    });
+  }
+  return out;
+}
+
+function parseHardTopics(res: TeacherAnalyticsResponse): HardTopic[] {
+  const raw = res.data;
+  if (!Array.isArray(raw)) return [];
+  const out: HardTopic[] = [];
+  for (const x of raw) {
+    if (typeof x !== "object" || x === null || Array.isArray(x)) continue;
+    const o = x as Record<string, unknown>;
+    const wr = o.wrong_rate;
+    out.push({
+      topic: typeof o.topic === "string" ? o.topic : undefined,
+      subject: typeof o.subject === "string" ? o.subject : undefined,
+      wrong_rate: typeof wr === "number" ? wr : typeof wr === "string" ? Number(wr) : undefined,
+    });
+  }
+  return out;
+}
+
+function parseTimeAnalysis(res: TeacherAnalyticsResponse): TimeAnalysis[] {
+  const raw = res.data;
+  if (!Array.isArray(raw)) return [];
+  const out: TimeAnalysis[] = [];
+  for (const x of raw) {
+    if (typeof x !== "object" || x === null || Array.isArray(x)) continue;
+    const o = x as Record<string, unknown>;
+    const av = o.avg_seconds;
+    out.push({
+      subject: typeof o.subject === "string" ? o.subject : undefined,
+      avg_seconds: typeof av === "number" ? av : typeof av === "string" ? Number(av) : undefined,
+    });
+  }
+  return out;
+}
 
 type RiskFilter = "all" | "inactive" | "net_drop" | "high_risk";
 
@@ -82,9 +131,9 @@ export default function AnalizPage() {
       setStudents([]);
     }
 
-    if (kazanimRes.status === "fulfilled") setKazanimErrors((kazanimRes.value.data ?? []) as KazanimError[]);
-    if (hardRes.status === "fulfilled") setHardTopics((hardRes.value.data ?? []) as HardTopic[]);
-    if (timeRes.status === "fulfilled") setTimeData((timeRes.value.data ?? []) as TimeAnalysis[]);
+    if (kazanimRes.status === "fulfilled") setKazanimErrors(parseKazanimErrors(kazanimRes.value));
+    if (hardRes.status === "fulfilled") setHardTopics(parseHardTopics(hardRes.value));
+    if (timeRes.status === "fulfilled") setTimeData(parseTimeAnalysis(timeRes.value));
 
     setLoading(false);
     setAnalyticsLoading(false);

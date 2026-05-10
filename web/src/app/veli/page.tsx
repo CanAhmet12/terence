@@ -39,7 +39,7 @@ export default function VeliDashboardPage() {
     setError(null);
     try {
       const res = await api.getChildren();
-      setChildren(Array.isArray(res) ? res as ChildSummary[] : []);
+      setChildren(Array.isArray(res) ? res : []);
     } catch (e) {
       setError((e as Error).message || "Veriler yüklenemedi");
     }

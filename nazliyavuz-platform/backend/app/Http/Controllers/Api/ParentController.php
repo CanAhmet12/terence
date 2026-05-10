@@ -108,10 +108,17 @@ class ParentController extends Controller
         return response()->json(['success' => true, 'message' => 'Ã‡ocuk hesabÄ± baÄŸlandÄ±']);
     }
 
-    // POST /api/student/generate-parent-code
+    // POST /api/student/generate-parent-code (route: role:student)
     public function generateParentCode(): JsonResponse
     {
         $student = Auth::user();
+        if (!$student->isStudent()) {
+            return response()->json([
+                'error' => true,
+                'code' => 'FORBIDDEN',
+                'message' => 'Bu işlem yalnızca öğrenci hesapları içindir.',
+            ], 403);
+        }
         $code    = strtoupper(Str::random(8));
 
         ParentStudent::updateOrCreate(
@@ -122,8 +129,8 @@ class ParentController extends Controller
         return response()->json(['success' => true, 'invite_code' => $code]);
     }
 
-    // GET /api/parent/child-report
-    public function childReport(): JsonResponse
+    // GET /api/parent/child-report?child_id= (opsiyonel; yoksa tek çocukta ilki)
+    public function childReport(Request $request): JsonResponse
     {
         $parent   = Auth::user();
         $students = $parent->children()->where('parent_students.status', 'approved')->get();
@@ -132,7 +139,21 @@ class ParentController extends Controller
             return response()->json(['success' => false, 'message' => 'BaÄŸlÄ± Ã¶ÄŸrenci bulunamadÄ±'], 404);
         }
 
-        $student = $students->first();
+        $rawChildId = $request->query('child_id');
+        if ($rawChildId !== null && $rawChildId !== '') {
+            $childId = (int) $rawChildId;
+            $student = $students->firstWhere('id', $childId);
+            if (!$student) {
+                return response()->json([
+                    'success' => false,
+                    'code' => 'FORBIDDEN',
+                    'message' => 'Bu öğrenci hesabına erişim yetkiniz yok veya bağlantı onaylı değil.',
+                ], 403);
+            }
+        } else {
+            $student = $students->first();
+        }
+
         $report  = $this->buildChildReport($student);
 
         return response()->json(['success' => true, 'report' => $report]);

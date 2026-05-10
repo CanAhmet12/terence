@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
+import { resolveGoalTemplateFromUser } from "@/lib/goal-dashboard";
 import {
   api,
   Question,
@@ -282,7 +283,7 @@ function SoruBankasiPageInner({
   kazanimFromUrl: string;
   topicFromUrl: string;
 }) {
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const qParam = searchParams.get("q") ?? "";
@@ -643,6 +644,8 @@ function SoruBankasiPageInner({
     [loadQuestions, qParam, kazanimFromUrl, effectiveExamTab]
   );
 
+  const bankTone = resolveGoalTemplateFromUser(user ?? undefined) === "school_primary" ? "school" : "exam";
+
   return (
     <div className="relative overflow-x-hidden bg-slate-50 text-slate-900">
       <div
@@ -657,6 +660,7 @@ function SoruBankasiPageInner({
       <div className="relative mx-auto max-w-[min(100%,1680px)] px-4 pb-6 pt-4 sm:px-6 lg:px-8">
         <div className="flex flex-col gap-4">
           <QuestionBankHero
+            tone={bankTone}
             scopeMode={scopeMode}
             onScopeModeChange={(m) => {
               setScopeMode(m);
@@ -710,7 +714,7 @@ function SoruBankasiPageInner({
             loading={sidebarLoading}
           />
 
-          <StudyMotivationBanner onStartQuick={onQuick10} />
+          <StudyMotivationBanner tone={bankTone} onStartQuick={onQuick10} />
         </div>
       </div>
 

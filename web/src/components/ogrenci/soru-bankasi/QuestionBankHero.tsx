@@ -6,6 +6,8 @@ import { cn } from "@/lib/utils";
 type ScopeMode = "class" | "exam";
 
 type QuestionBankHeroProps = {
+  /** Okul odaklı öğrencilerde sınav/net dili yerine gelişim tonu */
+  tone?: "exam" | "school";
   scopeMode: ScopeMode;
   onScopeModeChange: (mode: ScopeMode) => void;
   examTabs: string[];
@@ -16,6 +18,7 @@ type QuestionBankHeroProps = {
 };
 
 export function QuestionBankHero({
+  tone = "exam",
   scopeMode,
   onScopeModeChange,
   examTabs,
@@ -24,6 +27,7 @@ export function QuestionBankHero({
   onOpenVoice,
   onOpenPersonalTest,
 }: QuestionBankHeroProps) {
+  const school = tone === "school";
   return (
     <section className="relative overflow-hidden rounded-3xl border border-violet-100 bg-white p-6 shadow-[0_8px_40px_rgba(99,102,241,0.08)] sm:p-8 lg:p-10">
       <div className="pointer-events-none absolute -left-20 top-0 h-64 w-64 rounded-full bg-violet-200/40 blur-3xl" />
@@ -37,14 +41,26 @@ export function QuestionBankHero({
             Öğrenci · Soru Bankası
           </div>
           <h1 className="mt-5 text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl lg:text-[3.25rem] lg:leading-[1.08]">
-            Sorularla{" "}
-            <span className="bg-gradient-to-r from-violet-600 via-fuchsia-600 to-violet-600 bg-clip-text text-transparent">
-              netini inşa et
-            </span>
+            {school ? (
+              <>
+                Sınıfına uygun sorularla{" "}
+                <span className="bg-gradient-to-r from-teal-600 via-emerald-600 to-teal-600 bg-clip-text text-transparent">
+                  güçlen
+                </span>
+              </>
+            ) : (
+              <>
+                Sorularla{" "}
+                <span className="bg-gradient-to-r from-violet-600 via-fuchsia-600 to-violet-600 bg-clip-text text-transparent">
+                  netini inşa et
+                </span>
+              </>
+            )}
           </h1>
           <p className="mt-4 max-w-xl text-base leading-relaxed text-slate-600 sm:text-lg">
-            Sınıfına ve sınav hedefine göre filtrelenmiş binlerce soru; zayıf kazanımlarına özel setler ve sesli çözüm
-            asistanı tek ekranda.
+            {school
+              ? "Okul müfredatına uygun sorular; konu pekiştirme, zayıf alanları güçlendirme ve sesli çözüm asistanı aynı ekranda."
+              : "Sınıfına ve sınav hedefine göre filtrelenmiş binlerce soru; zayıf kazanımlarına özel setler ve sesli çözüm asistanı tek ekranda."}
           </p>
 
           <div className="mt-8 flex flex-wrap items-center gap-3">
@@ -75,7 +91,7 @@ export function QuestionBankHero({
                     : "text-slate-600 hover:text-slate-900"
                 )}
               >
-                Sınav odaklı
+                {school ? "Sınav pratiği" : "Sınav odaklı"}
               </button>
             </div>
 
@@ -91,8 +107,14 @@ export function QuestionBankHero({
 
           {scopeMode === "exam" && examTabs.length > 1 && (
             <div className="mt-8">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Sınav türü</p>
-              <div role="tablist" aria-label="Sınav türü seçimi" className="mt-3 flex flex-wrap gap-2">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                {school ? "İçerik türü" : "Sınav türü"}
+              </p>
+              <div
+                role="tablist"
+                aria-label={school ? "İçerik türü seçimi" : "Sınav türü seçimi"}
+                className="mt-3 flex flex-wrap gap-2"
+              >
                 {examTabs.map((tab) => (
                   <button
                     key={tab}

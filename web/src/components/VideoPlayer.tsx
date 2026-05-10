@@ -27,6 +27,7 @@ interface DRMConfig {
     position: 'random' | 'fixed'
     opacity: number
     interval: number
+    font_size?: number
   }
 }
 

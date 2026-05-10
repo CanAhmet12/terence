@@ -25,7 +25,7 @@ function Skeleton({ className }: { className?: string }) {
   return <div className={`bg-slate-100 rounded-xl animate-pulse ${className ?? ""}`} />;
 }
 
-function formatSize(bytes?: number) {
+function formatSize(bytes?: number | null) {
   if (!bytes) return "—";
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
   return `${(bytes / 1024 / 1024).toFixed(1)} MB`;

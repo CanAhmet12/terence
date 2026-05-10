@@ -4,7 +4,7 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import Image from "next/image";
 import { useAuth } from "@/lib/auth-context";
 import { api } from "@/lib/api";
-import type { Question, TeacherCurriculumTopicRow, TeacherCurriculumUploadResponse } from "@/lib/api";
+import type { TeacherCurriculumTopicRow, TeacherCurriculumUploadResponse } from "@/lib/api";
 import { Video, FileText, Upload, CheckCircle, Loader2, X, AlertCircle, Sparkles, Bot, RefreshCw, Search, ImageIcon } from "lucide-react";
 
 type ContentType = "video" | "pdf";
@@ -75,26 +75,35 @@ function AIQuestionModal({
         subject: aiSubject,
         difficulty: aiDifficulty,
       } as Parameters<typeof api.generateQuestion>[0]);
-      const q = res as Question & {
-        stem?: string;
-        question?: { stem?: string; options?: Record<string, string> | unknown[]; correct_answer?: string; explanation?: string };
-      };
-      const qInner = ((q as Record<string, unknown>).question as typeof q) ?? q;
-      const options = Array.isArray(qInner.options)
-        ? Object.fromEntries(
-            (qInner.options as { option_letter: string; option_text: string }[]).map((o) => [o.option_letter, o.option_text])
-          )
-        : qInner.options && typeof qInner.options === "object" && !Array.isArray(qInner.options)
-          ? (qInner.options as Record<string, string>)
-          : {};
+      const q = res;
+      const qInner = q.question ?? q;
+      const rawOpts = qInner.options;
+      let options: Record<string, string> = {};
+      if (Array.isArray(rawOpts)) {
+        options = Object.fromEntries(
+          rawOpts
+            .map((o) => {
+              const letter =
+                typeof o.option_letter === "string" ? o.option_letter : typeof o.letter === "string" ? o.letter : "";
+              const text =
+                typeof o.option_text === "string" ? o.option_text : typeof o.text === "string" ? o.text : "";
+              return [letter, text] as const;
+            })
+            .filter(([letter]) => letter.length > 0),
+        );
+      } else if (rawOpts && typeof rawOpts === "object") {
+        for (const [k, v] of Object.entries(rawOpts)) {
+          if (typeof v === "string") options[k] = v;
+        }
+      }
+      const optArr = Array.isArray(rawOpts) ? rawOpts : [];
       const parsed = {
-        stem: qInner.stem || qInner.question_text || "Soru metni alınamadı.",
+        stem: qInner.stem || qInner.question_text || q.question_text || "Soru metni alınamadı.",
         options,
         correct_answer:
           qInner.correct_answer ??
-          (Array.isArray(qInner.options)
-            ? qInner.options.find((o) => (o as { is_correct?: boolean }).is_correct)?.option_letter
-            : "A") ??
+          optArr.find((o) => o.is_correct)?.option_letter ??
+          optArr.find((o) => o.is_correct)?.letter ??
           "A",
         explanation: qInner.explanation,
       };

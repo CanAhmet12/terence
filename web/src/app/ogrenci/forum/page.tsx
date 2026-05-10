@@ -81,7 +81,7 @@ function NewPostModal({ onClose, onCreated, token }: NewPostModalProps) {
     setError("");
     try {
       const res = await api.createForumPost({ title: title.trim(), content: content.trim(), subject: subject || undefined });
-      onCreated((res as Record<string, unknown>)?.post ?? res);
+      if (res) onCreated(res);
     } catch (e) {
       setError((e as Error).message || "Gönderi oluşturulamadı");
     } finally {
@@ -172,9 +172,8 @@ function PostDetail({ postId, token, user, onBack }: PostDetailProps) {
       setLoading(true);
       try {
         const res = await api.getForumPost(postId);
-        const resObj = res as Record<string, unknown>;
-        setPost(resObj.post as Record<string, unknown>);
-        setReplies(Array.isArray(resObj.replies) ? resObj.replies as Record<string, unknown>[] : []);
+        setPost(res.post);
+        setReplies(res.replies);
       } catch {
         setError("Gönderi yüklenemedi");
       } finally {
@@ -189,9 +188,7 @@ function PostDetail({ postId, token, user, onBack }: PostDetailProps) {
     setSending(true);
     try {
       const res = await api.createForumReply(postId, { content: replyText.trim() });
-      const resObj = res as Record<string, unknown>;
-      const newReply = resObj?.reply ?? res;
-      setReplies((prev) => [...prev, newReply as Record<string, unknown>]);
+      if (res) setReplies((prev) => [...prev, res]);
       setReplyText("");
     } catch (e) {
       setError((e as Error).message || "Yanıt gönderilemedi");
@@ -204,15 +201,22 @@ function PostDetail({ postId, token, user, onBack }: PostDetailProps) {
     if (!post) return;
     try {
       const res = await api.likeForumPost(postId);
-      const resObj = res as Record<string, unknown>;
-      setPost((p) => p ? { ...p, is_liked: resObj?.liked, like_count: resObj?.like_count } : p);
+      setPost((p) => {
+        if (!p) return p;
+        const liked = Boolean(res?.liked ?? !p.is_liked);
+        const nextCount =
+          typeof res?.like_count === "number"
+            ? res.like_count
+            : (p.like_count ?? p.likes_count ?? 0) + (liked === p.is_liked ? 0 : liked ? 1 : -1);
+        return { ...p, is_liked: liked, like_count: nextCount, likes_count: nextCount };
+      });
     } catch { /* ignore */ }
   };
 
   const handleMarkBest = async (replyId: number) => {
     try {
       await api.markForumReplyBest(postId, replyId);
-      setReplies((prev) => prev.map((r) => ({ ...r, is_best_answer: r.id === replyId })));
+      setReplies((prev) => prev.map((r) => ({ ...r, is_best: r.id === replyId, is_best_answer: r.id === replyId })));
       setPost((p) => p ? { ...p, is_solved: true } : p);
     } catch { /* ignore */ }
   };
@@ -242,7 +246,7 @@ function PostDetail({ postId, token, user, onBack }: PostDetailProps) {
       {/* Post */}
       <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
         <div className="flex items-start gap-4">
-          <UserAvatar name={post.author_name} photo={post.author_photo} role={post.author_role} size="md" />
+          <UserAvatar name={post.author_name ?? "Öğrenci"} photo={post.author_photo ?? undefined} role={post.author_role} size="md" />
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-3">
               <h1 className="font-bold text-slate-900 text-lg leading-snug">{post.title}</h1>
@@ -298,7 +302,7 @@ function PostDetail({ postId, token, user, onBack }: PostDetailProps) {
                 </div>
               )}
               <div className="flex items-start gap-3">
-                <UserAvatar name={reply.author_name} photo={reply.author_photo} role={reply.author_role} />
+                <UserAvatar name={reply.author_name ?? "Kullanıcı"} photo={reply.author_photo ?? undefined} role={reply.author_role} />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-2">
                     <span className="text-sm font-semibold text-slate-800">{reply.author_name}</span>
@@ -380,11 +384,10 @@ export default function ForumPage() {
         search: search || undefined,
         sort,
         page,
-      } as Parameters<typeof api.getForumPosts>[0]);
-      const resObj = res as Record<string, unknown>;
-      setPosts(Array.isArray(resObj.data) ? resObj.data as Record<string, unknown>[] : []);
-      setTotal(res.total ?? 0);
-      setLastPage(res.last_page ?? 1);
+      });
+      setPosts(res.data);
+      setTotal(res.total);
+      setLastPage(res.last_page);
     } catch (e) {
       setError((e as Error).message || "Forum yüklenemedi");
       setPosts([]);
@@ -516,7 +519,7 @@ export default function ForumPage() {
               className="w-full text-left bg-white rounded-2xl border border-slate-200 p-5 shadow-sm hover:shadow-md hover:border-teal-200 transition-all group"
             >
               <div className="flex items-start gap-4">
-                <UserAvatar name={post.author_name} photo={post.author_photo} role={post.author_role} />
+                <UserAvatar name={post.author_name ?? "Öğrenci"} photo={post.author_photo ?? undefined} role={post.author_role} />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start gap-2 mb-1">
                     <h3 className="font-semibold text-slate-900 group-hover:text-teal-700 transition-colors text-sm line-clamp-2 flex-1">
@@ -542,10 +545,10 @@ export default function ForumPage() {
                 <div className="flex flex-col items-end gap-1.5 shrink-0">
                   <div className="flex items-center gap-3 text-xs text-slate-400">
                     <span className="flex items-center gap-1">
-                      <MessageSquare className="w-3.5 h-3.5" /> {post.reply_count}
+                      <MessageSquare className="w-3.5 h-3.5" /> {post.reply_count ?? post.replies_count ?? 0}
                     </span>
                     <span className="flex items-center gap-1">
-                      <ThumbsUp className="w-3.5 h-3.5" /> {post.like_count}
+                      <ThumbsUp className="w-3.5 h-3.5" /> {post.like_count ?? post.likes_count ?? 0}
                     </span>
                     {post.views !== undefined && (
                       <span className="flex items-center gap-1">

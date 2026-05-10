@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Models\EmailVerification;
 use App\Models\RefreshToken;
 use App\Services\MailService;
+use App\Services\StudentLearningProfileService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Hash;
@@ -46,9 +47,13 @@ class AuthController extends Controller
                 Rule::requiredIf(($data['role'] ?? null) === 'student'),
                 'nullable',
                 'integer',
-                'between:1,12',
+                'between:0,12',
             ],
-            'target_exam'           => 'nullable|in:LGS,TYT,AYT,TYT-AYT,KPSS',
+            'target_exam'           => [
+                Rule::requiredIf(($data['role'] ?? null) === 'student'),
+                'nullable',
+                'in:LGS,TYT,AYT,TYT-AYT,KPSS,GENEL',
+            ],
             'target_school'         => 'nullable|string|max:255',
             'target_department'     => 'nullable|string|max:255',
             'target_net'            => 'nullable|numeric|min:0|max:200',
@@ -62,6 +67,19 @@ class AuthController extends Controller
         if ($v->fails()) {
             \Log::warning('Register Validation Failed: ' . json_encode($v->errors()));
             return $this->validationError($v, $request);
+        }
+
+        if (($data['role'] ?? '') === 'student') {
+            $g = isset($data['grade']) ? (int) $data['grade'] : null;
+            $ex = isset($data['target_exam']) ? (string) $data['target_exam'] : null;
+            $pairErr = StudentLearningProfileService::validateStudentGradeAndTargetExam($g, $ex);
+            if ($pairErr) {
+                return response()->json([
+                    'error' => true,
+                    'code' => 'INVALID_LEARNING_PROFILE',
+                    'message' => $pairErr,
+                ], 422);
+            }
         }
 
         $role = $data['role'] ?? 'student';
@@ -223,8 +241,8 @@ class AuthController extends Controller
             'name'               => 'sometimes|string|max:255',
             'phone'              => 'sometimes|nullable|string|max:20',
             'bio'                => 'sometimes|nullable|string|max:500',
-            'grade'              => 'sometimes|nullable|integer|between:1,12',
-            'target_exam'        => 'sometimes|nullable|in:LGS,TYT,AYT,TYT-AYT,KPSS',
+            'grade'              => 'sometimes|nullable|integer|between:0,12',
+            'target_exam'        => 'sometimes|nullable|in:LGS,TYT,AYT,TYT-AYT,KPSS,GENEL',
             'target_school'      => 'sometimes|nullable|string|max:255',
             'target_department'  => 'sometimes|nullable|string|max:255',
             'target_net'         => 'sometimes|nullable|numeric|min:0|max:200',
@@ -237,7 +255,26 @@ class AuthController extends Controller
             return $this->validationError($v, $request);
         }
 
-        $user->update($v->validated());
+        $validated = $v->validated();
+
+        if ($user->isStudent()) {
+            $nextGrade = array_key_exists('grade', $validated)
+                ? ($validated['grade'] !== null ? (int) $validated['grade'] : null)
+                : StudentLearningProfileService::normalizedIntGrade($user);
+            $nextExam = $validated['target_exam'] ?? $user->target_exam ?? $user->exam_goal;
+            if ($nextGrade !== null && filled($nextExam)) {
+                $pairErr = StudentLearningProfileService::validateStudentGradeAndTargetExam($nextGrade, (string) $nextExam);
+                if ($pairErr) {
+                    return response()->json([
+                        'error' => true,
+                        'code' => 'INVALID_LEARNING_PROFILE',
+                        'message' => $pairErr,
+                    ], 422);
+                }
+            }
+        }
+
+        $user->update($validated);
 
         $user->refresh();
         if ($user->isStudent() && $user->grade !== null && $user->grade !== '' && filled($user->target_exam)) {

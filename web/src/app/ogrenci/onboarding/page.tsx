@@ -4,57 +4,70 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { api } from "@/lib/api";
-import { resolveGoalTemplateFromUser } from "@/lib/goal-dashboard";
+import {
+  resolveGoalTemplateFromUser,
+  validateStudentGradeAndTargetExam,
+} from "@/lib/goal-dashboard";
 import { CheckCircle, ChevronRight, GraduationCap, Target, Sparkles, Calendar } from "lucide-react";
 
-// ─── Konfigürasyonlar ─────────────────────────────────────────────────────────
+// ─── Konfigürasyonlar (backend StudentLearningProfileService ile uyumlu) ─────
 
 const GRADES = [
-  { value: "5",  label: "5. Sınıf",  sub: "İlkokul",    emoji: "🏫", color: "#10b981" },
-  { value: "6",  label: "6. Sınıf",  sub: "Ortaokul",   emoji: "📚", color: "#3b82f6" },
-  { value: "7",  label: "7. Sınıf",  sub: "Ortaokul",   emoji: "📚", color: "#6366f1" },
-  { value: "8",  label: "8. Sınıf",  sub: "LGS Hazırlık",emoji: "🎯", color: "#f59e0b" },
-  { value: "9",  label: "9. Sınıf",  sub: "Lise",       emoji: "🎓", color: "#ef4444" },
-  { value: "10", label: "10. Sınıf", sub: "Lise",       emoji: "🎓", color: "#8b5cf6" },
-  { value: "11", label: "11. Sınıf", sub: "Lise",       emoji: "🎓", color: "#0ea5e9" },
-  { value: "12", label: "12. Sınıf", sub: "YKS Hazırlık",emoji: "🏆", color: "#f97316" },
+  { value: "5",  label: "5. Sınıf",  sub: "Ortaokul",     emoji: "🏫", color: "#10b981" },
+  { value: "6",  label: "6. Sınıf",  sub: "Ortaokul",     emoji: "📚", color: "#3b82f6" },
+  { value: "7",  label: "7. Sınıf",  sub: "LGS başlangıcı", emoji: "📚", color: "#6366f1" },
+  { value: "8",  label: "8. Sınıf",  sub: "LGS yılı",     emoji: "🎯", color: "#f59e0b" },
+  { value: "9",  label: "9. Sınıf",  sub: "Lise",         emoji: "🎓", color: "#ef4444" },
+  { value: "10", label: "10. Sınıf", sub: "Lise",         emoji: "🎓", color: "#8b5cf6" },
+  { value: "11", label: "11. Sınıf", sub: "Lise",         emoji: "🎓", color: "#0ea5e9" },
+  { value: "12", label: "12. Sınıf", sub: "YKS yoğun",    emoji: "🏆", color: "#f97316" },
+  { value: "0",  label: "Mezun",     sub: "YKS odaklı",   emoji: "🎓", color: "#0f766e" },
 ];
 
 const EXAM_TYPES: Record<string, Array<{ value: string; label: string; sub: string; icon: string; color: string }>> = {
   "5": [
-    { value: "LGS", label: "LGS Hazırlık", sub: "Liselere Giriş Sınavı", icon: "📚", color: "#10b981" },
+    { value: "GENEL", label: "Okul & gelişim", sub: "Ders takibi, alışkanlık ve okul başarısı", icon: "🏫", color: "#10b981" },
   ],
   "6": [
-    { value: "LGS", label: "LGS Hazırlık", sub: "Liselere Giriş Sınavı", icon: "📚", color: "#3b82f6" },
+    { value: "GENEL", label: "Okul & gelişim", sub: "Güçlendirme ve düzenli çalışma", icon: "📚", color: "#3b82f6" },
   ],
   "7": [
-    { value: "LGS", label: "LGS Hazırlık", sub: "Liselere Giriş Sınavı", icon: "📝", color: "#6366f1" },
+    { value: "LGS", label: "LGS hazırlığı", sub: "Ortaokul sonu; konu ve deneme disiplini", icon: "📝", color: "#6366f1" },
   ],
   "8": [
-    { value: "LGS", label: "LGS", sub: "Liselere Giriş Sınavı", icon: "🎯", color: "#f59e0b" },
+    { value: "LGS", label: "LGS", sub: "Liselere Geçiş Sınavı odaklı içerik", icon: "🎯", color: "#f59e0b" },
   ],
-  "9":  [
-    { value: "TYT",     label: "TYT",      sub: "Temel Yeterlilik (Tüm alanlar)",  icon: "📐", color: "#1565c0" },
-    { value: "TYT-AYT", label: "TYT + AYT", sub: "Sayısal, Sözel veya EA hedefli", icon: "🎯", color: "#6a1b9a" },
+  "9": [
+    { value: "TYT", label: "TYT", sub: "Temel yeterlilik — üniversite temeli", icon: "📐", color: "#1565c0" },
+    { value: "TYT-AYT", label: "TYT + AYT", sub: "Dört yıllık üniversite hedefi", icon: "🎯", color: "#6a1b9a" },
   ],
   "10": [
-    { value: "TYT",     label: "TYT",      sub: "Temel Yeterlilik",               icon: "📐", color: "#1565c0" },
-    { value: "TYT-AYT", label: "TYT + AYT", sub: "Sayısal, Sözel veya EA hedefli", icon: "🎯", color: "#6a1b9a" },
+    { value: "TYT", label: "TYT", sub: "Temel yeterlilik", icon: "📐", color: "#1565c0" },
+    { value: "TYT-AYT", label: "TYT + AYT", sub: "Alan keşfi ile birlikte", icon: "🎯", color: "#6a1b9a" },
   ],
   "11": [
-    { value: "TYT",     label: "TYT",      sub: "Temel Yeterlilik",               icon: "📐", color: "#1565c0" },
-    { value: "AYT",     label: "AYT",      sub: "Alan Yeterlilik",                icon: "🧪", color: "#e65100" },
-    { value: "TYT-AYT", label: "TYT + AYT", sub: "Sayısal, Sözel veya EA hedefli", icon: "🎯", color: "#6a1b9a" },
+    { value: "TYT", label: "TYT", sub: "Temel yeterlilik", icon: "📐", color: "#1565c0" },
+    { value: "AYT", label: "AYT", sub: "Alan yeterlilik", icon: "🧪", color: "#e65100" },
+    { value: "TYT-AYT", label: "TYT + AYT", sub: "Birlikte hazırlık", icon: "🎯", color: "#6a1b9a" },
   ],
   "12": [
-    { value: "TYT",     label: "TYT",      sub: "Temel Yeterlilik",               icon: "📐", color: "#1565c0" },
-    { value: "AYT",     label: "AYT",      sub: "Alan Yeterlilik",                icon: "🧪", color: "#e65100" },
-    { value: "TYT-AYT", label: "TYT + AYT", sub: "En kapsamlı hazırlık",          icon: "🏆", color: "#6a1b9a" },
+    { value: "TYT", label: "TYT", sub: "Temel yeterlilik", icon: "📐", color: "#1565c0" },
+    { value: "AYT", label: "AYT", sub: "Alan yeterlilik", icon: "🧪", color: "#e65100" },
+    { value: "TYT-AYT", label: "TYT + AYT", sub: "Tam sınav modu", icon: "🏆", color: "#6a1b9a" },
+  ],
+  "0": [
+    { value: "TYT", label: "TYT", sub: "Üniversite sınavı — temel oturum", icon: "📐", color: "#1565c0" },
+    { value: "AYT", label: "AYT", sub: "Alan oturumu", icon: "🧪", color: "#e65100" },
+    { value: "TYT-AYT", label: "TYT + AYT", sub: "İki oturum birlikte", icon: "🎯", color: "#6a1b9a" },
+    { value: "KPSS", label: "KPSS", sub: "Kamu personel seçmesi", icon: "📋", color: "#0284c7" },
+  ],
+  default: [
+    { value: "TYT", label: "TYT", sub: "Temel yeterlilik", icon: "📐", color: "#1565c0" },
   ],
 };
 
 function getExamOptions(grade: string) {
-  return EXAM_TYPES[grade] ?? EXAM_TYPES["default"];
+  return EXAM_TYPES[grade] ?? EXAM_TYPES.default;
 }
 
 // ─── Bileşenler ───────────────────────────────────────────────────────────────
@@ -107,7 +120,14 @@ export default function OnboardingPage() {
     setSaving(true);
     setError("");
     try {
-      const gradeValue = parseInt(selectedGrade, 10);
+      const gradeValue = selectedGrade === "0" ? 0 : parseInt(selectedGrade, 10);
+
+      const pairErr = validateStudentGradeAndTargetExam(gradeValue, selectedExam);
+      if (pairErr) {
+        setError(pairErr);
+        setSaving(false);
+        return;
+      }
 
       const payload: Record<string, unknown> = {
         grade: gradeValue,
@@ -253,10 +273,15 @@ export default function OnboardingPage() {
               <p className="text-sm font-semibold text-indigo-600 uppercase tracking-wide mb-1">Adım 2 / {stepTotal}</p>
               <h2 className="text-xl font-bold text-slate-800 flex items-center justify-center gap-2">
                 <Sparkles className="w-5 h-5 text-violet-500" />
-                Hedef sınavın hangisi?
+                {(() => {
+                  const g = parseInt(selectedGrade, 10);
+                  if (!Number.isNaN(g) && g >= 5 && g <= 6) return "Okul hedefin ne?";
+                  if (!Number.isNaN(g) && g === 0) return "Hangi sınava hazırlanıyorsun?";
+                  return "Hedef sınavın hangisi?";
+                })()}
               </h2>
               <p className="text-sm text-slate-500 mt-1">
-                Seçimine göre ilgili konular ve müfredat önüne gelecek.
+                Seçimine göre dersler, soru bankası ve denemeler kişiselleştirilir.
               </p>
             </div>
 

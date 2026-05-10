@@ -40,9 +40,34 @@ type Props = {
   onOpen: (item: UnifiedMediaItem) => void;
   /** Mock’taki gibi kartlar farklı vurgu renkleri */
   cardIndex?: number;
+  /** Öğrenci profili — içerik etiketi boşsa rozet için kullanılır */
+  profileGrade?: number | string | null;
+  profileTargetExam?: string | null;
 };
 
-export function MediaContentCard({ item, subscriptionPlan, onOpen, cardIndex = 0 }: Props) {
+function formatGradeBadge(grade: string | number | null | undefined): string {
+  if (grade === null || grade === undefined || grade === "") return "Müfredat";
+  const s = String(grade).trim().toLowerCase();
+  if (s === "mezun" || s === "0" || grade === 0) return "Mezun";
+  const n = String(grade).replace(/\D/g, "");
+  return n ? `${n}. Sınıf` : "Müfredat";
+}
+
+function examBadgeFromProfile(target?: string | null): string {
+  const t = (target ?? "").toUpperCase();
+  if (t === "GENEL" || t === "") return "Okul";
+  if (t.includes("TYT") && t.includes("AYT")) return "TYT+AYT";
+  return t.slice(0, 6) || "Genel";
+}
+
+export function MediaContentCard({
+  item,
+  subscriptionPlan,
+  onOpen,
+  cardIndex = 0,
+  profileGrade,
+  profileTargetExam,
+}: Props) {
   const locked = !item.isFree && !userHasProAccess(subscriptionPlan);
   const progressPct =
     item.contentType === "video" && item.durationSeconds > 0
@@ -54,11 +79,11 @@ export function MediaContentCard({ item, subscriptionPlan, onOpen, cardIndex = 0
   const examShort =
     item.examType && item.examType !== "all"
       ? String(item.examType).replace(/\s+/g, "").slice(0, 6).toUpperCase()
-      : "TYT";
+      : examBadgeFromProfile(profileTargetExam ?? undefined);
   const gradeBadge =
     item.grade && item.grade !== "all" && item.grade !== ""
       ? `${String(item.grade).replace(/\D/g, "") || item.grade}. Sınıf`
-      : "12. Sınıf";
+      : formatGradeBadge(profileGrade);
 
   return (
     <article className="group flex flex-col overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-md shadow-slate-200/30 transition hover:-translate-y-0.5 hover:border-violet-200 hover:shadow-lg">

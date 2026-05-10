@@ -67,6 +67,13 @@ class ParentController extends Controller
     public function generateParentCode(): JsonResponse
     {
         $student = Auth::user();
+        if (!$student->isStudent()) {
+            return response()->json([
+                'error' => true,
+                'code' => 'FORBIDDEN',
+                'message' => 'Bu işlem yalnızca öğrenci hesapları içindir.',
+            ], 403);
+        }
         $code    = strtoupper(Str::random(8));
 
         ParentStudent::updateOrCreate(

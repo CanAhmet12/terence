@@ -81,7 +81,7 @@ export default function OdevPage() {
     setError("");
 
     try {
-      const res = await api.createAssignment({
+      const assignment = await api.createAssignment({
         title: form.title,
         subject: form.subject,
         due_date: form.due_date || undefined,
@@ -90,7 +90,6 @@ export default function OdevPage() {
         type: form.type || undefined,
         target_count: form.target_count ? Number(form.target_count) : undefined,
       } as Parameters<typeof api.createAssignment>[0]);
-      const assignment = ((res as Record<string, unknown>)?.assignment ?? res) as Assignment;
       setAssignments((prev) => [assignment, ...prev]);
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
@@ -230,10 +229,8 @@ export default function OdevPage() {
               ) : (
                 <div className="space-y-3">
                   {assignments.map((a) => {
-                  const studentCount = (a as Record<string, unknown>).class_room
-                    ? ((a as Record<string, unknown>).class_room as Record<string, unknown>).student_count as number ?? 1
-                    : 1;
-                  const completionCount = (a as Record<string, unknown>).completions_count as number ?? 0;
+                  const studentCount = a.class_room?.student_count ?? 1;
+                  const completionCount = a.completions_count ?? 0;
                   const completePct = studentCount > 0 ? Math.round((completionCount / studentCount) * 100) : 0;
                   const overdue = a.due_date ? new Date(a.due_date).getTime() < Date.now() : false;
 
@@ -243,10 +240,10 @@ export default function OdevPage() {
                         <div className="flex-1 min-w-0">
                           <p className="font-bold text-slate-900 text-sm truncate">{a.title}</p>
                           <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                            {(a as Record<string, unknown>).class_room && (
+                            {a.class_room && (
                               <span className="text-xs text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-lg font-semibold flex items-center gap-1 border border-indigo-100">
                                 <Users className="w-3 h-3" />
-                                {((a as Record<string, unknown>).class_room as Record<string, unknown>).name as string}
+                                {a.class_room.name ?? "Sınıf"}
                               </span>
                             )}
                             {a.subject && (

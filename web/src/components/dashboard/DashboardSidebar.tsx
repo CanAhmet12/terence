@@ -328,7 +328,7 @@ export function DashboardSidebar() {
       </nav>
 
       {/* ── Öğretmen: abonelik satışı yok ── */}
-      {isTeacher && role !== "admin" && (
+      {isTeacher && (
         <div className="px-3 pb-3">
           <div className="rounded-2xl border border-teal-100 bg-gradient-to-br from-teal-50 to-emerald-50/90 p-4">
             <p className="text-xs font-bold text-teal-900 leading-snug">Öğretmen hesabı</p>

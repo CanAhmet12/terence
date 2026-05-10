@@ -1,13 +1,22 @@
-export type GoalTemplate = "school_primary" | "exam_lgs" | "exam_yks"
+import type { EducationPhase, GoalTemplate, GoalUserLike } from "./student-learning-profile"
+import {
+  goalTemplateLabel,
+  resolveGoalTemplateFromUser,
+  resolveEducationPhase,
+  TARGET_GENEL,
+  validateStudentGradeAndTargetExam,
+} from "./student-learning-profile"
+
+export type { EducationPhase, GoalTemplate, GoalUserLike }
+export {
+  goalTemplateLabel,
+  resolveGoalTemplateFromUser,
+  resolveEducationPhase,
+  TARGET_GENEL,
+  validateStudentGradeAndTargetExam,
+}
 
 export type RiskTier = "on_track" | "at_risk" | "critical"
-
-/** api.ts içindeki User ile uyumlu minimum alan (döngüsel import yok) */
-export type GoalUserLike = {
-  grade?: number | string | null
-  target_exam?: string | null
-  exam_goal?: string | null
-}
 
 export interface GoalDashboardUserSnapshot {
   id: number
@@ -22,6 +31,8 @@ export interface GoalDashboardUserSnapshot {
   exam_date?: string | null
   streak_days?: number
   xp_points?: number
+  /** Backend `GoalDashboardService` — kademe tonlaması */
+  education_phase?: EducationPhase
 }
 
 export interface GoalDashboardExamMetrics {
@@ -72,26 +83,4 @@ export interface StudentGoalDashboard {
   school_metrics: GoalDashboardSchoolMetrics | null
   insights: GoalDashboardInsights
   data_completeness: GoalDataCompleteness
-}
-
-export function resolveGoalTemplateFromUser(user: GoalUserLike | null | undefined): GoalTemplate {
-  if (!user) return "exam_yks"
-  const exam = user.target_exam ?? user.exam_goal
-  if (exam === "LGS") return "exam_lgs"
-  const grade = typeof user.grade === "number" ? user.grade : parseInt(String(user.grade ?? "0"), 10)
-  if (grade >= 1 && grade <= 6) return "school_primary"
-  if (exam === "TYT" || exam === "AYT" || exam === "TYT-AYT" || exam === "KPSS") return "exam_yks"
-  if (grade >= 7 && grade <= 8) return "exam_lgs"
-  return "exam_yks"
-}
-
-export function goalTemplateLabel(t: GoalTemplate): string {
-  switch (t) {
-    case "school_primary":
-      return "Okul hedefi"
-    case "exam_lgs":
-      return "LGS hazırlık"
-    default:
-      return "Sınav hedefi"
-  }
 }

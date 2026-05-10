@@ -185,6 +185,14 @@ class TeacherController extends Controller
         }
         unset($data['class_id'], $data['type']);
 
+        $classRoomId = $data['class_room_id'] ?? null;
+        if ($classRoomId !== null) {
+            $ownsClass = ClassRoom::where('id', $classRoomId)->where('teacher_id', $teacher->id)->exists();
+            if (!$ownsClass) {
+                return response()->json(['error' => true, 'message' => 'Bu sınıf size ait değil.'], 403);
+            }
+        }
+
         $assignment = Assignment::create(array_merge($data, ['teacher_id' => $teacher->id]));
         return response()->json(['success' => true, 'assignment' => $assignment], 201);
     }
@@ -208,7 +216,15 @@ class TeacherController extends Controller
             return response()->json(['error' => true, 'errors' => $v->errors()], 422);
         }
 
-        $assignment->update($v->validated());
+        $patch = $v->validated();
+        if (array_key_exists('class_room_id', $patch) && $patch['class_room_id'] !== null) {
+            $ownsClass = ClassRoom::where('id', $patch['class_room_id'])->where('teacher_id', $teacher->id)->exists();
+            if (!$ownsClass) {
+                return response()->json(['error' => true, 'message' => 'Bu sınıf size ait değil.'], 403);
+            }
+        }
+
+        $assignment->update($patch);
         return response()->json(['success' => true, 'assignment' => $assignment->fresh()]);
     }
 

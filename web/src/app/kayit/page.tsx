@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -10,6 +10,7 @@ import {
   CheckCircle, Briefcase
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
+import { validateStudentGradeAndTargetExam } from "@/lib/goal-dashboard";
 
 const GOOGLE_AUTH_URL = process.env.NEXT_PUBLIC_API_URL
   ? `${process.env.NEXT_PUBLIC_API_URL.replace(/\/api$/, "")}/auth/google/redirect`
@@ -30,12 +31,24 @@ type Role = "student" | "teacher" | "parent";
 type Step = 1 | 2 | 3;
 
 const EXAM_TYPES = [
-  { value: "LGS", label: "LGS", desc: "Liseye Geçiş Sınavı", grades: [8] },
-  { value: "TYT", label: "TYT", desc: "Temel Yeterlilik Testi", grades: [9, 10, 11, 12] },
-  { value: "AYT", label: "AYT", desc: "Alan Yeterlilik Testi", grades: [9, 10, 11, 12] },
-  { value: "TYT-AYT", label: "TYT+AYT", desc: "Üniversite (İkisi Birden)", grades: [9, 10, 11, 12] },
-  { value: "KPSS", label: "KPSS", desc: "Kamu Personel Sınavı", grades: [] },
+  { value: "LGS", label: "LGS", desc: "Liseye Geçiş Sınavı", grades: [7, 8] },
+  { value: "GENEL", label: "Okul odaklı (GENEL)", desc: "5–6. sınıf okul müfredatı ve gelişim", grades: [5, 6] },
+  { value: "TYT", label: "TYT", desc: "Temel Yeterlilik Testi", grades: [9, 10, 11, 12, 0] },
+  { value: "AYT", label: "AYT", desc: "Alan Yeterlilik Testi", grades: [0, 11, 12] },
+  { value: "TYT-AYT", label: "TYT+AYT", desc: "Üniversite (İkisi Birden)", grades: [0, 9, 10, 11, 12] },
+  { value: "KPSS", label: "KPSS", desc: "Kamu Personel Sınavı", grades: [0] },
 ];
+
+type ExamChoice = { value: string; label: string; desc: string };
+
+function getExamChoicesForGrade(grade: number | null): ExamChoice[] {
+  if (grade === null) return [];
+  return EXAM_TYPES.filter((et) => et.grades.includes(grade)).map(({ value, label, desc }) => ({
+    value,
+    label,
+    desc,
+  }));
+}
 
 const STUDENT_GRADES = [
   { value: 5, label: "5. Sınıf" },
@@ -166,6 +179,17 @@ export default function RegisterPage() {
   // Adım 3 — Veli
   const [childEmail, setChildEmail] = useState("");
 
+  const [studentFormError, setStudentFormError] = useState("");
+
+  const examChoices = useMemo(() => getExamChoicesForGrade(grade), [grade]);
+
+  useEffect(() => {
+    if (role !== "student" || grade === null) return;
+    if (targetExam && !examChoices.some((e) => e.value === targetExam)) {
+      setTargetExam("");
+    }
+  }, [grade, role, examChoices, targetExam]);
+
   const pwMismatch = !!password && !!passwordConfirm && password !== passwordConfirm;
   const selectedRole = ROLES.find(r => r.value === role)!;
   const color = role === "teacher" ? "blue" : role === "parent" ? "purple" : "teal";
@@ -194,6 +218,14 @@ export default function RegisterPage() {
     e.preventDefault();
     if (pwMismatch) return;
     clearError();
+    setStudentFormError("");
+    if (role === "student") {
+      const err = validateStudentGradeAndTargetExam(grade, targetExam || null);
+      if (err) {
+        setStudentFormError(err);
+        return;
+      }
+    }
     try {
       await register({
         name, email, password,
@@ -456,6 +488,9 @@ export default function RegisterPage() {
                     {error && (
                       <div className="mb-5 p-4 bg-red-50 border border-red-100 rounded-xl text-red-700 text-sm font-medium">{error}</div>
                     )}
+                    {studentFormError && (
+                      <div className="mb-5 p-4 bg-red-50 border border-red-100 rounded-xl text-red-700 text-sm font-medium">{studentFormError}</div>
+                    )}
 
                     <div className="space-y-6">
                       {/* Sınıf */}
@@ -483,7 +518,7 @@ export default function RegisterPage() {
                           Hangi sınava hazırlanıyorsun? <span className="text-red-500">*</span>
                         </label>
                         <div className="grid grid-cols-1 gap-2">
-                          {EXAM_TYPES.map(et => (
+                          {examChoices.map((et) => (
                             <button key={et.value} type="button" onClick={() => setTargetExam(et.value)}
                               className={`flex items-center justify-between p-3.5 rounded-xl border-2 transition-all text-left ${
                                 targetExam === et.value
@@ -503,7 +538,7 @@ export default function RegisterPage() {
                       </div>
 
                       {/* Hedef Okul / Bölüm (sınava göre göster) */}
-                      {targetExam && targetExam !== "LGS" && (
+                      {targetExam && targetExam !== "LGS" && targetExam !== "GENEL" && targetExam !== "KPSS" && (
                         <div className="grid grid-cols-2 gap-3">
                           <div>
                             <label className="flex items-center gap-1 text-sm font-semibold text-slate-700 mb-2">

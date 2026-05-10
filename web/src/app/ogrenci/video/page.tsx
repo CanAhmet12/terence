@@ -243,6 +243,8 @@ export default function VideoPage() {
                       item={item}
                       cardIndex={idx}
                       subscriptionPlan={user?.subscription_plan}
+                      profileGrade={user?.grade}
+                      profileTargetExam={user?.target_exam ?? user?.exam_goal}
                       onOpen={openItem}
                     />
                   ))}

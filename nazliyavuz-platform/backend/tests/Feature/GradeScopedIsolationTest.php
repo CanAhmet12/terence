@@ -33,7 +33,7 @@ class GradeScopedIsolationTest extends TestCase
         $student = User::factory()->create([
             'role' => 'student',
             'grade' => 6,
-            'target_exam' => 'LGS',
+            'target_exam' => 'GENEL',
         ]);
 
         DB::table('curriculum_subjects')->insert([

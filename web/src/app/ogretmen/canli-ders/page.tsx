@@ -88,10 +88,9 @@ export default function CanliDersPage() {
         is_public: form.is_public || !form.class_room_id,
         subject_tag: form.subject_tag.trim() || undefined,
       } as Parameters<typeof teacherApi.createLiveSession>[0]);
-      const session = ((res as Record<string, unknown>)?.session ?? res) as LiveSession;
-      setCreatedUrl((session as Record<string, unknown>)?.daily_room_url as string ?? "");
+      setCreatedUrl(res.daily_room_url ?? res.room_url ?? "");
       setSaved(true);
-      setLessons((prev) => [session, ...prev]);
+      setLessons((prev) => [res, ...prev]);
     } catch (e) {
       setError((e as Error).message);
     } finally {

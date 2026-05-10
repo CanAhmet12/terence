@@ -125,8 +125,16 @@ class TeacherController extends Controller
         if ($v->fails()) {
             return response()->json(['error' => true, 'errors' => $v->errors()], 422);
         }
-        $teacher    = Auth::user();
-        $assignment = Assignment::create(array_merge($v->validated(), ['teacher_id' => $teacher->id]));
+        $teacher = Auth::user();
+        $data = $v->validated();
+        $classRoomId = $data['class_room_id'] ?? null;
+        if ($classRoomId !== null) {
+            $owns = ClassRoom::where('id', $classRoomId)->where('teacher_id', $teacher->id)->exists();
+            if (!$owns) {
+                return response()->json(['error' => true, 'message' => 'Bu sınıf size ait değil.'], 403);
+            }
+        }
+        $assignment = Assignment::create(array_merge($data, ['teacher_id' => $teacher->id]));
         return response()->json(['success' => true, 'assignment' => $assignment], 201);
     }
 
@@ -175,9 +183,17 @@ class TeacherController extends Controller
             return response()->json(['error' => true, 'errors' => $v->errors()], 422);
         }
         $teacher  = Auth::user();
+        $data = $v->validated();
+        $classRoomId = $data['class_room_id'] ?? null;
+        if ($classRoomId !== null) {
+            $owns = ClassRoom::where('id', $classRoomId)->where('teacher_id', $teacher->id)->exists();
+            if (!$owns) {
+                return response()->json(['error' => true, 'message' => 'Bu sınıf size ait değil.'], 403);
+            }
+        }
         $roomName = 'terence-' . Str::slug($request->title) . '-' . Str::random(6);
 
-        $session = LiveSession::create(array_merge($v->validated(), [
+        $session = LiveSession::create(array_merge($data, [
             'teacher_id'      => $teacher->id,
             'daily_room_name' => $roomName,
             'daily_room_url'  => 'https://terenceegitim.daily.co/' . $roomName,

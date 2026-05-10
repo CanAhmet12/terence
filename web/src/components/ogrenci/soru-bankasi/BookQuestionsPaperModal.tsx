@@ -119,7 +119,13 @@ export function BookQuestionsPaperModal({
                       <button
                         type="button"
                         disabled={!!result || answeringId === soru.id}
-                        onClick={() => soru && onAnswer(soru, opt.option_letter)}
+                        onClick={() =>
+                          soru &&
+                          onAnswer(
+                            soru,
+                            opt.option_letter ?? opt.letter ?? "",
+                          )
+                        }
                         className="flex w-full items-start gap-4 py-4 text-left font-serif text-[16px] text-stone-900 transition hover:bg-amber-50/50 disabled:pointer-events-none disabled:opacity-50 sm:text-[17px]"
                       >
                         <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 border-stone-800 font-semibold tabular-nums text-stone-900">

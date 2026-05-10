@@ -172,7 +172,7 @@ export default function VeliRaporPage() {
             <>
               <div className="space-y-4">
                 {subjects.map((d) => {
-                  const total = (d.correct + d.wrong) || 1;
+                  const total = (d.correct + (d.wrong ?? 0)) || 1;
                   const pct = Math.round((d.correct / total) * 100);
                   const status = pct >= 80 ? "good" : pct >= 60 ? "warning" : "risk";
                   return (

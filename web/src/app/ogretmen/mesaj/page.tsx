@@ -105,9 +105,8 @@ export default function MesajPage() {
               send_sms: sendSms,
             };
 
-      const res = await api.sendMessage(payload as Parameters<typeof api.sendMessage>[0]);
-      const msgObj = ((res as Record<string, unknown>)?.message ?? res) as Record<string, unknown>;
-      setMessages((prev) => [msgObj, ...prev]);
+      const msg = await api.sendMessage(payload);
+      setMessages((prev) => [msg, ...prev]);
       setSent(true);
       setTimeout(() => setSent(false), 3000);
       setMesaj("");
@@ -276,12 +275,11 @@ export default function MesajPage() {
                 <div className="p-10 text-center text-slate-400 text-sm">Henüz mesaj gönderilmemiş.</div>
               ) : (
                 <div className="divide-y divide-slate-50">
-                  {messages.slice(0, 8).map((m, i) => {
-                    const msg = m as Record<string, unknown>;
+                  {messages.slice(0, 8).map((m) => {
                     return (
-                      <div key={i} className="flex items-start gap-3 p-4 hover:bg-slate-50 transition-colors">
+                      <div key={m.id} className="flex items-start gap-3 p-4 hover:bg-slate-50 transition-colors">
                         <div className="w-8 h-8 rounded-xl bg-indigo-100 flex items-center justify-center shrink-0">
-                          {msg.recipient_type === "class" ? (
+                          {m.recipient_type === "class" ? (
                             <Users className="w-4 h-4 text-indigo-600" />
                           ) : (
                             <UserIcon className="w-4 h-4 text-indigo-600" />
@@ -289,14 +287,14 @@ export default function MesajPage() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-semibold text-slate-800 truncate">
-                            {(msg.recipient_name as string) ?? (msg.recipient_type as string) ?? "—"}
+                            {m.recipient_name ?? m.recipient_type ?? "—"}
                           </p>
                           <p className="text-xs text-slate-500 truncate mt-0.5">
-                            {(msg.content as string)?.slice(0, 60) ?? "—"}
+                            {m.content?.slice(0, 60) ?? "—"}
                           </p>
                         </div>
                         <span className="text-[10px] text-slate-400 shrink-0">
-                          {msg.created_at ? timeAgo(msg.created_at as string) : ""}
+                          {m.created_at ? timeAgo(m.created_at) : ""}
                         </span>
                       </div>
                     );

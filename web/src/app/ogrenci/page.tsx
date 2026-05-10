@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useAuth } from "@/lib/auth-context";
 import { api, PlanStats, DailyPlan, PlanTask } from "@/lib/api";
+import { resolveGoalTemplateFromUser, TARGET_GENEL } from "@/lib/goal-dashboard";
 import { PushPermissionBanner } from "@/components/dashboard/PushPermissionBanner";
 import {
   Target, Calendar, Zap, TrendingUp, BookOpen, FileQuestion,
@@ -113,7 +114,7 @@ function getGreeting() {
 // ─── Ana sayfa ───────────────────────────────────────────────────────────────
 
 export default function StudentDashboardPage() {
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const [plan, setPlan] = useState<DailyPlan | null>(null);
   const [stats, setStats] = useState<PlanStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -173,15 +174,21 @@ export default function StudentDashboardPage() {
   const xp = user?.xp_points ?? stats?.xp_points ?? 0;
   const streak = user?.streak_days ?? stats?.streak_days ?? 0;
   const level = user?.level ?? stats?.level ?? 1;
-  const currentNet = user?.current_net ?? (stats as Record<string, unknown>)?.current_net ?? 0;
-  const targetNet = user?.target_net ?? (stats as Record<string, unknown>)?.target_net ?? 0;
+  const currentNet = Number(user?.current_net ?? stats?.current_net ?? 0);
+  const targetNet = Number(user?.target_net ?? stats?.target_net ?? 0);
 
+  const goalTemplate = resolveGoalTemplateFromUser(user ?? undefined);
+  const isSchoolPrimary = goalTemplate === "school_primary";
+  const heroExam =
+    user?.target_exam === TARGET_GENEL || user?.exam_goal === TARGET_GENEL
+      ? "Okul & gelişim"
+      : (user?.target_exam ?? user?.exam_goal ?? "");
   return (
     <div className="bg-slate-50 min-h-full min-w-0 overflow-x-hidden">
       <div className="w-full px-3 py-6 space-y-6 sm:px-4 sm:py-8 lg:px-6 lg:space-y-8">
 
         {/* ── Push Banner ── */}
-        <PushPermissionBanner />
+        <PushPermissionBanner token={token} />
 
         {/* ── Hero Banner ── */}
         <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-br from-cyan-600 via-teal-600 to-emerald-700 p-5 text-white shadow-xl shadow-cyan-500/25 sm:p-8">
@@ -200,13 +207,14 @@ export default function StudentDashboardPage() {
               <p className="text-cyan-200 text-sm mt-2 font-medium capitalize">{today}</p>
 
               {/* Hedef bilgisi */}
-              {user?.target_exam && (
-                <div className="flex items-center gap-2 mt-4">
+              {(user?.target_exam || user?.exam_goal) && (
+                <div className="flex items-center gap-2 mt-4 flex-wrap">
                   <div className="flex items-center gap-1.5 bg-white/15 backdrop-blur-sm rounded-full px-3 py-1.5 text-xs font-semibold">
                     <Target className="w-3.5 h-3.5" />
-                    {user.target_exam} Hedefi
+                    {heroExam}
+                    {!isSchoolPrimary && heroExam && !heroExam.includes("Okul") ? " hedefi" : ""}
                   </div>
-                  {targetNet > 0 && (
+                  {!isSchoolPrimary && Number(targetNet) > 0 && (
                     <div className="flex items-center gap-1.5 bg-white/15 backdrop-blur-sm rounded-full px-3 py-1.5 text-xs font-semibold">
                       <TrendingUp className="w-3.5 h-3.5" />
                       {currentNet} / {targetNet} net
@@ -299,9 +307,15 @@ export default function StudentDashboardPage() {
           />
           <StatCard
             icon={TrendingUp}
-            label="Mevcut Net"
-            value={currentNet > 0 ? `${currentNet}` : "—"}
-            sub={targetNet > 0 ? `Hedef: ${targetNet}` : "Hedef belirlenmedi"}
+            label={isSchoolPrimary ? "Deneme neti" : "Mevcut Net"}
+            value={isSchoolPrimary && !(Number(currentNet) > 0) ? "—" : `${currentNet > 0 ? currentNet : "—"}`}
+            sub={
+              isSchoolPrimary
+                ? "Bu dönemde sınav neti zorunlu değil; istersen hedef belirleyebilirsin."
+                : Number(targetNet) > 0
+                  ? `Hedef: ${targetNet}`
+                  : "Hedef belirlenmedi"
+            }
             color="text-indigo-500"
             bgColor="bg-indigo-50"
             loading={loading}
@@ -473,11 +487,13 @@ export default function StudentDashboardPage() {
                   <Skeleton className="h-5 w-32" />
                   <Skeleton className="h-3 w-full" />
                 </div>
-              ) : user?.target_exam ? (
+              ) : user?.target_exam || user?.exam_goal ? (
                 <div className="space-y-3">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="px-2.5 py-1 bg-violet-100 text-violet-700 text-xs font-bold rounded-lg">
-                      {user.target_exam}
+                      {user?.target_exam === TARGET_GENEL || user?.exam_goal === TARGET_GENEL
+                        ? "Okul & gelişim"
+                        : (user?.target_exam ?? user?.exam_goal)}
                     </span>
                     {user.target_school && (
                       <span className="px-2.5 py-1 bg-slate-100 text-slate-600 text-xs font-medium rounded-lg truncate max-w-[140px]">
@@ -580,7 +596,7 @@ export default function StudentDashboardPage() {
         </div>
 
         {/* ── Risk Uyarısı (varsa) ── */}
-        {!loading && user?.target_exam && targetNet > 0 && Number(currentNet) < Number(targetNet) * 0.6 && (
+        {!loading && !isSchoolPrimary && user?.target_exam && targetNet > 0 && Number(currentNet) < Number(targetNet) * 0.6 && (
           <div className="flex items-start gap-4 p-5 rounded-2xl bg-amber-50 border border-amber-200">
             <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center shrink-0">
               <AlertCircle className="w-5 h-5 text-amber-600" />
@@ -601,7 +617,7 @@ export default function StudentDashboardPage() {
         )}
 
         {/* ── Haftalık Net Trendi ── */}
-        {!loading && stats && Array.isArray((stats as Record<string, unknown>).weekly_nets) && ((stats as Record<string, unknown>).weekly_nets as number[]).length > 0 && (
+        {!loading && stats && Array.isArray(stats.weekly_nets) && stats.weekly_nets.length > 0 && (
           <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
             <div className="flex items-center justify-between mb-5">
               <div className="flex items-center gap-3">
@@ -617,7 +633,7 @@ export default function StudentDashboardPage() {
                 Detaylı Rapor <ChevronRight className="w-3.5 h-3.5" />
               </Link>
             </div>
-            <WeeklyNetChart nets={((stats as Record<string, unknown>).weekly_nets as number[])} />
+            <WeeklyNetChart nets={stats.weekly_nets} />
           </div>
         )}
       </div>

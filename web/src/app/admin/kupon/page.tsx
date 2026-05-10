@@ -52,9 +52,8 @@ export default function AdminKuponPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await api.getAdminCoupons();
-      const resObj = res as Record<string, unknown>;
-      setCoupons((Array.isArray(resObj.data) ? resObj.data : Array.isArray(res) ? res : []) as AdminCoupon[]);
+      const list = await api.getAdminCoupons();
+      setCoupons(list);
     } catch (e) {
       setError((e as Error).message || "Kuponlar yüklenemedi.");
     }
@@ -79,7 +78,7 @@ export default function AdminKuponPage() {
         discount_value: form.discount_value,
         max_uses: form.max_uses ? Number(form.max_uses) : undefined,
         expires_at: form.expires_at || undefined,
-      } as Parameters<typeof api.createAdminCoupon>[0]);
+      });
       setShowForm(false);
       setForm({ code: "", discount_type: "percent", discount_value: 10, max_uses: "", expires_at: "", applicable_plans: [] });
       loadCoupons();
@@ -200,9 +199,10 @@ export default function AdminKuponPage() {
       ) : (
         <div className="space-y-3">
           {coupons.map((c) => {
-            const tl = timeLeft(c.expires_at);
+            const tl = timeLeft(c.expires_at ?? null);
             const isExpired = tl === "Süresi doldu";
-            const usagePct = c.max_uses ? Math.round((c.used_count / c.max_uses) * 100) : null;
+            const used = c.used_count ?? c.uses ?? 0;
+            const usagePct = c.max_uses ? Math.round((used / c.max_uses) * 100) : null;
             return (
               <div key={c.id} className={`bg-white rounded-2xl border p-5 shadow-sm transition-all ${
                 !c.is_active || isExpired ? "opacity-60 border-slate-200" : "border-slate-200 hover:border-teal-200"
@@ -234,15 +234,24 @@ export default function AdminKuponPage() {
                     </div>
                     <div className="flex items-center gap-4 text-xs text-slate-500 flex-wrap">
                       {c.max_uses && (
-                        <span>{c.used_count}/{c.max_uses} kullanım
+                        <span>{used}/{c.max_uses} kullanım
                           {usagePct !== null && <span className="ml-1 text-slate-400">(%{usagePct})</span>}
                         </span>
                       )}
-                      {!c.max_uses && <span>{c.used_count} kullanım (sınırsız)</span>}
+                      {!c.max_uses && <span>{used} kullanım (sınırsız)</span>}
                       {tl && <span className={isExpired ? "text-red-500 font-medium" : "text-amber-600"}>{tl}</span>}
-                      {c.applicable_plans?.length ? (
-                        <span>Geçerli: {c.applicable_plans.join(", ")}</span>
-                      ) : <span>Tüm paketlerde geçerli</span>}
+                      {(() => {
+                        const plans = Array.isArray(c.applicable_plans)
+                          ? c.applicable_plans
+                          : typeof c.applicable_plans === "string" && c.applicable_plans
+                            ? [c.applicable_plans]
+                            : [];
+                        return plans.length ? (
+                          <span>Geçerli: {plans.join(", ")}</span>
+                        ) : (
+                          <span>Tüm paketlerde geçerli</span>
+                        );
+                      })()}
                     </div>
                     {c.max_uses && usagePct !== null && (
                       <div className="mt-2 h-1.5 bg-slate-100 rounded-full overflow-hidden max-w-[160px]">

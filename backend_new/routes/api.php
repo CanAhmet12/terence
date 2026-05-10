@@ -116,8 +116,9 @@ Route::middleware('auth:api')->group(function () {
         Route::post('link',              [ParentController::class, 'linkChild']);
     });
 
-    // Öğrenci: veli bağlantı kodu üret
-    Route::post('student/generate-parent-code', [ParentController::class, 'generateParentCode']);
+    Route::middleware('role:student')->group(function () {
+        Route::post('student/generate-parent-code', [ParentController::class, 'generateParentCode']);
+    });
 
     // ─── Admin ────────────────────────────────────────────────────────
     Route::middleware('role:admin')->prefix('admin')->group(function () {

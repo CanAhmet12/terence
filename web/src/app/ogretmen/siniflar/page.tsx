@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/lib/auth-context";
-import { api, ClassRoom, TeacherStudent, type TeacherClassExamSummaryRow } from "@/lib/api";
+import { api, ClassRoom, TeacherStudent, type User, type TeacherClassExamSummaryRow } from "@/lib/api";
 import type { StudentGoalDashboard, RiskTier } from "@/lib/goal-dashboard";
 import { goalTemplateLabel } from "@/lib/goal-dashboard";
 import { Search, Users, Clock, RefreshCw, AlertCircle, Plus, X, Target, Loader2, CalendarDays, ClipboardList } from "lucide-react";
@@ -87,26 +87,26 @@ export default function SiniflarPage() {
       .then((rawData) => {
         const data = Array.isArray(rawData) ? rawData : [];
         setStudents(data.map((u) => {
-          const raw = u as Record<string, unknown>;
-          // current_net ile hedef net'i karşılaştırarak risk seviyesini hesapla
-          const currentNet = Number(raw.current_net ?? 0);
-          const targetNet = Number(raw.target_net ?? 50);
-          const daysInactive = raw.last_login_at
-            ? Math.floor((Date.now() - new Date(raw.last_login_at as string).getTime()) / 86400000)
+          const currentNet = Number(u.current_net ?? 0);
+          const targetNet = Number(u.target_net ?? 50);
+          const last = u.last_login_at;
+          const daysInactive = last
+            ? Math.floor((Date.now() - new Date(last).getTime()) / 86400000)
             : 999;
-          let risk: "green" | "yellow" | "red" = "green";
-          if (daysInactive > 7 || currentNet < targetNet * 0.4) risk = "red";
-          else if (daysInactive > 3 || currentNet < targetNet * 0.7) risk = "yellow";
+          let risk_level: NonNullable<User["risk_level"]> = "green";
+          if (daysInactive > 7 || currentNet < targetNet * 0.4) risk_level = "red";
+          else if (daysInactive > 3 || currentNet < targetNet * 0.7) risk_level = "yellow";
 
           return {
-            id: u.id,
-            name: u.name,
-            email: u.email,
+            ...u,
+            role: u.role ?? "student",
+            created_at: u.created_at || new Date().toISOString(),
+            risk_level,
             net_score: currentNet >= 0 ? currentNet : undefined,
-            risk_level: risk,
-            last_active_at: raw.last_login_at as string | undefined,
-            tasks_completed_today: raw.tasks_completed_today as number | undefined,
-            study_time_today_seconds: raw.study_time_today_seconds as number | undefined,
+            last_active_at: last ?? undefined,
+            days_inactive: daysInactive,
+            study_time_today_seconds: u.study_time_today_seconds,
+            tasks_completed_today: u.tasks_completed_today,
           };
         }));
       })
@@ -254,10 +254,10 @@ export default function SiniflarPage() {
                         </div>
                         <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${rConf.dot}`} />
                       </div>
-                      {(c as Record<string, unknown>).avg_net !== undefined && (
+                      {c.avg_net != null && (
                         <div className="ml-12 mt-1.5">
                           <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                            <div className="h-full bg-indigo-400 rounded-full" style={{ width: `${Math.min(((c as Record<string, unknown>).avg_net as number / 100) * 100, 100)}%` }} />
+                            <div className="h-full bg-indigo-400 rounded-full" style={{ width: `${Math.min((c.avg_net / 100) * 100, 100)}%` }} />
                           </div>
                         </div>
                       )}

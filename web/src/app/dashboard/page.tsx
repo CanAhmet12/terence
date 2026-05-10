@@ -139,7 +139,7 @@ export default function StudentDashboard() {
     labels: Object.keys(safeSubjectPerf),
     datasets: [{
       label: 'Doğruluk Oranı',
-      data: Object.values(safeSubjectPerf).map((s) => (s as Record<string, number>).accuracy_rate ?? 0),
+      data: Object.values(safeSubjectPerf).map((s) => s.accuracy_rate ?? 0),
       backgroundColor: [
         'rgba(59, 130, 246, 0.8)',
         'rgba(16, 185, 129, 0.8)',

@@ -172,7 +172,12 @@ export default function AdminSoruBankasiKitaplariPage() {
             <div key={key}>
               <label className="text-xs font-bold text-slate-700">{label}</label>
               <input
-                value={(form as Record<string, string>)[key] ?? ""}
+                value={(() => {
+                  const k = key as keyof QuestionBankDisplayInput
+                  const v = form[k]
+                  if (v == null) return ""
+                  return typeof v === "string" ? v : String(v)
+                })()}
                 onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))}
                 className="mt-1 w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm"
               />

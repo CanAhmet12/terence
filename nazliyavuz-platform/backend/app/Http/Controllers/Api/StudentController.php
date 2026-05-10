@@ -10,6 +10,7 @@ use App\Models\XpLog;
 use App\Models\ExamSession;
 use App\Models\QuestionAnswer;
 use App\Services\GoalDashboardService;
+use App\Services\StudentLearningProfileService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
@@ -139,47 +140,72 @@ class StudentController extends Controller
     public function goalEngine(): JsonResponse
     {
         $user = Auth::user();
+        if (! $user->isStudent()) {
+            return response()->json([
+                'error' => true,
+                'code' => 'FORBIDDEN',
+                'message' => 'Bu uç nokta yalnızca öğrenci hesapları içindir.',
+            ], 403);
+        }
 
-        $examDate  = $user->exam_date ? Carbon::parse($user->exam_date) : Carbon::now()->addMonths(6);
-        $daysLeft  = max(0, (int) Carbon::now()->diffInDays($examDate, false));
+        $template = StudentLearningProfileService::resolveGoalTemplate($user);
+
+        $examDateDefault = match ($template) {
+            'exam_lgs' => Carbon::now()->addMonths(4),
+            default => Carbon::now()->addMonths(6),
+        };
+        $examDate = $user->exam_date ? Carbon::parse($user->exam_date) : $examDateDefault;
+        $daysLeft = max(0, (int) Carbon::now()->diffInDays($examDate, false));
         $weeksLeft = max(1, ceil($daysLeft / 7));
 
-        // Current net score (last 30 days average)
         $currentNet = (float) ($user->current_net ?? 0);
-        $targetNet  = (float) ($user->target_net ?? 80);
+        $dbTarget = $user->target_net;
+        $targetNet = $dbTarget !== null ? (float) $dbTarget : null;
 
-        $netNeeded      = max(0, $targetNet - $currentNet);
-        $weeklyNetNeeded = $weeksLeft > 0 ? round($netNeeded / $weeksLeft, 2) : 0;
+        if ($template === 'school_primary' || $targetNet === null) {
+            $netNeeded = null;
+            $weeklyNetNeeded = null;
+            $risk = 'low';
+        } else {
+            $netNeeded = max(0, $targetNet - $currentNet);
+            $weeklyNetNeeded = $weeksLeft > 0 ? round($netNeeded / $weeksLeft, 2) : 0;
+            $risk = 'low';
+            if ($weeklyNetNeeded > 5) {
+                $risk = 'high';
+            } elseif ($weeklyNetNeeded > 2) {
+                $risk = 'medium';
+            }
+        }
 
-        // Risk assessment
-        $risk = 'low';
-        if ($weeklyNetNeeded > 5)       $risk = 'high';
-        elseif ($weeklyNetNeeded > 2)   $risk = 'medium';
-
-        // Weekly study stats
-        $weekStart     = Carbon::now()->startOfWeek();
+        $weekStart = Carbon::now()->startOfWeek();
         $weeklyMinutes = (int) StudySession::where('user_id', $user->id)
             ->where('started_at', '>=', $weekStart)
             ->whereNotNull('duration_seconds')
             ->sum(DB::raw('duration_seconds / 60'));
 
-        // Streak days
         $streakDays = $user->streak_days ?? 0;
 
+        $examGoal = $user->exam_goal ?? $user->target_exam ?? match ($template) {
+            'school_primary' => StudentLearningProfileService::TARGET_GENEL,
+            'exam_lgs' => 'LGS',
+            default => 'TYT',
+        };
+
         return response()->json([
-            'success'            => true,
-            'days_left'          => $daysLeft,
-            'weeks_left'         => (int) $weeksLeft,
-            'current_net'        => $currentNet,
-            'target_net'         => $targetNet,
-            'net_needed'         => round($netNeeded, 2),
-            'weekly_net_needed'  => $weeklyNetNeeded,
-            'risk'               => $risk,
+            'success' => true,
+            'days_left' => $daysLeft,
+            'weeks_left' => (int) $weeksLeft,
+            'current_net' => $currentNet,
+            'target_net' => $targetNet,
+            'net_needed' => $netNeeded !== null ? round($netNeeded, 2) : null,
+            'weekly_net_needed' => $weeklyNetNeeded,
+            'risk' => $risk,
             'weekly_study_minutes' => $weeklyMinutes,
-            'streak_days'        => $streakDays,
-            'exam_date'          => $examDate->format('Y-m-d'),
-            'exam_goal'          => $user->exam_goal ?? 'TYT',
+            'streak_days' => $streakDays,
+            'exam_date' => $examDate->format('Y-m-d'),
+            'exam_goal' => $examGoal,
             'upgrade_suggestion' => $risk === 'high' && ($user->subscription_plan ?? 'free') === 'free',
+            'goal_template' => $template,
         ]);
     }
 
@@ -187,7 +213,14 @@ class StudentController extends Controller
     public function report(): JsonResponse
     {
         $user = Auth::user();
-        
+
+        if (! $user->isStudent()) {
+            return response()->json([
+                'error' => true,
+                'code' => 'FORBIDDEN',
+                'message' => 'Bu rapor yalnızca öğrenci hesapları içindir.',
+            ], 403);
+        }
         // Get student's learning scope for filtering
         $scope = $user->learningScope();
         $grade = $scope['grade'];
@@ -288,7 +321,7 @@ class StudentController extends Controller
             'streak_days'       => $user->streak_days ?? 0,
             'xp_points'         => (int) ($user->xp_points ?? 0),
             'current_net'       => (float) ($user->current_net ?? 0),
-            'target_net'        => (float) ($user->target_net ?? 80),
+            'target_net'        => $user->target_net !== null ? (float) $user->target_net : null,
         ]);
     }
 

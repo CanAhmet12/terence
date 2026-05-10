@@ -73,8 +73,9 @@ export default function ExamSessionPage() {
       const history = await api.getExamHistory();
       const session = history.find((s) => s.id === sessionId);
       if (session) {
-        durationRef.current = session.duration_minutes * 60;
-        setTimeLeft(session.duration_minutes * 60);
+        const dm = session.duration_minutes ?? 60;
+        durationRef.current = dm * 60;
+        setTimeLeft(dm * 60);
       }
     } catch { /* sessiz geç */ }
 
@@ -330,12 +331,14 @@ export default function ExamSessionPage() {
                 </p>
 
                 <div className="space-y-3">
-                  {question.options.map((opt) => {
-                    const isSelected = answers[question.id] === opt.letter;
+                  {(question.options ?? []).map((opt) => {
+                    const letter = String(opt.letter ?? opt.option_letter ?? "");
+                    const labelText = opt.text ?? opt.option_text ?? "";
+                    const isSelected = answers[question.id] === letter;
                     return (
                       <button
-                        key={opt.letter}
-                        onClick={() => handleAnswer(opt.letter)}
+                        key={letter || labelText}
+                        onClick={() => handleAnswer(letter)}
                         className={`w-full flex items-center gap-4 p-4 rounded-xl border-2 text-left transition-all duration-150 ${
                           isSelected
                             ? "border-teal-500 bg-teal-50 shadow-sm"
@@ -345,13 +348,13 @@ export default function ExamSessionPage() {
                         <span className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-sm shrink-0 transition-colors ${
                           isSelected ? "bg-teal-600 text-white" : "bg-slate-100 text-slate-600"
                         }`}>
-                          {opt.letter}
+                          {letter}
                         </span>
                         {opt.image ? (
-                          <img src={opt.image} alt={`Şık ${opt.letter}`} className="max-h-16 object-contain" />
+                          <img src={opt.image} alt={`Şık ${letter}`} className="max-h-16 object-contain" />
                         ) : (
                           <span className={`text-sm ${isSelected ? "text-teal-900 font-semibold" : "text-slate-700"}`}>
-                            {opt.text}
+                            {labelText}
                           </span>
                         )}
                       </button>

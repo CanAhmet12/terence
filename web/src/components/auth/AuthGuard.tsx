@@ -36,10 +36,10 @@ export function AuthGuard({
     }
     
     if (!user) {
-      // Don't redirect if already on home or login page
       if (pathname !== "/" && pathname !== "/giris") {
         sessionStorage.setItem(REDIRECT_COUNTER_KEY, (redirectCount + 1).toString());
-        router.replace("/");
+        const dest = `/giris?redirect=${encodeURIComponent(pathname)}`;
+        router.replace(dest);
       }
       return;
     }

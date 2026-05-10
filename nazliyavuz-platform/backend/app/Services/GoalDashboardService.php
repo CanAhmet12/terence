@@ -46,22 +46,7 @@ class GoalDashboardService
 
     public function resolveTemplate(User $user): string
     {
-        $exam = $user->target_exam ?? $user->exam_goal;
-        if ($exam === 'LGS') {
-            return 'exam_lgs';
-        }
-        $grade = (int) ($user->grade ?? 0);
-        if ($grade >= 1 && $grade <= 6) {
-            return 'school_primary';
-        }
-        if (in_array($exam, ['TYT', 'AYT', 'TYT-AYT', 'KPSS'], true)) {
-            return 'exam_yks';
-        }
-        if ($grade >= 7 && $grade <= 8) {
-            return 'exam_lgs';
-        }
-
-        return 'exam_yks';
+        return StudentLearningProfileService::resolveGoalTemplate($user);
     }
 
     /**
@@ -82,6 +67,7 @@ class GoalDashboardService
             'exam_date' => $this->readExamDate($user),
             'streak_days' => (int) ($user->streak_days ?? 0),
             'xp_points' => (int) ($user->xp_points ?? 0),
+            'education_phase' => StudentLearningProfileService::resolveEducationPhase($user),
         ];
     }
 

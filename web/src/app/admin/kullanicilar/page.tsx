@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Search, MoreVertical, UserCheck, UserX, Trash2, RefreshCw, Users } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
-import { api, User } from "@/lib/api";
+import { api, User, type PaginatedResponse } from "@/lib/api";
 
 type AdminUser = User & { is_active?: boolean; created_at?: string };
 
@@ -46,13 +46,15 @@ export default function AdminKullanicilarPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await api.getAdminUsers({ search: q || undefined, role: role || undefined, page: p });
-      const resObj = res as Record<string, unknown>;
-      const usersData = Array.isArray((resObj as Record<string, unknown>).data) ? (resObj as Record<string, unknown>).data as AdminUser[] : Array.isArray(res) ? res as AdminUser[] : [];
-      const meta = (resObj as Record<string, unknown>).meta as Record<string, number> | undefined;
+      const res: PaginatedResponse<User> = await api.getAdminUsers({
+        search: q || undefined,
+        role: role || undefined,
+        page: p,
+      });
+      const usersData = res.data as AdminUser[];
       setUsers(usersData);
-      setTotal(meta?.total ?? usersData.length);
-      setLastPage(meta?.last_page ?? 1);
+      setTotal(res.total);
+      setLastPage(res.last_page);
     } catch {
       setError("Kullanıcılar yüklenemedi.");
     } finally {

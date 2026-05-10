@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
-import { parentApi, type User, type TeacherLesson } from "@/lib/api";
+import { parentApi, type ChildSummary, type TeacherLesson } from "@/lib/api";
 import { Video, Calendar, Clock, RefreshCw, Loader2, Wifi, Play } from "lucide-react";
 
 function fmt(iso?: string) {
@@ -13,7 +13,7 @@ function fmt(iso?: string) {
 
 export default function VeliCanliDerslerPage() {
   const { token } = useAuth();
-  const [children, setChildren] = useState<User[]>([]);
+  const [children, setChildren] = useState<ChildSummary[]>([]);
   const [childId, setChildId] = useState<number | "">("");
   const [tab, setTab] = useState<"upcoming" | "past">("upcoming");
   const [lessons, setLessons] = useState<TeacherLesson[]>([]);
@@ -39,7 +39,7 @@ export default function VeliCanliDerslerPage() {
 
   useEffect(() => {
     if (children.length > 0 && childId === "") {
-      setChildId(children[0].id);
+      setChildId(children[0].child.id);
     }
   }, [children, childId]);
 
@@ -83,8 +83,8 @@ export default function VeliCanliDerslerPage() {
                 >
                   <option value="">Seçin</option>
                   {children.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
+                    <option key={c.child.id} value={c.child.id}>
+                      {c.child.name}
                     </option>
                   ))}
                 </select>

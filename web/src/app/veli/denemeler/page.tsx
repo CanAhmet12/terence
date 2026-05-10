@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
-import { parentApi, type User, type ExamSession } from "@/lib/api";
+import { parentApi, type ChildSummary, type ExamSession } from "@/lib/api";
 import { ClipboardList, Loader2, RefreshCw } from "lucide-react";
 
 function fmt(iso?: string | null) {
@@ -12,7 +12,7 @@ function fmt(iso?: string | null) {
 
 export default function VeliDenemelerPage() {
   const { token } = useAuth();
-  const [children, setChildren] = useState<User[]>([]);
+  const [children, setChildren] = useState<ChildSummary[]>([]);
   const [childId, setChildId] = useState<number | "">("");
   const [exams, setExams] = useState<ExamSession[]>([]);
   const [loading, setLoading] = useState(true);
@@ -33,7 +33,7 @@ export default function VeliDenemelerPage() {
 
   useEffect(() => {
     if (children.length > 0 && childId === "") {
-      setChildId(children[0].id);
+      setChildId(children[0].child.id);
     }
   }, [children, childId]);
 
@@ -81,8 +81,8 @@ export default function VeliDenemelerPage() {
                     <option value="">Bağlı öğrenci yok</option>
                   ) : (
                     children.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name}
+                      <option key={c.child.id} value={c.child.id}>
+                        {c.child.name}
                       </option>
                     ))
                   )}

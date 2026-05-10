@@ -47,8 +47,7 @@ export default function MiniTestPage() {
     }
     try {
       const res = await api.getQuestions({ per_page: 5, difficulty: "easy" } as Parameters<typeof api.getQuestions>[0]);
-      const resObj = res as Record<string, unknown>;
-      const questionsData = Array.isArray(resObj.data) ? resObj.data as Question[] : Array.isArray(res) ? res as Question[] : [];
+      const questionsData = Array.isArray(res.data) ? res.data : [];
       if (questionsData.length === 0) {
         setLoadError(true);
         setLoading(false);
@@ -95,10 +94,9 @@ export default function MiniTestPage() {
         answer: optionLetter,
         time_spent: timeSpent,
       } as Parameters<typeof api.answerQuestion>[0]);
-      const resObj = res as Record<string, unknown>;
-      correctOption = resObj.correct_option as string ?? optionLetter;
-      isCorrect = resObj.correct as boolean ?? resObj.is_correct as boolean ?? true;
-      explanation = resObj.explanation as string;
+      correctOption = res.correct_option ?? optionLetter;
+      isCorrect = res.correct ?? res.is_correct ?? true;
+      explanation = res.explanation;
     } catch {
       correctOption = optionLetter;
       isCorrect = true;
@@ -323,16 +321,17 @@ export default function MiniTestPage() {
         <p className="text-lg text-slate-800 font-medium mb-7 leading-relaxed">{currentQ.question_text}</p>
 
         <div className="space-y-3">
-          {currentQ.options.map((opt) => {
-            const isSelected = currentAnswer?.selected === opt.option_letter;
-            const isCorrectOpt = currentAnswer?.correct_option === opt.option_letter;
+          {(currentQ.options ?? []).map((opt) => {
+            const letter = opt.option_letter ?? opt.letter ?? "?";
+            const isSelected = currentAnswer?.selected === letter;
+            const isCorrectOpt = currentAnswer?.correct_option === letter;
             const isWrong = currentAnswer && isSelected && !currentAnswer.is_correct;
             const showResult = !!currentAnswer;
 
             return (
               <button
-                key={opt.id}
-                onClick={() => handleAnswer(opt.option_letter)}
+                key={opt.id ?? letter}
+                onClick={() => handleAnswer(letter)}
                 disabled={showResult}
                 className={`w-full text-left p-4 rounded-xl border flex items-center gap-3 transition-all font-medium ${
                   showResult
@@ -349,9 +348,9 @@ export default function MiniTestPage() {
                     ? isCorrectOpt ? "bg-teal-500 text-white" : isWrong ? "bg-red-500 text-white" : "bg-slate-200 text-slate-500"
                     : "bg-slate-200 text-slate-600 group-hover:bg-teal-100"
                 }`}>
-                  {opt.option_letter}
+                  {letter}
                 </span>
-                <span className="flex-1">{opt.option_text}</span>
+                <span className="flex-1">{opt.option_text ?? opt.text ?? ""}</span>
                 {showResult && isCorrectOpt && <CheckCircle className="w-5 h-5 text-teal-600 shrink-0" />}
                 {showResult && isWrong && <XCircle className="w-5 h-5 text-red-600 shrink-0" />}
               </button>

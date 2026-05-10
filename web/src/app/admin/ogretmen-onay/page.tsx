@@ -2,9 +2,9 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { ArrowLeft, CheckCircle, XCircle, Search, RefreshCw, User, BookOpen, Clock, AlertCircle, Eye } from "lucide-react";
+import { ArrowLeft, CheckCircle, XCircle, Search, RefreshCw, User as UserIcon, BookOpen, Clock, AlertCircle, Eye } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
-import { api } from "@/lib/api";
+import { api, type User } from "@/lib/api";
 
 interface TeacherApplicant {
   id: number;
@@ -23,23 +23,21 @@ function Skeleton({ className }: { className?: string }) {
 }
 
 /** API bazen teacher_status veya name döndürmez; STATUS_CONFIG erişiminde sayfa çökmemesi için */
-function normalizeTeacherApplicant(raw: Record<string, unknown>): TeacherApplicant {
+function normalizeTeacherApplicant(raw: User): TeacherApplicant {
   const ts = raw.teacher_status;
   const teacher_status: TeacherApplicant["teacher_status"] =
     ts === "approved" || ts === "rejected" || ts === "pending" ? ts : "pending";
-  const id = Number(raw.id);
-  const name = typeof raw.name === "string" && raw.name.trim() !== "" ? raw.name : "İsimsiz";
-  const email = typeof raw.email === "string" ? raw.email : "";
+  const name = raw.name?.trim() ? raw.name : "İsimsiz";
   return {
-    id: Number.isFinite(id) ? id : 0,
+    id: raw.id,
     name,
-    email,
-    phone: typeof raw.phone === "string" ? raw.phone : undefined,
-    subject: typeof raw.subject === "string" ? raw.subject : undefined,
-    bio: typeof raw.bio === "string" ? raw.bio : undefined,
+    email: raw.email,
+    phone: raw.phone,
+    subject: raw.subject,
+    bio: raw.bio,
     teacher_status,
-    created_at: typeof raw.created_at === "string" ? raw.created_at : new Date().toISOString(),
-    profile_photo_url: typeof raw.profile_photo_url === "string" ? raw.profile_photo_url : undefined,
+    created_at: raw.created_at,
+    profile_photo_url: raw.profile_photo_url,
   };
 }
 
@@ -72,10 +70,8 @@ export default function OgretmenOnayPage() {
         role: "teacher",
         search: search || undefined,
         per_page: 50,
-      } as Parameters<typeof api.getAdminUsers>[0]);
-      const resObj = res as Record<string, unknown>;
-      const rows = (Array.isArray(resObj.data) ? resObj.data : Array.isArray(res) ? res : []) as Record<string, unknown>[];
-      setAllApplicants(rows.map((r) => normalizeTeacherApplicant(r)));
+      });
+      setAllApplicants(res.data.map((u) => normalizeTeacherApplicant(u)));
     } catch (e) {
       setError((e as Error).message || "Yüklenemedi.");
     }
@@ -193,7 +189,7 @@ export default function OgretmenOnayPage() {
       ) : applicants.length === 0 ? (
         <div className="text-center py-20">
           <div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-4">
-            <User className="w-8 h-8 text-slate-300" />
+            <UserIcon className="w-8 h-8 text-slate-300" />
           </div>
           <h3 className="font-bold text-slate-700 mb-1">
             {filter === "pending" ? "Bekleyen başvuru yok" : "Kayıt bulunamadı"}

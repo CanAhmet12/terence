@@ -227,9 +227,9 @@ export default function OgretmenDerslerPage() {
                                   <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-2 flex-wrap">
                                       <span className="font-semibold text-slate-900 text-sm">{topic.title}</span>
-                                      {(topic as Record<string, unknown>).kazanim_code && (
+                                      {topic.kazanim_code && (
                                         <span className="font-mono text-[11px] font-bold text-teal-600 bg-teal-50 px-2 py-0.5 rounded-md border border-teal-100">
-                                          {(topic as Record<string, unknown>).kazanim_code as string}
+                                          {topic.kazanim_code}
                                         </span>
                                       )}
                                     </div>

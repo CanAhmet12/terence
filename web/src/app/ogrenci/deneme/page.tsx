@@ -472,7 +472,7 @@ export default function DenemePage() {
   const maxRef = maxNetReference(typeof profileExamType === "string" ? profileExamType : undefined);
 
   const availableExamTypes = useMemo(() => {
-    if (!profileExamType) {
+    if (!profileExamType || profileExamType === "GENEL") {
       return EXAM_TYPES.filter((item) => item.key === "Mini");
     }
     if (profileExamType === "TYT-AYT") {
@@ -563,14 +563,14 @@ export default function DenemePage() {
         question_count: examType.questions,
         duration_minutes: examType.duration,
       });
-      const session = (res as Record<string, unknown>).session ?? res;
-      const sessionId = (session as ExamSession).id;
+      const session = res.session ?? res;
+      const sessionId = session.id;
       if (!sessionId) {
         setError("Deneme oturumu oluşturulamadı. Lütfen tekrar deneyin.");
         setStartingType(null);
         return;
       }
-      const questions = (res as Record<string, unknown>).questions;
+      const questions = res.questions;
       if (Array.isArray(questions) && questions.length) {
         localStorage.setItem(
           `exam_questions_${sessionId}`,
@@ -604,14 +604,14 @@ export default function DenemePage() {
         exam_template_id: tpl.id,
         duration_minutes: tpl.duration_minutes,
       });
-      const session = (res as Record<string, unknown>).session ?? res;
-      const sessionId = (session as ExamSession).id;
+      const session = res.session ?? res;
+      const sessionId = session.id;
       if (!sessionId) {
         setError("Deneme oturumu oluşturulamadı. Lütfen tekrar deneyin.");
         setStartingType(null);
         return;
       }
-      const questions = (res as Record<string, unknown>).questions;
+      const questions = res.questions;
       if (Array.isArray(questions) && questions.length) {
         localStorage.setItem(
           `exam_questions_${sessionId}`,
