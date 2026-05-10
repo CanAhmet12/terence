@@ -61,7 +61,7 @@ export default function RootLayout({
         <link rel="preconnect" href="https://cdn.terenceegitim.com" />
         <link rel="dns-prefetch" href="https://cdn.terenceegitim.com" />
       </head>
-      <body className="antialiased">
+      <body className="antialiased min-h-dvh">
         {children}
       </body>
     </html>

@@ -55,9 +55,9 @@ export default function VeliLayout({
 
   return (
     <AuthGuard role="parent">
-      <div className="flex min-h-screen bg-slate-50/80">
+      <div className="flex min-h-dvh w-full max-w-[100vw] items-stretch bg-slate-50/80">
         {/* Desktop sidebar */}
-        <aside className="hidden lg:flex w-64 min-h-screen bg-white border-r border-slate-200/80 flex-col shrink-0">
+        <aside className="hidden lg:flex w-64 min-h-dvh shrink-0 flex-col border-r border-slate-200/80 bg-white">
           <div className="p-6 border-b border-slate-100">
             <Link href="/" className="flex items-center gap-3 group">
               <div className="w-11 h-11 rounded-2xl overflow-hidden shadow-lg shadow-teal-500/20 group-hover:shadow-teal-500/30 transition-shadow">
@@ -144,8 +144,8 @@ export default function VeliLayout({
           </div>
         </aside>
 
-        <div className="flex-1 flex flex-col min-w-0">
-          <div className="lg:hidden flex items-center gap-3 px-4 py-3 border-b border-slate-200 bg-white/95 backdrop-blur-sm">
+        <div className="flex min-h-dvh min-w-0 flex-1 flex-col">
+          <div className="lg:hidden flex w-full items-center justify-between gap-3 border-b border-slate-200 bg-white/95 px-4 py-3 backdrop-blur-sm">
             <button onClick={() => setMobileOpen(true)} className="p-2.5 rounded-xl hover:bg-slate-100">
               <Menu className="w-6 h-6" />
             </button>
@@ -157,7 +157,7 @@ export default function VeliLayout({
             </div>
           </div>
           <DashboardHeader />
-          <main className="flex-1 overflow-x-hidden overflow-y-auto min-w-0">{children}</main>
+          <main className="min-h-0 w-full min-w-0 flex-1 overflow-x-hidden overflow-y-auto">{children}</main>
         </div>
       </div>
     </AuthGuard>

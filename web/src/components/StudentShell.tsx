@@ -11,7 +11,7 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
 
   // Onboarding sayfasında sidebar gösterme
   if (pathname === "/ogrenci/onboarding") {
-    return <>{children}</>;
+    return <div className="min-h-dvh w-full">{children}</div>;
   }
 
   const hideGlobalHeader =

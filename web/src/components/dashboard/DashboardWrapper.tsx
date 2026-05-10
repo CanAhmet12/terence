@@ -45,7 +45,7 @@ export function DashboardWrapper({ sidebar, header, children }: Props) {
   const showMobileBackdrop = mobileOpen && narrowViewport;
 
   return (
-    <div className="flex min-h-screen items-stretch bg-slate-50/80">
+    <div className="flex min-h-dvh w-full max-w-[100vw] items-stretch bg-slate-50/80">
       {/* Desktop: sidebar — yükseklik içerikle büyür; ayrı scroll çubuğu oluşturmaz */}
       <aside className="hidden lg:flex w-64 shrink-0 flex-col self-stretch border-r border-slate-200/80 bg-white">
         {sidebar}
@@ -82,8 +82,8 @@ export function DashboardWrapper({ sidebar, header, children }: Props) {
       </aside>
 
       {/* Main content */}
-      <div className="flex min-h-0 flex-1 flex-col min-w-0">
-        <div className="flex items-center gap-3 border-b border-slate-200 bg-white/95 px-4 py-3 backdrop-blur-sm lg:hidden">
+      <div className="flex min-h-0 w-full min-w-0 flex-1 flex-col">
+        <div className="flex w-full items-center justify-between gap-3 border-b border-slate-200 bg-white/95 px-4 py-3 backdrop-blur-sm lg:hidden">
           <button
             onClick={() => setMobileOpen(true)}
             className="rounded-xl p-2.5 text-slate-600 transition-colors hover:bg-slate-100"

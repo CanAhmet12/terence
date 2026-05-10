@@ -155,18 +155,22 @@ function DashboardHeaderInner() {
         hasCenterSearch ? "shadow-[0_1px_0_rgba(15,23,42,0.04)]" : "bg-white/95 backdrop-blur-xl"
       }`}
     >
-      <div className="flex w-full flex-col gap-3 px-3 py-2.5 sm:px-4 sm:py-2.5 lg:px-5 lg:py-3">
+      <div className="flex w-full flex-col gap-3 px-3 py-2.5 sm:px-5 sm:py-2.5 lg:px-6 lg:py-3">
         <div
           className={cn(
-            "grid w-full items-center gap-x-3 gap-y-2",
-            /* Arama yokken 2 çocuk var; lg'de 3 sütun kullanırsak 2. çocuk orta (arama) sütununa düşer — sağda boşluk kalır */
+            "w-full items-center gap-x-3 gap-y-2",
             hasCenterSearch
-              ? "grid-cols-[1fr_auto] lg:grid-cols-[minmax(0,1fr)_minmax(220px,420px)_minmax(0,1fr)] lg:gap-x-6"
-              : "grid-cols-[minmax(0,1fr)_auto]"
+              ? "grid grid-cols-[1fr_auto] lg:grid-cols-[minmax(0,1fr)_minmax(220px,420px)_minmax(0,1fr)] lg:gap-x-6"
+              : "flex flex-row flex-wrap items-center justify-between"
           )}
         >
           {/* Sol: breadcrumb */}
-          <div className="flex min-w-0 items-center gap-1.5 sm:gap-2 lg:justify-self-start">
+          <div
+            className={cn(
+              "flex min-w-0 items-center gap-1.5 sm:gap-2",
+              hasCenterSearch ? "lg:justify-self-start" : "min-w-0 flex-1"
+            )}
+          >
             <Link
               href={dashboardHref}
               className={`flex shrink-0 items-center gap-1 text-slate-400 transition-colors ${breadcrumbHover}`}
@@ -240,7 +244,12 @@ function DashboardHeaderInner() {
           )}
 
           {/* Sağ: bildirim + profil — ana içerik ile aynı tam genişlikte sağ kenara hizalı */}
-          <div className="flex min-w-0 shrink-0 items-center justify-end justify-self-end lg:min-w-0">
+          <div
+            className={cn(
+              "flex min-w-0 shrink-0 items-center justify-end",
+              hasCenterSearch && "justify-self-end lg:min-w-0"
+            )}
+          >
             <HeaderUserMenu
               profileSubtext={
                 user.role === "student" &&
