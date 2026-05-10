@@ -11,6 +11,14 @@ export const metadata: Metadata = {
   authors: [{ name: 'Terence' }],
   manifest: '/manifest.json',
   metadataBase: new URL('https://terenceegitim.com'),
+  /** Google arama sonucu favicon için: gerçek dosyalar (404 olmayan), en az ~48px kare PNG önerilir */
+  icons: {
+    icon: [
+      { url: '/dijitalkocicon.png', type: 'image/png' },
+      { url: '/favicon.ico', sizes: 'any' },
+    ],
+    apple: [{ url: '/dijitalkocicon.png', type: 'image/png' }],
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
@@ -55,9 +63,6 @@ export default function RootLayout({
   return (
     <html lang="tr">
       <head>
-        <link rel="icon" href="/favicon.ico" sizes="any" />
-        <link rel="icon" href="/icon.svg" type="image/svg+xml" />
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         <link rel="preconnect" href="https://cdn.terenceegitim.com" />
         <link rel="dns-prefetch" href="https://cdn.terenceegitim.com" />
       </head>
