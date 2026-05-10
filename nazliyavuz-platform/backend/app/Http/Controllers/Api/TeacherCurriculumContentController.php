@@ -14,7 +14,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 
@@ -77,12 +76,10 @@ class TeacherCurriculumContentController extends Controller
         $v = Validator::make($request->all(), [
             'curriculum_topic_id' => 'required|integer|exists:curriculum_topics,id',
             'title' => 'sometimes|nullable|string|max:255',
-            'url' => 'sometimes|nullable|string|max:2048',
-            'file' => 'sometimes|nullable|file|max:51200',
+            'file' => 'required|file|max:51200',
             'content_type' => 'required|in:video,pdf',
             'is_free' => 'sometimes|boolean',
             'thumbnail' => 'sometimes|nullable|image|mimes:jpeg,jpg,png,webp|max:10240',
-            'thumbnail_url' => 'sometimes|nullable|string|max:2048',
         ]);
 
         if ($v->fails()) {
@@ -106,66 +103,29 @@ class TeacherCurriculumContentController extends Controller
             return response()->json(['error' => true, 'message' => 'Geçersiz müfredat yapısı.'], 422);
         }
 
-        if ($contentType === 'video' && ! $request->hasFile('file') && empty($data['url'] ?? null)) {
-            return response()->json([
-                'error' => true,
-                'message' => 'Video için dosya veya URL gerekli.',
-            ], 422);
-        }
-
-        if ($contentType === 'pdf' && ! $request->hasFile('file') && empty($data['url'] ?? null)) {
-            return response()->json([
-                'error' => true,
-                'message' => 'PDF için dosya veya URL gerekli.',
-            ], 422);
-        }
-
-        $urlInput = isset($data['url']) ? trim((string) $data['url']) : '';
-        if ($urlInput !== '' && ! filter_var($urlInput, FILTER_VALIDATE_URL)) {
-            return response()->json([
-                'error' => true,
-                'message' => 'Geçersiz URL.',
-            ], 422);
-        }
-
-        $thumbUrlInput = trim((string) $request->input('thumbnail_url', ''));
-        if ($thumbUrlInput !== '' && ! filter_var($thumbUrlInput, FILTER_VALIDATE_URL)) {
-            return response()->json([
-                'error' => true,
-                'message' => 'Kapak görseli URL\'si geçersiz.',
-            ], 422);
-        }
-
         $title = trim((string) ($data['title'] ?? '')) ?: ($cTopic->title.' — '.($contentType === 'video' ? 'Video' : 'PDF'));
 
         $thumbService = $this->thumbnailService;
 
         try {
-            $result = DB::transaction(function () use ($request, $cTopic, $cUnit, $cSubject, $teacher, $contentType, $title, $isFree, $urlInput, $thumbUrlInput, $thumbService) {
+            $result = DB::transaction(function () use ($request, $cTopic, $cUnit, $cSubject, $teacher, $contentType, $title, $isFree, $thumbService) {
                 $lTopic = $this->resolveLinkedTopic($cTopic, $cUnit, $cSubject, $teacher->id);
 
-                $url = $urlInput;
-                if ($request->hasFile('file')) {
-                    $file = $request->file('file');
-                    $ext = strtolower($file->getClientOriginalExtension() ?: 'bin');
-                    $safe = 'ct_'.$lTopic->id.'_'.time().'_'.Str::random(6).'.'.$ext;
-                    $path = $file->storeAs('curriculum_content', $safe, 'public');
-                    $url = rtrim($request->getSchemeAndHttpHost(), '/').'/storage/'.$path;
-                }
-
-                if ($url === '') {
-                    throw new \RuntimeException('İçerik URL\'si oluşturulamadı.');
-                }
+                $file = $request->file('file');
+                $ext = strtolower($file->getClientOriginalExtension() ?: 'bin');
+                $safe = 'ct_'.$lTopic->id.'_'.time().'_'.Str::random(6).'.'.$ext;
+                $path = $file->storeAs('curriculum_content', $safe, 'public');
+                $url = rtrim($request->getSchemeAndHttpHost(), '/').'/storage/'.$path;
 
                 $thumbnailUrl = null;
                 if ($contentType === 'video') {
                     if ($request->hasFile('thumbnail')) {
                         $thumbnailUrl = $thumbService->storeOptimizedCover($request->file('thumbnail'), $request, (int) $lTopic->id);
-                    } elseif ($thumbUrlInput !== '') {
-                        $thumbnailUrl = $thumbUrlInput;
                     } else {
-                        $thumbnailUrl = $thumbService->youtubeThumbnailFromVideoUrl($url);
+                        $thumbnailUrl = $thumbService->genericContentCover($request, (int) $lTopic->id, 'video');
                     }
+                } elseif ($contentType === 'pdf') {
+                    $thumbnailUrl = $thumbService->genericContentCover($request, (int) $lTopic->id, 'pdf');
                 }
 
                 $maxOrder = (int) ContentItem::where('topic_id', $lTopic->id)->max('sort_order');

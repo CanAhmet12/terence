@@ -33,7 +33,7 @@ const teacherNavGroups = [
   {
     label: "İÇERİK & ÖDEV",
     items: [
-      { href: "/ogretmen/icerik", icon: Upload, label: "İçerik Yükleme" },
+      { href: "/ogretmen/icerik", icon: Upload, label: "Müfredat medyası" },
       { href: "/ogretmen/odev", icon: FileQuestion, label: "Ödev & Test" },
     ],
   },

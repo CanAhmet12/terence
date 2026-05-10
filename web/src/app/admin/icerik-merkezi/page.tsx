@@ -1,0 +1,88 @@
+"use client";
+
+import Link from "next/link";
+import { ArrowLeft, BookOpen, FileQuestion, Library, ListVideo, Upload } from "lucide-react";
+
+const cards = [
+  {
+    href: "/admin/icerik/yukle",
+    title: "Müfredat medyası",
+    desc: "Video veya PDF dosyasını bilgisayardan yükleyin; müfredat konusuna bağlanır. Harici link yok.",
+    icon: Upload,
+    accent: "from-teal-600 to-emerald-500",
+  },
+  {
+    href: "/admin/icerik",
+    title: "Yüklenen içerikler",
+    desc: "Bağlı video ve PDF kayıtlarını listeleyin veya silin.",
+    icon: ListVideo,
+    accent: "from-slate-700 to-slate-600",
+  },
+  {
+    href: "/admin/sorular",
+    title: "Soru havuzu",
+    desc: "Tek tek veya toplu (JSON) soru girişi. PDF’ten otomatik soru çıkarma bir sonraki sürümde planlanır.",
+    icon: FileQuestion,
+    accent: "from-violet-600 to-purple-500",
+  },
+  {
+    href: "/admin/soru-bankasi-kitaplari",
+    title: "Öğrenci kitap kartları",
+    desc: "Soru bankasında görünen 3D kitap kapak metinleri ve renkleri (otomatik kapak için ders/sınıf eşlemesi).",
+    icon: Library,
+    accent: "from-amber-600 to-orange-500",
+  },
+];
+
+export default function AdminIcerikMerkeziPage() {
+  return (
+    <div className="p-4 sm:p-6 lg:p-8 xl:p-12 min-w-0 overflow-x-hidden max-w-4xl">
+      <Link href="/admin" className="inline-flex items-center gap-2 text-slate-600 hover:text-teal-600 mb-6 font-medium text-sm">
+        <ArrowLeft className="w-4 h-4" />
+        Panele dön
+      </Link>
+
+      <div className="flex items-start gap-4 mb-10">
+        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-teal-500 to-teal-700 text-white shadow-lg shadow-teal-500/25 shrink-0">
+          <BookOpen className="w-7 h-7" />
+        </div>
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">İçerik merkezi</h1>
+          <p className="text-slate-600 mt-2 text-sm sm:text-base leading-relaxed max-w-2xl">
+            Tüm yükleme ve içerik yönetimi akışları buradan dallanır. Medya yalnızca dosya ile gelir; öğretmen paneli de aynı kurala geçirildi. Çok sayfalı kitabı PDF olarak tek dosya
+            yükleyebilirsiniz; sayfa sayfa ayrıştırma ve soru-PDF OCR için altyapı ayrıca genişletilecektir.
+          </p>
+        </div>
+      </div>
+
+      <div className="grid sm:grid-cols-2 gap-5">
+        {cards.map(({ href, title, desc, icon: Icon, accent }) => (
+          <Link
+            key={href}
+            href={href}
+            className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-all hover:border-teal-300 hover:shadow-md"
+          >
+            <div className={`mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${accent} text-white shadow-md`}>
+              <Icon className="w-6 h-6" />
+            </div>
+            <h2 className="text-lg font-bold text-slate-900 group-hover:text-teal-700 transition-colors">{title}</h2>
+            <p className="mt-2 text-sm text-slate-600 leading-relaxed">{desc}</p>
+            <span className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-teal-600">
+              Aç
+              <span aria-hidden>→</span>
+            </span>
+          </Link>
+        ))}
+      </div>
+
+      <div className="mt-10 rounded-2xl border border-amber-200 bg-amber-50/80 p-5 text-sm text-amber-950">
+        <p className="font-semibold text-amber-900 mb-2">Yol haritası (kısa)</p>
+        <ul className="list-disc pl-5 space-y-1 text-amber-900/90">
+          <li>PDF kitap: sayfa görüntüleri ve sıra (arka planda poppler/Imagick veya kuyruk işçisi).</li>
+          <li>Soru seti: Word/PDF şablonundan içe aktarma veya görsel tabanlı OCR (kalite kontrollü onay adımı).</li>
+          <li>Video: isteğe bağlı ffmpeg ile gerçek kare kapak ve süre meta verisi.</li>
+        </ul>
+      </div>
+    </div>
+  );
+}

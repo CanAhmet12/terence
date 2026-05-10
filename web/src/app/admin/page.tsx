@@ -215,10 +215,10 @@ export default function AdminDashboardPage() {
           </p>
           <div className="flex flex-wrap gap-3">
             <Link
-              href="/admin/icerik"
+              href="/admin/icerik-merkezi"
               className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-teal-600 to-teal-500 text-white font-semibold rounded-xl hover:from-teal-700 hover:to-teal-600 transition-all shadow-lg shadow-teal-500/25"
             >
-              İçerik Yönet
+              İçerik merkezi
             </Link>
             <Link
               href="/admin/sorular"

@@ -78,6 +78,9 @@ export default function AdminIcerikPage() {
     <div className="p-4 sm:p-6 lg:p-8 xl:p-12 min-w-0 overflow-x-hidden">
       <div className="flex items-start justify-between gap-4 mb-8">
         <div>
+          <Link href="/admin/icerik-merkezi" className="inline-flex items-center gap-2 text-teal-600 hover:text-teal-700 text-sm mb-2 font-medium transition-colors">
+            İçerik merkezi
+          </Link>
           <Link href="/admin" className="inline-flex items-center gap-2 text-slate-500 hover:text-teal-600 text-sm mb-4 transition-colors">
             <ArrowLeft className="w-4 h-4" />
             Panele dön
@@ -88,7 +91,7 @@ export default function AdminIcerikPage() {
             href="/admin/icerik/yukle"
             className="inline-flex mt-4 items-center gap-2 px-4 py-2.5 rounded-xl bg-teal-600 text-white text-sm font-semibold hover:bg-teal-700 transition-colors"
           >
-            Yeni içerik yükle
+            Yeni medya yükle
           </Link>
         </div>
         <button

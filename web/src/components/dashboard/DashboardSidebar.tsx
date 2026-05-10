@@ -31,6 +31,7 @@ import {
   Baby,
   Crown,
   Gem,
+  Layers,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -146,7 +147,7 @@ const adminNavGroups = [
     label: "İÇERİK",
     items: [
       { href: "/admin/sorular", icon: FileQuestion, label: "Soru Havuzu" },
-      { href: "/admin/icerik", icon: ClipboardList, label: "İçerik" },
+      { href: "/admin/icerik-merkezi", icon: Layers, label: "İçerik merkezi" },
       { href: "/admin/kupon", icon: Heart, label: "Kuponlar" },
     ],
   },

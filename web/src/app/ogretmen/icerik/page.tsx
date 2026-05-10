@@ -4,11 +4,12 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { api } from "@/lib/api";
 import type { Question, TeacherCurriculumTopicRow } from "@/lib/api";
-import { Video, FileText, FileQuestion, Upload, CheckCircle, Loader2, X, AlertCircle, Sparkles, Bot, RefreshCw, Search, ImageIcon } from "lucide-react";
+import { Video, FileText, Upload, CheckCircle, Loader2, X, AlertCircle, Sparkles, Bot, RefreshCw, Search, ImageIcon } from "lucide-react";
 
-type ContentType = "video" | "pdf" | "soru";
+type ContentType = "video" | "pdf";
 
-const inputCls = "w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none transition-all bg-white";
+const inputCls =
+  "w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none transition-all bg-white";
 const labelCls = "block text-sm font-semibold text-slate-700 mb-1.5";
 
 function useDebouncedValue<T>(value: T, delay: number): T {
@@ -20,7 +21,7 @@ function useDebouncedValue<T>(value: T, delay: number): T {
   return debounced;
 }
 
-// ─── AI Soru Üretme Modalı ────────────────────────────────────────────────────
+// ─── AI Soru Üretme Modalı (yalnızca taslak; soru bankasına otomatik yazılmaz) ─
 function AIQuestionModal({
   token,
   topicHint,
@@ -37,7 +38,12 @@ function AIQuestionModal({
   const [aiTopic, setAiTopic] = useState(topicHint);
   const [aiDifficulty, setAiDifficulty] = useState<"easy" | "medium" | "hard">("medium");
   const [generating, setGenerating] = useState(false);
-  const [generatedQ, setGeneratedQ] = useState<{ stem: string; options: Record<string, string>; correct_answer: string; explanation?: string } | null>(null);
+  const [generatedQ, setGeneratedQ] = useState<{
+    stem: string;
+    options: Record<string, string>;
+    correct_answer: string;
+    explanation?: string;
+  } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const handleGenerate = async () => {
@@ -58,10 +64,15 @@ function AIQuestionModal({
         subject: aiSubject,
         difficulty: aiDifficulty,
       } as Parameters<typeof api.generateQuestion>[0]);
-      const q = res as Question & { stem?: string; question?: { stem?: string; options?: Record<string, string>; correct_answer?: string; explanation?: string } };
-      const qInner = (q as Record<string, unknown>).question as typeof q ?? q;
+      const q = res as Question & {
+        stem?: string;
+        question?: { stem?: string; options?: Record<string, string> | unknown[]; correct_answer?: string; explanation?: string };
+      };
+      const qInner = ((q as Record<string, unknown>).question as typeof q) ?? q;
       const options = Array.isArray(qInner.options)
-        ? Object.fromEntries((qInner.options as { option_letter: string; option_text: string }[]).map((o) => [o.option_letter, o.option_text]))
+        ? Object.fromEntries(
+            (qInner.options as { option_letter: string; option_text: string }[]).map((o) => [o.option_letter, o.option_text])
+          )
         : qInner.options && typeof qInner.options === "object" && !Array.isArray(qInner.options)
           ? (qInner.options as Record<string, string>)
           : {};
@@ -70,7 +81,9 @@ function AIQuestionModal({
         options,
         correct_answer:
           qInner.correct_answer ??
-          (Array.isArray(qInner.options) ? qInner.options.find((o) => (o as { is_correct?: boolean }).is_correct)?.option_letter : "A") ??
+          (Array.isArray(qInner.options)
+            ? qInner.options.find((o) => (o as { is_correct?: boolean }).is_correct)?.option_letter
+            : "A") ??
           "A",
         explanation: qInner.explanation,
       };
@@ -90,8 +103,8 @@ function AIQuestionModal({
               <Sparkles className="w-5 h-5 text-purple-600" />
             </div>
             <div>
-              <h3 className="font-bold text-lg text-slate-900">AI ile Soru Üret</h3>
-              <p className="text-xs text-slate-500">Soru bankasına aktarım için taslak oluşturur</p>
+              <h3 className="font-bold text-lg text-slate-900">AI ile Soru Taslağı</h3>
+              <p className="text-xs text-slate-500">Kopyalayıp dışarıda kullanın; soru bankasına otomatik eklenmez.</p>
             </div>
           </div>
           <button
@@ -120,7 +133,11 @@ function AIQuestionModal({
             </div>
             <div>
               <label className={labelCls}>Zorluk</label>
-              <select value={aiDifficulty} onChange={(e) => setAiDifficulty(e.target.value as "easy" | "medium" | "hard")} className={inputCls}>
+              <select
+                value={aiDifficulty}
+                onChange={(e) => setAiDifficulty(e.target.value as "easy" | "medium" | "hard")}
+                className={inputCls}
+              >
                 <option value="easy">Kolay</option>
                 <option value="medium">Orta</option>
                 <option value="hard">Zor</option>
@@ -137,7 +154,13 @@ function AIQuestionModal({
             <label className={labelCls}>
               Kazanım Kodu <span className="text-red-500">*</span>
             </label>
-            <input type="text" value={aiKazanim} onChange={(e) => setAiKazanim(e.target.value.toUpperCase())} placeholder="Örn: M.8.1.1" className={`${inputCls} font-mono`} />
+            <input
+              type="text"
+              value={aiKazanim}
+              onChange={(e) => setAiKazanim(e.target.value.toUpperCase())}
+              placeholder="Örn: M.8.1.1"
+              className={`${inputCls} font-mono`}
+            />
           </div>
 
           {error && (
@@ -175,7 +198,9 @@ function AIQuestionModal({
                 <div
                   key={k}
                   className={`flex items-start gap-2 p-2.5 rounded-xl text-sm ${
-                    generatedQ.correct_answer === k ? "bg-teal-100 border border-teal-300 font-semibold text-teal-800" : "bg-white border border-slate-200 text-slate-700"
+                    generatedQ.correct_answer === k
+                      ? "bg-teal-100 border border-teal-300 font-semibold text-teal-800"
+                      : "bg-white border border-slate-200 text-slate-700"
                   }`}
                 >
                   <span className="font-bold shrink-0 w-5">{k})</span>
@@ -194,7 +219,7 @@ function AIQuestionModal({
                 className="w-full py-3 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-xl text-sm transition-colors flex items-center justify-center gap-2"
               >
                 <CheckCircle className="w-4 h-4" />
-                Taslağı Kapat
+                Kapat
               </button>
             </div>
           )}
@@ -214,10 +239,8 @@ export default function IcerikYuklemePage() {
   const [searchResults, setSearchResults] = useState<TeacherCurriculumTopicRow[]>([]);
   const [selectedTopic, setSelectedTopic] = useState<TeacherCurriculumTopicRow | null>(null);
   const [displayTitle, setDisplayTitle] = useState("");
-  const [mediaUrl, setMediaUrl] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
-  const [thumbnailUrlField, setThumbnailUrlField] = useState("");
   const [thumbObjectUrl, setThumbObjectUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploaded, setUploaded] = useState(false);
@@ -251,7 +274,7 @@ export default function IcerikYuklemePage() {
   }, []);
 
   useEffect(() => {
-    if (!token || secim === "soru") {
+    if (!token) {
       setSearchResults([]);
       return;
     }
@@ -276,13 +299,9 @@ export default function IcerikYuklemePage() {
     return () => {
       cancelled = true;
     };
-  }, [debouncedQuery, token, secim]);
+  }, [debouncedQuery, token]);
 
   const validateForm = (): boolean => {
-    if (secim === "soru") {
-      setError("Soru ekleme bu sayfadan yapılmaz; öğrenci soru bankası üzerinden soru setleri yönetilir.");
-      return false;
-    }
     if (!token) {
       setError("Oturum açmanız gerekir.");
       return false;
@@ -291,9 +310,8 @@ export default function IcerikYuklemePage() {
       setError("Listeden bir müfredat konusu seçin (arama en az 2 karakter).");
       return false;
     }
-    const urlOk = mediaUrl.trim().length > 0;
-    if (!file && !urlOk) {
-      setError(secim === "video" ? "Video dosyası veya harici URL girin." : "PDF dosyası veya doğrudan PDF bağlantısı girin.");
+    if (!file) {
+      setError(secim === "video" ? "Video dosyasını bilgisayarınızdan seçin." : "PDF dosyasını bilgisayarınızdan seçin.");
       return false;
     }
     return true;
@@ -301,7 +319,7 @@ export default function IcerikYuklemePage() {
 
   const handleUpload = async () => {
     if (!validateForm()) return;
-    if (!selectedTopic || secim === "soru") return;
+    if (!selectedTopic || !file) return;
 
     setUploading(true);
     setError("");
@@ -311,13 +329,10 @@ export default function IcerikYuklemePage() {
       fd.append("curriculum_topic_id", String(selectedTopic.id));
       fd.append("content_type", secim);
       if (displayTitle.trim()) fd.append("title", displayTitle.trim());
-      if (mediaUrl.trim()) fd.append("url", mediaUrl.trim());
       fd.append("is_free", "1");
-      if (file) fd.append("file", file);
-      if (secim === "video") {
-        if (thumbnailFile) fd.append("thumbnail", thumbnailFile);
-        const tu = thumbnailUrlField.trim();
-        if (tu) fd.append("thumbnail_url", tu);
+      fd.append("file", file);
+      if (secim === "video" && thumbnailFile) {
+        fd.append("thumbnail", thumbnailFile);
       }
 
       const res = await api.uploadCurriculumContent(fd);
@@ -336,18 +351,15 @@ export default function IcerikYuklemePage() {
     setSearchResults([]);
     setSelectedTopic(null);
     setDisplayTitle("");
-    setMediaUrl("");
     setFile(null);
     setThumbnailFile(null);
-    setThumbnailUrlField("");
     setUploaded(false);
     setError("");
   };
 
   const TABS: { key: ContentType; label: string; icon: React.ElementType }[] = [
     { key: "video", label: "Video", icon: Video },
-    { key: "pdf", label: "PDF Ders Notu", icon: FileText },
-    { key: "soru", label: "Soru", icon: FileQuestion },
+    { key: "pdf", label: "PDF ders notu", icon: FileText },
   ];
 
   if (uploaded) {
@@ -359,11 +371,16 @@ export default function IcerikYuklemePage() {
           </div>
           <h2 className="text-2xl font-bold text-slate-900 mb-2">İçerik müfredata bağlandı</h2>
           <p className="text-slate-600 mb-8">
-            {secim === "video" ? "Video" : "PDF"} kaydı oluşturuldu. Öğrenciler aynı müfredat konusunda içeriği görebilir.
+            {secim === "video" ? "Video" : "PDF"} kaydı oluşturuldu. Kapak görseli sunucuda otomatik oluşturuldu; isterseniz bir sonraki yüklemede özel kapak
+            yükleyebilirsiniz.
           </p>
           <div className="flex justify-center gap-3">
-            <button type="button" onClick={resetForm} className="px-6 py-3 bg-teal-600 hover:bg-teal-700 text-white font-semibold rounded-xl transition-colors">
-              Yeni İçerik Ekle
+            <button
+              type="button"
+              onClick={resetForm}
+              className="px-6 py-3 bg-teal-600 hover:bg-teal-700 text-white font-semibold rounded-xl transition-colors"
+            >
+              Yeni içerik ekle
             </button>
           </div>
         </div>
@@ -377,21 +394,36 @@ export default function IcerikYuklemePage() {
         <div className="mb-8">
           <div className="flex items-start justify-between gap-4 flex-wrap">
             <div>
-              <h1 className="text-3xl font-black text-slate-900 tracking-tight">İçerik Yükleme</h1>
-              <p className="text-slate-500 mt-1 font-medium">Müfredat konusu seçin; video veya PDF öğrenci Derslerim akışına düşer.</p>
+              <h1 className="text-3xl font-black text-slate-900 tracking-tight">Müfredat medyası</h1>
+              <p className="text-slate-500 mt-1 font-medium max-w-xl">
+                Yalnızca bilgisayarınızdan dosya yüklenir (harici link yok). Önce müfredat konusunu seçin, ardından video veya PDF dosyasını ekleyin.
+              </p>
             </div>
-            {secim === "soru" && (
-              <button
-                type="button"
-                onClick={() => setShowAIModal(true)}
-                className="flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-700 hover:to-purple-600 text-white font-bold rounded-xl shadow-lg shadow-purple-500/20 transition-all shrink-0"
-              >
-                <Sparkles className="w-5 h-5" />
-                AI ile Soru Taslağı
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={() => setShowAIModal(true)}
+              className="flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-700 hover:to-purple-600 text-white font-bold rounded-xl shadow-lg shadow-purple-500/20 transition-all shrink-0"
+            >
+              <Sparkles className="w-5 h-5" />
+              AI soru taslağı
+            </button>
           </div>
         </div>
+
+        <ol className="flex flex-wrap gap-3 mb-8 text-sm font-semibold text-slate-600">
+          <li className="flex items-center gap-2 rounded-xl bg-white border border-slate-200 px-4 py-2">
+            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-teal-600 text-white text-xs">1</span>
+            Tür: video veya PDF
+          </li>
+          <li className="flex items-center gap-2 rounded-xl bg-white border border-slate-200 px-4 py-2">
+            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-teal-600 text-white text-xs">2</span>
+            Müfredat konusu
+          </li>
+          <li className="flex items-center gap-2 rounded-xl bg-white border border-slate-200 px-4 py-2">
+            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-teal-600 text-white text-xs">3</span>
+            Dosya yükle
+          </li>
+        </ol>
 
         <div className="flex gap-3 mb-8 flex-wrap">
           {TABS.map(({ key, label, icon: Icon }) => (
@@ -402,7 +434,6 @@ export default function IcerikYuklemePage() {
                 setSecim(key);
                 setFile(null);
                 setThumbnailFile(null);
-                setThumbnailUrlField("");
                 setError("");
               }}
               className={`flex items-center gap-2 px-5 py-3 rounded-xl font-semibold transition-all ${
@@ -416,228 +447,185 @@ export default function IcerikYuklemePage() {
         </div>
 
         <div className="max-w-2xl space-y-6">
-          {secim === "soru" && (
-            <div className="flex items-start gap-2.5 p-4 bg-amber-50 border border-amber-200 rounded-2xl">
-              <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-              <p className="text-sm text-amber-800">
-                Soru havuzu bu formdan yüklenmez. Öğrenci <strong>Soru Bankası</strong> modülü üzerinden çalışma yapar; burada yalnızca müfredat medyası (video/PDF) bağlanır.
-              </p>
-            </div>
-          )}
+          <div className="flex items-start gap-2.5 p-4 bg-sky-50 border border-sky-100 rounded-2xl">
+            <Search className="w-5 h-5 text-sky-600 shrink-0 mt-0.5" />
+            <p className="text-sm text-sky-900">
+              Konu adı veya MEB kodu ile arayın; çıkan listeden <strong>tam müfredat satırını</strong> seçin. Soru bankası ve toplu kitap içeriği yönetimi{" "}
+              <strong>yönetici panelinden</strong> yapılır.
+            </p>
+          </div>
 
-          {secim !== "soru" && (
-            <>
-              <div className="flex items-start gap-2.5 p-4 bg-sky-50 border border-sky-100 rounded-2xl">
-                <Search className="w-5 h-5 text-sky-600 shrink-0 mt-0.5" />
-                <p className="text-sm text-sky-900">
-                  Konu adı veya MEB kodu ile arayın; çıkan listeden <strong>tam müfredat satırını</strong> seçin. Seçim yapılmadan yükleme çalışmaz.
-                </p>
+          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
+            <div>
+              <label className={labelCls}>
+                Müfredat konusu ara <span className="text-red-500">*</span>
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={topicQuery}
+                  onChange={(e) => setTopicQuery(e.target.value)}
+                  placeholder="Örn: logaritma veya M.10.1.2"
+                  className={inputCls}
+                  autoComplete="off"
+                />
+                {searching && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    <Loader2 className="w-5 h-5 animate-spin text-slate-400" />
+                  </div>
+                )}
               </div>
-
-              <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
-                <div>
-                  <label className={labelCls}>
-                    Müfredat konusu ara <span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      value={topicQuery}
-                      onChange={(e) => setTopicQuery(e.target.value)}
-                      placeholder="Örn: logaritma veya M.10.1.2"
-                      className={inputCls}
-                      autoComplete="off"
-                    />
-                    {searching && (
-                      <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                        <Loader2 className="w-5 h-5 animate-spin text-slate-400" />
-                      </div>
-                    )}
-                  </div>
-                  {searchResults.length > 0 && (
-                    <ul className="mt-2 max-h-56 overflow-y-auto border border-slate-200 rounded-xl divide-y divide-slate-100 bg-white shadow-sm z-10">
-                      {searchResults.map((t) => (
-                        <li key={t.id}>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setSelectedTopic(t);
-                              setTopicQuery(`${t.subject_name ?? ""} — ${t.title}`);
-                              setSearchResults([]);
-                            }}
-                            className="w-full text-left px-4 py-3 hover:bg-teal-50 text-sm"
-                          >
-                            <span className="font-semibold text-slate-900">{t.title}</span>
-                            <span className="block text-xs text-slate-500 mt-0.5">
-                              {[t.subject_name, t.unit_title, t.grade ? `${t.grade}. sınıf` : null, t.exam_type].filter(Boolean).join(" · ")}
-                            </span>
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-
-                {selectedTopic && (
-                  <div className="flex flex-wrap items-center gap-2 p-3 bg-teal-50 border border-teal-100 rounded-xl text-sm text-teal-900">
-                    <CheckCircle className="w-4 h-4 shrink-0" />
-                    <span>
-                      Seçili konu #{selectedTopic.id}: <strong>{selectedTopic.title}</strong>
-                    </span>
-                    <button type="button" className="ml-auto text-teal-700 underline text-xs" onClick={() => setSelectedTopic(null)}>
-                      Temizle
-                    </button>
-                  </div>
-                )}
-
-                <div>
-                  <label className={labelCls}>Başlık (isteğe bağlı)</label>
-                  <input type="text" value={displayTitle} onChange={(e) => setDisplayTitle(e.target.value)} placeholder="Öğrencide görünecek başlık" className={inputCls} />
-                </div>
-
-                <div>
-                  <label className={labelCls}>{secim === "video" ? "Harici video URL (YouTube vb.)" : "PDF doğrudan bağlantı"}</label>
-                  <input type="url" value={mediaUrl} onChange={(e) => setMediaUrl(e.target.value)} placeholder="https://..." className={inputCls} />
-                  <p className="text-xs text-slate-500 mt-1">Dosya yüklemezseniz bu adres kullanılır.</p>
-                </div>
-
-                <div>
-                  <label className={labelCls}>
-                    {secim === "video" ? "Video dosyası" : "PDF dosyası"} {!mediaUrl.trim() && <span className="text-red-500">*</span>}
-                  </label>
-                  <div
-                    onDragOver={(e) => {
-                      e.preventDefault();
-                      setDragOver(true);
-                    }}
-                    onDragLeave={() => setDragOver(false)}
-                    onDrop={handleDrop}
-                    onClick={() => fileRef.current?.click()}
-                    className={`relative border-2 border-dashed rounded-2xl p-10 text-center cursor-pointer transition-all ${
-                      dragOver ? "border-teal-400 bg-teal-50" : file ? "border-teal-300 bg-teal-50/30" : "border-slate-200 hover:border-slate-300 hover:bg-slate-50"
-                    }`}
-                  >
-                    <input
-                      ref={fileRef}
-                      type="file"
-                      className="hidden"
-                      accept={secim === "video" ? "video/*" : "application/pdf"}
-                      onChange={(e) => handleFile(e.target.files?.[0] ?? null)}
-                    />
-                    {file ? (
-                      <div className="flex items-center justify-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-teal-100 flex items-center justify-center">
-                          {secim === "video" ? <Video className="w-5 h-5 text-teal-600" /> : <FileText className="w-5 h-5 text-teal-600" />}
-                        </div>
-                        <div className="text-left">
-                          <p className="font-semibold text-slate-900 text-sm">{file.name}</p>
-                          <p className="text-xs text-slate-500">{(file.size / (1024 * 1024)).toFixed(1)} MB</p>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setFile(null);
-                          }}
-                          className="ml-4 p-1.5 rounded-lg hover:bg-red-100 text-red-500 transition-colors"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
-                      </div>
-                    ) : (
-                      <>
-                        <Upload className="w-10 h-10 text-slate-300 mx-auto mb-3" />
-                        <p className="font-semibold text-slate-600">Dosyayı sürükle veya tıkla</p>
-                        <p className="text-sm text-slate-400 mt-1">{secim === "video" ? "MP4, WEBM — en fazla ~50 MB" : "Yalnızca PDF"}</p>
-                      </>
-                    )}
-                  </div>
-                </div>
-
-                {secim === "video" && (
-                  <div className="rounded-2xl border border-violet-100 bg-violet-50/40 p-5 space-y-3">
-                    <p className="text-sm font-bold text-slate-800 flex items-center gap-2">
-                      <ImageIcon className="w-4 h-4 text-violet-600" /> Kapak görseli (isteğe bağlı)
-                    </p>
-                    <p className="text-xs text-slate-600">
-                      YouTube URL&apos;si kullanıyorsanız boş bırakabilirsiniz; kapak otomatik alınır. Özel görsel yüklemek sunucuda sıkıştırılır.
-                    </p>
-                    <div>
-                      <label className={labelCls}>Kapak görseli URL</label>
-                      <input
-                        type="url"
-                        value={thumbnailUrlField}
-                        onChange={(e) => setThumbnailUrlField(e.target.value)}
-                        placeholder="https://..."
-                        className={inputCls}
-                        disabled={!!thumbnailFile}
-                      />
-                    </div>
-                    <div>
-                      <label className={labelCls}>Kapak dosyası (JPEG / PNG / WebP)</label>
-                      <input
-                        type="file"
-                        accept="image/jpeg,image/png,image/webp"
-                        disabled={thumbnailUrlField.trim().length > 0}
-                        onChange={(e) => setThumbnailFile(e.target.files?.[0] ?? null)}
-                        className={`${inputCls} py-2 file:mr-3 file:rounded-lg file:border-0 file:bg-violet-100 file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-violet-800`}
-                      />
-                    </div>
-                    {(thumbObjectUrl || (thumbnailUrlField.trim().startsWith("http") && thumbnailUrlField.trim().length > 12)) && (
-                      <div className="relative aspect-video w-full max-w-sm overflow-hidden rounded-xl border border-slate-200 shadow-sm">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={thumbObjectUrl || thumbnailUrlField.trim()}
-                          alt="Kapak önizleme"
-                          className="h-full w-full object-cover object-center"
-                          loading="lazy"
-                        />
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {error && (
-                  <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-100 rounded-xl">
-                    <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
-                    <p className="text-sm text-red-700">{error}</p>
-                  </div>
-                )}
-
-                <button
-                  type="button"
-                  onClick={handleUpload}
-                  disabled={uploading || !token}
-                  className="w-full py-4 bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-700 hover:to-teal-600 disabled:opacity-70 text-white font-bold rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-teal-500/25"
-                >
-                  {uploading ? (
-                    <>
-                      <Loader2 className="w-5 h-5 animate-spin" /> Yükleniyor...
-                    </>
-                  ) : (
-                    <>
-                      <Upload className="w-5 h-5" /> Müfredata Bağla
-                    </>
-                  )}
-                </button>
-                {!token && <p className="text-center text-sm text-amber-700">Oturum açmadan yükleme yapılamaz.</p>}
-              </div>
-            </>
-          )}
-
-          {secim === "soru" && (
-            <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-              <p className="text-slate-600 text-sm leading-relaxed mb-4">
-                AI ile yalnızca taslak üretebilirsiniz; soruların sisteme işlenmesi soru bankası akışına bağlıdır. Video veya PDF eklemek için üstteki sekmeleri kullanın.
-              </p>
-              {error && (
-                <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-100 rounded-xl">
-                  <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
-                  <p className="text-sm text-red-700">{error}</p>
-                </div>
+              {searchResults.length > 0 && (
+                <ul className="mt-2 max-h-56 overflow-y-auto border border-slate-200 rounded-xl divide-y divide-slate-100 bg-white shadow-sm z-10">
+                  {searchResults.map((t) => (
+                    <li key={t.id}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedTopic(t);
+                          setTopicQuery(`${t.subject_name ?? ""} — ${t.title}`);
+                          setSearchResults([]);
+                        }}
+                        className="w-full text-left px-4 py-3 hover:bg-teal-50 text-sm"
+                      >
+                        <span className="font-semibold text-slate-900">{t.title}</span>
+                        <span className="block text-xs text-slate-500 mt-0.5">
+                          {[t.subject_name, t.unit_title, t.grade ? `${t.grade}. sınıf` : null, t.exam_type].filter(Boolean).join(" · ")}
+                        </span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
               )}
             </div>
-          )}
+
+            {selectedTopic && (
+              <div className="flex flex-wrap items-center gap-2 p-3 bg-teal-50 border border-teal-100 rounded-xl text-sm text-teal-900">
+                <CheckCircle className="w-4 h-4 shrink-0" />
+                <span>
+                  Seçili konu #{selectedTopic.id}: <strong>{selectedTopic.title}</strong>
+                </span>
+                <button type="button" className="ml-auto text-teal-700 underline text-xs" onClick={() => setSelectedTopic(null)}>
+                  Temizle
+                </button>
+              </div>
+            )}
+
+            <div>
+              <label className={labelCls}>Başlık (isteğe bağlı)</label>
+              <input
+                type="text"
+                value={displayTitle}
+                onChange={(e) => setDisplayTitle(e.target.value)}
+                placeholder="Öğrencide görünecek başlık"
+                className={inputCls}
+              />
+            </div>
+
+            <div>
+              <label className={labelCls}>
+                {secim === "video" ? "Video dosyası" : "PDF dosyası"} <span className="text-red-500">*</span>
+              </label>
+              <div
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setDragOver(true);
+                }}
+                onDragLeave={() => setDragOver(false)}
+                onDrop={handleDrop}
+                onClick={() => fileRef.current?.click()}
+                className={`relative border-2 border-dashed rounded-2xl p-10 text-center cursor-pointer transition-all ${
+                  dragOver ? "border-teal-400 bg-teal-50" : file ? "border-teal-300 bg-teal-50/30" : "border-slate-200 hover:border-slate-300 hover:bg-slate-50"
+                }`}
+              >
+                <input
+                  ref={fileRef}
+                  type="file"
+                  className="hidden"
+                  accept={secim === "video" ? "video/*" : "application/pdf"}
+                  onChange={(e) => handleFile(e.target.files?.[0] ?? null)}
+                />
+                {file ? (
+                  <div className="flex items-center justify-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-teal-100 flex items-center justify-center">
+                      {secim === "video" ? <Video className="w-5 h-5 text-teal-600" /> : <FileText className="w-5 h-5 text-teal-600" />}
+                    </div>
+                    <div className="text-left">
+                      <p className="font-semibold text-slate-900 text-sm">{file.name}</p>
+                      <p className="text-xs text-slate-500">{(file.size / (1024 * 1024)).toFixed(1)} MB</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setFile(null);
+                      }}
+                      className="ml-4 p-1.5 rounded-lg hover:bg-red-100 text-red-500 transition-colors"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <Upload className="w-10 h-10 text-slate-300 mx-auto mb-3" />
+                    <p className="font-semibold text-slate-600">Dosyayı sürükle veya tıkla</p>
+                    <p className="text-sm text-slate-400 mt-1">{secim === "video" ? "MP4, WEBM vb. — sunucu limiti ~50 MB" : "Yalnızca PDF"}</p>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {secim === "video" && (
+              <div className="rounded-2xl border border-violet-100 bg-violet-50/40 p-5 space-y-3">
+                <p className="text-sm font-bold text-slate-800 flex items-center gap-2">
+                  <ImageIcon className="w-4 h-4 text-violet-600" /> Özel kapak (isteğe bağlı)
+                </p>
+                <p className="text-xs text-slate-600">
+                  Boş bırakırsanız sunucu otomatik bir kapak üretir. İsterseniz JPEG, PNG veya WebP yükleyebilirsiniz; görsel sıkıştırılarak saklanır.
+                </p>
+                <div>
+                  <label className={labelCls}>Kapak dosyası</label>
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    onChange={(e) => setThumbnailFile(e.target.files?.[0] ?? null)}
+                    className={`${inputCls} py-2 file:mr-3 file:rounded-lg file:border-0 file:bg-violet-100 file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-violet-800`}
+                  />
+                </div>
+                {thumbObjectUrl && (
+                  <div className="relative aspect-video w-full max-w-sm overflow-hidden rounded-xl border border-slate-200 shadow-sm">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={thumbObjectUrl} alt="Kapak önizleme" className="h-full w-full object-cover object-center" loading="lazy" />
+                  </div>
+                )}
+              </div>
+            )}
+
+            {error && (
+              <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-100 rounded-xl">
+                <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+                <p className="text-sm text-red-700">{error}</p>
+              </div>
+            )}
+
+            <button
+              type="button"
+              onClick={handleUpload}
+              disabled={uploading || !token}
+              className="w-full py-4 bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-700 hover:to-teal-600 disabled:opacity-70 text-white font-bold rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-teal-500/25"
+            >
+              {uploading ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" /> Yükleniyor...
+                </>
+              ) : (
+                <>
+                  <Upload className="w-5 h-5" /> Müfredata bağla
+                </>
+              )}
+            </button>
+            {!token && <p className="text-center text-sm text-amber-700">Oturum açmadan yükleme yapılamaz.</p>}
+          </div>
         </div>
       </div>
 

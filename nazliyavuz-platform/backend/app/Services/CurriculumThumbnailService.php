@@ -124,4 +124,57 @@ class CurriculumThumbnailService
 
         return $jpeg !== false && $jpeg !== '' ? $jpeg : null;
     }
+
+    /**
+     * Harici link olmadan yüklenen video/PDF için basit degrade kapak (GD).
+     *
+     * @param  string  $kind  "video" | "pdf"
+     */
+    public function genericContentCover(Request $request, int $topicId, string $kind): ?string
+    {
+        if (! $this->gdAvailable()) {
+            return null;
+        }
+
+        $kind = $kind === 'pdf' ? 'pdf' : 'video';
+        $w = 1280;
+        $h = 720;
+        $im = imagecreatetruecolor($w, $h);
+        if ($im === false) {
+            return null;
+        }
+
+        $isVideo = $kind === 'video';
+        $c1 = $isVideo ? [15, 118, 110] : [146, 64, 14];
+        $c2 = $isVideo ? [45, 212, 191] : [245, 158, 11];
+        for ($y = 0; $y < $h; $y++) {
+            $t = $h > 1 ? $y / ($h - 1) : 0.0;
+            $r = (int) round($c1[0] * (1 - $t) + $c2[0] * $t);
+            $g = (int) round($c1[1] * (1 - $t) + $c2[1] * $t);
+            $b = (int) round($c1[2] * (1 - $t) + $c2[2] * $t);
+            $col = imagecolorallocate($im, max(0, min(255, $r)), max(0, min(255, $g)), max(0, min(255, $b)));
+            imageline($im, 0, $y, $w, $y, $col);
+        }
+
+        $fg = imagecolorallocate($im, 255, 255, 255);
+        $label = $isVideo ? 'VIDEO' : 'PDF';
+        $font = 5;
+        $tw = imagefontwidth($font) * strlen($label);
+        $th = imagefontheight($font);
+        imagestring($im, $font, (int) (($w - $tw) / 2), (int) (($h - $th) / 2), $label, $fg);
+
+        ob_start();
+        imagejpeg($im, null, self::JPEG_QUALITY);
+        imagedestroy($im);
+        $blob = ob_get_clean();
+        if ($blob === false || $blob === '') {
+            return null;
+        }
+
+        $safe = 'gc_'.$kind.'_'.$topicId.'_'.time().'_'.Str::lower(Str::random(6)).'.jpg';
+        $path = 'curriculum_thumbnails/'.$safe;
+        Storage::disk('public')->put($path, $blob);
+
+        return rtrim($request->getSchemeAndHttpHost(), '/').'/storage/'.$path;
+    }
 }
