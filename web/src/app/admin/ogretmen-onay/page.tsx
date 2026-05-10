@@ -22,8 +22,30 @@ function Skeleton({ className }: { className?: string }) {
   return <div className={`bg-slate-100 rounded-xl animate-pulse ${className ?? ""}`} />;
 }
 
+/** API bazen teacher_status veya name döndürmez; STATUS_CONFIG erişiminde sayfa çökmemesi için */
+function normalizeTeacherApplicant(raw: Record<string, unknown>): TeacherApplicant {
+  const ts = raw.teacher_status;
+  const teacher_status: TeacherApplicant["teacher_status"] =
+    ts === "approved" || ts === "rejected" || ts === "pending" ? ts : "pending";
+  const id = Number(raw.id);
+  const name = typeof raw.name === "string" && raw.name.trim() !== "" ? raw.name : "İsimsiz";
+  const email = typeof raw.email === "string" ? raw.email : "";
+  return {
+    id: Number.isFinite(id) ? id : 0,
+    name,
+    email,
+    phone: typeof raw.phone === "string" ? raw.phone : undefined,
+    subject: typeof raw.subject === "string" ? raw.subject : undefined,
+    bio: typeof raw.bio === "string" ? raw.bio : undefined,
+    teacher_status,
+    created_at: typeof raw.created_at === "string" ? raw.created_at : new Date().toISOString(),
+    profile_photo_url: typeof raw.profile_photo_url === "string" ? raw.profile_photo_url : undefined,
+  };
+}
+
 function timeAgo(dateStr: string) {
   const date = new Date(dateStr);
+  if (Number.isNaN(date.getTime())) return "—";
   const diff = Date.now() - date.getTime();
   const days = Math.floor(diff / 86400000);
   if (days === 0) return "Bugün";
@@ -33,7 +55,7 @@ function timeAgo(dateStr: string) {
 
 export default function OgretmenOnayPage() {
   const { token } = useAuth();
-  const [applicants, setApplicants] = useState<TeacherApplicant[]>([]);
+  const [allApplicants, setAllApplicants] = useState<TeacherApplicant[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
@@ -52,25 +74,28 @@ export default function OgretmenOnayPage() {
         per_page: 50,
       } as Parameters<typeof api.getAdminUsers>[0]);
       const resObj = res as Record<string, unknown>;
-      setApplicants((Array.isArray(resObj.data) ? resObj.data : Array.isArray(res) ? res : []) as TeacherApplicant[]);
+      const rows = (Array.isArray(resObj.data) ? resObj.data : Array.isArray(res) ? res : []) as Record<string, unknown>[];
+      setAllApplicants(rows.map((r) => normalizeTeacherApplicant(r)));
     } catch (e) {
       setError((e as Error).message || "Yüklenemedi.");
     }
     setLoading(false);
-  }, [token, filter, search]);
+  }, [token, search]);
 
   useEffect(() => {
     const t = setTimeout(loadApplicants, 300);
     return () => clearTimeout(t);
   }, [loadApplicants]);
 
+  const applicants = allApplicants.filter((a) => filter === "all" || a.teacher_status === filter);
+
   const handleApprove = async (id: number) => {
     if (!token) return;
     setProcessing(id);
     try {
-      await api.updateAdminUser(id, { teacher_status: "approved" } as Parameters<typeof api.updateAdminUser>[1]);
-      setApplicants((prev) => prev.map((a) => a.id === id ? { ...a, teacher_status: "approved" } : a));
-      if (selectedUser?.id === id) setSelectedUser((u) => u ? { ...u, teacher_status: "approved" } : null);
+      await api.approveTeacher(id);
+      setAllApplicants((prev) => prev.map((a) => (a.id === id ? { ...a, teacher_status: "approved" as const } : a)));
+      if (selectedUser?.id === id) setSelectedUser((u) => (u ? { ...u, teacher_status: "approved" } : null));
     } catch (e) {
       alert((e as Error).message || "İşlem başarısız.");
     }
@@ -82,16 +107,16 @@ export default function OgretmenOnayPage() {
     if (!confirm("Bu öğretmen başvurusunu reddetmek istediğinizden emin misiniz?")) return;
     setProcessing(id);
     try {
-      await api.updateAdminUser(id, { teacher_status: "rejected" } as Parameters<typeof api.updateAdminUser>[1]);
-      setApplicants((prev) => prev.map((a) => a.id === id ? { ...a, teacher_status: "rejected" } : a));
-      if (selectedUser?.id === id) setSelectedUser((u) => u ? { ...u, teacher_status: "rejected" } : null);
+      await api.rejectTeacher(id);
+      setAllApplicants((prev) => prev.map((a) => (a.id === id ? { ...a, teacher_status: "rejected" as const } : a)));
+      if (selectedUser?.id === id) setSelectedUser((u) => (u ? { ...u, teacher_status: "rejected" } : null));
     } catch (e) {
       alert((e as Error).message || "İşlem başarısız.");
     }
     setProcessing(null);
   };
 
-  const pendingCount = applicants.filter((a) => a.teacher_status === "pending").length;
+  const pendingCount = allApplicants.filter((a) => a.teacher_status === "pending").length;
 
   const STATUS_CONFIG = {
     pending: { label: "Bekliyor", cls: "bg-amber-100 text-amber-700 border-amber-200" },
@@ -178,7 +203,7 @@ export default function OgretmenOnayPage() {
       ) : (
         <div className="space-y-3">
           {applicants.map((a) => {
-            const statusCfg = STATUS_CONFIG[a.teacher_status];
+            const statusCfg = STATUS_CONFIG[a.teacher_status] ?? STATUS_CONFIG.pending;
             return (
               <div key={a.id} className={`bg-white rounded-2xl border shadow-sm p-5 flex items-center gap-4 ${
                 a.teacher_status === "pending" ? "border-amber-200 bg-amber-50/30" : "border-slate-200"

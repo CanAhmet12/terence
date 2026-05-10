@@ -73,7 +73,8 @@ class AdminController extends Controller
         if ($request->filled('role')) {
             $q->where('role', $request->role);
         }
-        $users = $q->orderByDesc('created_at')->paginate(20);
+        $perPage = min(100, max(1, (int) $request->input('per_page', 20)));
+        $users = $q->orderByDesc('created_at')->paginate($perPage);
         return response()->json([
             'success' => true,
             'data'    => $users->items(),
@@ -94,11 +95,25 @@ class AdminController extends Controller
             'role'              => 'sometimes|in:student,teacher,admin,parent',
             'subscription_plan' => 'sometimes|in:free,bronze,plus,pro',
             'is_active'         => 'sometimes|boolean',
+            'teacher_status'    => 'sometimes|in:pending,approved,rejected',
+            'admin_notes'       => 'sometimes|nullable|string|max:2000',
+            'rejection_reason'  => 'sometimes|nullable|string|max:2000',
         ]);
         if ($v->fails()) {
             return response()->json(['error' => true, 'errors' => $v->errors()], 422);
         }
-        $user->update($v->validated());
+        $payload = $v->validated();
+        if (array_key_exists('teacher_status', $payload)) {
+            if ($payload['teacher_status'] === 'approved') {
+                $payload['approved_at'] = now();
+                $payload['approved_by'] = Auth::id();
+            }
+            if ($payload['teacher_status'] === 'rejected') {
+                $payload['approved_at'] = null;
+                $payload['approved_by'] = null;
+            }
+        }
+        $user->update($payload);
         return response()->json(['success' => true, 'user' => $user->fresh()]);
     }
 
@@ -460,14 +475,22 @@ class AdminController extends Controller
     public function approveTeacher(int $id): JsonResponse
     {
         $user = User::where('id', $id)->where('role', 'teacher')->firstOrFail();
-        $user->update(['teacher_status' => 'approved']);
+        $user->update([
+            'teacher_status' => 'approved',
+            'approved_at'    => now(),
+            'approved_by'    => Auth::id(),
+        ]);
         return response()->json(['success' => true, 'message' => 'Ogretmen onaylandi']);
     }
 
     public function rejectTeacher(int $id): JsonResponse
     {
         $user = User::where('id', $id)->where('role', 'teacher')->firstOrFail();
-        $user->update(['teacher_status' => 'rejected']);
+        $user->update([
+            'teacher_status' => 'rejected',
+            'approved_at'    => null,
+            'approved_by'    => null,
+        ]);
         return response()->json(['success' => true, 'message' => 'Ogretmen reddedildi']);
     }
 
