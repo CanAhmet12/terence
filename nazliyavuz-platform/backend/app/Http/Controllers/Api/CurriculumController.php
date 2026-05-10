@@ -120,7 +120,9 @@ class CurriculumController extends Controller
             $q->where('is_active', true)->orderBy('sort_order')
               ->with(['topics' => function ($tq) {
                   $tq->where('is_active', true)->orderBy('sort_order')
-                    ->with(['linkedTopic.contentItems.video']);
+                    ->with(['linkedTopic.contentItems' => function ($ciq) {
+                        $ciq->with(['video', 'pdfPages']);
+                    }]);
               }]);
         }]);
 
@@ -214,7 +216,7 @@ class CurriculumController extends Controller
                                         'linkedTopic' => function ($ltq) {
                                             $ltq->with([
                                                 'contentItems' => function ($ciq) {
-                                                    $ciq->where('is_active', true)->orderBy('sort_order')->with('video');
+                                                    $ciq->where('is_active', true)->orderBy('sort_order')->with(['video', 'pdfPages']);
                                                 },
                                             ]);
                                         },
@@ -251,6 +253,7 @@ class CurriculumController extends Controller
                         if ($canonicalType === null) {
                             continue;
                         }
+                        $ci->loadMissing('pdfPages');
                         $countsBySlug[$subject->slug]++;
                         $items[] = [
                             'key'                   => 'cur-'.$topic->id.'-'.$ci->id,
@@ -260,6 +263,7 @@ class CurriculumController extends Controller
                             'title'                 => $ci->title,
                             'url'                   => $this->resolveMediaCatalogItemUrl($ci, $canonicalType),
                             'thumbnail_url'         => $this->resolveMediaCatalogDisplayThumbnail($ci, $canonicalType),
+                            'pdf_page_urls'         => $canonicalType === 'pdf' ? $ci->resolvedPdfPageUrls() : [],
                             'duration_seconds'      => $ci->duration_seconds ?? ($ci->video?->duration_seconds ?? null),
                             'is_free'               => (bool) $ci->is_free,
                             'subject_slug'          => $subject->slug,

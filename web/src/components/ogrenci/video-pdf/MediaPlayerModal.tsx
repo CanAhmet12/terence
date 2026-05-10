@@ -5,6 +5,7 @@ import { ExternalLink, FileText, Play, X } from "lucide-react";
 import api, { extractVimeoId, extractYouTubeId } from "@/lib/api";
 import type { UnifiedMediaItem } from "./types";
 import { clearStoredSeconds, mediaPosKey, setStoredSeconds } from "./utils";
+import { PdfPageBookViewer } from "@/components/ogrenci/dersler/PdfPageBookViewer";
 
 function formatDuration(seconds: number) {
   const m = Math.floor(seconds / 60);
@@ -205,28 +206,13 @@ export function MediaPlayerModal({
         </div>
 
         <div className="aspect-video bg-black">
-          {item.contentType === "pdf" && rawUrl ? (
-            <div className="flex h-full w-full flex-col">
-              <div className="min-h-0 flex-1">
-                <embed
-                  src={rawUrl}
-                  type="application/pdf"
-                  className="h-full min-h-[280px] w-full"
-                  title={`PDF: ${item.title}`}
-                />
-              </div>
-              <div className="flex shrink-0 justify-center border-t border-slate-700 py-2">
-                <a
-                  href={rawUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 rounded-lg bg-white/10 px-4 py-2 text-xs font-semibold text-white hover:bg-white/20 sm:text-sm"
-                >
-                  <FileText className="h-4 w-4 shrink-0" aria-hidden />
-                  PDF’yi yeni sekmede aç
-                  <ExternalLink className="h-3.5 w-3.5 opacity-80" aria-hidden />
-                </a>
-              </div>
+          {item.contentType === "pdf" && (rawUrl || (item.pdfPageUrls?.length ?? 0) > 0) ? (
+            <div className="flex h-full min-h-[320px] w-full flex-col bg-slate-900">
+              <PdfPageBookViewer
+                pageUrls={item.pdfPageUrls ?? []}
+                pdfUrl={rawUrl ?? null}
+                title={item.title}
+              />
             </div>
           ) : item.contentType === "text" && rawUrl ? (
             <div className="flex h-full flex-col items-center justify-center gap-4 p-6 text-center">

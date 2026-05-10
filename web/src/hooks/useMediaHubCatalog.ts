@@ -25,6 +25,7 @@ function mapCatalogRow(row: MediaCatalogItem): UnifiedMediaItem {
   const ct = row.content_type;
   const url = row.url ?? null;
   const playbackUrl = ct === "video" ? url : url;
+  const pdfPages = row.pdf_page_urls ?? [];
   return {
     key: row.key,
     source: "curriculum",
@@ -33,7 +34,12 @@ function mapCatalogRow(row: MediaCatalogItem): UnifiedMediaItem {
     title: row.title,
     url,
     playbackUrl,
-    thumbnailUrl: ct === "video" ? getVideoThumbnail(url, row.thumbnail_url ?? null) : null,
+    thumbnailUrl:
+      ct === "video"
+        ? getVideoThumbnail(url, row.thumbnail_url ?? null)
+        : ct === "pdf"
+          ? (row.thumbnail_url && String(row.thumbnail_url).trim()) || pdfPages[0] || null
+          : null,
     durationSeconds: row.duration_seconds ?? 0,
     isFree: row.is_free,
     subjectSlug: row.subject_slug,
@@ -47,6 +53,7 @@ function mapCatalogRow(row: MediaCatalogItem): UnifiedMediaItem {
     unitTitle: row.unit_title,
     topicStatus: row.topic_status,
     sortOrder: row.sort_order,
+    pdfPageUrls: pdfPages.length ? pdfPages : undefined,
   };
 }
 
@@ -71,13 +78,16 @@ function mapCourseContentItem(
     contentType === "video"
       ? item.video?.duration_seconds ?? item.duration_seconds ?? 0
       : item.duration_seconds ?? 0;
+  const pdfPages = item.pdf_page_urls ?? [];
   const thumb =
     contentType === "video"
       ? getVideoThumbnail(
           playbackUrl,
           (item.thumbnail_url && String(item.thumbnail_url).trim()) || item.video?.thumbnail_url || null,
         )
-      : null;
+      : contentType === "pdf"
+        ? (item.thumbnail_url && String(item.thumbnail_url).trim()) || pdfPages[0] || null
+        : null;
   return {
     key: `course-${course.id}-${topic.id}-${item.id}`,
     source: "course",
@@ -100,6 +110,7 @@ function mapCourseContentItem(
     courseTopicId: topic.id,
     courseTitle: course.title,
     progressStatus: item.progress_status,
+    pdfPageUrls: pdfPages.length ? pdfPages : undefined,
   };
 }
 

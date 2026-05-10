@@ -242,7 +242,7 @@ class CourseController extends Controller
         $contentItems = ContentItem::where('topic_id', $id)
             ->where('is_active', true)
             ->orderBy('sort_order', 'asc')
-            ->with(['video'])
+            ->with(['video', 'pdfPages'])
             ->get();
 
         $data = $contentItems->map(function ($item) {
@@ -255,6 +255,7 @@ class CourseController extends Controller
                 'is_active' => $item->is_active,
                 'url' => $item->url,
                 'thumbnail_url' => $item->thumbnail_url,
+                'pdf_page_urls' => $item->type === 'pdf' ? $item->resolvedPdfPageUrls() : [],
             ];
 
             if ($item->type === 'video' && $item->video) {

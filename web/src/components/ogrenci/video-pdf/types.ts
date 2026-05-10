@@ -30,6 +30,8 @@ export interface UnifiedMediaItem {
   courseTopicId?: number;
   courseTitle?: string;
   progressStatus?: string;
+  /** PDF sayfa görselleri */
+  pdfPageUrls?: string[];
 }
 
 export type MediaHubSubjectSummary = MediaCatalogSubjectSummary & {

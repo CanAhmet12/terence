@@ -66,7 +66,8 @@ class CurriculumTopic extends Model
                         'type'  => $type,
                         'title' => $ci->title,
                         'url'   => $ci->url,
-                        'thumbnail_url' => $type === 'video' ? $ci->resolvedVideoDisplayThumbnail() : null,
+                        'thumbnail_url' => $type === 'video' ? $ci->resolvedVideoDisplayThumbnail() : ($ci->thumbnail_url ?: null),
+                        'pdf_page_urls' => $type === 'pdf' ? $ci->resolvedPdfPageUrls() : [],
                         'is_free' => $ci->is_free,
                         'duration_seconds' => $ci->duration_seconds,
                     ];

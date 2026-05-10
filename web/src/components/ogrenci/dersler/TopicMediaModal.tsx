@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { X } from "lucide-react";
 import { VideoPanel } from "./VideoPanel";
 import type { ContentListItem } from "./TopicContentList";
+import { PdfPageBookViewer } from "./PdfPageBookViewer";
 
 function formatDuration(sec?: number) {
   if (!sec || sec <= 0) return null;
@@ -33,7 +34,8 @@ export function TopicMediaModal({
   if (!open || !item) return null;
 
   const hasVideo = item.type === "video" && !!item.url;
-  const hasPdf = item.type === "pdf" && !!item.url;
+  const hasPdf =
+    item.type === "pdf" && (!!item.url || (item.pdf_page_urls?.length ?? 0) > 0);
   const dur = formatDuration(item.duration_seconds);
 
   return (
@@ -66,18 +68,12 @@ export function TopicMediaModal({
               <VideoPanel url={item.url!} />
             </div>
           ) : hasPdf ? (
-            <div className="flex h-[min(75dvh,640px)] min-h-[280px] w-full flex-col bg-white">
-              <embed src={item.url!} type="application/pdf" className="min-h-0 w-full flex-1" title="PDF" />
-              <div className="flex shrink-0 justify-center border-t border-slate-200 py-2">
-                <a
-                  href={item.url!}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm font-semibold text-violet-700 underline-offset-2 hover:underline"
-                >
-                  Yeni sekmede aç
-                </a>
-              </div>
+            <div className="flex h-[min(78dvh,720px)] min-h-[280px] w-full flex-col bg-white">
+              <PdfPageBookViewer
+                pageUrls={item.pdf_page_urls ?? []}
+                pdfUrl={item.url ?? null}
+                title={item.title}
+              />
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center gap-2 px-6 py-16 text-center text-sm text-slate-600">

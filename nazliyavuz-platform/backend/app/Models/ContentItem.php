@@ -7,13 +7,34 @@ use Illuminate\Database\Eloquent\Model;
 
 class ContentItem extends Model
 {
-    protected $fillable = ['topic_id', 'type', 'title', 'url', 'thumbnail_url', 'duration_seconds', 'size_bytes', 'sort_order', 'is_free', 'is_active', 'description'];
+    protected $fillable = ['topic_id', 'type', 'title', 'url', 'storage_path', 'thumbnail_url', 'duration_seconds', 'size_bytes', 'sort_order', 'is_free', 'is_active', 'description'];
 
     protected $casts = ['is_free' => 'boolean', 'is_active' => 'boolean'];
 
     public function topic()
     {
         return $this->belongsTo(Topic::class);
+    }
+
+    public function pdfPages()
+    {
+        return $this->hasMany(ContentItemPdfPage::class)->orderBy('page_number');
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function resolvedPdfPageUrls(): array
+    {
+        if (! $this->relationLoaded('pdfPages')) {
+            $this->load('pdfPages');
+        }
+        if ($this->pdfPages->isEmpty()) {
+            return [];
+        }
+        $base = rtrim((string) config('app.url'), '/');
+
+        return $this->pdfPages->map(fn (ContentItemPdfPage $p) => $base.'/storage/'.$p->path)->values()->all();
     }
 
     public function progress()

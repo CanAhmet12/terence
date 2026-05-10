@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Jobs\ProcessContentItemPdfPagesJob;
 use App\Http\Controllers\Controller;
 use App\Models\ContentItem;
 use App\Models\Course;
@@ -135,6 +136,7 @@ class TeacherCurriculumContentController extends Controller
                     'type' => $contentType,
                     'title' => $title,
                     'url' => $url,
+                    'storage_path' => $path,
                     'thumbnail_url' => $thumbnailUrl,
                     'duration_seconds' => null,
                     'size_bytes' => $request->hasFile('file') ? $request->file('file')->getSize() : null,
@@ -155,6 +157,10 @@ class TeacherCurriculumContentController extends Controller
         }
 
         $this->cache->invalidateCourse((int) $result['course_id']);
+
+        if ($contentType === 'pdf') {
+            ProcessContentItemPdfPagesJob::dispatch((int) $result['item']->id);
+        }
 
         return response()->json([
             'success' => true,

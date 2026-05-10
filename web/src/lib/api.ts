@@ -449,6 +449,8 @@ export interface CurriculumContentItem {
   type: 'video' | 'pdf' | 'quiz' | 'text'
   title: string
   url?: string
+  /** PDF sayfa görselleri (JPEG URL listesi) */
+  pdf_page_urls?: string[]
   /** Özel kapak veya CDN; yoksa istemci YouTube vb. için türetir */
   thumbnail_url?: string | null
   is_free?: boolean
@@ -518,6 +520,8 @@ export interface MediaCatalogItem {
   sort_order: number
   /** Sunucunun çözdüğü kapak (özel > video kaydı > YouTube) */
   thumbnail_url?: string | null
+  /** PDF kitap görünümü için sayfa URL’leri */
+  pdf_page_urls?: string[]
 }
 
 export interface MediaCatalogSubjectSummary {
@@ -897,6 +901,7 @@ export interface ContentItem {
     thumbnail_url?: string
     duration_seconds?: number
   }
+  pdf_page_urls?: string[]
 }
 
 export interface CourseTopic {

@@ -9,6 +9,7 @@ export type ContentListItem = {
   type: "video" | "pdf" | "quiz" | "text";
   title: string;
   url?: string;
+  pdf_page_urls?: string[];
   duration_seconds?: number;
   thumbnail_url?: string;
   is_free?: boolean;
@@ -68,7 +69,9 @@ export function TopicContentList({
   const handlePrimary = (item: ContentListItem, e: MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     e.stopPropagation();
-    const canEmbed = (item.type === "video" || item.type === "pdf") && !!item.url;
+    const canEmbed =
+      (item.type === "video" && !!item.url) ||
+      (item.type === "pdf" && (!!item.url || (item.pdf_page_urls?.length ?? 0) > 0));
     if (canEmbed && onOpenMedia) onOpenMedia(item);
     else onSelect(item);
   };

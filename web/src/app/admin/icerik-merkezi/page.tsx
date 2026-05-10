@@ -75,12 +75,23 @@ export default function AdminIcerikMerkeziPage() {
         ))}
       </div>
 
-      <div className="mt-10 rounded-2xl border border-amber-200 bg-amber-50/80 p-5 text-sm text-amber-950">
+      <div className="mt-10 rounded-2xl border border-emerald-200 bg-emerald-50/80 p-5 text-sm text-emerald-950">
+        <p className="font-semibold text-emerald-900 mb-2">PDF kitap görünümü (yeni)</p>
+        <p className="mb-2">
+          Yüklenen PDF dosyaları sunucuda sayfa görüntülerine bölünür (poppler <code className="text-xs bg-white/60 px-1 rounded">pdftoppm</code> veya Imagick).
+          Öğrenci &quot;Derslerim&quot; ve &quot;Video &amp; PDF&quot; ekranında sayfa sayfa okuyabilir; iş kuyrukta çalışır — birkaç saniye sonra yenileyin.
+        </p>
+      </div>
+
+      <div className="mt-6 rounded-2xl border border-amber-200 bg-amber-50/80 p-5 text-sm text-amber-950">
         <p className="font-semibold text-amber-900 mb-2">Yol haritası (kısa)</p>
         <ul className="list-disc pl-5 space-y-1 text-amber-900/90">
-          <li>PDF kitap: sayfa görüntüleri ve sıra (arka planda poppler/Imagick veya kuyruk işçisi).</li>
-          <li>Soru seti: Word/PDF şablonundan içe aktarma veya görsel tabanlı OCR (kalite kontrollü onay adımı).</li>
-          <li>Video: isteğe bağlı ffmpeg ile gerçek kare kapak ve süre meta verisi.</li>
+          <li>
+            <strong>PDF kitap:</strong> sayfa görselleri (canlıda) — sunucuda{" "}
+            <code className="text-xs bg-white/60 px-1 rounded">apt install poppler-utils</code> önerilir.
+          </li>
+          <li>Soru seti: Word/PDF şablon içe aktarma veya OCR + onay adımı.</li>
+          <li>Video: ffmpeg ile gerçek kare kapak ve süre meta verisi.</li>
         </ul>
       </div>
     </div>
