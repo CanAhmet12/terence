@@ -62,6 +62,24 @@ class RoleMiddleware
             ], 403);
         }
 
+        // Öğretmen API rotaları: yalnızca yönetici onayı verilmiş öğretmen (admin bu grupta teacher değil)
+        if ($user->role === 'teacher' && in_array('teacher', $allowedRoles, true)) {
+            $status = $user->teacher_status;
+            if ($status !== 'approved') {
+                $code = $status === 'rejected' ? 'TEACHER_REJECTED' : 'TEACHER_PENDING_APPROVAL';
+                $message = $status === 'rejected'
+                    ? 'Öğretmen başvurunuz reddedildi. Detay için destek ile iletişime geçebilirsiniz.'
+                    : 'Öğretmen hesabınız yönetici onayı bekliyor. Onaylandığında panele erişebilirsiniz.';
+
+                return response()->json([
+                    'error' => [
+                        'code'    => $code,
+                        'message' => $message,
+                    ],
+                ], 403);
+            }
+        }
+
         return $next($request);
     }
 }

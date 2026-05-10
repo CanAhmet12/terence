@@ -197,20 +197,58 @@ class RoleMiddlewareTest extends TestCase
     }
 
     /**
+     * Pending öğretmen teacher-only rotalarına erişemez
+     */
+    public function test_pending_teacher_cannot_access_teacher_only_route(): void
+    {
+        $teacher = User::factory()->create([
+            'role' => 'teacher',
+            'teacher_status' => 'pending',
+        ]);
+        $token = JWTAuth::fromUser($teacher);
+
+        $response = $this->withHeader('Authorization', "Bearer $token")
+            ->getJson('/api/v1/teacher/classes');
+
+        $response->assertStatus(403)
+            ->assertJsonPath('error.code', 'TEACHER_PENDING_APPROVAL');
+    }
+
+    /**
+     * Onaylı öğretmen teacher-only rotalara erişir (route mevcutsa 404 olabilir; 403 olmamalı)
+     */
+    public function test_approved_teacher_not_blocked_by_teacher_status_gate(): void
+    {
+        $teacher = User::factory()->create([
+            'role' => 'teacher',
+            'teacher_status' => 'approved',
+        ]);
+        $token = JWTAuth::fromUser($teacher);
+
+        $response = $this->withHeader('Authorization', "Bearer $token")
+            ->getJson('/api/v1/teacher/classes');
+
+        self::assertNotSame(403, $response->getStatusCode());
+        self::assertNotSame(
+            'TEACHER_PENDING_APPROVAL',
+            data_get($response->json(), 'error.code')
+        );
+    }
+
+    /**
      * Test teacher role can access teacher endpoints
      */
     public function test_teacher_role_can_access_teacher_endpoints(): void
     {
         $teacher = User::factory()->create([
             'role' => 'teacher',
-            'teacher_status' => 'approved'
+            'teacher_status' => 'approved',
         ]);
         $token = JWTAuth::fromUser($teacher);
 
         $response = $this->withHeader('Authorization', "Bearer $token")
             ->getJson('/api/teacher/reservations');
 
-        // Should not be forbidden
         $response->assertNotForbidden();
     }
 }

@@ -64,17 +64,20 @@ class AuthController extends Controller
             return $this->validationError($v, $request);
         }
 
+        $role = $data['role'] ?? 'student';
+
         $user = User::create([
             'name'              => $data['name'] ?? null,
             'email'             => $data['email'] ?? null,
             'password'          => Hash::make($data['password'] ?? ''),
-            'role'              => $data['role'] ?? 'student',
+            'role'              => $role,
             'phone'             => $data['phone'] ?? null,
             'grade'             => $data['grade'] ?? null,
             'target_exam'       => $data['target_exam'] ?? null,
             'target_school'     => $data['target_school'] ?? null,
             'target_department' => $data['target_department'] ?? null,
             'target_net'        => $data['target_net'] ?? null,
+            'teacher_status'    => $role === 'teacher' ? 'pending' : null,
         ]);
 
         // Öğretmen ek alanları

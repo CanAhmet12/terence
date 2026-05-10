@@ -1,8 +1,5 @@
 import type { Metadata } from "next";
-import { TeacherSidebar } from "@/components/dashboard/TeacherSidebar";
-import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
-import { DashboardWrapper } from "@/components/dashboard/DashboardWrapper";
-import { AuthGuard } from "@/components/auth/AuthGuard";
+import { TeacherLayoutClient } from "./TeacherLayoutClient";
 
 export const metadata: Metadata = {
   title: "Öğretmen Paneli",
@@ -15,14 +12,5 @@ export default function TeacherLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <AuthGuard role="teacher">
-      <DashboardWrapper
-        sidebar={<TeacherSidebar />}
-        header={<DashboardHeader />}
-      >
-        {children}
-      </DashboardWrapper>
-    </AuthGuard>
-  );
+  return <TeacherLayoutClient>{children}</TeacherLayoutClient>;
 }

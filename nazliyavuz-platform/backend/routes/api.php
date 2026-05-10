@@ -248,18 +248,19 @@ Route::prefix('v1')->group(function () {
         Route::post('/upload/document', [App\Http\Controllers\FileUploadController::class, 'uploadDocument']);
         Route::post('/upload/presigned-url', [App\Http\Controllers\FileUploadController::class, 'generatePresignedUrl']);
         
-        // Teacher availability management
-        Route::get('/teacher/availabilities', [AvailabilityController::class, 'getCurrentTeacherAvailabilities']);
-        Route::post('/teacher/availabilities', [AvailabilityController::class, 'store']);
-        Route::put('/teacher/availabilities/{availability}', [AvailabilityController::class, 'update']);
-        Route::delete('/teacher/availabilities/{availability}', [AvailabilityController::class, 'destroy']);
-        
-        // Teacher exceptions management (izin, tatil, özel günler)
-        Route::get('/teacher/exceptions', [TeacherExceptionController::class, 'index']);
-        Route::post('/teacher/exceptions', [TeacherExceptionController::class, 'store']);
-        Route::put('/teacher/exceptions/{id}', [TeacherExceptionController::class, 'update']);
-        Route::delete('/teacher/exceptions/{id}', [TeacherExceptionController::class, 'destroy']);
-        Route::post('/teacher/exceptions/bulk-unavailable', [TeacherExceptionController::class, 'addBulkUnavailable']);
+        // Teacher availability / exceptions (öğretmen onayı gerekir — role:teacher)
+        Route::middleware('role:teacher')->group(function () {
+            Route::get('/teacher/availabilities', [AvailabilityController::class, 'getCurrentTeacherAvailabilities']);
+            Route::post('/teacher/availabilities', [AvailabilityController::class, 'store']);
+            Route::put('/teacher/availabilities/{availability}', [AvailabilityController::class, 'update']);
+            Route::delete('/teacher/availabilities/{availability}', [AvailabilityController::class, 'destroy']);
+
+            Route::get('/teacher/exceptions', [TeacherExceptionController::class, 'index']);
+            Route::post('/teacher/exceptions', [TeacherExceptionController::class, 'store']);
+            Route::put('/teacher/exceptions/{id}', [TeacherExceptionController::class, 'update']);
+            Route::delete('/teacher/exceptions/{id}', [TeacherExceptionController::class, 'destroy']);
+            Route::post('/teacher/exceptions/bulk-unavailable', [TeacherExceptionController::class, 'addBulkUnavailable']);
+        });
         
             // Push notification routes
             Route::post('/notifications/register-token', [PushNotificationController::class, 'registerToken']);

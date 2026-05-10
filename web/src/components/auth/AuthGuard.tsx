@@ -43,7 +43,23 @@ export function AuthGuard({
       }
       return;
     }
-    
+
+    // Öğretmen: yönetici onayı olmadan tam panele izin yok
+    if (user.role === "teacher") {
+      const isApproved = user.teacher_status === "approved";
+      const onPendingPage = pathname.startsWith("/ogretmen/onay-bekleniyor");
+      if (isApproved && onPendingPage) {
+        sessionStorage.removeItem(REDIRECT_COUNTER_KEY);
+        router.replace("/ogretmen");
+        return;
+      }
+      if (!isApproved && !onPendingPage) {
+        sessionStorage.setItem(REDIRECT_COUNTER_KEY, (redirectCount + 1).toString());
+        router.replace("/ogretmen/onay-bekleniyor");
+        return;
+      }
+    }
+
     if (role !== "any" && user.role !== role) {
       // Don't redirect if already on correct dashboard
       const targetPath = 

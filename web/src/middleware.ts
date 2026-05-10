@@ -38,6 +38,7 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith("/bakim/") ||
     pathname === "/giris" ||
     pathname.startsWith("/giris/") ||
+    pathname.startsWith("/ogretmen/onay-bekleniyor") ||
     pathname.startsWith("/admin");
 
   if (!maintenanceBypass) {

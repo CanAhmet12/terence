@@ -34,6 +34,8 @@ function translateApiMessage(raw?: string, code?: string): string {
     REFRESH_TOKEN_MISSING: 'Oturum suresi doldu. Lutfen tekrar giris yap.',
     GRADE_REQUIRED: 'Ogrenci hesabi icin sinif bilgisi zorunludur.',
     MAINTENANCE_MODE: 'Sistem bakimda. Lutfen daha sonra tekrar deneyin.',
+    TEACHER_PENDING_APPROVAL: 'Ogretmen hesabiniz yonetici onayi bekliyor.',
+    TEACHER_REJECTED: 'Ogretmen basvurunuz reddedildi.',
     'The email has already been taken.': 'Bu e-posta adresi zaten kayitli.',
     'The email has already been taken': 'Bu e-posta adresi zaten kayitli.',
     'The email field must be a valid email address.': 'Gecerli bir e-posta adresi gir.',
@@ -172,6 +174,24 @@ api.interceptors.response.use(
       }
     }
 
+    const status403 = error.response?.status
+    if (status403 === 403) {
+      const data403 = (error.response?.data ?? {}) as Record<string, unknown>
+      const nested403 =
+        data403.error && typeof data403.error === 'object' ? (data403.error as Record<string, unknown>) : null
+      const code403 = nested403?.code as string | undefined
+      if (
+        (code403 === 'TEACHER_PENDING_APPROVAL' || code403 === 'TEACHER_REJECTED') &&
+        typeof window !== 'undefined'
+      ) {
+        const p = window.location.pathname
+        if (!p.startsWith('/ogretmen/onay-bekleniyor')) {
+          window.location.assign('/ogretmen/onay-bekleniyor')
+        }
+        return Promise.reject(error)
+      }
+    }
+
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true
       try {
@@ -202,7 +222,12 @@ api.interceptors.response.use(
 
     const parsed = extractApiError(error)
     if (parsed.status && [422, 403, 429, 500].includes(parsed.status)) {
-      toast.error(parsed.message)
+      const skipToast403 =
+        parsed.code === 'TEACHER_PENDING_APPROVAL' ||
+        parsed.code === 'TEACHER_REJECTED'
+      if (!skipToast403) {
+        toast.error(parsed.message)
+      }
     }
 
     const normalizedError = new Error(parsed.message) as Error & ApiErrorPayload
@@ -294,6 +319,7 @@ export interface User {
   subscription_plan?: string
   subscription_expires_at?: string | null
   teacher_status?: string
+  rejection_reason?: string | null
   xp_points?: number
   level?: number
   streak_days?: number

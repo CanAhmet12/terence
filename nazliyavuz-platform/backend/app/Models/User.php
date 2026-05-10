@@ -494,6 +494,7 @@ class User extends Authenticatable implements JWTSubject
             'subscription_expires_at' => $this->subscription_expires_at,
             'email_verified_at'       => $this->email_verified_at,
             'teacher_status'          => $this->teacher_status,
+            'rejection_reason'        => $this->rejection_reason,
             'xp_points'               => (int)($this->xp_points ?? 0),
             'level'                   => (int)($this->level ?? 1),
             'streak_days'             => (int)($this->streak_days ?? 0),

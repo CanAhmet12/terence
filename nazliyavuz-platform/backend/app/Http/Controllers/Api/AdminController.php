@@ -554,11 +554,12 @@ class AdminController extends Controller
     public function approveTeacher(int $id): JsonResponse
     {
         $user = User::where('id', $id)->where('role', 'teacher')->firstOrFail();
-        $user->update([
-            'teacher_status' => 'approved',
-            'approved_at'    => now(),
-            'approved_by'    => Auth::id(),
-        ]);
+        $adminId = (int) Auth::id();
+        if ($adminId <= 0) {
+            return response()->json(['error' => true, 'message' => 'Yetkisiz'], 401);
+        }
+        $user->approveTeacher($adminId);
+
         return response()->json(['success' => true, 'message' => 'Ogretmen onaylandi']);
     }
 
@@ -566,10 +567,12 @@ class AdminController extends Controller
     {
         $user = User::where('id', $id)->where('role', 'teacher')->firstOrFail();
         $user->update([
-            'teacher_status' => 'rejected',
-            'approved_at'    => null,
-            'approved_by'    => null,
+            'teacher_status'   => 'rejected',
+            'approved_at'      => null,
+            'approved_by'      => null,
+            'rejection_reason' => null,
         ]);
+
         return response()->json(['success' => true, 'message' => 'Ogretmen reddedildi']);
     }
 
