@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { api } from "@/lib/api";
 import { Bell, ChevronDown, LayoutDashboard, LogOut, User } from "lucide-react";
@@ -19,6 +19,7 @@ export function HeaderUserMenu({
   profileSubtext,
 }: HeaderUserMenuProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const { user, token, logout } = useAuth();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -46,6 +47,19 @@ export function HeaderUserMenu({
   useEffect(() => {
     if (user?.profile_photo_url) setPhotoUrl(user.profile_photo_url);
   }, [user?.profile_photo_url]);
+
+  useEffect(() => {
+    setDropdownOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!dropdownOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setDropdownOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [dropdownOpen]);
 
   const handleLogout = async () => {
     setDropdownOpen(false);
@@ -137,7 +151,11 @@ export function HeaderUserMenu({
 
         {dropdownOpen && (
           <>
-            <div className="fixed inset-0 z-40" onClick={() => setDropdownOpen(false)} aria-hidden="true" />
+            <div
+              className="fixed inset-0 z-40 bg-slate-900/20 backdrop-blur-[1px]"
+              onClick={() => setDropdownOpen(false)}
+              aria-hidden="true"
+            />
             <div className="absolute right-0 z-50 mt-2 w-56 rounded-2xl border border-slate-200 bg-white py-2 shadow-xl">
               <div className="mb-1 border-b border-slate-100 px-4 py-3">
                 <p className="truncate text-sm font-semibold text-slate-900">{user.name}</p>

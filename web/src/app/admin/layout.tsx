@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -43,6 +43,35 @@ export default function AdminLayout({
 }) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
+  /** Tailwind dışı: dar pencerede menü açık kaldıysa veya lg:hidden üretimi sorunluysa overlay masaüstünde kalmasın */
+  const [narrowViewport, setNarrowViewport] = useState(false);
+
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mq = window.matchMedia("(max-width: 1023px)");
+    const apply = () => setNarrowViewport(mq.matches);
+    apply();
+    mq.addEventListener("change", apply);
+    return () => mq.removeEventListener("change", apply);
+  }, []);
+
+  useEffect(() => {
+    if (!narrowViewport && mobileOpen) setMobileOpen(false);
+  }, [narrowViewport, mobileOpen]);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setMobileOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  const showMobileBackdrop = mobileOpen && narrowViewport;
 
   return (
     <AuthGuard role="admin">
@@ -79,17 +108,18 @@ export default function AdminLayout({
         </aside>
 
         {/* Mobile overlay */}
-        {mobileOpen && (
+        {showMobileBackdrop && (
           <div
-            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 lg:hidden"
+            className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm lg:hidden"
             onClick={() => setMobileOpen(false)}
+            aria-hidden="true"
           />
         )}
 
         {/* Mobile sidebar */}
         <aside
           className={`fixed top-0 left-0 z-50 h-full w-72 bg-slate-900 text-white shadow-2xl transform transition-transform lg:hidden ${
-            mobileOpen ? "translate-x-0" : "-translate-x-full"
+            mobileOpen && narrowViewport ? "translate-x-0" : "-translate-x-full"
           }`}
         >
           <div className="absolute top-4 right-4 z-10">
