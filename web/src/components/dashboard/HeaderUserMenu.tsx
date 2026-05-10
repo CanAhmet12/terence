@@ -5,7 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { api } from "@/lib/api";
 import { Bell, ChevronDown, LayoutDashboard, LogOut, User } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 type HeaderUserMenuProps = {
   /** Örn. Video & PDF: mor rozet */
@@ -24,12 +24,14 @@ export function HeaderUserMenu({
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  const menuRootRef = useRef<HTMLDivElement>(null);
 
   const fetchUnread = useCallback(async () => {
     if (!token) return;
     try {
       const notifications = await api.getNotifications(token, { per_page: 50 });
-      const count = notifications.data.filter((n) => !n.is_read).length;
+      const rows = Array.isArray(notifications?.data) ? notifications.data : [];
+      const count = rows.filter((n) => !n.is_read).length;
       setUnreadCount(count);
     } catch {
       // ignore
@@ -59,6 +61,18 @@ export function HeaderUserMenu({
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
+  }, [dropdownOpen]);
+
+  /** Tam ekran backdrop kullanma: z-40 katman bazen açık kalıp tüm paneli kilitliyordu; dış tık ile kapat */
+  useEffect(() => {
+    if (!dropdownOpen) return;
+    const onPointerDown = (e: PointerEvent) => {
+      const root = menuRootRef.current;
+      if (!root || root.contains(e.target as Node)) return;
+      setDropdownOpen(false);
+    };
+    document.addEventListener("pointerdown", onPointerDown, true);
+    return () => document.removeEventListener("pointerdown", onPointerDown, true);
   }, [dropdownOpen]);
 
   const handleLogout = async () => {
@@ -104,7 +118,7 @@ export function HeaderUserMenu({
           : "/ogrenci/bildirimler";
 
   return (
-    <div className="flex shrink-0 items-center gap-0.5 sm:gap-2">
+    <div ref={menuRootRef} className="flex shrink-0 items-center gap-0.5 sm:gap-2">
       <Link
         href={notificationsHref}
         className="relative flex items-center justify-center rounded-lg p-1.5 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700 sm:p-2"
@@ -150,13 +164,7 @@ export function HeaderUserMenu({
         </button>
 
         {dropdownOpen && (
-          <>
-            <div
-              className="fixed inset-0 z-40 bg-slate-900/20 backdrop-blur-[1px]"
-              onClick={() => setDropdownOpen(false)}
-              aria-hidden="true"
-            />
-            <div className="absolute right-0 z-50 mt-2 w-56 rounded-2xl border border-slate-200 bg-white py-2 shadow-xl">
+          <div className="absolute right-0 z-50 mt-2 w-56 rounded-2xl border border-slate-200 bg-white py-2 shadow-xl">
               <div className="mb-1 border-b border-slate-100 px-4 py-3">
                 <p className="truncate text-sm font-semibold text-slate-900">{user.name}</p>
                 <p className="truncate text-xs text-slate-500">{user.email}</p>
@@ -188,7 +196,6 @@ export function HeaderUserMenu({
                 </button>
               </div>
             </div>
-          </>
         )}
       </div>
     </div>
