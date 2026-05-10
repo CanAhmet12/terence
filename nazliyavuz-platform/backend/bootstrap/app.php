@@ -36,6 +36,7 @@ return Application::configure(basePath: dirname(__DIR__))
                'xss_protection' => \App\Http\Middleware\XssProtectionMiddleware::class,
                'admin.security' => \App\Http\Middleware\AdminSecurityMiddleware::class,
                'update_user_activity' => \App\Http\Middleware\UpdateUserActivity::class,
+               'maintenance_except_admin' => \App\Http\Middleware\MaintenanceModeExceptAdmin::class,
            ]);
        })
     ->withExceptions(function (Exceptions $exceptions): void {

@@ -40,6 +40,24 @@ export default function AdminAyarlarPage() {
 
   useEffect(() => { loadLogs(); }, [loadLogs]);
 
+  useEffect(() => {
+    if (!token) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const s = await api.getAdminSettings();
+        if (cancelled) return;
+        setLang(s.language);
+        setMaintenanceMode(s.maintenance_mode);
+      } catch {
+        // Sunucudan ayar okunamazsa varsayılanlar
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [token]);
+
   const handleSave = async () => {
     if (!token) return;
     setSaving(true);

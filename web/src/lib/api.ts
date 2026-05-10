@@ -1,23 +1,10 @@
 import axios, { AxiosError, AxiosRequestConfig, AxiosResponse } from 'axios'
 import toast from 'react-hot-toast'
 import type { StudentGoalDashboard, RiskTier } from './goal-dashboard'
+import { getPublicApiBaseUrl } from './public-api-base'
 
 /** NEXT_PUBLIC_API_URL bazen .../api/v1 ile biter; istekler /v1/... kullanınca çift /v1/v1 oluşur. */
-function normalizeApiBaseUrl(raw: string): string {
-  let u = raw.trim().replace(/\/+$/, '')
-  if (u.endsWith('/v1')) {
-    u = u.slice(0, -3).replace(/\/+$/, '')
-  }
-  return u
-}
-
-// Önce NEXT_PUBLIC_API_URL (build / runtime). Yoksa: development → yerel Laravel, production → canlı site (deploy’da env unutulursa kırılmaz).
-const API_BASE_URL = normalizeApiBaseUrl(
-  process.env.NEXT_PUBLIC_API_URL ||
-    (process.env.NODE_ENV === 'development'
-      ? 'http://localhost:8000/api'
-      : 'https://terenceegitim.com/api')
-)
+const API_BASE_URL = getPublicApiBaseUrl()
 
 export const api = axios.create({
   baseURL: API_BASE_URL,
@@ -46,6 +33,7 @@ function translateApiMessage(raw?: string, code?: string): string {
     REFRESH_TOKEN_INVALID: 'Oturum suresi doldu. Lutfen tekrar giris yap.',
     REFRESH_TOKEN_MISSING: 'Oturum suresi doldu. Lutfen tekrar giris yap.',
     GRADE_REQUIRED: 'Ogrenci hesabi icin sinif bilgisi zorunludur.',
+    MAINTENANCE_MODE: 'Sistem bakimda. Lutfen daha sonra tekrar deneyin.',
     'The email has already been taken.': 'Bu e-posta adresi zaten kayitli.',
     'The email has already been taken': 'Bu e-posta adresi zaten kayitli.',
     'The email field must be a valid email address.': 'Gecerli bir e-posta adresi gir.',
@@ -168,6 +156,21 @@ api.interceptors.response.use(
   (response: AxiosResponse) => response,
   async (error: AxiosError) => {
     const originalRequest = error.config as AxiosRequestConfig & { _retry?: boolean }
+
+    const statusEarly = error.response?.status
+    if (statusEarly === 503) {
+      const data503 = (error.response?.data ?? {}) as Record<string, unknown>
+      const nested503 =
+        data503.error && typeof data503.error === 'object' ? (data503.error as Record<string, unknown>) : null
+      const code503 = nested503?.code as string | undefined
+      if (code503 === 'MAINTENANCE_MODE' && typeof window !== 'undefined') {
+        const p = window.location.pathname
+        if (!p.startsWith('/admin') && p !== '/bakim') {
+          window.location.assign('/bakim')
+        }
+        return Promise.reject(error)
+      }
+    }
 
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true
@@ -2100,6 +2103,17 @@ export const adminApi = {
     await api.delete(`/admin/coupons/${actualId}`)
   },
 
+  async getAdminSettings(): Promise<{ language: string; maintenance_mode: boolean }> {
+    const response = await api.get<{ success?: boolean; data?: { language?: string; maintenance_mode?: boolean } }>(
+      '/admin/settings'
+    )
+    const d = response.data?.data
+    return {
+      language: d?.language === 'en' ? 'en' : 'tr',
+      maintenance_mode: Boolean(d?.maintenance_mode),
+    }
+  },
+
   async updateAdminSettings(_tokenOrData?: string | Record<string, unknown>, data?: Record<string, unknown>): Promise<void> {
     const actualData = typeof _tokenOrData === 'string' ? data : _tokenOrData
     await api.post('/admin/settings', actualData)
@@ -2473,6 +2487,7 @@ Object.assign(api, {
   createAdminCoupon: adminApi.createAdminCoupon.bind(adminApi),
   updateAdminCoupon: adminApi.updateAdminCoupon.bind(adminApi),
   deleteAdminCoupon: adminApi.deleteAdminCoupon.bind(adminApi),
+  getAdminSettings: adminApi.getAdminSettings.bind(adminApi),
   updateAdminSettings: adminApi.updateAdminSettings.bind(adminApi),
   // Payment
   getPackages: paymentApi.getPackages.bind(paymentApi),

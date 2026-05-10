@@ -41,6 +41,7 @@ Route::prefix('v1')->group(function () {
     // Health check (public)
     Route::get('/health', [App\Http\Controllers\HealthCheckController::class, 'detailed']);
     Route::get('/health/basic', [App\Http\Controllers\HealthCheckController::class, 'basic']);
+    Route::get('/system/public-status', [\App\Http\Controllers\Api\SystemStatusController::class, 'publicStatus']);
     
     // ============================================================
     // PUBLIC AUTH ROUTES (No authentication required)
@@ -96,7 +97,7 @@ Route::prefix('v1')->group(function () {
     Route::post('/payments/callback', [PaymentController::class, 'handleCallback']);
     
     // Protected routes
-    Route::middleware(['auth:api', 'rate_limit:api,60,1', 'update_user_activity'])->group(function () {
+    Route::middleware(['auth:api', 'rate_limit:api,60,1', 'update_user_activity', 'maintenance_except_admin'])->group(function () {
         
         // User profile
         Route::get('/user', [UserController::class, 'profile']);
@@ -590,6 +591,7 @@ Route::middleware(['auth:api'])->group(function () {
         Route::post('/admin/coupons', [\App\Http\Controllers\Api\AdminController::class, 'createCoupon']);
         Route::patch('/admin/coupons/{id}', [\App\Http\Controllers\Api\AdminController::class, 'updateCoupon']);
         Route::delete('/admin/coupons/{id}', [\App\Http\Controllers\Api\AdminController::class, 'deleteCoupon']);
+        Route::get('/admin/settings', [\App\Http\Controllers\Api\AdminController::class, 'getSettings']);
         Route::post('/admin/settings', [\App\Http\Controllers\Api\AdminController::class, 'updateSettings']);
     });
 });

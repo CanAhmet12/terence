@@ -14,6 +14,7 @@ use App\Models\QuestionBankDisplay;
 use App\Models\ExamTemplate;
 use App\Models\ExamTemplateQuestion;
 use App\Models\AuditLog;
+use App\Models\SystemSetting;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
@@ -267,11 +268,43 @@ class AdminController extends Controller
         return response()->json(['success' => true, 'data' => $logs]);
     }
 
+    // GET /api/admin/settings
+    public function getSettings(): JsonResponse
+    {
+        $lang = SystemSetting::getRaw('default_language', 'tr');
+        if (! in_array($lang, ['tr', 'en'], true)) {
+            $lang = 'tr';
+        }
+        $maintRaw = SystemSetting::getRaw('maintenance_mode', '0');
+        $maintenance = $maintRaw === '1' || $maintRaw === 'true' || $maintRaw === 'yes';
+
+        return response()->json([
+            'success' => true,
+            'data'    => [
+                'language'          => $lang,
+                'maintenance_mode'  => $maintenance,
+            ],
+        ]);
+    }
+
     // POST /api/admin/settings
     public function updateSettings(Request $request): JsonResponse
     {
-        // Ayarlar DB'de config tablosunda tutulacak
-        // Şimdilik basit bir yanıt dön
+        $v = Validator::make($request->all(), [
+            'language'          => 'nullable|string|in:tr,en',
+            'maintenance_mode'  => 'nullable|boolean',
+        ]);
+        if ($v->fails()) {
+            return response()->json(['error' => true, 'errors' => $v->errors()], 422);
+        }
+        $data = $v->validated();
+        if (array_key_exists('language', $data)) {
+            SystemSetting::put('default_language', (string) $data['language']);
+        }
+        if (array_key_exists('maintenance_mode', $data)) {
+            SystemSetting::put('maintenance_mode', $request->boolean('maintenance_mode') ? '1' : '0');
+        }
+
         return response()->json(['success' => true, 'message' => 'Ayarlar kaydedildi']);
     }
 
