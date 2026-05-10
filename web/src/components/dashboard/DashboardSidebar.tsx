@@ -146,8 +146,8 @@ const adminNavGroups = [
   {
     label: "İÇERİK",
     items: [
-      { href: "/admin/sorular", icon: FileQuestion, label: "Soru Havuzu" },
       { href: "/admin/icerik-merkezi", icon: Layers, label: "İçerik merkezi" },
+      { href: "/admin/sorular", icon: FileQuestion, label: "Soru Havuzu" },
       { href: "/admin/kupon", icon: Heart, label: "Kuponlar" },
     ],
   },

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft, BookOpen, FileQuestion, Library, ListVideo, Upload } from "lucide-react";
+import { ArrowLeft, BookOpen, ClipboardList, FileQuestion, Library, ListVideo, Upload } from "lucide-react";
 
 const cards = [
   {
@@ -19,6 +19,13 @@ const cards = [
     accent: "from-slate-700 to-slate-600",
   },
   {
+    href: "/admin/deneme-sablonlari",
+    title: "Deneme şablonları",
+    desc: "TYT, AYT, LGS vb. deneme şablonları; süre, sınıf ve soru listesi yönetimi.",
+    icon: ClipboardList,
+    accent: "from-sky-600 to-blue-600",
+  },
+  {
     href: "/admin/sorular",
     title: "Soru havuzu",
     desc: "Tek tek veya toplu (JSON) soru girişi. PDF’ten otomatik soru çıkarma bir sonraki sürümde planlanır.",
@@ -27,8 +34,8 @@ const cards = [
   },
   {
     href: "/admin/soru-bankasi-kitaplari",
-    title: "Öğrenci kitap kartları",
-    desc: "Soru bankasında görünen 3D kitap kapak metinleri ve renkleri (otomatik kapak için ders/sınıf eşlemesi).",
+    title: "Kitap kapakları",
+    desc: "Soru bankasında görünen 3D kitap kartları: metinler, renkler ve ders/sınıf eşlemesi.",
     icon: Library,
     accent: "from-amber-600 to-orange-500",
   },
@@ -55,7 +62,7 @@ export default function AdminIcerikMerkeziPage() {
         </div>
       </div>
 
-      <div className="grid sm:grid-cols-2 gap-5">
+      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {cards.map(({ href, title, desc, icon: Icon, accent }) => (
           <Link
             key={href}

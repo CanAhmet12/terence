@@ -27,6 +27,7 @@ import {
   LayoutDashboard,
   Bell,
   Search,
+  ClipboardList,
 } from "lucide-react";
 import { useCallback, useEffect, useRef, Suspense } from "react";
 import { cn } from "@/lib/utils";
@@ -69,6 +70,9 @@ const PATH_MAP: Record<string, PathMeta> = {
   "/admin/icerik-merkezi": { label: "İçerik merkezi", icon: BookOpen },
   "/admin/icerik/yukle": { label: "Medya yükle", icon: Upload },
   "/admin/icerik": { label: "İçerik listesi", icon: Upload },
+  "/admin/sorular": { label: "Soru havuzu", icon: FileQuestion },
+  "/admin/deneme-sablonlari": { label: "Deneme şablonları", icon: ClipboardList },
+  "/admin/soru-bankasi-kitaplari": { label: "Kitap kapakları", icon: Library },
   "/admin/raporlar": { label: "Raporlar", icon: BarChart3 },
   "/admin/ayarlar": { label: "Sistem Ayarları", icon: Settings },
   "/admin/ogretmen-onay": { label: "Öğretmen Onay", icon: Users },
@@ -135,8 +139,10 @@ function DashboardHeaderInner() {
           : "/ogrenci";
 
   const currentPage =
-    PATH_MAP[pathname] ||
-    Object.entries(PATH_MAP).find(([key]) => pathname.startsWith(key + "/"))?.[1] ||
+    PATH_MAP[pathname] ??
+    Object.entries(PATH_MAP)
+      .filter(([key]) => pathname === key || pathname.startsWith(`${key}/`))
+      .sort((a, b) => b[0].length - a[0].length)[0]?.[1] ??
     ({ label: "Panel", icon: Home } as const);
   const PageIcon = currentPage.icon;
   const coachIconSrc = currentPage.iconSrc;

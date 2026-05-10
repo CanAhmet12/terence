@@ -204,9 +204,9 @@ export default function AdminDenemeSablonlariPage() {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 xl:p-12 min-w-0 overflow-x-hidden max-w-6xl">
-      <Link href="/admin" className="inline-flex items-center gap-2 text-slate-600 hover:text-teal-600 mb-6 font-medium">
+      <Link href="/admin/icerik-merkezi" className="inline-flex items-center gap-2 text-slate-600 hover:text-teal-600 mb-6 font-medium">
         <ArrowLeft className="w-4 h-4" />
-        Admin
+        İçerik merkezine dön
       </Link>
 
       <div className="flex items-start gap-3 mb-8">

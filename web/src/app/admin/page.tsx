@@ -211,7 +211,7 @@ export default function AdminDashboardPage() {
             İçerik Yönetimi
           </h2>
           <p className="text-sm text-slate-600 mb-6">
-            Video, PDF ve soru ekleme, düzenleme, silme işlemleri
+            Medya yükleme, soru havuzu, deneme şablonları ve kitap kapakları tek merkezden.
           </p>
           <div className="flex flex-wrap gap-3">
             <Link
@@ -219,12 +219,6 @@ export default function AdminDashboardPage() {
               className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-teal-600 to-teal-500 text-white font-semibold rounded-xl hover:from-teal-700 hover:to-teal-600 transition-all shadow-lg shadow-teal-500/25"
             >
               İçerik merkezi
-            </Link>
-            <Link
-              href="/admin/sorular"
-              className="inline-flex items-center gap-2 px-5 py-2.5 border-2 border-slate-200 text-slate-700 font-semibold rounded-xl hover:bg-slate-50 transition-colors"
-            >
-              Soru Havuzu
             </Link>
           </div>
         </div>

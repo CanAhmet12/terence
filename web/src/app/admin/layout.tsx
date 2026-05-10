@@ -14,8 +14,6 @@ import {
   X,
   UserCheck,
   Tag,
-  Library,
-  ClipboardList,
 } from "lucide-react";
 import Image from "next/image";
 import { AuthGuard } from "@/components/auth/AuthGuard";
@@ -27,8 +25,6 @@ const navItems = [
   { href: "/admin/ogretmen-onay", icon: UserCheck, label: "Öğretmen Onay" },
   { href: "/admin/icerik-merkezi", icon: Layers, label: "İçerik merkezi" },
   { href: "/admin/sorular", icon: FileQuestion, label: "Soru Havuzu" },
-  { href: "/admin/deneme-sablonlari", icon: ClipboardList, label: "Deneme şablonları" },
-  { href: "/admin/soru-bankasi-kitaplari", icon: Library, label: "Kitap kapakları" },
   { href: "/admin/kupon", icon: Tag, label: "Kuponlar" },
   { href: "/admin/raporlar", icon: BarChart3, label: "Raporlar" },
   { href: "/admin/ayarlar", icon: Settings, label: "Ayarlar" },
@@ -88,7 +84,10 @@ export default function AdminLayout({
             {navItems.map((item) => {
               const isActive =
                 item.href === "/admin/icerik-merkezi"
-                  ? pathname === "/admin/icerik-merkezi" || pathname.startsWith("/admin/icerik")
+                  ? pathname === "/admin/icerik-merkezi" ||
+                    pathname.startsWith("/admin/icerik") ||
+                    pathname.startsWith("/admin/deneme-sablonlari") ||
+                    pathname.startsWith("/admin/soru-bankasi-kitaplari")
                   : pathname === item.href;
               return (
                 <Link
@@ -144,7 +143,10 @@ export default function AdminLayout({
                   href={item.href}
                   className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium ${
                     (item.href === "/admin/icerik-merkezi"
-                      ? pathname === "/admin/icerik-merkezi" || pathname.startsWith("/admin/icerik")
+                      ? pathname === "/admin/icerik-merkezi" ||
+                        pathname.startsWith("/admin/icerik") ||
+                        pathname.startsWith("/admin/deneme-sablonlari") ||
+                        pathname.startsWith("/admin/soru-bankasi-kitaplari")
                       : pathname === item.href)
                       ? "bg-teal-600/20 text-teal-400"
                       : "text-slate-400 hover:bg-slate-800"
