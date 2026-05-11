@@ -1,3 +1,0 @@
-cd /var/www/terence/nazliyavuz-platform/backend
-php -r 'require "vendor/autoload.php"; $app = require_once "bootstrap/app.php"; $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap(); $b = (int) Illuminate\Support\Facades\DB::table("migrations")->max("batch") + 1; Illuminate\Support\Facades\DB::table("migrations")->insertOrIgnore(array("migration"=>"2026_05_06_000002_add_student_grade_constraint","batch"=>$b)); echo "inserted batch $b\n";'
-php artisan migrate:status | grep 2026_05_06_000002
