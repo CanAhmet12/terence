@@ -1592,6 +1592,46 @@ export interface ExamSummaryStats {
   avg_time_seconds: number
 }
 
+/** Laravel decimal / bigint alanları JSON'da string gelebilir; UI `.toFixed()` çağırınca patlamasın */
+function sanitizeExamSessionNumeric(sess: ExamSession): ExamSession {
+  const n = (v: unknown): number | undefined => {
+    if (v == null || v === '') return undefined
+    if (typeof v === 'number') return Number.isFinite(v) ? v : undefined
+    const x = Number(v)
+    return Number.isFinite(x) ? x : undefined
+  }
+  const id = n(sess.id) ?? 0
+  let breakdown = sess.subject_breakdown
+  if (breakdown && typeof breakdown === 'object' && !Array.isArray(breakdown)) {
+    const next: Record<string, { correct: number; wrong: number; empty: number; net: number }> = {}
+    for (const [key, row] of Object.entries(breakdown)) {
+      if (row && typeof row === 'object') {
+        const r = row as Record<string, unknown>
+        next[key] = {
+          correct: n(r.correct) ?? 0,
+          wrong: n(r.wrong) ?? 0,
+          empty: n(r.empty) ?? 0,
+          net: n(r.net) ?? 0,
+        }
+      }
+    }
+    breakdown = next
+  }
+  return {
+    ...sess,
+    id,
+    net_score: n(sess.net_score),
+    correct_count: n(sess.correct_count),
+    wrong_count: n(sess.wrong_count),
+    empty_count: n(sess.empty_count),
+    time_spent_seconds: n(sess.time_spent_seconds),
+    score: n(sess.score),
+    total_questions: n(sess.total_questions),
+    duration_minutes: n(sess.duration_minutes),
+    subject_breakdown: breakdown,
+  }
+}
+
 /** Laravel `GET /exams/{id}/result`, `POST /exams/{id}/finish` vb. yanıtlarını tek `ExamSession` şekline indirger */
 export function normalizeExamSessionFromApi(payload: unknown): ExamSession {
   if (payload == null || typeof payload !== 'object') {
@@ -1602,12 +1642,19 @@ export function normalizeExamSessionFromApi(payload: unknown): ExamSession {
     (o.result as ExamSession | undefined) ??
     (o.session as ExamSession | undefined) ??
     (o.data as ExamSession | undefined)
-  if (nested && typeof nested === 'object' && typeof (nested as ExamSession).id === 'number') {
-    return nested as ExamSession
+  const nestedId =
+    nested && typeof nested === 'object' ? (nested as Record<string, unknown>).id : undefined
+  if (
+    nested &&
+    typeof nested === 'object' &&
+    (typeof nestedId === 'number' || (typeof nestedId === 'string' && nestedId !== ''))
+  ) {
+    return sanitizeExamSessionNumeric(nested as ExamSession)
   }
-  if (typeof o.session_id === 'number') {
-    return {
-      id: o.session_id,
+  if (typeof o.session_id === 'number' || (typeof o.session_id === 'string' && o.session_id !== '')) {
+    const sid = typeof o.session_id === 'number' ? o.session_id : Number(o.session_id)
+    return sanitizeExamSessionNumeric({
+      id: Number.isFinite(sid) ? sid : 0,
       correct_count: o.correct_count as number | undefined,
       wrong_count: o.wrong_count as number | undefined,
       empty_count: o.empty_count as number | undefined,
@@ -1615,10 +1662,10 @@ export function normalizeExamSessionFromApi(payload: unknown): ExamSession {
       subject_breakdown: o.subject_breakdown as ExamSession['subject_breakdown'],
       time_spent_seconds: o.time_spent_seconds as number | undefined,
       status: 'completed',
-    }
+    })
   }
-  if (typeof o.id === 'number') {
-    return o as unknown as ExamSession
+  if (typeof o.id === 'number' || (typeof o.id === 'string' && o.id !== '')) {
+    return sanitizeExamSessionNumeric(o as unknown as ExamSession)
   }
   return { id: 0 }
 }

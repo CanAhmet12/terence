@@ -27,7 +27,11 @@ export default function ExamResultPage() {
   const [weakLoading, setWeakLoading] = useState(false);
 
   const loadResult = useCallback(async () => {
-    if (!token) return;
+    if (!token) {
+      setLoading(false);
+      setError("Oturum bulunamadı. Lütfen tekrar giriş yap.");
+      return;
+    }
     try {
       const res = await api.getExamResult(sessionId);
       setResult(res);
@@ -56,7 +60,7 @@ export default function ExamResultPage() {
     );
   }
 
-  if (error || !result) {
+  if (error || !result || !result.id) {
     return (
       <div className="p-10 text-center">
         <p className="text-red-500 mb-4">{error ?? "Sonuç bulunamadı"}</p>
@@ -65,9 +69,18 @@ export default function ExamResultPage() {
     );
   }
 
+  const netDisplay =
+    typeof result.net_score === "number" && Number.isFinite(result.net_score)
+      ? result.net_score.toFixed(2)
+      : result.net_score != null
+        ? String(result.net_score)
+        : "—";
+
   const breakdown = result.subject_breakdown ?? {};
   const subjects = Object.keys(breakdown);
-  const netColor = (result.net_score ?? 0) >= 70 ? "text-emerald-600" : (result.net_score ?? 0) >= 40 ? "text-amber-600" : "text-red-600";
+  const netNum = Number(result.net_score);
+  const netSafe = Number.isFinite(netNum) ? netNum : 0;
+  const netColor = netSafe >= 70 ? "text-emerald-600" : netSafe >= 40 ? "text-amber-600" : "text-red-600";
 
   return (
     <div className="p-4 sm:p-6 lg:p-10 max-w-4xl mx-auto min-w-0">
@@ -86,7 +99,7 @@ export default function ExamResultPage() {
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 sm:p-8 mb-6">
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 text-center">
           <div>
-            <p className={`text-4xl font-black ${netColor}`}>{result.net_score?.toFixed(2) ?? "—"}</p>
+            <p className={`text-4xl font-black ${netColor}`}>{netDisplay}</p>
             <p className="text-sm text-slate-500 mt-1 font-medium">Net Puan</p>
           </div>
           <div>
@@ -129,17 +142,22 @@ export default function ExamResultPage() {
           <div className="space-y-4">
             {subjects.map((subject) => {
               const s = breakdown[subject];
-              const total = (s.correct + s.wrong + s.empty) || 1;
-              const accuracy = Math.round((s.correct / total) * 100);
+              const c = Number(s.correct) || 0;
+              const w = Number(s.wrong) || 0;
+              const e = Number(s.empty) || 0;
+              const netSub = Number(s.net);
+              const total = c + w + e || 1;
+              const accuracy = Math.round((c / total) * 100);
+              const netRow = Number.isFinite(netSub) ? netSub.toFixed(1) : "—";
               return (
                 <div key={subject}>
                   <div className="flex items-center justify-between mb-1.5">
                     <span className="text-sm font-semibold text-slate-700">{subject}</span>
                     <div className="flex items-center gap-3 text-xs text-slate-500">
-                      <span className="text-emerald-600 font-semibold">D:{s.correct}</span>
-                      <span className="text-red-500 font-semibold">Y:{s.wrong}</span>
-                      <span className="text-slate-400">B:{s.empty}</span>
-                      <span className="font-bold text-slate-700">Net:{s.net.toFixed(1)}</span>
+                      <span className="text-emerald-600 font-semibold">D:{c}</span>
+                      <span className="text-red-500 font-semibold">Y:{w}</span>
+                      <span className="text-slate-400">B:{e}</span>
+                      <span className="font-bold text-slate-700">Net:{netRow}</span>
                     </div>
                   </div>
                   <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
@@ -169,14 +187,16 @@ export default function ExamResultPage() {
             </div>
           ) : (
             <div className="space-y-3">
-              {weakAchievements.map((wa) => {
-                const accuracyColor = wa.accuracy_rate < 40
+              {weakAchievements.map((wa, idx) => {
+                const acc = Number(wa.accuracy_rate);
+                const accSafe = Number.isFinite(acc) ? acc : 0;
+                const accuracyColor = accSafe < 40
                   ? "bg-red-500"
-                  : wa.accuracy_rate < 70
+                  : accSafe < 70
                   ? "bg-amber-500"
                   : "bg-teal-500";
                 return (
-                  <div key={wa.id} className="flex items-center gap-4 p-4 bg-slate-50 rounded-xl border border-slate-100">
+                  <div key={wa.id ?? `${wa.kod}-${idx}`} className="flex items-center gap-4 p-4 bg-slate-50 rounded-xl border border-slate-100">
                     <div className="shrink-0">
                       <span className="font-mono text-xs font-bold text-teal-600 bg-teal-50 px-2 py-1 rounded-lg">
                         {wa.kod}
@@ -191,10 +211,10 @@ export default function ExamResultPage() {
                         <div className="w-20 h-2 bg-slate-200 rounded-full overflow-hidden">
                           <div
                             className={`h-full rounded-full ${accuracyColor}`}
-                            style={{ width: `${wa.accuracy_rate}%` }}
+                            style={{ width: `${Math.min(100, Math.max(0, accSafe))}%` }}
                           />
                         </div>
-                        <span className="text-xs font-bold text-slate-700">%{wa.accuracy_rate}</span>
+                        <span className="text-xs font-bold text-slate-700">%{accSafe}</span>
                       </div>
                       <p className="text-xs text-slate-400 mt-0.5">{wa.wrong_count}/{wa.total_count} hatalı</p>
                     </div>
