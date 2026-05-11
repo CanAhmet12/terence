@@ -300,27 +300,28 @@ export default function OgretmenDashboardPage() {
         )}
 
         {/* ── Hero ── */}
-        <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-br from-blue-600 via-indigo-700 to-violet-800 p-5 text-white shadow-xl shadow-indigo-500/20 sm:p-8">
+        <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-br from-cyan-600 via-sky-600 to-cyan-800 p-5 text-white shadow-xl shadow-cyan-500/25 sm:p-8">
           <div className="absolute -right-12 -top-12 w-48 h-48 bg-white/5 rounded-full blur-2xl pointer-events-none" />
+          <div className="absolute right-20 bottom-0 w-32 h-32 bg-cyan-500/20 rounded-full blur-xl pointer-events-none" />
           <div className="relative z-10 flex flex-col sm:flex-row sm:items-center gap-6">
             <div className="flex-1">
-              <p className="text-indigo-200 text-sm font-medium">{greeting},</p>
+              <p className="text-cyan-200 text-sm font-medium">{greeting},</p>
               <h1 className="text-2xl lg:text-3xl font-black mt-1 leading-tight">
                 {user?.name?.split(" ")[0] ?? "Öğretmen"} 👋
               </h1>
-              <p className="text-indigo-200 text-sm mt-2">
+              <p className="text-cyan-200 text-sm mt-2">
                 {now.toLocaleDateString("tr-TR", { weekday: "long", day: "numeric", month: "long" })}
               </p>
             </div>
             <div className="flex items-center gap-4">
               <div className="text-center">
                 <p className="text-3xl font-black">{riskStudents.filter((s) => s.risk_level === "red").length}</p>
-                <p className="text-indigo-200 text-xs mt-0.5">Kritik Öğrenci</p>
+                <p className="text-cyan-200 text-xs mt-0.5">Kritik Öğrenci</p>
               </div>
               <div className="w-px h-12 bg-white/20" />
               <div className="text-center">
                 <p className="text-3xl font-black">{stats?.total_students ?? "—"}</p>
-                <p className="text-indigo-200 text-xs mt-0.5">Toplam Öğrenci</p>
+                <p className="text-cyan-200 text-xs mt-0.5">Toplam Öğrenci</p>
               </div>
             </div>
           </div>
