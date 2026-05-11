@@ -41,13 +41,18 @@ const floatingCards = [
 
 export function HeroSection() {
   return (
-    <section className="relative pt-24 pb-12 sm:pt-28 sm:pb-16 lg:pt-36 lg:pb-24 overflow-x-hidden">
-      {/* Arka plan dekoratörleri */}
-      <div className="absolute inset-0 gradient-hero-mesh" />
-      {/* OLD: bg-teal-300/10 */}
-      <div className="absolute top-0 right-0 w-[700px] h-[700px] rounded-full bg-cyan-300/10 blur-3xl -translate-y-1/3 translate-x-1/4" />
-      <div className="absolute bottom-0 left-0 w-[500px] h-[500px] rounded-full bg-amber-300/8 blur-3xl translate-y-1/3 -translate-x-1/4" />
-      <div className="absolute inset-0 pattern-dots opacity-[0.07]" />
+    <section className="relative pt-24 pb-12 sm:pt-28 sm:pb-16 lg:pt-36 lg:pb-24">
+      {/*
+        Dışta overflow-x-hidden kullanma: CSS’te overflow-x ≠ visible iken overflow-y visible kalamaz,
+        y ekseni auto’ya döner ve bölüm istemeden ikinci bir kaydırma alanı oluşturabilir.
+        Taşan blur/dot sadece bu sarmalayıcıda clip’lenir.
+      */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
+        <div className="absolute inset-0 gradient-hero-mesh" />
+        <div className="absolute top-0 right-0 w-[700px] h-[700px] rounded-full bg-cyan-300/10 blur-3xl -translate-y-1/3 translate-x-1/4" />
+        <div className="absolute bottom-0 left-0 w-[500px] h-[500px] rounded-full bg-amber-300/8 blur-3xl translate-y-1/3 -translate-x-1/4" />
+        <div className="absolute inset-0 pattern-dots opacity-[0.07]" />
+      </div>
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 min-w-0">
         <div className="grid lg:grid-cols-2 gap-10 lg:gap-16 items-center min-w-0">
