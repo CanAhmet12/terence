@@ -417,6 +417,42 @@ Route::post('/payment/callback', [\App\Http\Controllers\Api\PaymentController::c
 Route::post('/webhooks/daily-recording', [\App\Http\Controllers\Api\DailyRecordingWebhookController::class, 'handle'])
     ->middleware('throttle:60,1');
 
+// Terence korumalı API: frontend axios base `/api` + `/v1/...`; bu blokta v1 yoktu (404).
+$registerTerenceTeacherApiRoutes = static function (): void {
+    Route::get('/teacher/stats', [\App\Http\Controllers\Api\TeacherController::class, 'stats']);
+    Route::get('/teacher/classes', [\App\Http\Controllers\Api\TeacherController::class, 'classes']);
+    Route::post('/teacher/classes', [\App\Http\Controllers\Api\TeacherController::class, 'createClass']);
+    Route::get('/teacher/classes/{id}/students', [\App\Http\Controllers\Api\TeacherController::class, 'classStudents']);
+    Route::get('/teacher/classes/{id}/exam-summary', [\App\Http\Controllers\Api\TeacherController::class, 'classExamSummary']);
+    Route::post('/teacher/classes/{id}/plan-tasks', [\App\Http\Controllers\Api\TeacherPlanController::class, 'assignClassPlanTasks']);
+    Route::get('/teacher/students/{studentId}/goal-dashboard', [\App\Http\Controllers\Api\TeacherController::class, 'studentGoalDashboard']);
+    Route::get('/teacher/students/risk', [\App\Http\Controllers\Api\TeacherController::class, 'riskStudents']);
+    Route::get('/teacher/assignments', [\App\Http\Controllers\Api\TeacherController::class, 'assignments']);
+    Route::post('/teacher/assignments', [\App\Http\Controllers\Api\TeacherController::class, 'createAssignment']);
+    Route::patch('/teacher/assignments/{id}', [\App\Http\Controllers\Api\TeacherController::class, 'updateAssignment']);
+    Route::delete('/teacher/assignments/{id}', [\App\Http\Controllers\Api\TeacherController::class, 'deleteAssignment']);
+    Route::get('/teacher/live-sessions', [\App\Http\Controllers\Api\TeacherController::class, 'liveSessions']);
+    Route::post('/teacher/live-sessions', [\App\Http\Controllers\Api\TeacherController::class, 'createLiveSession']);
+    Route::get('/teacher/live-sessions/{id}', [\App\Http\Controllers\Api\TeacherController::class, 'showLiveSession']);
+    Route::patch('/teacher/live-sessions/{id}/go-live', [\App\Http\Controllers\Api\TeacherController::class, 'goLiveLiveSession']);
+    Route::patch('/teacher/live-sessions/{id}/end', [\App\Http\Controllers\Api\TeacherController::class, 'endLiveSession']);
+    Route::get('/teacher/analytics/{type}', [\App\Http\Controllers\Api\TeacherController::class, 'analytics']);
+    Route::get('/teacher/messages', [\App\Http\Controllers\Api\TeacherController::class, 'messages']);
+    Route::post('/teacher/messages', [\App\Http\Controllers\Api\TeacherController::class, 'sendMessage']);
+    Route::get('/teacher/curriculum/topics', [\App\Http\Controllers\Api\TeacherCurriculumContentController::class, 'searchTopics']);
+    Route::post('/teacher/curriculum-content', [\App\Http\Controllers\Api\TeacherCurriculumContentController::class, 'store']);
+};
+
+$registerTerenceStudentExamApiRoutes = static function (): void {
+    Route::post('/exams/start', [\App\Http\Controllers\Api\ExamController::class, 'start']);
+    Route::get('/exams/templates', [\App\Http\Controllers\Api\ExamController::class, 'templateCatalog']);
+    Route::get('/exams/history', [\App\Http\Controllers\Api\ExamController::class, 'history']);
+    Route::get('/exams/summary', [\App\Http\Controllers\Api\ExamController::class, 'summary']);
+    Route::post('/exams/{id}/answer', [\App\Http\Controllers\Api\ExamController::class, 'answer']);
+    Route::post('/exams/{id}/finish', [\App\Http\Controllers\Api\ExamController::class, 'finish']);
+    Route::get('/exams/{id}/result', [\App\Http\Controllers\Api\ExamController::class, 'result']);
+};
+
 // ============================================================
 // TERENCE EÄÄ°TÄ°M PLATFORMU - API ROUTES
 // ============================================================
@@ -454,15 +490,7 @@ Route::middleware(['auth:api'])->group(function () {
     });
 
     // â”€â”€ Deneme SÄ±navÄ± â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-    Route::middleware(['role:student', 'student_grade'])->group(function () {
-        Route::post('/exams/start', [\App\Http\Controllers\Api\ExamController::class, 'start']);
-        Route::get('/exams/templates', [\App\Http\Controllers\Api\ExamController::class, 'templateCatalog']);
-        Route::get('/exams/history', [\App\Http\Controllers\Api\ExamController::class, 'history']);
-        Route::get('/exams/summary', [\App\Http\Controllers\Api\ExamController::class, 'summary']);
-        Route::post('/exams/{id}/answer', [\App\Http\Controllers\Api\ExamController::class, 'answer']);
-        Route::post('/exams/{id}/finish', [\App\Http\Controllers\Api\ExamController::class, 'finish']);
-        Route::get('/exams/{id}/result', [\App\Http\Controllers\Api\ExamController::class, 'result']);
-    });
+    Route::middleware(['role:student', 'student_grade'])->group($registerTerenceStudentExamApiRoutes);
 
     // Günlük plan (öğrenci)
     Route::middleware('role:student')->group(function () {
@@ -525,30 +553,7 @@ Route::middleware(['auth:api'])->group(function () {
     Route::delete('/ai/coach/history', [\App\Http\Controllers\Api\AiController::class, 'clearCoachHistory']);
 
     // â"€â"€ Ã–ÄŸretmen â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
-    Route::middleware('role:teacher,admin')->group(function () {
-        Route::get('/teacher/stats', [\App\Http\Controllers\Api\TeacherController::class, 'stats']);
-        Route::get('/teacher/classes', [\App\Http\Controllers\Api\TeacherController::class, 'classes']);
-        Route::post('/teacher/classes', [\App\Http\Controllers\Api\TeacherController::class, 'createClass']);
-        Route::get('/teacher/classes/{id}/students', [\App\Http\Controllers\Api\TeacherController::class, 'classStudents']);
-        Route::get('/teacher/classes/{id}/exam-summary', [\App\Http\Controllers\Api\TeacherController::class, 'classExamSummary']);
-        Route::post('/teacher/classes/{id}/plan-tasks', [\App\Http\Controllers\Api\TeacherPlanController::class, 'assignClassPlanTasks']);
-        Route::get('/teacher/students/{studentId}/goal-dashboard', [\App\Http\Controllers\Api\TeacherController::class, 'studentGoalDashboard']);
-        Route::get('/teacher/students/risk', [\App\Http\Controllers\Api\TeacherController::class, 'riskStudents']);
-        Route::get('/teacher/assignments', [\App\Http\Controllers\Api\TeacherController::class, 'assignments']);
-        Route::post('/teacher/assignments', [\App\Http\Controllers\Api\TeacherController::class, 'createAssignment']);
-        Route::patch('/teacher/assignments/{id}', [\App\Http\Controllers\Api\TeacherController::class, 'updateAssignment']);
-        Route::delete('/teacher/assignments/{id}', [\App\Http\Controllers\Api\TeacherController::class, 'deleteAssignment']);
-        Route::get('/teacher/live-sessions', [\App\Http\Controllers\Api\TeacherController::class, 'liveSessions']);
-        Route::post('/teacher/live-sessions', [\App\Http\Controllers\Api\TeacherController::class, 'createLiveSession']);
-        Route::get('/teacher/live-sessions/{id}', [\App\Http\Controllers\Api\TeacherController::class, 'showLiveSession']);
-        Route::patch('/teacher/live-sessions/{id}/go-live', [\App\Http\Controllers\Api\TeacherController::class, 'goLiveLiveSession']);
-        Route::patch('/teacher/live-sessions/{id}/end', [\App\Http\Controllers\Api\TeacherController::class, 'endLiveSession']);
-        Route::get('/teacher/analytics/{type}', [\App\Http\Controllers\Api\TeacherController::class, 'analytics']);
-        Route::get('/teacher/messages', [\App\Http\Controllers\Api\TeacherController::class, 'messages']);
-        Route::post('/teacher/messages', [\App\Http\Controllers\Api\TeacherController::class, 'sendMessage']);
-        Route::get('/teacher/curriculum/topics', [\App\Http\Controllers\Api\TeacherCurriculumContentController::class, 'searchTopics']);
-        Route::post('/teacher/curriculum-content', [\App\Http\Controllers\Api\TeacherCurriculumContentController::class, 'store']);
-    });
+    Route::middleware('role:teacher,admin')->group($registerTerenceTeacherApiRoutes);
 
     // â”€â”€ Veli â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     Route::middleware('role:parent,admin')->group(function () {
@@ -597,6 +602,11 @@ Route::middleware(['auth:api'])->group(function () {
         Route::get('/admin/settings', [\App\Http\Controllers\Api\AdminController::class, 'getSettings']);
         Route::post('/admin/settings', [\App\Http\Controllers\Api\AdminController::class, 'updateSettings']);
     });
+});
+
+Route::prefix('v1')->middleware(['auth:api'])->group(function () use ($registerTerenceTeacherApiRoutes, $registerTerenceStudentExamApiRoutes): void {
+    Route::middleware('role:teacher,admin')->group($registerTerenceTeacherApiRoutes);
+    Route::middleware(['role:student', 'student_grade'])->group($registerTerenceStudentExamApiRoutes);
 });
 
 // Payment callback (public)
