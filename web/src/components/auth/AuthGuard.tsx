@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
+import { FullPageLoading } from "@/components/LoadingStates";
 
 type Role = "student" | "teacher" | "admin" | "parent" | "any";
 
@@ -78,11 +79,7 @@ export function AuthGuard({
   }, [user, loading, role, router, pathname]);
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-teal-500 border-t-transparent" />
-      </div>
-    );
+    return <FullPageLoading text="Oturum doğrulanıyor" />;
   }
   if (!user) return null;
   if (role !== "any" && user.role !== role) return null;

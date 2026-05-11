@@ -1,5 +1,5 @@
-import { LoadingSpinner } from '@/components/LoadingStates'
+import { FullPageLoading } from "@/components/LoadingStates";
 
 export default function Loading() {
-  return <LoadingSpinner size="lg" text="Sayfa yükleniyor..." />
+  return <FullPageLoading text="Sayfa hazırlanıyor" />;
 }
