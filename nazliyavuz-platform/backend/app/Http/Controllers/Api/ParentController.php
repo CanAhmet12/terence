@@ -100,12 +100,12 @@ class ParentController extends Controller
             return response()->json([
                 'error'   => true,
                 'code'    => 'INVALID_CODE',
-                'message' => 'GeÃ§ersiz veya sÃ¼resi dolmuÅŸ davet kodu',
+                'message' => 'Geçersiz veya süresi dolmuş davet kodu.',
             ], 404);
         }
 
         $link->update(['parent_id' => $parent->id, 'status' => 'approved']);
-        return response()->json(['success' => true, 'message' => 'Ã‡ocuk hesabÄ± baÄŸlandÄ±']);
+        return response()->json(['success' => true, 'message' => 'Çocuk hesabı bağlandı.']);
     }
 
     // POST /api/student/generate-parent-code (route: role:student)
@@ -136,7 +136,11 @@ class ParentController extends Controller
         $students = $parent->children()->where('parent_students.status', 'approved')->get();
 
         if ($students->isEmpty()) {
-            return response()->json(['success' => false, 'message' => 'BaÄŸlÄ± Ã¶ÄŸrenci bulunamadÄ±'], 404);
+            return response()->json([
+                'success' => false,
+                'code' => 'NO_LINKED_STUDENT',
+                'message' => 'Bağlı öğrenci bulunamadı. Öğrenci hesabından oluşturulan davet kodunu Veli panelinde «Çocuk Ekle» ile girin.',
+            ], 404);
         }
 
         $rawChildId = $request->query('child_id');

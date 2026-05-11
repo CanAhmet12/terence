@@ -25,7 +25,13 @@ type ApiErrorPayload = {
 }
 
 function translateApiMessage(raw?: string, code?: string): string {
-  const normalized = (raw ?? '').trim()
+  let normalized = (raw ?? '').trim()
+  // PHP kaynak dosyasında bozuk UTF-8 ile saklanmış eski mesajlar (çoğu düzeltildi; CDN önbelleği için yedek)
+  normalized = normalized
+    .replace(/BaÄŸlÄ± Ã¶ÄŸrenci bulunamadÄ±/gi, 'Bağlı öğrenci bulunamadı')
+    .replace(/GeÃ§ersiz veya sÃ¼resi dolmuÅŸ davet kodu\.?/gi, 'Geçersiz veya süresi dolmuş davet kodu.')
+    .replace(/Ã‡ocuk hesabÄ± baÄŸlandÄ±\.?/gi, 'Çocuk hesabı bağlandı.')
+
   const map: Record<string, string> = {
     INVALID_CREDENTIALS: 'E-posta veya sifre hatali.',
     FORBIDDEN: 'Bu islem icin yetkin bulunmuyor.',
@@ -59,6 +65,12 @@ function translateApiMessage(raw?: string, code?: string): string {
 
   // Mesaj yoksa kod ile genel metin
   if (code === 'VALIDATION_ERROR') return 'Girdigin bilgileri kontrol et ve tekrar dene.'
+  if (code === 'NO_LINKED_STUDENT') {
+    return 'Bağlı öğrenci bulunamadı. Öğrenci hesabında Profil → Veli davet kodu ile kod oluşturup veli hesabında Çocuk Ekle ile girin.'
+  }
+  if (code === 'INVALID_CODE') {
+    return normalized.length > 0 ? normalized : 'Geçersiz veya süresi dolmuş davet kodu.'
+  }
   if (code && map[code]) return map[code]
   return 'Bir hata olustu. Lutfen tekrar dene.'
 }
@@ -1937,8 +1949,12 @@ export const studentApi = {
   },
 
   async generateParentCode(_token?: string): Promise<{ code: string }> {
-    const response = await apiCore.post<{ code: string }>('/student/generate-parent-code')
-    return response.data
+    const response = await apiCore.post<{ invite_code?: string; code?: string }>('/student/generate-parent-code')
+    const data = response.data as Record<string, unknown>
+    const raw = data.invite_code ?? data.code
+    const code = typeof raw === 'string' ? raw.trim() : ''
+    if (!code) throw new Error('Davet kodu alınamadı.')
+    return { code }
   },
 
   async getGoalEngine(_token?: string): Promise<unknown> {

@@ -201,15 +201,15 @@ export default function VeliDashboardPage() {
             Çocuğunuzu Bağlayın
           </h3>
           <p className="text-sm text-slate-600 mb-4">
-            Çocuğunuzun profilinden aldığı davet kodunu girin.
+            Öğrenci hesabında <strong className="text-slate-800">Profil</strong> sayfasındaki «Veli davet kodu» bölümünden oluşturulan kodu buraya yazın.
           </p>
           <div className="flex gap-2">
             <input
               type="text"
               value={linkCode}
               onChange={(e) => setLinkCode(e.target.value)}
-              placeholder="DAVET KODUNU GİRİN"
-              className="flex-1 px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-cyan-500 outline-none uppercase tracking-widest"
+              placeholder="Örn. ABC12XYZ"
+              className="flex-1 px-4 py-2.5 border border-slate-200 rounded-xl text-sm font-sans focus:ring-2 focus:ring-cyan-500 outline-none"
               onKeyDown={(e) => e.key === "Enter" && handleLinkChild()}
             />
             <button
@@ -245,7 +245,7 @@ export default function VeliDashboardPage() {
           </div>
           <h3 className="font-bold text-slate-900 text-lg mb-2">Henüz Bağlı Çocuk Yok</h3>
           <p className="text-slate-600 text-sm mb-5">
-            Çocuğunuzun profilinden aldığı davet kodu ile hesabını bağlayın.
+            Öğrenci hesabında <strong className="text-slate-800">Profil → Veli davet kodu</strong> ile oluşturulan kodu «Çocuk Ekle» ile girin.
           </p>
           <button
             onClick={() => setShowLink(true)}
@@ -258,8 +258,14 @@ export default function VeliDashboardPage() {
       )}
 
       {error && (
-        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-2xl text-sm text-red-700">
-          {error}
+        <div
+          role="alert"
+          className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-900 antialiased font-sans leading-relaxed"
+        >
+          <p className="font-semibold normal-case tracking-normal">{error}</p>
+          <p className="mt-2 text-xs text-red-800/90 font-normal leading-relaxed">
+            Öğrenci hesabında <strong className="font-semibold">Profil → Veli davet kodu</strong> ile kod oluşturup buradan bağlayabilirsiniz.
+          </p>
         </div>
       )}
 

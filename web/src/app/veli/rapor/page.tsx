@@ -107,9 +107,20 @@ export default function VeliRaporPage() {
       </div>
 
       {error && (
-        <div className="p-4 bg-red-50 border border-red-200 rounded-2xl text-sm text-red-700 flex items-center gap-2">
-          <AlertCircle className="w-5 h-5 shrink-0" />
-          {error}
+        <div
+          role="alert"
+          className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-900 antialiased font-sans leading-relaxed flex gap-3 items-start"
+        >
+          <AlertCircle className="w-5 h-5 shrink-0 text-red-600 mt-0.5" aria-hidden />
+          <div className="min-w-0 space-y-2">
+            <p className="font-semibold normal-case tracking-normal">{error}</p>
+            <p className="text-xs text-red-800/90 font-normal leading-relaxed">
+              Öğrenci hesabıyla giriş yapıp <strong className="font-semibold">Profil</strong> sayfasından veli davet kodunu oluşturun; ardından veli hesabında «Çocuk Ekle» ile girin.
+            </p>
+            <Link href="/veli" className="inline-flex text-xs font-semibold text-cyan-700 hover:text-cyan-800 hover:underline">
+              Veli ana sayfasına dön →
+            </Link>
+          </div>
         </div>
       )}
 

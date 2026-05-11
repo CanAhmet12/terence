@@ -7,7 +7,7 @@ import { api } from "@/lib/api";
 import {
   User, Mail, Phone, Lock, Save, Camera, CheckCircle,
   AlertCircle, Target, BookOpen, Shield, Bell, ChevronRight,
-  Loader2, GraduationCap, Award, Star, Crown, Edit3
+  Loader2, GraduationCap, Award, Star, Crown, Edit3, Users, Copy, RefreshCw,
 } from "lucide-react";
 
 const SINAVLAR = [
@@ -112,6 +112,10 @@ export default function OgrenciProfilPage() {
   const [bildirimDeneme, setBildirimDeneme] = useState(true);
   const [bildirimHedef, setBildirimHedef] = useState(true);
 
+  const [parentInviteCode, setParentInviteCode] = useState<string | null>(null);
+  const [parentCodeLoading, setParentCodeLoading] = useState(false);
+  const [parentCodeMsg, setParentCodeMsg] = useState<string | null>(null);
+
   const isStudent = user?.role === "student";
   const isTeacher = user?.role === "teacher";
   const isParent  = user?.role === "parent";
@@ -208,6 +212,32 @@ export default function OgrenciProfilPage() {
   //     setTimeout(() => setSaveState("idle"), 5000);
   //   }
   // };
+
+  const generateVeliCode = async () => {
+    if (!token) return;
+    setParentCodeLoading(true);
+    setParentCodeMsg(null);
+    try {
+      const { code } = await api.generateParentCode(token);
+      setParentInviteCode(code);
+      setParentCodeMsg("Yeni kod oluşturuldu. Velinize iletin.");
+    } catch (err: unknown) {
+      setParentCodeMsg(err instanceof Error ? err.message : "Kod oluşturulamadı.");
+    } finally {
+      setParentCodeLoading(false);
+    }
+  };
+
+  const copyVeliCode = async () => {
+    if (!parentInviteCode) return;
+    try {
+      await navigator.clipboard.writeText(parentInviteCode);
+      setParentCodeMsg("Kod panoya kopyalandı.");
+      setTimeout(() => setParentCodeMsg(null), 2500);
+    } catch {
+      setParentCodeMsg("Kopyalanamadı; kodu elle seçip kopyalayın.");
+    }
+  };
 
   const saveNotifications = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -402,6 +432,55 @@ export default function OgrenciProfilPage() {
                   </div>
 
                   <FormInput label="Telefon" value={phone} onChange={setPhone} type="tel" placeholder="0555 000 00 00" />
+
+                  {isStudent && (
+                    <div className="rounded-2xl border border-cyan-100 bg-gradient-to-br from-cyan-50/90 to-white p-5 space-y-4">
+                      <div className="flex items-start gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-cyan-100 flex items-center justify-center shrink-0">
+                          <Users className="w-5 h-5 text-cyan-700" aria-hidden />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <h3 className="font-bold text-slate-900 text-sm">Veli davet kodu</h3>
+                          <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+                            Veliniz kendi hesabıyla giriş yaptıktan sonra «Çocuk Ekle» alanına bu kodu yazar; böylece raporlarınız güvenli şekilde bağlanır. Kodu kimseyle paylaşmayın.
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => void generateVeliCode()}
+                          disabled={parentCodeLoading}
+                          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-cyan-600 text-white text-sm font-semibold hover:bg-cyan-700 disabled:opacity-60 transition-colors"
+                        >
+                          {parentCodeLoading ? (
+                            <Loader2 className="w-4 h-4 animate-spin shrink-0" aria-hidden />
+                          ) : (
+                            <RefreshCw className="w-4 h-4 shrink-0" aria-hidden />
+                          )}
+                          Kod oluştur / yenile
+                        </button>
+                        {parentInviteCode && (
+                          <>
+                            <span className="font-mono text-base font-bold tracking-[0.12em] text-slate-900 bg-white border border-slate-200 px-3 py-2 rounded-xl">
+                              {parentInviteCode}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => void copyVeliCode()}
+                              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 bg-white text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
+                            >
+                              <Copy className="w-4 h-4 shrink-0" aria-hidden />
+                              Kopyala
+                            </button>
+                          </>
+                        )}
+                      </div>
+                      {parentCodeMsg && (
+                        <p className="text-xs font-medium text-cyan-800 bg-cyan-50 border border-cyan-100 rounded-xl px-3 py-2">{parentCodeMsg}</p>
+                      )}
+                    </div>
+                  )}
 
                   {isTeacher && (
                     <>
