@@ -456,7 +456,7 @@ $registerTerenceStudentExamApiRoutes = static function (): void {
 // ============================================================
 // TERENCE EÄÄ°TÄ°M PLATFORMU - API ROUTES
 // ============================================================
-Route::middleware(['auth:api'])->group(function () {
+Route::middleware(['auth:api'])->group(function () use ($registerTerenceTeacherApiRoutes, $registerTerenceStudentExamApiRoutes) {
 
     // â”€â”€ Auth (Education) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     Route::get('/auth/me', [\App\Http\Controllers\Api\AuthController::class, 'me']);
