@@ -6,7 +6,7 @@ import { useAuth } from "@/lib/auth-context";
 import { api, ClassRoom, TeacherStudent, type User, type TeacherClassExamSummaryRow } from "@/lib/api";
 import type { StudentGoalDashboard, RiskTier } from "@/lib/goal-dashboard";
 import { goalTemplateLabel } from "@/lib/goal-dashboard";
-import { Search, Users, Clock, RefreshCw, AlertCircle, Plus, X, Target, Loader2, CalendarDays, ClipboardList } from "lucide-react";
+import { Search, Users, Clock, RefreshCw, AlertCircle, Plus, X, Target, Loader2, CalendarDays, ClipboardList, Copy } from "lucide-react";
 
 const RISK_CONFIG = {
   green: { label: "İyi", dot: "bg-green-500", badge: "bg-green-100 text-green-700" },
@@ -39,6 +39,14 @@ function timeAgo(dateStr: string) {
   return `${days} gün önce`;
 }
 
+async function copyJoinCode(code: string) {
+  try {
+    await navigator.clipboard.writeText(code);
+  } catch {
+    window.prompt("Katılım kodunu kopyalayın:", code);
+  }
+}
+
 export default function SiniflarPage() {
   const { token } = useAuth();
 
@@ -47,12 +55,15 @@ export default function SiniflarPage() {
   const [selectedClassId, setSelectedClassId] = useState<number | null>(null);
   const [students, setStudents] = useState<TeacherStudent[]>([]);
   const [studentsLoading, setStudentsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [classesError, setClassesError] = useState<string | null>(null);
+  const [studentsError, setStudentsError] = useState<string | null>(null);
+  const [examError, setExamError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [riskFilter, setRiskFilter] = useState<"" | "green" | "yellow" | "red">("");
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newClassName, setNewClassName] = useState("");
   const [creating, setCreating] = useState(false);
+  const [createModalError, setCreateModalError] = useState<string | null>(null);
 
   const [goalStudent, setGoalStudent] = useState<TeacherStudent | null>(null);
   const [goalDash, setGoalDash] = useState<StudentGoalDashboard | null>(null);
@@ -61,17 +72,26 @@ export default function SiniflarPage() {
   const [examRows, setExamRows] = useState<TeacherClassExamSummaryRow[]>([]);
   const [examLoading, setExamLoading] = useState(false);
 
-  const loadClasses = useCallback(async () => {
-    if (!token) return;
-    setError(null);
+  const loadClasses = useCallback(async (selectAfter?: number | null) => {
+    if (!token) {
+      setLoading(false);
+      return;
+    }
+    setClassesError(null);
     try {
       const res = await api.getTeacherClasses(token);
       setClasses(res);
-      if (res.length > 0) {
-        setSelectedClassId(res[0].id);
+      if (selectAfter != null && res.some((c) => c.id === selectAfter)) {
+        setSelectedClassId(selectAfter);
+      } else {
+        setSelectedClassId((prev) => {
+          if (res.length === 0) return null;
+          if (prev != null && res.some((c) => c.id === prev)) return prev;
+          return res[0].id;
+        });
       }
     } catch (e) {
-      setError((e as Error).message);
+      setClassesError((e as Error).message);
     }
     setLoading(false);
   }, [token]);
@@ -81,49 +101,70 @@ export default function SiniflarPage() {
   useEffect(() => {
     if (!selectedClassId || !token) return;
     setStudentsLoading(true);
+    setStudentsError(null);
     setSearch("");
     setRiskFilter("");
-    api.getClassStudents(selectedClassId)
+    api
+      .getClassStudents(selectedClassId)
       .then((rawData) => {
         const data = Array.isArray(rawData) ? rawData : [];
-        setStudents(data.map((u) => {
-          const currentNet = Number(u.current_net ?? 0);
-          const targetNet = Number(u.target_net ?? 50);
-          const last = u.last_login_at;
-          const daysInactive = last
-            ? Math.floor((Date.now() - new Date(last).getTime()) / 86400000)
-            : 999;
-          let risk_level: NonNullable<User["risk_level"]> = "green";
-          if (daysInactive > 7 || currentNet < targetNet * 0.4) risk_level = "red";
-          else if (daysInactive > 3 || currentNet < targetNet * 0.7) risk_level = "yellow";
+        setStudents(
+          data.map((u) => {
+            const currentNet = Number(u.current_net ?? 0);
+            const last = u.last_login_at;
+            const daysInactive =
+              typeof u.days_inactive === "number"
+                ? u.days_inactive
+                : last
+                  ? Math.floor((Date.now() - new Date(last).getTime()) / 86400000)
+                  : 999;
 
-          return {
-            ...u,
-            role: u.role ?? "student",
-            created_at: u.created_at || new Date().toISOString(),
-            risk_level,
-            net_score: currentNet >= 0 ? currentNet : undefined,
-            last_active_at: last ?? undefined,
-            days_inactive: daysInactive,
-            study_time_today_seconds: u.study_time_today_seconds,
-            tasks_completed_today: u.tasks_completed_today,
-          };
-        }));
+            let risk_level: NonNullable<User["risk_level"]>;
+            if (u.risk_level === "red" || u.risk_level === "yellow" || u.risk_level === "green") {
+              risk_level = u.risk_level;
+            } else {
+              const targetNet = Number(u.target_net ?? 50);
+              risk_level = "green";
+              if (daysInactive > 7 || currentNet < targetNet * 0.4) risk_level = "red";
+              else if (daysInactive > 3 || currentNet < targetNet * 0.7) risk_level = "yellow";
+            }
+
+            return {
+              ...u,
+              role: u.role ?? "student",
+              created_at: u.created_at || new Date().toISOString(),
+              risk_level,
+              net_score: currentNet >= 0 ? currentNet : undefined,
+              last_active_at: last ?? undefined,
+              days_inactive: daysInactive,
+              study_time_today_seconds: u.study_time_today_seconds,
+              tasks_completed_today: u.tasks_completed_today,
+            };
+          }),
+        );
       })
-      .catch(() => setStudents([]))
+      .catch((e) => {
+        setStudents([]);
+        setStudentsError((e as Error).message || "Öğrenci listesi yüklenemedi.");
+      })
       .finally(() => setStudentsLoading(false));
   }, [selectedClassId, token]);
 
   useEffect(() => {
     if (!selectedClassId || !token) {
       setExamRows([]);
+      setExamError(null);
       return;
     }
     setExamLoading(true);
+    setExamError(null);
     api
       .getClassExamSummary(selectedClassId)
       .then((rows) => setExamRows(Array.isArray(rows) ? rows : []))
-      .catch(() => setExamRows([]))
+      .catch((e) => {
+        setExamRows([]);
+        setExamError((e as Error).message || "Deneme özeti yüklenemedi.");
+      })
       .finally(() => setExamLoading(false));
   }, [selectedClassId, token]);
 
@@ -161,21 +202,20 @@ export default function SiniflarPage() {
 
   const handleCreateClass = async () => {
     if (!newClassName.trim()) {
-      setError("Sınıf adı boş olamaz");
+      setCreateModalError("Sınıf adı boş olamaz");
       return;
     }
     if (!token) return;
-    
+
     setCreating(true);
-    setError(null);
+    setCreateModalError(null);
     try {
-      const res = await api.createClass(token, { name: newClassName.trim() });
-      const newClass = (res as { class?: ClassRoom }).class ?? res;
-      setClasses([...classes, newClass as ClassRoom]);
+      const created = await api.createClass(token, { name: newClassName.trim() });
       setNewClassName("");
       setShowCreateModal(false);
+      await loadClasses(created.id);
     } catch (e) {
-      setError((e as Error).message);
+      setCreateModalError((e as Error).message);
     }
     setCreating(false);
   };
@@ -191,23 +231,34 @@ export default function SiniflarPage() {
             <p className="text-slate-500 mt-1 font-medium">Öğrenci risk durumları · Günlük aktivite · Net takibi</p>
           </div>
           <div className="flex items-center gap-3">
-            <button onClick={() => setShowCreateModal(true)}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold transition-all shadow-sm">
+            <button
+              type="button"
+              onClick={() => {
+                setShowCreateModal(true);
+                setCreateModalError(null);
+              }}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold transition-all shadow-sm"
+            >
               <Plus className="w-4 h-4" />
               Yeni Sınıf
             </button>
-            <button onClick={loadClasses} disabled={loading}
-              className="p-2.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-400 hover:text-slate-600 transition-all shadow-sm disabled:opacity-50">
+            <button
+              type="button"
+              onClick={() => loadClasses()}
+              disabled={loading}
+              aria-label="Sınıf listesini yenile"
+              className="p-2.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-400 hover:text-slate-600 transition-all shadow-sm disabled:opacity-50"
+            >
               <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
             </button>
           </div>
         </div>
 
-        {/* ── Hata ── */}
-        {error && (
+        {/* ── Hata (liste) ── */}
+        {classesError && (
           <div className="mb-6 flex items-center gap-3 p-4 bg-red-50 border border-red-200 rounded-2xl text-sm text-red-700">
             <AlertCircle className="w-5 h-5 shrink-0" />
-            {error}
+            {classesError}
           </div>
         )}
 
@@ -227,8 +278,14 @@ export default function SiniflarPage() {
                   <Users className="w-10 h-10 text-slate-300 mx-auto mb-3" />
                   <p className="font-semibold text-slate-500">Henüz sınıf yok</p>
                   <p className="text-xs text-slate-400 mt-2 mb-4">Sağ üstteki "Yeni Sınıf" butonu ile oluştur</p>
-                  <button onClick={() => setShowCreateModal(true)}
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl transition-colors">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowCreateModal(true);
+                      setCreateModalError(null);
+                    }}
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl transition-colors"
+                  >
                     <Plus className="w-4 h-4" />
                     İlk Sınıfı Oluştur
                   </button>
@@ -238,7 +295,10 @@ export default function SiniflarPage() {
                   const rConf = RISK_CONFIG[(c.risk_level ?? "green") as keyof typeof RISK_CONFIG] ?? RISK_CONFIG.green;
                   const isSelected = selectedClassId === c.id;
                   return (
-                    <button key={c.id} onClick={() => setSelectedClassId(c.id)}
+                    <button
+                      type="button"
+                      key={c.id}
+                      onClick={() => setSelectedClassId(c.id)}
                       className={`w-full text-left p-4 rounded-2xl border transition-all ${
                         isSelected
                           ? "bg-indigo-50 border-indigo-300 shadow-sm"
@@ -285,7 +345,10 @@ export default function SiniflarPage() {
                       {(["green", "yellow", "red"] as const).map((r) => {
                         const rc = RISK_CONFIG[r];
                         return (
-                          <button key={r} onClick={() => setRiskFilter(riskFilter === r ? "" : r)}
+                          <button
+                            type="button"
+                            key={r}
+                            onClick={() => setRiskFilter(riskFilter === r ? "" : r)}
                             className={`p-4 rounded-2xl border-2 text-center transition-all ${
                               riskFilter === r ? `${rc.badge} border-current` : "bg-white border-slate-200 hover:border-slate-300"
                             }`}>
@@ -299,6 +362,24 @@ export default function SiniflarPage() {
                       })}
                     </div>
                   )}
+
+                  {selectedClass.join_code ? (
+                    <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-indigo-100 bg-indigo-50/60 px-4 py-3">
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-700">Katılım kodu</span>
+                      <code className="rounded-lg bg-white px-3 py-1.5 font-mono text-sm font-bold text-slate-900 shadow-sm border border-indigo-100">
+                        {selectedClass.join_code}
+                      </code>
+                      <button
+                        type="button"
+                        aria-label="Katılım kodunu kopyala"
+                        onClick={() => copyJoinCode(selectedClass.join_code!)}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-indigo-200 bg-white px-3 py-1.5 text-xs font-bold text-indigo-700 hover:bg-indigo-50 transition-colors"
+                      >
+                        <Copy className="h-3.5 w-3.5" />
+                        Kopyala
+                      </button>
+                    </div>
+                  ) : null}
 
                   {/* Arama + plan gönder */}
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
@@ -316,6 +397,13 @@ export default function SiniflarPage() {
                       Günlük plan gönder
                     </Link>
                   </div>
+
+                  {studentsError && !studentsLoading && (
+                    <div className="flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+                      <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-red-600" />
+                      <span>{studentsError}</span>
+                    </div>
+                  )}
 
                   {/* Tablo */}
                   <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden shadow-sm">
@@ -403,6 +491,12 @@ export default function SiniflarPage() {
                       <ClipboardList className="w-4 h-4 text-indigo-500" />
                       <p className="text-sm font-bold text-slate-800">Deneme özeti (son 30 gün)</p>
                     </div>
+                    {examError && !examLoading && (
+                      <div className="mx-5 mt-4 mb-1 flex items-start gap-2 rounded-xl border border-red-100 bg-red-50 px-3 py-2.5 text-sm text-red-800">
+                        <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-600" />
+                        <span>{examError}</span>
+                      </div>
+                    )}
                     {examLoading ? (
                       <div className="p-4 space-y-2">
                         {[1, 2, 3].map((i) => (
@@ -630,8 +724,15 @@ export default function SiniflarPage() {
                   <p className="text-xs text-slate-500">Öğrencilerinizi gruplandırın</p>
                 </div>
               </div>
-              <button onClick={() => { setShowCreateModal(false); setNewClassName(""); setError(null); }}
-                className="w-9 h-9 rounded-xl border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-100 transition-colors">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowCreateModal(false);
+                  setNewClassName("");
+                  setCreateModalError(null);
+                }}
+                className="w-9 h-9 rounded-xl border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-100 transition-colors"
+              >
                 <X className="w-4 h-4" />
               </button>
             </div>
@@ -652,21 +753,27 @@ export default function SiniflarPage() {
                 />
               </div>
 
-              {error && (
+              {createModalError && (
                 <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-100 rounded-xl">
                   <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
-                  <p className="text-sm text-red-700">{error}</p>
+                  <p className="text-sm text-red-700">{createModalError}</p>
                 </div>
               )}
 
               <div className="flex gap-3">
                 <button
-                  onClick={() => { setShowCreateModal(false); setNewClassName(""); setError(null); }}
+                  type="button"
+                  onClick={() => {
+                    setShowCreateModal(false);
+                    setNewClassName("");
+                    setCreateModalError(null);
+                  }}
                   className="flex-1 py-3 border border-slate-200 text-slate-700 hover:bg-slate-50 font-semibold rounded-xl transition-colors"
                 >
                   İptal
                 </button>
                 <button
+                  type="button"
                   onClick={handleCreateClass}
                   disabled={creating || !newClassName.trim()}
                   className="flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white font-bold rounded-xl transition-all flex items-center justify-center gap-2"

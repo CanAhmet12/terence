@@ -110,8 +110,9 @@ function AIQuestionModal({
       setGeneratedQ(parsed);
     } catch (e) {
       setError((e as Error).message || "AI soru üretirken hata oluştu.");
+    } finally {
+      setGenerating(false);
     }
-    setGenerating(false);
   };
 
   return (
@@ -265,7 +266,8 @@ export default function IcerikYuklemePage() {
   const [uploading, setUploading] = useState(false);
   const [uploaded, setUploaded] = useState(false);
   const [uploadDetail, setUploadDetail] = useState<TeacherCurriculumUploadResponse | null>(null);
-  const [error, setError] = useState("");
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [searchError, setSearchError] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [showAIModal, setShowAIModal] = useState(false);
 
@@ -284,7 +286,7 @@ export default function IcerikYuklemePage() {
   const handleFile = (f: File | null) => {
     if (!f) return;
     setFile(f);
-    setError("");
+    setUploadError(null);
   };
 
   const handleDrop = useCallback((e: React.DragEvent) => {
@@ -297,22 +299,29 @@ export default function IcerikYuklemePage() {
   useEffect(() => {
     if (!token) {
       setSearchResults([]);
+      setSearchError(null);
+      setSearching(false);
       return;
     }
     const q = debouncedQuery.trim();
     if (q.length < 2) {
       setSearchResults([]);
+      setSearchError(null);
       return;
     }
     let cancelled = false;
     setSearching(true);
+    setSearchError(null);
     api
       .searchCurriculumTopics(q)
       .then((rows) => {
         if (!cancelled) setSearchResults(rows);
       })
-      .catch(() => {
-        if (!cancelled) setSearchResults([]);
+      .catch((e) => {
+        if (!cancelled) {
+          setSearchResults([]);
+          setSearchError((e as Error).message || "Konu araması başarısız.");
+        }
       })
       .finally(() => {
         if (!cancelled) setSearching(false);
@@ -324,15 +333,15 @@ export default function IcerikYuklemePage() {
 
   const validateForm = (): boolean => {
     if (!token) {
-      setError("Oturum açmanız gerekir.");
+      setUploadError("Oturum açmanız gerekir.");
       return false;
     }
     if (!selectedTopic) {
-      setError("Listeden bir müfredat konusu seçin (arama en az 2 karakter).");
+      setUploadError("Listeden bir müfredat konusu seçin (arama en az 2 karakter).");
       return false;
     }
     if (!file) {
-      setError(secim === "video" ? "Video dosyasını bilgisayarınızdan seçin." : "PDF dosyasını bilgisayarınızdan seçin.");
+      setUploadError(secim === "video" ? "Video dosyasını bilgisayarınızdan seçin." : "PDF dosyasını bilgisayarınızdan seçin.");
       return false;
     }
     return true;
@@ -343,7 +352,7 @@ export default function IcerikYuklemePage() {
     if (!selectedTopic || !file) return;
 
     setUploading(true);
-    setError("");
+    setUploadError(null);
 
     try {
       const fd = new FormData();
@@ -363,7 +372,7 @@ export default function IcerikYuklemePage() {
       setUploadDetail(res);
       setUploaded(true);
     } catch (e) {
-      setError((e as Error).message || "Yükleme sırasında hata oluştu.");
+      setUploadError((e as Error).message || "Yükleme sırasında hata oluştu.");
     }
     setUploading(false);
   };
@@ -371,13 +380,14 @@ export default function IcerikYuklemePage() {
   const resetForm = () => {
     setTopicQuery("");
     setSearchResults([]);
+    setSearchError(null);
     setSelectedTopic(null);
     setDisplayTitle("");
     setFile(null);
     setThumbnailFile(null);
     setUploaded(false);
     setUploadDetail(null);
-    setError("");
+    setUploadError(null);
   };
 
   const TABS: { key: ContentType; label: string; icon: React.ElementType }[] = [
@@ -402,7 +412,7 @@ export default function IcerikYuklemePage() {
             <div className="mb-6 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
               <div className="relative aspect-video w-full bg-slate-100">
                 {ci.thumbnail_url ? (
-                  <Image src={ci.thumbnail_url} alt="" fill className="object-cover" sizes="(max-width:512px) 100vw, 512px" unoptimized />
+                  <Image src={ci.thumbnail_url} alt={ci.title || "İçerik önizlemesi"} fill className="object-cover" sizes="(max-width:512px) 100vw, 512px" unoptimized />
                 ) : (
                   <div className="flex h-full min-h-[140px] items-center justify-center text-slate-400 text-sm">Kapak oluşturuluyor veya yok</div>
                 )}
@@ -481,7 +491,7 @@ export default function IcerikYuklemePage() {
                 setSecim(key);
                 setFile(null);
                 setThumbnailFile(null);
-                setError("");
+                setUploadError(null);
               }}
               className={`flex items-center gap-2 px-5 py-3 rounded-xl font-semibold transition-all ${
                 secim === key ? "bg-teal-600 text-white shadow-lg shadow-teal-500/25" : "bg-white border border-slate-200 text-slate-700 hover:bg-slate-50"
@@ -532,6 +542,8 @@ export default function IcerikYuklemePage() {
                           setSelectedTopic(t);
                           setTopicQuery(`${t.subject_name ?? ""} — ${t.title}`);
                           setSearchResults([]);
+                          setSearchError(null);
+                          setUploadError(null);
                         }}
                         className="w-full text-left px-4 py-3 hover:bg-teal-50 text-sm"
                       >
@@ -544,6 +556,23 @@ export default function IcerikYuklemePage() {
                   ))}
                 </ul>
               )}
+              {searchError && (
+                <div className="mt-2 flex items-start gap-2 rounded-xl border border-red-100 bg-red-50 px-3 py-2 text-sm text-red-800">
+                  <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-600" />
+                  <span>{searchError}</span>
+                </div>
+              )}
+              {!selectedTopic &&
+                debouncedQuery.trim().length >= 2 &&
+                !searching &&
+                !searchError &&
+                searchResults.length === 0 &&
+                token && (
+                  <p className="mt-2 text-sm text-slate-500">Eşleşen müfredat konusu bulunamadı. Farklı anahtar kelime veya MEB kodu deneyin.</p>
+                )}
+              {!token && topicQuery.trim().length >= 2 && (
+                <p className="mt-2 text-sm text-amber-800">Konu aramak için oturum açın.</p>
+              )}
             </div>
 
             {selectedTopic && (
@@ -552,7 +581,14 @@ export default function IcerikYuklemePage() {
                 <span>
                   Seçili konu #{selectedTopic.id}: <strong>{selectedTopic.title}</strong>
                 </span>
-                <button type="button" className="ml-auto text-teal-700 underline text-xs" onClick={() => setSelectedTopic(null)}>
+                <button
+                  type="button"
+                  className="ml-auto text-teal-700 underline text-xs"
+                  onClick={() => {
+                    setSelectedTopic(null);
+                    setUploadError(null);
+                  }}
+                >
                   Temizle
                 </button>
               </div>
@@ -608,6 +644,7 @@ export default function IcerikYuklemePage() {
                         setFile(null);
                       }}
                       className="ml-4 p-1.5 rounded-lg hover:bg-red-100 text-red-500 transition-colors"
+                      aria-label="Seçili dosyayı kaldır"
                     >
                       <X className="w-4 h-4" />
                     </button>
@@ -648,10 +685,10 @@ export default function IcerikYuklemePage() {
               </div>
             )}
 
-            {error && (
+            {uploadError && (
               <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-100 rounded-xl">
                 <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
-                <p className="text-sm text-red-700">{error}</p>
+                <p className="text-sm text-red-700">{uploadError}</p>
               </div>
             )}
 

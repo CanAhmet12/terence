@@ -18,6 +18,7 @@ import {
   Trophy,
   Info,
   Filter,
+  AlertCircle,
 } from "lucide-react";
 
 type NotifCategory = "all" | "study" | "exam" | "risk" | "message" | "badge" | "other";
@@ -82,6 +83,7 @@ export function NotificationsPageContent() {
 
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [markingAll, setMarkingAll] = useState(false);
   const [activeTab, setActiveTab] = useState<NotifCategory>("all");
   const [filter, setFilter] = useState<"all" | "unread">("all");
@@ -89,17 +91,22 @@ export function NotificationsPageContent() {
 
   const loadNotifications = useCallback(async () => {
     if (!token) {
+      setNotifications([]);
+      setLoadError(null);
       setLoading(false);
       return;
     }
     setLoading(true);
+    setLoadError(null);
     try {
       const res = await api.getNotifications(token, { per_page: 100 });
-      setNotifications(res.data);
-    } catch {
+      setNotifications(Array.isArray(res.data) ? res.data : []);
+    } catch (e) {
       setNotifications([]);
+      setLoadError((e as Error).message || "Bildirimler yüklenemedi.");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }, [token]);
 
   useEffect(() => {
@@ -130,8 +137,9 @@ export function NotificationsPageContent() {
       await api.markAllNotificationsRead(token);
     } catch {
       await loadNotifications();
+    } finally {
+      setMarkingAll(false);
     }
-    setMarkingAll(false);
   };
 
   const handleDelete = async (id: number) => {
@@ -142,8 +150,9 @@ export function NotificationsPageContent() {
       await api.deleteNotification(token, id);
     } catch {
       await loadNotifications();
+    } finally {
+      setDeleting(null);
     }
-    setDeleting(null);
   };
 
   if (!user) return null;
@@ -184,9 +193,10 @@ export function NotificationsPageContent() {
           <div className="flex items-center gap-2 shrink-0 mt-1">
             <button
               type="button"
-              onClick={loadNotifications}
-              disabled={loading}
+              onClick={() => void loadNotifications()}
+              disabled={loading || !token}
               className="p-2 rounded-xl hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors disabled:opacity-50"
+              aria-label="Bildirimleri yenile"
               title="Yenile"
             >
               <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
@@ -208,6 +218,13 @@ export function NotificationsPageContent() {
             )}
           </div>
         </div>
+
+        {loadError && !loading && (
+          <div className="mb-5 flex items-start gap-3 rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-900">
+            <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-red-600" />
+            <span>{loadError}</span>
+          </div>
+        )}
 
         <div className="flex gap-1.5 overflow-x-auto pb-1 mb-4 scrollbar-hide">
           {CATEGORY_TABS.map((tab) => {
@@ -267,9 +284,17 @@ export function NotificationsPageContent() {
             <div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-4">
               <Bell className="w-8 h-8 text-slate-300" />
             </div>
-            <h3 className="font-bold text-slate-700 mb-1">Bildirim bulunamadı</h3>
+            <h3 className="font-bold text-slate-700 mb-1">
+              {loadError && notifications.length === 0 ? "Liste yüklenemedi" : "Bildirim bulunamadı"}
+            </h3>
             <p className="text-sm text-slate-500">
-              {filter === "unread" ? "Tüm bildirimler okunmuş." : "Bu kategoride bildirim yok."}
+              {loadError && notifications.length === 0
+                ? "Bağlantınızı kontrol edip yenileyin."
+                : filter === "unread"
+                  ? "Tüm bildirimler okunmuş."
+                  : activeTab !== "all"
+                    ? "Bu kategoride bildirim yok."
+                    : "Henüz bildiriminiz yok."}
             </p>
           </div>
         ) : (
@@ -326,6 +351,7 @@ export function NotificationsPageContent() {
                           }}
                           className="w-8 h-8 rounded-xl bg-teal-50 hover:bg-teal-100 border border-teal-100 flex items-center justify-center transition-colors"
                           title="Okundu"
+                          aria-label="Okundu işaretle"
                         >
                           <Check className="w-3.5 h-3.5 text-teal-600" />
                         </button>
@@ -339,6 +365,7 @@ export function NotificationsPageContent() {
                         disabled={deleting === n.id}
                         className="w-8 h-8 rounded-xl bg-red-50 hover:bg-red-100 border border-red-100 flex items-center justify-center transition-colors disabled:opacity-50"
                         title="Sil"
+                        aria-label="Bildirimi sil"
                       >
                         {deleting === n.id ? (
                           <RefreshCw className="w-3.5 h-3.5 text-red-400 animate-spin" />

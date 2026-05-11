@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { api, Assignment, ClassRoom } from "@/lib/api";
-import { Calendar, CheckCircle, Loader2, Users, BookOpen, RefreshCw } from "lucide-react";
+import { Calendar, CheckCircle, Loader2, Users, BookOpen, RefreshCw, AlertCircle } from "lucide-react";
 
 function Skeleton({ className }: { className?: string }) {
   return <div className={`bg-slate-100 rounded-xl animate-pulse ${className ?? ""}`} />;
@@ -26,7 +26,9 @@ export default function OdevPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
-  const [error, setError] = useState("");
+  const [assignmentsLoadError, setAssignmentsLoadError] = useState<string | null>(null);
+  const [classesLoadError, setClassesLoadError] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
 
   const [form, setForm] = useState({
     title: "",
@@ -39,23 +41,39 @@ export default function OdevPage() {
   });
 
   const loadAssignments = useCallback(async () => {
-    if (!token) { setLoading(false); return; }
+    if (!token) {
+      setAssignments([]);
+      setAssignmentsLoadError(null);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    setAssignmentsLoadError(null);
     try {
       const res = await api.getTeacherAssignments(token);
       setAssignments(res);
     } catch (e) {
-      setError((e as Error).message);
+      setAssignments([]);
+      setAssignmentsLoadError((e as Error).message || "Ödev listesi yüklenemedi.");
     } finally {
       setLoading(false);
     }
   }, [token]);
 
   const loadClasses = useCallback(async () => {
-    if (!token) return;
+    if (!token) {
+      setClasses([]);
+      setClassesLoadError(null);
+      return;
+    }
+    setClassesLoadError(null);
     try {
       const res = await api.getTeacherClasses(token);
       setClasses(res);
-    } catch {}
+    } catch (e) {
+      setClasses([]);
+      setClassesLoadError((e as Error).message || "Sınıf listesi yüklenemedi.");
+    }
   }, [token]);
 
   useEffect(() => {
@@ -64,24 +82,27 @@ export default function OdevPage() {
   }, [loadAssignments, loadClasses]);
 
   const handleSubmit = async () => {
-    if (!token) return;
-    if (!form.title || !form.subject) {
-      setError("Başlık ve ders alanları zorunludur.");
+    if (!token) {
+      setFormError("Oturum açmanız gerekir.");
       return;
     }
-    
+    if (!form.title || !form.subject) {
+      setFormError("Başlık ve ders alanları zorunludur.");
+      return;
+    }
+
     if (!form.class_room_id) {
       const confirmed = window.confirm(
         "Sınıf seçilmedi. Ödev tüm öğrencilerinize atanacak. Emin misiniz?"
       );
       if (!confirmed) return;
     }
-    
+
     setSaving(true);
-    setError("");
+    setFormError(null);
 
     try {
-      const assignment = await api.createAssignment({
+      await api.createAssignment({
         title: form.title,
         subject: form.subject,
         due_date: form.due_date || undefined,
@@ -90,12 +111,12 @@ export default function OdevPage() {
         type: form.type || undefined,
         target_count: form.target_count ? Number(form.target_count) : undefined,
       } as Parameters<typeof api.createAssignment>[0]);
-      setAssignments((prev) => [assignment, ...prev]);
+      await loadAssignments();
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
       setForm({ title: "", subject: "", type: "question", target_count: "10", due_date: "", description: "", class_room_id: "" });
     } catch (e) {
-      setError((e as Error).message);
+      setFormError((e as Error).message || "Ödev oluşturulamadı.");
     } finally {
       setSaving(false);
     }
@@ -163,6 +184,12 @@ export default function OdevPage() {
                   <option value="">Tüm Sınıflar</option>
                   {classes.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
+                {classesLoadError && (
+                  <p className="mt-2 flex items-start gap-2 text-xs font-medium text-red-700">
+                    <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                    {classesLoadError}
+                  </p>
+                )}
               </div>
 
               <div className="grid sm:grid-cols-2 gap-4">
@@ -186,12 +213,19 @@ export default function OdevPage() {
                   className={inputCls + " resize-none"} />
               </div>
 
-              {error && (
-                <p className="text-sm text-red-600 bg-red-50 px-4 py-3 rounded-xl border border-red-200">{error}</p>
+              {formError && (
+                <div className="flex items-start gap-2 rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-800">
+                  <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-600" />
+                  <span>{formError}</span>
+                </div>
               )}
 
-              <button onClick={handleSubmit} disabled={saving}
-                className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition-colors disabled:opacity-60 flex items-center justify-center gap-2 shadow-sm shadow-indigo-500/25 active:scale-[0.98]">
+              <button
+                type="button"
+                onClick={() => void handleSubmit()}
+                disabled={saving}
+                className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition-colors disabled:opacity-60 flex items-center justify-center gap-2 shadow-sm shadow-indigo-500/25 active:scale-[0.98]"
+              >
                 {saving ? <><Loader2 className="w-4 h-4 animate-spin" /> Oluşturuluyor...</>
                   : <><BookOpen className="w-4 h-4" /> Ödev Oluştur</>}
               </button>
@@ -208,14 +242,25 @@ export default function OdevPage() {
                   </div>
                   <h2 className="font-bold text-slate-900">Mevcut Ödevler</h2>
                 </div>
-                <button onClick={loadAssignments}
-                  className="p-2 rounded-xl hover:bg-slate-100 border border-transparent hover:border-slate-200 transition-all">
-                  <RefreshCw className="w-4 h-4 text-slate-400 hover:text-slate-600" />
+                <button
+                  type="button"
+                  onClick={() => void loadAssignments()}
+                  disabled={loading}
+                  aria-label="Ödev listesini yenile"
+                  className="p-2 rounded-xl hover:bg-slate-100 border border-transparent hover:border-slate-200 transition-all disabled:opacity-50"
+                >
+                  <RefreshCw className={`w-4 h-4 text-slate-400 hover:text-slate-600 ${loading ? "animate-spin" : ""}`} />
                 </button>
               </div>
             </div>
 
             <div className="p-6">
+              {assignmentsLoadError && !loading && (
+                <div className="mb-4 flex items-start gap-2 rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-800">
+                  <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-600" />
+                  <span>{assignmentsLoadError}</span>
+                </div>
+              )}
               {loading ? (
                 <div className="space-y-3">{[1, 2, 3].map((i) => <Skeleton key={i} className="h-24 rounded-2xl" />)}</div>
               ) : assignments.length === 0 ? (
@@ -223,8 +268,12 @@ export default function OdevPage() {
                   <div className="w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-3">
                     <BookOpen className="w-7 h-7 text-slate-300" />
                   </div>
-                  <p className="font-semibold text-slate-600">Henüz ödev yok</p>
-                  <p className="text-xs text-slate-400 mt-1">Soldaki formla ilk ödevini oluştur</p>
+                  {!assignmentsLoadError && (
+                    <>
+                      <p className="font-semibold text-slate-600">Henüz ödev yok</p>
+                      <p className="text-xs text-slate-400 mt-1">Soldaki formla ilk ödevini oluştur</p>
+                    </>
+                  )}
                 </div>
               ) : (
                 <div className="space-y-3">

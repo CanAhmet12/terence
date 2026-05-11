@@ -61,23 +61,42 @@ export default function OgretmenPlanAtamaPage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [classesError, setClassesError] = useState<string | null>(null);
+  const [studentsError, setStudentsError] = useState<string | null>(null);
+  const [sendError, setSendError] = useState<string | null>(null);
+  const [queryClassFallbackInfo, setQueryClassFallbackInfo] = useState<string | null>(null);
 
   const loadClasses = useCallback(async () => {
-    if (!token) return;
+    if (!token) {
+      setLoading(false);
+      setClasses([]);
+      setClassId(null);
+      return;
+    }
     setLoading(true);
-    setError(null);
+    setClassesError(null);
+    setQueryClassFallbackInfo(null);
     try {
       const list = await teacherApi.getTeacherClasses(token);
       setClasses(list);
       const qid = classFromQuery ? parseInt(classFromQuery, 10) : NaN;
-      if (Number.isFinite(qid) && list.some((c: ClassRoom) => c.id === qid)) {
+      const queryValid = Number.isFinite(qid) && list.some((c: ClassRoom) => c.id === qid);
+      if (queryValid) {
         setClassId(qid);
       } else if (list.length > 0) {
-        setClassId((prev) => prev ?? list[0].id);
+        if (classFromQuery) {
+          setQueryClassFallbackInfo(
+            "Adresteki sınıf bulunamadı veya size ait değil; listeden uygun bir sınıf seçildi.",
+          );
+          setClassId(list[0].id);
+        } else {
+          setClassId((prev) => prev ?? list[0].id);
+        }
+      } else {
+        setClassId(null);
       }
     } catch (e) {
-      setError((e as Error).message || "Sınıflar yüklenemedi");
+      setClassesError((e as Error).message || "Sınıflar yüklenemedi");
     }
     setLoading(false);
   }, [token, classFromQuery]);
@@ -87,15 +106,24 @@ export default function OgretmenPlanAtamaPage() {
   }, [loadClasses]);
 
   useEffect(() => {
+    setSelectedStudentIds([]);
+  }, [classId]);
+
+  useEffect(() => {
     if (!classId) {
       setStudents([]);
+      setStudentsError(null);
       return;
     }
     setStudentsLoading(true);
+    setStudentsError(null);
     teacherApi
       .getClassStudents(classId)
       .then((raw: User[]) => setStudents(Array.isArray(raw) ? raw : []))
-      .catch(() => setStudents([]))
+      .catch((e) => {
+        setStudents([]);
+        setStudentsError((e as Error).message || "Öğrenci listesi yüklenemedi.");
+      })
       .finally(() => setStudentsLoading(false));
   }, [classId]);
 
@@ -116,6 +144,7 @@ export default function OgretmenPlanAtamaPage() {
   };
 
   const applyTemplate = (pack: PlanTemplatePack) => {
+    setSendError(null);
     setRows(
       pack.tasks.map((t) => ({
         id: crypto.randomUUID(),
@@ -149,11 +178,11 @@ export default function OgretmenPlanAtamaPage() {
         priority: r.priority as "low" | "normal" | "high",
       }));
     if (tasks.length === 0) {
-      setError("En az bir görev başlığı girin.");
+      setSendError("En az bir görev başlığı girin.");
       return;
     }
     setSubmitting(true);
-    setError(null);
+    setSendError(null);
     setMessage(null);
     try {
       const client_batch_id =
@@ -171,7 +200,7 @@ export default function OgretmenPlanAtamaPage() {
         `Gönderildi: ${res.students_affected} öğrenci, ${res.tasks_created} görev kaydı.`,
       );
     } catch (e) {
-      setError((e as Error).message || "Atama başarısız");
+      setSendError((e as Error).message || "Atama başarısız");
     }
     setSubmitting(false);
   };
@@ -197,10 +226,21 @@ export default function OgretmenPlanAtamaPage() {
           </div>
         </div>
 
-        {error && (
+        {classesError && (
           <div className="flex items-center gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
             <AlertCircle className="h-5 w-5 shrink-0" />
-            {error}
+            {classesError}
+          </div>
+        )}
+        {queryClassFallbackInfo && (
+          <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm font-medium text-amber-900">
+            {queryClassFallbackInfo}
+          </div>
+        )}
+        {sendError && (
+          <div className="flex items-center gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+            <AlertCircle className="h-5 w-5 shrink-0" />
+            {sendError}
           </div>
         )}
         {message && (
@@ -264,6 +304,12 @@ export default function OgretmenPlanAtamaPage() {
                     </button>
                   )}
                 </div>
+                {studentsError && !studentsLoading && (
+                  <div className="mb-2 flex items-start gap-2 rounded-xl border border-red-100 bg-red-50 px-3 py-2 text-xs font-medium text-red-800">
+                    <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-600" />
+                    <span>{studentsError}</span>
+                  </div>
+                )}
                 <div className="max-h-56 space-y-1 overflow-y-auto rounded-xl border border-slate-100 bg-slate-50/80 p-2">
                   {studentsLoading ? (
                     <p className="p-4 text-center text-sm text-slate-400">
@@ -390,6 +436,7 @@ export default function OgretmenPlanAtamaPage() {
                         }
                         className="rounded-lg p-2 text-slate-400 hover:bg-red-50 hover:text-red-600"
                         title="Satırı sil"
+                        aria-label="Görev satırını sil"
                       >
                         <Trash2 className="h-4 w-4" />
                       </button>

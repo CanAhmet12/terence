@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { api, TeacherMessage, ClassRoom, User } from "@/lib/api";
-import { MessageSquare, Users, User as UserIcon, Clock, Send, CheckCircle, Bell, Loader2, RefreshCw } from "lucide-react";
+import { MessageSquare, Users, User as UserIcon, Clock, Send, CheckCircle, Bell, Loader2, RefreshCw, AlertCircle } from "lucide-react";
 
 function timeAgo(iso: string) {
   const diff = Date.now() - new Date(iso).getTime();
@@ -29,7 +29,10 @@ export default function MesajPage() {
   const [studentsLoading, setStudentsLoading] = useState(false);
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
-  const [error, setError] = useState("");
+  const [messagesLoadError, setMessagesLoadError] = useState<string | null>(null);
+  const [classesLoadError, setClassesLoadError] = useState<string | null>(null);
+  const [studentsLoadError, setStudentsLoadError] = useState<string | null>(null);
+  const [sendFormError, setSendFormError] = useState<string | null>(null);
 
   const [tip, setTip] = useState<"sinif" | "ozel">("sinif");
   const [mesaj, setMesaj] = useState("");
@@ -38,20 +41,39 @@ export default function MesajPage() {
   const [sendSms, setSendSms] = useState(false);
 
   const loadMessages = useCallback(async () => {
-    if (!token) return;
+    if (!token) {
+      setMessages([]);
+      setMessagesLoadError(null);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    setMessagesLoadError(null);
     try {
       const res = await api.getTeacherMessages(token);
       setMessages(res);
-    } catch {}
-    setLoading(false);
+    } catch (e) {
+      setMessages([]);
+      setMessagesLoadError((e as Error).message || "Mesajlar yüklenemedi.");
+    } finally {
+      setLoading(false);
+    }
   }, [token]);
 
   const loadClasses = useCallback(async () => {
-    if (!token) return;
+    if (!token) {
+      setClasses([]);
+      setClassesLoadError(null);
+      return;
+    }
+    setClassesLoadError(null);
     try {
       const res = await api.getTeacherClasses(token);
       setClasses(res);
-    } catch {}
+    } catch (e) {
+      setClasses([]);
+      setClassesLoadError((e as Error).message || "Sınıf listesi yüklenemedi.");
+    }
   }, [token]);
 
   useEffect(() => {
@@ -59,33 +81,50 @@ export default function MesajPage() {
     loadClasses();
   }, [loadMessages, loadClasses]);
 
-  const handleClassChange = async (classId: number) => {
+  const handleClassChange = async (classId: number | "") => {
+    if (classId === "") {
+      setSeciliSinifId("");
+      setSeciliOgrenciId("");
+      setStudents([]);
+      setStudentsLoadError(null);
+      return;
+    }
     setSeciliSinifId(classId);
-    if (!token || !classId) return;
+    setSeciliOgrenciId("");
+    setStudents([]);
+    setStudentsLoadError(null);
+    if (!token) return;
     setStudentsLoading(true);
     try {
       const res = await api.getClassStudents(classId);
-      setStudents(res);
-    } catch {}
-    setStudentsLoading(false);
+      setStudents(Array.isArray(res) ? res : []);
+    } catch (e) {
+      setStudents([]);
+      setStudentsLoadError((e as Error).message || "Öğrenci listesi yüklenemedi.");
+    } finally {
+      setStudentsLoading(false);
+    }
   };
 
   const handleSend = async () => {
-    if (!token) return;
+    if (!token) {
+      setSendFormError("Oturum açmanız gerekir.");
+      return;
+    }
     if (tip === "sinif" && !seciliSinifId) {
-      setError("Sınıf seçimi zorunludur.");
+      setSendFormError("Sınıf seçimi zorunludur.");
       return;
     }
     if (tip === "ozel" && !seciliOgrenciId) {
-      setError("Öğrenci seçimi zorunludur.");
+      setSendFormError("Öğrenci seçimi zorunludur.");
       return;
     }
     if (!mesaj.trim()) {
-      setError("Mesaj alanı zorunludur.");
+      setSendFormError("Mesaj alanı zorunludur.");
       return;
     }
     setSending(true);
-    setError("");
+    setSendFormError(null);
 
     try {
       const payload =
@@ -112,10 +151,12 @@ export default function MesajPage() {
       setMesaj("");
       setSeciliSinifId("");
       setSeciliOgrenciId("");
+      setStudents([]);
     } catch (e) {
-      setError((e as Error).message);
+      setSendFormError((e as Error).message || "Mesaj gönderilemedi.");
+    } finally {
+      setSending(false);
     }
-    setSending(false);
   };
 
   return (
@@ -147,13 +188,23 @@ export default function MesajPage() {
                   { key: "sinif" as const, label: "Sınıfa Duyuru", icon: Users },
                   { key: "ozel" as const,  label: "Özel Mesaj",    icon: UserIcon },
                 ]).map(({ key, label, icon: Icon }) => (
-                  <button key={key}
-                    onClick={() => { setTip(key); setSeciliSinifId(""); setSeciliOgrenciId(""); }}
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => {
+                      setTip(key);
+                      setSeciliSinifId("");
+                      setSeciliOgrenciId("");
+                      setStudents([]);
+                      setStudentsLoadError(null);
+                      setSendFormError(null);
+                    }}
                     className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg font-semibold text-sm transition-all ${
                       tip === key
                         ? "bg-white text-indigo-700 shadow-sm"
                         : "text-slate-600 hover:text-slate-900"
-                    }`}>
+                    }`}
+                  >
                     <Icon className="w-4 h-4" />
                     {label}
                   </button>
@@ -166,30 +217,68 @@ export default function MesajPage() {
                   {tip === "sinif" ? "Sınıf Seç" : "Öğrenci Seç"} <span className="text-red-500">*</span>
                 </label>
                 {tip === "sinif" ? (
-                  <select value={seciliSinifId} onChange={(e) => { const v = e.target.value; if (v) handleClassChange(Number(v)); }}
-                    className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-400 outline-none text-sm transition-all">
+                  <select
+                    value={seciliSinifId}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      void handleClassChange(v === "" ? "" : Number(v));
+                    }}
+                    className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-400 outline-none text-sm transition-all"
+                  >
                     <option value="">Sınıf seçin</option>
-                    {classes.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                    {classes.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name}
+                      </option>
+                    ))}
                   </select>
                 ) : (
                   <div className="space-y-2">
-                    <select value={seciliSinifId} onChange={(e) => { const v = e.target.value; if (v) handleClassChange(Number(v)); }}
-                      className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-400 outline-none text-sm transition-all">
+                    <select
+                      value={seciliSinifId}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        void handleClassChange(v === "" ? "" : Number(v));
+                      }}
+                      className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-400 outline-none text-sm transition-all"
+                    >
                       <option value="">Önce sınıf seçin</option>
-                      {classes.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                      {classes.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.name}
+                        </option>
+                      ))}
                     </select>
                     {studentsLoading ? (
                       <Skeleton className="h-12 rounded-xl" />
                     ) : students.length > 0 ? (
-                      <select value={seciliOgrenciId} onChange={(e) => setSeciliOgrenciId(Number(e.target.value))}
-                        className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-400 outline-none text-sm transition-all">
+                      <select
+                        value={seciliOgrenciId === "" ? "" : seciliOgrenciId}
+                        onChange={(e) => {
+                          const v = e.target.value;
+                          setSeciliOgrenciId(v === "" ? "" : Number(v));
+                        }}
+                        className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-400 outline-none text-sm transition-all"
+                      >
                         <option value="">Öğrenci seçin</option>
-                        {students.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+                        {students.map((s) => (
+                          <option key={s.id} value={s.id}>
+                            {s.name}
+                          </option>
+                        ))}
                       </select>
                     ) : seciliSinifId ? (
-                      <p className="text-xs text-slate-400 px-1">Bu sınıfta öğrenci bulunamadı.</p>
+                      <p className={`text-xs px-1 ${studentsLoadError ? "font-medium text-red-700" : "text-slate-400"}`}>
+                        {studentsLoadError ?? "Bu sınıfta öğrenci bulunamadı."}
+                      </p>
                     ) : null}
                   </div>
+                )}
+                {classesLoadError && (
+                  <p className="mt-2 flex items-start gap-2 text-xs font-medium text-red-700">
+                    <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                    {classesLoadError}
+                  </p>
                 )}
               </div>
 
@@ -217,12 +306,19 @@ export default function MesajPage() {
                   <CheckCircle className="w-4 h-4 shrink-0" /> Mesaj başarıyla gönderildi!
                 </div>
               )}
-              {error && (
-                <div className="p-3.5 bg-red-50 border border-red-100 rounded-xl text-sm text-red-700">{error}</div>
+              {sendFormError && (
+                <div className="flex items-start gap-2 rounded-xl border border-red-100 bg-red-50 p-3.5 text-sm text-red-800">
+                  <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-600" />
+                  <span>{sendFormError}</span>
+                </div>
               )}
 
-              <button onClick={handleSend} disabled={sending}
-                className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-70 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-all shadow-sm shadow-indigo-500/25 active:scale-[0.98]">
+              <button
+                type="button"
+                onClick={() => void handleSend()}
+                disabled={sending || !token}
+                className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-70 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-all shadow-sm shadow-indigo-500/25 active:scale-[0.98]"
+              >
                 {sending ? <><Loader2 className="w-4 h-4 animate-spin" /> Gönderiliyor...</>
                   : <><Send className="w-4 h-4" /> Gönder</>}
               </button>
@@ -264,15 +360,30 @@ export default function MesajPage() {
                   <MessageSquare className="w-4 h-4 text-indigo-600" />
                   <h3 className="font-bold text-slate-900">Son Mesajlar</h3>
                 </div>
-                <button onClick={loadMessages} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors">
-                  <RefreshCw className="w-3.5 h-3.5" />
+                <button
+                  type="button"
+                  onClick={() => void loadMessages()}
+                  disabled={loading || !token}
+                  aria-label="Mesaj listesini yenile"
+                  className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors disabled:opacity-50"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
                 </button>
               </div>
+
+              {messagesLoadError && !loading && (
+                <div className="mx-5 mt-4 flex items-start gap-2 rounded-xl border border-red-100 bg-red-50 px-3 py-2.5 text-sm text-red-800">
+                  <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-600" />
+                  <span>{messagesLoadError}</span>
+                </div>
+              )}
 
               {loading ? (
                 <div className="p-4 space-y-3">{[1, 2].map((i) => <Skeleton key={i} className="h-16" />)}</div>
               ) : messages.length === 0 ? (
-                <div className="p-10 text-center text-slate-400 text-sm">Henüz mesaj gönderilmemiş.</div>
+                <div className="p-10 text-center text-slate-400 text-sm">
+                  {!messagesLoadError ? "Henüz mesaj gönderilmemiş." : null}
+                </div>
               ) : (
                 <div className="divide-y divide-slate-50">
                   {messages.slice(0, 8).map((m) => {

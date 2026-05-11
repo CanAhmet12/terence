@@ -731,6 +731,8 @@ export interface LeaderboardEntry {
 export interface TeacherClass {
   id: number
   name: string
+  /** Öğrencilerin sınıfa katılımı için (oluşturulunca atanır) */
+  join_code?: string | null
   subject?: string
   student_count?: number
   /** Bazı uçlarda `students_count` döner */
@@ -744,7 +746,7 @@ export interface TeacherClass {
 /** Öğretmen sınıf öğrenci listesi satırı — çoğunlukla `User` ile aynı çekirdek */
 export type TeacherStudent = User
 
-/** GET /teacher/classes/{id}/exam-summary satırı */
+/** GET /v1/teacher/classes/{id}/exam-summary satırı */
 export interface TeacherClassExamSummaryRow {
   student_id: number
   name: string
@@ -1643,7 +1645,7 @@ export function normalizeExamSessionFromApi(payload: unknown): ExamSession {
     (o.session as ExamSession | undefined) ??
     (o.data as ExamSession | undefined)
   const nestedId =
-    nested && typeof nested === 'object' ? (nested as Record<string, unknown>).id : undefined
+    nested && typeof nested === 'object' ? (nested as unknown as Record<string, unknown>).id : undefined
   if (
     nested &&
     typeof nested === 'object' &&
@@ -1831,16 +1833,11 @@ export const courseApi = {
     }
   },
 
-  async getCourseUnits(_tokenOrId?: string | number, courseId?: string | number): Promise<CourseUnit[]> {
-    // Backend GET /courses/{id} → { data: { units: [...] } }
-    const actualId = (typeof _tokenOrId === 'number') ? _tokenOrId : (courseId ?? _tokenOrId)
-    try {
-      const response = await apiCore.get<{ success: boolean; data: Course }>(`/courses/${actualId}`)
-      const course = response.data?.data ?? (response.data as unknown as Course)
-      return Array.isArray(course?.units) ? course.units : []
-    } catch {
-      return []
-    }
+  /** GET /courses/{id} → `data.units` (sayısal kurs kimliği zorunlu; slug kullanmayın). */
+  async getCourseUnits(courseId: number): Promise<CourseUnit[]> {
+    const response = await apiCore.get<{ success: boolean; data: Course }>(`/courses/${courseId}`)
+    const course = response.data?.data ?? (response.data as unknown as Course)
+    return Array.isArray(course?.units) ? course.units : []
   },
 
   async getTopicContent(_tokenOrId?: string | number, topicId?: string | number): Promise<ContentItem[]> {
@@ -2019,7 +2016,7 @@ export const aiApi = {
   },
 }
 
-/** GET /teacher/analytics/{type} — çoğu uç `{ data: satır[] }` döner */
+/** GET /v1/teacher/analytics/{type} — çoğu uç `{ data: satır[] }` döner */
 export interface TeacherAnalyticsResponse {
   data?: unknown[]
   success?: boolean
@@ -2029,30 +2026,30 @@ export interface TeacherAnalyticsResponse {
 // ─── Teacher API ─────────────────────────────────────────────────────────────
 export const teacherApi = {
   async getTeacherStats(_token?: string): Promise<unknown> {
-    const response = await apiCore.get<unknown>('/teacher/stats')
+    const response = await apiCore.get<unknown>('/v1/teacher/stats')
     return response.data
   },
 
   async getTeacherClasses(_token?: string): Promise<TeacherClass[]> {
-    const response = await apiCore.get<unknown>('/teacher/classes')
+    const response = await apiCore.get<unknown>('/v1/teacher/classes')
     return normalizeArray<TeacherClass>(response.data)
   },
 
   async createClass(_tokenOrData?: string | { name: string; subject?: string }, data?: { name: string; subject?: string }): Promise<TeacherClass> {
     const actualData = typeof _tokenOrData === 'string' ? data : _tokenOrData
-    const response = await apiCore.post<{ class: TeacherClass }>('/teacher/classes', actualData)
+    const response = await apiCore.post<{ class: TeacherClass }>('/v1/teacher/classes', actualData)
     return response.data.class ?? (response.data as unknown as TeacherClass)
   },
 
   async getClassStudents(_tokenOrId?: string | number, classId?: number): Promise<User[]> {
     const actualId = typeof _tokenOrId === 'number' ? _tokenOrId : classId
-    const response = await apiCore.get<unknown>(`/teacher/classes/${actualId}/students`)
+    const response = await apiCore.get<unknown>(`/v1/teacher/classes/${actualId}/students`)
     return normalizeArray<User>(response.data)
   },
 
   async getClassExamSummary(_tokenOrId?: string | number, classId?: number): Promise<TeacherClassExamSummaryRow[]> {
     const actualId = typeof _tokenOrId === 'number' ? _tokenOrId : classId
-    const response = await apiCore.get<unknown>(`/teacher/classes/${actualId}/exam-summary`)
+    const response = await apiCore.get<unknown>(`/v1/teacher/classes/${actualId}/exam-summary`)
     return normalizeArray<TeacherClassExamSummaryRow>(response.data)
   },
 
@@ -2073,7 +2070,7 @@ export const teacherApi = {
     },
   ): Promise<{ teacher_batch_id: string; students_affected: number; tasks_created: number }> {
     const response = await apiCore.post<{ success: boolean; teacher_batch_id: string; students_affected: number; tasks_created: number }>(
-      `/teacher/classes/${classId}/plan-tasks`,
+      `/v1/teacher/classes/${classId}/plan-tasks`,
       body,
     )
     return response.data
@@ -2082,40 +2079,42 @@ export const teacherApi = {
   async getTeacherStudentGoalDashboard(_tokenOrId?: string | number, studentId?: number): Promise<StudentGoalDashboard> {
     const actualId = typeof _tokenOrId === 'number' ? _tokenOrId : studentId
     if (actualId === undefined) throw new Error('Öğrenci ID gerekli')
-    const response = await apiCore.get<StudentGoalDashboard>(`/teacher/students/${actualId}/goal-dashboard`)
+    const response = await apiCore.get<StudentGoalDashboard>(`/v1/teacher/students/${actualId}/goal-dashboard`)
     return response.data
   },
 
   async getRiskStudents(_token?: string): Promise<User[]> {
-    const response = await apiCore.get<unknown>('/teacher/students/risk')
+    const response = await apiCore.get<unknown>('/v1/teacher/students/risk')
     return normalizeArray<User>(response.data)
   },
 
   async getTeacherAssignments(_token?: string): Promise<Assignment[]> {
-    const response = await apiCore.get<unknown>('/teacher/assignments')
+    const response = await apiCore.get<unknown>('/v1/teacher/assignments')
     return normalizeArray<Assignment>(response.data)
   },
 
-  async createAssignment(_tokenOrData?: string | { title: string; description?: string; due_date?: string; class_id?: number; subject?: string; type?: string; content?: string }, data?: { title: string; description?: string; due_date?: string; class_id?: number; subject?: string }): Promise<Assignment> {
+  async createAssignment(_tokenOrData?: string | { title: string; description?: string; due_date?: string; class_id?: number; class_room_id?: number; subject?: string; type?: string; content?: string }, data?: { title: string; description?: string; due_date?: string; class_id?: number; class_room_id?: number; subject?: string }): Promise<Assignment & { created_count?: number }> {
     const actualData = typeof _tokenOrData === 'string' ? data : _tokenOrData
-    const response = await apiCore.post<{ assignment: Assignment }>('/teacher/assignments', actualData)
-    return response.data.assignment ?? (response.data as unknown as Assignment)
+    const response = await apiCore.post<{ assignment: Assignment; created_count?: number }>('/v1/teacher/assignments', actualData)
+    const assignment = response.data.assignment ?? (response.data as unknown as Assignment)
+    const created_count = response.data.created_count
+    return created_count !== undefined ? { ...assignment, created_count } : assignment
   },
 
   async updateAssignment(_tokenOrId?: string | number, idOrData?: number | Partial<Assignment>, data?: Partial<Assignment>): Promise<Assignment> {
     const actualId = typeof _tokenOrId === 'number' ? _tokenOrId : (typeof idOrData === 'number' ? idOrData : undefined)
     const actualData = typeof _tokenOrId === 'number' ? (idOrData as Partial<Assignment>) : data
-    const response = await apiCore.patch<{ assignment: Assignment }>(`/teacher/assignments/${actualId}`, actualData)
+    const response = await apiCore.patch<{ assignment: Assignment }>(`/v1/teacher/assignments/${actualId}`, actualData)
     return response.data.assignment ?? (response.data as unknown as Assignment)
   },
 
   async deleteAssignment(_tokenOrId?: string | number, id?: number): Promise<void> {
     const actualId = typeof _tokenOrId === 'number' ? _tokenOrId : id
-    await apiCore.delete(`/teacher/assignments/${actualId}`)
+    await apiCore.delete(`/v1/teacher/assignments/${actualId}`)
   },
 
   async getLiveSessions(_token?: string): Promise<LiveSession[]> {
-    const response = await apiCore.get<unknown>('/teacher/live-sessions')
+    const response = await apiCore.get<unknown>('/v1/teacher/live-sessions')
     return normalizeArray<LiveSession>(response.data)
   },
 
@@ -2146,38 +2145,38 @@ export const teacherApi = {
     },
   ): Promise<LiveSession> {
     const actualData = typeof _tokenOrData === 'string' ? data : _tokenOrData
-    const response = await apiCore.post<{ session: LiveSession }>('/teacher/live-sessions', actualData)
+    const response = await apiCore.post<{ session: LiveSession }>('/v1/teacher/live-sessions', actualData)
     return response.data.session ?? (response.data as unknown as LiveSession)
   },
 
   async getLiveSession(_tokenOrId?: string | number, sessionId?: number): Promise<LiveSession> {
     const actualId = typeof _tokenOrId === 'number' ? _tokenOrId : sessionId
     if (actualId === undefined) throw new Error('Oturum ID gerekli')
-    const response = await apiCore.get<{ success?: boolean; data?: LiveSession }>(`/teacher/live-sessions/${actualId}`)
+    const response = await apiCore.get<{ success?: boolean; data?: LiveSession }>(`/v1/teacher/live-sessions/${actualId}`)
     const d = response.data as Record<string, unknown>
     return (d.data ?? response.data) as LiveSession
   },
 
   async goLiveSession(sessionId: number): Promise<LiveSession> {
-    const response = await apiCore.patch<{ success?: boolean; data?: LiveSession }>(`/teacher/live-sessions/${sessionId}/go-live`)
+    const response = await apiCore.patch<{ success?: boolean; data?: LiveSession }>(`/v1/teacher/live-sessions/${sessionId}/go-live`)
     const d = response.data as Record<string, unknown>
     return (d.data ?? response.data) as LiveSession
   },
 
   async endLiveSession(sessionId: number, body?: { recording_url?: string | null }): Promise<LiveSession> {
-    const response = await apiCore.patch<{ success?: boolean; data?: LiveSession }>(`/teacher/live-sessions/${sessionId}/end`, body ?? {})
+    const response = await apiCore.patch<{ success?: boolean; data?: LiveSession }>(`/v1/teacher/live-sessions/${sessionId}/end`, body ?? {})
     const d = response.data as Record<string, unknown>
     return (d.data ?? response.data) as LiveSession
   },
 
   async getTeacherAnalytics(_tokenOrType?: string, type?: string): Promise<TeacherAnalyticsResponse> {
     const actualType = type ?? ((_tokenOrType && _tokenOrType !== 'string') ? _tokenOrType : 'overview')
-    const response = await apiCore.get<TeacherAnalyticsResponse>(`/teacher/analytics/${actualType}`)
+    const response = await apiCore.get<TeacherAnalyticsResponse>(`/v1/teacher/analytics/${actualType}`)
     return response.data ?? {}
   },
 
   async getTeacherMessages(_token?: string): Promise<TeacherMessage[]> {
-    const response = await apiCore.get<unknown>('/teacher/messages')
+    const response = await apiCore.get<unknown>('/v1/teacher/messages')
     return normalizeArray<TeacherMessage>(response.data)
   },
 
@@ -2188,7 +2187,7 @@ export const teacherApi = {
       ...actualData,
       receiver_id: actualData.receiver_id ?? actualData.recipient_id,
     } : actualData
-    const response = await apiCore.post<{ message: TeacherMessage }>('/teacher/messages', payload)
+    const response = await apiCore.post<{ message: TeacherMessage }>('/v1/teacher/messages', payload)
     return response.data.message ?? (response.data as unknown as TeacherMessage)
   },
 
@@ -2203,7 +2202,7 @@ export const teacherApi = {
     }
   },
 
-  /** Müfredat konusu araması (içerik yükleme seçici). GET /teacher/curriculum/topics */
+  /** Müfredat konusu araması (içerik yükleme seçici). GET /v1/teacher/curriculum/topics */
   async searchCurriculumTopics(
     q: string,
     limitOrOptions: number | SearchCurriculumTopicsOptions = 40,
@@ -2220,16 +2219,16 @@ export const teacherApi = {
     if (e && e !== 'all') {
       params.exam_type = e
     }
-    const response = await apiCore.get<{ success?: boolean; topics?: TeacherCurriculumTopicRow[] }>('/teacher/curriculum/topics', {
+    const response = await apiCore.get<{ success?: boolean; topics?: TeacherCurriculumTopicRow[] }>('/v1/teacher/curriculum/topics', {
       params,
     })
     const topics = response.data?.topics
     return Array.isArray(topics) ? topics : []
   },
 
-  /** Video/PDF’yi müfredat konusuna bağlar. POST /teacher/curriculum-content (multipart) */
+  /** Video/PDF’yi müfredat konusuna bağlar. POST /v1/teacher/curriculum-content (multipart) */
   async uploadCurriculumContent(formData: FormData): Promise<TeacherCurriculumUploadResponse> {
-    const response = await apiCore.post<TeacherCurriculumUploadResponse>('/teacher/curriculum-content', formData)
+    const response = await apiCore.post<TeacherCurriculumUploadResponse>('/v1/teacher/curriculum-content', formData)
     return response.data
   },
 }

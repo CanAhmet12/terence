@@ -20,8 +20,12 @@ type SaveState = "idle" | "saving" | "success" | "error";
 
 function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
   return (
-    <button type="button" onClick={() => onChange(!checked)}
-      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${checked ? "bg-indigo-600" : "bg-slate-200"}`}>
+    <button
+      type="button"
+      aria-pressed={checked}
+      onClick={() => onChange(!checked)}
+      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${checked ? "bg-indigo-600" : "bg-slate-200"}`}
+    >
       <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${checked ? "translate-x-6" : "translate-x-1"}`} />
     </button>
   );
@@ -49,6 +53,7 @@ export default function OgretmenProfilPage() {
   const [saveError, setSaveError] = useState("");
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [photoUploading, setPhotoUploading] = useState(false);
+  const [photoError, setPhotoError] = useState<string | null>(null);
 
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -69,15 +74,22 @@ export default function OgretmenProfilPage() {
 
   const handlePhotoChange = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    e.target.value = "";
     if (!file) return;
-    setPhotoPreview(URL.createObjectURL(file));
+    const objectUrl = URL.createObjectURL(file);
+    setPhotoPreview(objectUrl);
+    setPhotoError(null);
     setPhotoUploading(true);
     try {
       const res = await api.uploadProfilePhoto(file);
       const updated = await api.updateProfile({ profile_photo_url: res.url });
+      URL.revokeObjectURL(objectUrl);
       updateUser(updated);
-    } catch {
+      setPhotoPreview(updated.profile_photo_url ?? res.url ?? user?.profile_photo_url ?? null);
+    } catch (err: unknown) {
+      URL.revokeObjectURL(objectUrl);
       setPhotoPreview(user?.profile_photo_url ?? null);
+      setPhotoError(err instanceof Error ? err.message : "Fotoğraf yüklenemedi.");
     } finally {
       setPhotoUploading(false);
     }
@@ -177,8 +189,12 @@ export default function OgretmenProfilPage() {
                         </div>
                       )}
                     </div>
-                    <button onClick={() => fileInputRef.current?.click()}
-                      className="absolute -bottom-1 -right-1 w-8 h-8 bg-white rounded-xl shadow-md flex items-center justify-center hover:bg-slate-50 transition-colors border border-slate-200">
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="absolute -bottom-1 -right-1 w-8 h-8 bg-white rounded-xl shadow-md flex items-center justify-center hover:bg-slate-50 transition-colors border border-slate-200"
+                      aria-label="Profil fotoğrafı seç"
+                    >
                       <Camera className="w-3.5 h-3.5 text-slate-600" />
                     </button>
                     <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handlePhotoChange} />
@@ -212,21 +228,42 @@ export default function OgretmenProfilPage() {
                 <div className="flex justify-between py-2.5">
                   <span className="text-xs text-slate-500">Üyelik</span>
                   <span className="text-xs font-medium text-slate-600">
-                    {new Date(user.created_at).toLocaleDateString("tr-TR", { month: "long", year: "numeric" })}
+                    {(() => {
+                      if (!user.created_at) return "—";
+                      const d = new Date(user.created_at);
+                      return Number.isNaN(d.getTime())
+                        ? "—"
+                        : d.toLocaleDateString("tr-TR", { month: "long", year: "numeric" });
+                    })()}
                   </span>
                 </div>
               </div>
             </div>
 
+            {photoError && (
+              <div className="flex items-start gap-2 rounded-xl border border-red-100 bg-red-50 px-3 py-2 text-xs font-medium text-red-800">
+                <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-red-600" />
+                <span>{photoError}</span>
+              </div>
+            )}
+
             {/* Sekmeler */}
             <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-2">
               {TABS.map((tab) => (
-                <button key={tab.id} onClick={() => { setActiveTab(tab.id); setSaveState("idle"); }}
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => {
+                    setActiveTab(tab.id);
+                    setSaveState("idle");
+                    setSaveError("");
+                  }}
                   className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
                     activeTab === tab.id
                       ? "bg-indigo-50 text-indigo-700 border-l-2 border-indigo-500"
                       : "text-slate-600 hover:bg-slate-50 hover:text-slate-800"
-                  }`}>
+                  }`}
+                >
                   <tab.icon className={`w-4 h-4 shrink-0 ${activeTab === tab.id ? "text-indigo-600" : "text-slate-400"}`} />
                   {tab.label}
                 </button>

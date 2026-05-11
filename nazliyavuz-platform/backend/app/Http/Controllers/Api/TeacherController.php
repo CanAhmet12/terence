@@ -33,6 +33,71 @@ class TeacherController extends Controller
             ->withCount('students')
             ->orderByDesc('created_at')
             ->get();
+
+        $classIds = $classes->pluck('id');
+        if ($classIds->isEmpty()) {
+            return response()->json(['success' => true, 'data' => $classes]);
+        }
+
+        $avgByClass = DB::table('class_students')
+            ->join('users', 'users.id', '=', 'class_students.student_id')
+            ->whereIn('class_students.class_room_id', $classIds)
+            ->groupBy('class_students.class_room_id')
+            ->selectRaw('class_students.class_room_id as cid, AVG(users.current_net) as avg_net')
+            ->pluck('avg_net', 'cid');
+
+        $pairs = DB::table('class_students')
+            ->whereIn('class_room_id', $classIds)
+            ->get(['class_room_id', 'student_id']);
+
+        $studentIds = $pairs->pluck('student_id')->unique()->values();
+
+        $riskRank = ['green' => 1, 'yellow' => 2, 'red' => 3];
+        $riskByStudent = [];
+        if ($studentIds->isNotEmpty()) {
+            $lastStudyByUser = StudySession::query()
+                ->whereIn('user_id', $studentIds)
+                ->selectRaw('user_id, MAX(started_at) as last_started')
+                ->groupBy('user_id')
+                ->pluck('last_started', 'user_id');
+
+            $nets = User::whereIn('id', $studentIds)->pluck('current_net', 'id');
+
+            foreach ($studentIds as $sid) {
+                $lastActivity = $lastStudyByUser[$sid] ?? null;
+                $daysSince    = $lastActivity ? now()->diffInDays(Carbon::parse($lastActivity)) : 999;
+                $net          = (float) ($nets[$sid] ?? 0);
+
+                $risk = 'green';
+                if ($daysSince > 7 || $net < 20) {
+                    $risk = 'red';
+                } elseif ($daysSince > 3 || $net < 40) {
+                    $risk = 'yellow';
+                }
+                $riskByStudent[$sid] = $risk;
+            }
+        }
+
+        $worstByClass = [];
+        foreach ($pairs as $p) {
+            $cid = (int) $p->class_room_id;
+            $sid = (int) $p->student_id;
+            $r   = $riskByStudent[$sid] ?? 'green';
+            if (! isset($worstByClass[$cid])) {
+                $worstByClass[$cid] = $r;
+                continue;
+            }
+            $cur = $worstByClass[$cid];
+            if (($riskRank[$r] ?? 1) > ($riskRank[$cur] ?? 1)) {
+                $worstByClass[$cid] = $r;
+            }
+        }
+
+        foreach ($classes as $c) {
+            $c->avg_net      = isset($avgByClass[$c->id]) ? round((float) $avgByClass[$c->id], 2) : null;
+            $c->risk_level   = $worstByClass[$c->id] ?? 'green';
+        }
+
         return response()->json(['success' => true, 'data' => $classes]);
     }
 
@@ -73,7 +138,46 @@ class TeacherController extends Controller
             'users.subscription_plan',
             'users.last_login_at',
         ]);
-        return response()->json(['success' => true, 'data' => $students]);
+
+        if ($students->isEmpty()) {
+            return response()->json(['success' => true, 'data' => []]);
+        }
+
+        $studentIds = $students->pluck('id');
+
+        $studyToday = StudySession::query()
+            ->whereIn('user_id', $studentIds)
+            ->whereDate('started_at', today())
+            ->selectRaw('user_id, COALESCE(SUM(COALESCE(duration_seconds, 0)), 0) as secs')
+            ->groupBy('user_id')
+            ->pluck('secs', 'user_id');
+
+        $lastStudyByUser = StudySession::query()
+            ->whereIn('user_id', $studentIds)
+            ->selectRaw('user_id, MAX(started_at) as last_started')
+            ->groupBy('user_id')
+            ->pluck('last_started', 'user_id');
+
+        $data = $students->map(function ($u) use ($studyToday, $lastStudyByUser) {
+            $lastActivity = $lastStudyByUser[$u->id] ?? null;
+            $daysSince    = $lastActivity ? now()->diffInDays(Carbon::parse($lastActivity)) : 999;
+            $net          = (float) $u->current_net;
+
+            $risk = 'green';
+            if ($daysSince > 7 || $net < 20) {
+                $risk = 'red';
+            } elseif ($daysSince > 3 || $net < 40) {
+                $risk = 'yellow';
+            }
+
+            return array_merge($u->toArray(), [
+                'study_time_today_seconds' => (int) ($studyToday[$u->id] ?? 0),
+                'risk_level'               => $risk,
+                'days_inactive'            => $daysSince,
+            ]);
+        });
+
+        return response()->json(['success' => true, 'data' => $data]);
     }
 
     // GET /api/teacher/classes/{id}/exam-summary — sınıftaki öğrencilerin deneme özeti (salt okunur)
@@ -112,7 +216,7 @@ class TeacherController extends Controller
     {
         $teacher  = Auth::user();
         $classIds = ClassRoom::where('teacher_id', $teacher->id)->pluck('id');
-        $studentIds = ClassStudent::whereIn('class_room_id', $classIds)->pluck('student_id');
+        $studentIds = ClassStudent::whereIn('class_room_id', $classIds)->pluck('student_id')->unique()->values();
 
         $students = User::whereIn('id', $studentIds)->get();
 
@@ -141,7 +245,10 @@ class TeacherController extends Controller
             ];
         });
 
-        return response()->json(['success' => true, 'data' => $result->sortByDesc('risk_level')->values()]);
+        $riskRank = ['red' => 3, 'yellow' => 2, 'green' => 1];
+        $sorted = $result->sortByDesc(fn ($row) => $riskRank[$row['risk_level']] ?? 0)->values();
+
+        return response()->json(['success' => true, 'data' => $sorted]);
     }
 
     // GET /api/teacher/assignments
@@ -191,10 +298,50 @@ class TeacherController extends Controller
             if (!$ownsClass) {
                 return response()->json(['error' => true, 'message' => 'Bu sınıf size ait değil.'], 403);
             }
+            $studentIds = ClassStudent::where('class_room_id', $classRoomId)->pluck('student_id')->unique()->values();
+        } else {
+            $classIds = ClassRoom::where('teacher_id', $teacher->id)->pluck('id');
+            $studentIds = ClassStudent::whereIn('class_room_id', $classIds)->pluck('student_id')->unique()->values();
         }
 
-        $assignment = Assignment::create(array_merge($data, ['teacher_id' => $teacher->id]));
-        return response()->json(['success' => true, 'assignment' => $assignment], 201);
+        if ($studentIds->isEmpty()) {
+            return response()->json([
+                'error'   => true,
+                'message' => 'Öğrenci bulunamadı. Önce sınıflarınıza öğrenci ekleyin veya bir sınıf seçin.',
+            ], 422);
+        }
+
+        $dueDate = isset($data['due_date']) && $data['due_date'] !== null
+            ? Carbon::parse($data['due_date'])
+            : now()->addDays(7);
+
+        $title = $data['title'];
+        $description = $data['description'] ?? null;
+
+        $created = DB::transaction(function () use ($teacher, $studentIds, $classRoomId, $title, $description, $dueDate) {
+            $rows = [];
+            foreach ($studentIds as $studentId) {
+                $rows[] = Assignment::create([
+                    'teacher_id'    => $teacher->id,
+                    'student_id'    => $studentId,
+                    'class_room_id' => $classRoomId,
+                    'title'         => $title,
+                    'description'   => $description,
+                    'due_date'      => $dueDate,
+                    'difficulty'    => 'medium',
+                    'status'        => 'pending',
+                ]);
+            }
+            return $rows;
+        });
+
+        $first = $created[0];
+
+        return response()->json([
+            'success'       => true,
+            'assignment'    => $first,
+            'created_count' => count($created),
+        ], 201);
     }
 
     // PATCH /api/teacher/assignments/{id}
@@ -242,11 +389,13 @@ class TeacherController extends Controller
     {
         $teacher  = Auth::user();
         $classIds = ClassRoom::where('teacher_id', $teacher->id)->pluck('id');
-        $studentIds = ClassStudent::whereIn('class_room_id', $classIds)->pluck('student_id');
+        $studentIds = ClassStudent::whereIn('class_room_id', $classIds)->pluck('student_id')->unique()->values();
 
         $totalStudents = $studentIds->count();
-        $activeToday   = StudySession::whereIn('user_id', $studentIds)
-            ->whereDate('started_at', today())->distinct('user_id')->count('user_id');
+        $activeToday   = (int) StudySession::whereIn('user_id', $studentIds)
+            ->whereDate('started_at', today())
+            ->selectRaw('COUNT(DISTINCT user_id) as c')
+            ->value('c');
         $avgNet        = User::whereIn('id', $studentIds)->avg('current_net') ?? 0;
         $assignments   = Assignment::where('teacher_id', $teacher->id)->count();
 
@@ -504,13 +653,22 @@ class TeacherController extends Controller
         if ($request->recipient_type === 'class' && $request->recipient_id) {
             $class = ClassRoom::where('teacher_id', $teacher->id)->find($request->recipient_id);
             if ($class) {
-                $recipientIds = ClassStudent::where('class_room_id', $class->id)->pluck('student_id')->toArray();
+                $recipientIds = ClassStudent::where('class_room_id', $class->id)->pluck('student_id')->unique()->values()->all();
             }
         } elseif ($request->recipient_type === 'student' && $request->recipient_id) {
             $recipientIds = [$request->recipient_id];
         } elseif ($request->recipient_type === 'all') {
             $classIds   = ClassRoom::where('teacher_id', $teacher->id)->pluck('id');
-            $recipientIds = ClassStudent::whereIn('class_room_id', $classIds)->pluck('student_id')->toArray();
+            $recipientIds = ClassStudent::whereIn('class_room_id', $classIds)->pluck('student_id')->unique()->values()->all();
+        }
+
+        $recipientIds = array_values(array_unique(array_filter($recipientIds)));
+
+        if ($recipientIds === []) {
+            return response()->json([
+                'error'   => true,
+                'message' => 'Alıcı öğrenci bulunamadı. Öğrencilerinizi bir sınıfa ekleyin.',
+            ], 422);
         }
 
         // Create notification for each recipient
