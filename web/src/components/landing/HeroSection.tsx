@@ -211,7 +211,7 @@ export function HeroSection() {
                         <div className={`w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold ${task.done ? 'bg-cyan-500 text-white' : 'bg-slate-200 text-slate-500'}`}>
                           {task.done ? '✓' : i + 1}
                         </div>
-                        <span className={`text-[11px] ${task.done ? 'text-slate-400 line-through' : 'text-slate-700 font-medium'}`}>{task.text}</span>
+                        <span className={`text-[11px] ${task.done ? "text-slate-600" : "text-slate-700 font-medium"}`}>{task.text}</span>
                       </div>
                     ))}
                   </div>

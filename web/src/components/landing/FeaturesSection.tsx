@@ -270,7 +270,7 @@ export function FeaturesSection() {
                         <div className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold ${task.done ? "bg-cyan-500 text-white" : "bg-slate-200 text-slate-500"}`}>
                           {task.done ? "✓" : i + 1}
                         </div>
-                        <span className={`text-xs ${task.done ? "text-slate-400 line-through" : "text-slate-700 font-medium"}`}>{task.text}</span>
+                        <span className={`text-xs ${task.done ? "text-slate-600" : "text-slate-700 font-medium"}`}>{task.text}</span>
                       </div>
                     ))}
                   </div>
