@@ -480,7 +480,9 @@ function SoruBankasiPageInner({
         }
         if (goalRes.status === "fulfilled" && goalRes.value) {
           const g = goalRes.value;
-          setGoalHint(`Net ${g.current_net} → ${g.target_net}`);
+          setGoalHint(
+            `Hedef net ${g.target_net}, güncel ${g.current_net}. Kalan gün: ${g.days_remaining}.`
+          );
         } else {
           setGoalHint(null);
         }
@@ -645,14 +647,18 @@ function SoruBankasiPageInner({
   const bankTone = resolveGoalTemplateFromUser(user ?? undefined) === "school_primary" ? "school" : "exam";
 
   return (
-    <div className="relative overflow-x-hidden bg-[#fafafa] text-slate-900">
+    <div className="relative overflow-x-hidden bg-slate-50 text-slate-900">
       <div
-        className="pointer-events-none fixed inset-0 bg-[radial-gradient(ellipse_70%_45%_at_50%_-8%,rgba(139,92,246,0.06),transparent)]"
+        className="pointer-events-none fixed inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-10%,rgba(139,92,246,0.09),transparent)]"
+        aria-hidden
+      />
+      <div
+        className="pointer-events-none fixed inset-0 bg-[radial-gradient(ellipse_50%_40%_at_100%_0%,rgba(59,130,246,0.06),transparent)]"
         aria-hidden
       />
 
-      <div className="relative mx-auto max-w-[min(100%,1440px)] px-4 pb-10 pt-6 sm:px-6 lg:px-10">
-        <div className="flex flex-col gap-8 lg:gap-10">
+      <div className="relative mx-auto max-w-[min(100%,1680px)] px-4 pb-6 pt-4 sm:px-6 lg:px-8">
+        <div className="flex flex-col gap-4">
           <QuestionBankHero
             tone={bankTone}
             scopeMode={scopeMode}
@@ -675,8 +681,8 @@ function SoruBankasiPageInner({
 
           <QuestionBankKpiStrip summary={bankSummary} loading={bankSummaryLoading} />
 
-          <div className="grid grid-cols-1 gap-8 xl:grid-cols-12 xl:items-start xl:gap-10">
-            <div className="min-w-0 space-y-8 xl:col-span-9">
+          <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_280px] xl:items-start xl:gap-6">
+            <div className="min-w-0 space-y-4">
               <SubjectBankCarousel
                 subjects={bankSummary?.subjects ?? []}
                 onSelectSubject={openBookForSubject}
@@ -689,14 +695,13 @@ function SoruBankasiPageInner({
               />
             </div>
 
-            <div className="min-w-0 xl:col-span-3 xl:sticky xl:top-24 xl:self-start">
+            <div className="min-w-0 xl:sticky xl:top-20 xl:self-start">
               <QuestionBankSidebar
                 examHistory={examHistory}
                 planStats={planStats}
                 loading={sidebarLoading}
                 onPersonalTest={() => setShowPersonalTest(true)}
                 hidePersonalTestCard
-                compact
               />
             </div>
           </div>

@@ -12,48 +12,60 @@ export function QuestionBankQuickActions({
   onWeakFocus: () => void;
   disabled: boolean;
 }) {
+  const cards = [
+    {
+      title: "Hızlı 10",
+      desc: "Rastgele 10 soruluk set — akışa gir.",
+      icon: Zap,
+      onClick: onQuick10,
+      gradient: "bg-gradient-to-br from-amber-50 to-orange-50/90 border-amber-100",
+      ring: "hover:shadow-md hover:border-amber-200",
+    },
+    {
+      title: "Zayıf kazanım seti",
+      desc: "İlk zayıf konundan başlayarak otomatik yükle.",
+      icon: Crosshair,
+      onClick: onWeakFocus,
+      gradient: "bg-gradient-to-br from-rose-50 to-violet-50/90 border-rose-100",
+      ring: "hover:shadow-md hover:border-rose-200",
+    },
+  ];
+
   return (
-    <div className="flex flex-col gap-3 sm:flex-row sm:items-stretch">
-      <button
-        type="button"
-        disabled={disabled}
-        onClick={onQuick10}
-        title="Rastgele 10 soruluk set"
-        className={cn(
-          "group flex flex-1 items-center gap-4 rounded-2xl border border-slate-200/90 bg-white px-5 py-4 text-left shadow-sm transition",
-          "hover:border-amber-200/80 hover:shadow-md",
-          "focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2 focus-visible:ring-offset-[#fafafa]",
-          "disabled:pointer-events-none disabled:opacity-45"
-        )}
-      >
-        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow-md shadow-amber-500/25">
-          <Zap className="h-6 w-6" aria-hidden />
-        </span>
-        <div className="min-w-0">
-          <span className="block text-base font-semibold tracking-tight text-slate-900">Hızlı 10</span>
-          <span className="mt-0.5 block text-xs font-medium text-slate-500">Akışa gir</span>
-        </div>
-      </button>
-      <button
-        type="button"
-        disabled={disabled}
-        onClick={onWeakFocus}
-        title="İlk zayıf kazanımdan set yükle"
-        className={cn(
-          "group flex flex-1 items-center gap-4 rounded-2xl border border-slate-200/90 bg-white px-5 py-4 text-left shadow-sm transition",
-          "hover:border-violet-200/90 hover:shadow-md",
-          "focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2 focus-visible:ring-offset-[#fafafa]",
-          "disabled:pointer-events-none disabled:opacity-45"
-        )}
-      >
-        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 text-white shadow-md shadow-violet-500/30">
-          <Crosshair className="h-6 w-6" aria-hidden />
-        </span>
-        <div className="min-w-0">
-          <span className="block text-base font-semibold tracking-tight text-slate-900">Zayıf konu</span>
-          <span className="mt-0.5 block text-xs font-medium text-slate-500">Otomatik set</span>
-        </div>
-      </button>
-    </div>
+    <fieldset className="space-y-3 border-0 p-0">
+      <legend className="mb-1 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+        Hızlı modlar
+      </legend>
+      <div className="grid gap-3 md:grid-cols-2">
+        {cards.map(({ title, desc, icon: Icon, onClick, gradient, ring }) => (
+          <button
+            key={title}
+            type="button"
+            disabled={disabled}
+            onClick={onClick}
+            className={cn(
+              "group relative overflow-hidden rounded-2xl border p-4 text-left shadow-sm transition focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-50",
+              "disabled:pointer-events-none disabled:opacity-45",
+              gradient,
+              ring,
+              "hover:-translate-y-0.5"
+            )}
+          >
+            <div className="relative flex flex-col gap-3">
+              <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-white/90 bg-white text-violet-700 shadow-sm">
+                <Icon className="h-5 w-5" aria-hidden />
+              </span>
+              <div>
+                <span className="text-base font-bold text-slate-900">{title}</span>
+                <p className="mt-1 text-sm leading-relaxed text-slate-600">{desc}</p>
+              </div>
+              <span className="text-xs font-semibold uppercase tracking-wider text-violet-600 opacity-0 transition group-hover:opacity-100">
+                Başlat →
+              </span>
+            </div>
+          </button>
+        ))}
+      </div>
+    </fieldset>
   );
 }

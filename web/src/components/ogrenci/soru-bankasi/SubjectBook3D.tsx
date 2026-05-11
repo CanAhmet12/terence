@@ -105,9 +105,9 @@ type SubjectBook3DProps = {
 };
 
 /** Kapak ölçüleri (px) — tek yerden büyütme */
-const BOOK_W = 248;
-const BOOK_H = 322;
-const SPINE_W = 34;
+const BOOK_W = 210;
+const BOOK_H = 286;
+const SPINE_W = 28;
 
 export function SubjectBook3D({ subject, meta, href, className, onActivate, bookDisplay }: SubjectBook3DProps) {
   const baseTheme = subjectToBookTheme(subject);
@@ -122,14 +122,14 @@ export function SubjectBook3D({ subject, meta, href, className, onActivate, book
   const ctaLabel = bookDisplay?.cta_label?.trim() || "Aç →";
 
   const cls = cn(
-    "group/book relative block w-[min(100%,292px)] max-w-[292px] shrink-0 select-none focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2 focus-visible:ring-offset-[#fafafa]",
+    "group/book relative block w-[248px] shrink-0 select-none focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-50",
     className
   );
 
   const visual = (
-    <div className="perspective-[1200px]">
+    <div className="perspective-[1500px]">
       <div
-        className="pointer-events-none absolute -bottom-2 left-1/2 h-10 w-[88%] -translate-x-1/2 rounded-[100%] bg-violet-900/[0.14] blur-2xl transition-all duration-500 group-hover/book:w-[96%] group-hover/book:bg-violet-900/[0.18]"
+        className="pointer-events-none absolute -bottom-1 left-1/2 h-6 w-[85%] -translate-x-1/2 rounded-[100%] bg-slate-900/12 blur-xl transition-all duration-500 group-hover/book:w-[92%]"
         aria-hidden
       />
 
@@ -137,8 +137,8 @@ export function SubjectBook3D({ subject, meta, href, className, onActivate, book
         className={cn(
           "relative mx-auto origin-center [transform-style:preserve-3d]",
           "transition-[transform] duration-500 ease-[cubic-bezier(0.33,1.34,0.64,1)]",
-          "group-hover/book:[transform:rotateY(-28deg)_rotateX(6deg)_translateY(-14px)_translateZ(20px)]",
-          "[transform:rotateY(-18deg)_rotateX(4deg)_translateZ(0)]"
+          "group-hover/book:[transform:rotateY(-24deg)_rotateX(5deg)_translateY(-10px)_translateZ(12px)]",
+          "[transform:rotateY(-16deg)_rotateX(3deg)_translateZ(0)]"
         )}
       >
         <div
@@ -180,19 +180,16 @@ export function SubjectBook3D({ subject, meta, href, className, onActivate, book
         </div>
 
         <div
-          className="relative z-[2] flex flex-col justify-between overflow-hidden rounded-r-[18px] border border-white/10 p-5 shadow-[16px_28px_48px_-8px_rgba(15,23,42,0.28),0_0_0_1px_rgba(255,255,255,0.06)_inset]"
+          className="relative z-[2] flex flex-col justify-between overflow-hidden rounded-r-[15px] border border-black/[0.08] p-[18px] shadow-[10px_14px_28px_rgba(15,23,42,0.14)]"
           style={{
             width: BOOK_W,
             height: BOOK_H,
             backgroundColor: th.cover,
           }}
         >
+          {/* Çok hafif üst parlama — belirgin gradient yok */}
           <div
-            className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/[0.22] via-transparent to-black/[0.18]"
-            aria-hidden
-          />
-          <div
-            className="pointer-events-none absolute -right-1/4 top-0 h-[120%] w-1/2 skew-x-12 bg-gradient-to-l from-white/25 to-transparent opacity-50"
+            className="pointer-events-none absolute inset-0 bg-gradient-to-b from-white/[0.07] via-transparent to-transparent"
             aria-hidden
           />
 
@@ -205,10 +202,10 @@ export function SubjectBook3D({ subject, meta, href, className, onActivate, book
 
           <div className="relative mt-1">
             <p className="text-[12px] font-medium uppercase tracking-wide text-white/75">{brandLabel}</p>
-            <h3 className="mt-3 line-clamp-3 text-[1.65rem] font-extrabold leading-[1.12] tracking-tight text-white drop-shadow-sm sm:text-[1.75rem]">
+            <h3 className="mt-2 line-clamp-3 text-[22px] font-bold leading-snug tracking-tight text-white">
               {titleText}
             </h3>
-            <p className="mt-2 line-clamp-1 text-[12px] font-medium tracking-wide text-white/80">{meta}</p>
+            <p className="mt-2 line-clamp-2 text-[13px] leading-relaxed text-white/85">{meta}</p>
           </div>
 
           <div className="relative flex items-center justify-between gap-2 border-t border-white/20 pt-3">

@@ -12,25 +12,36 @@ export function StudyMotivationBanner({
   const school = tone === "school";
   return (
     <aside
-      aria-label="Hızlı başlangıç"
-      className="flex flex-col gap-3 rounded-2xl border border-slate-200/80 bg-white/90 px-4 py-3 shadow-sm backdrop-blur-sm sm:flex-row sm:items-center sm:justify-between sm:px-5 sm:py-3.5"
+      aria-label="Çalışma hatırlatması"
+      className="relative overflow-hidden rounded-3xl border border-orange-100 bg-gradient-to-r from-orange-50 via-amber-50 to-white p-5 shadow-sm sm:p-6"
     >
-      <div className="flex min-w-0 items-center gap-3">
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-orange-400 to-amber-500 text-white shadow-md shadow-orange-500/20">
-          <Flame className="h-5 w-5" aria-hidden />
-        </span>
-        <p className="text-sm font-semibold tracking-tight text-slate-800">
-          {school ? "Kısa pratik turu" : "Bir set daha"}
-        </p>
+      <div className="pointer-events-none absolute -left-8 top-1/2 h-32 w-32 -translate-y-1/2 rounded-full bg-orange-200/40 blur-3xl" />
+
+      <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex gap-3">
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-orange-100 bg-white shadow-sm">
+            <Flame className="h-6 w-6 text-orange-500" aria-hidden />
+          </span>
+          <div>
+            <p className="text-lg font-bold text-slate-900 sm:text-xl">
+              {school ? "Bugün bir pratik turu" : "Bugün bir set daha"}
+            </p>
+            <p className="mt-1 max-w-xl text-sm leading-relaxed text-slate-600">
+              {school
+                ? "Düzenli tekrar, okul derslerinde fark yaratır. Kısa setle ısın, sonra zayıf konuna odaklan."
+                : "Netini yükselten şey düzenli tekrar. Hızlı set ile ısın, sonra zayıf konuya dal."}
+            </p>
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={onStartQuick}
+          className="inline-flex shrink-0 items-center justify-center gap-2 self-stretch rounded-2xl bg-orange-500 px-6 py-3 text-sm font-bold text-white shadow-md transition hover:bg-orange-600 sm:self-center"
+        >
+          <Play className="h-5 w-5 fill-current" aria-hidden />
+          Hızlı set ile başla
+        </button>
       </div>
-      <button
-        type="button"
-        onClick={onStartQuick}
-        className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-xs font-semibold text-white shadow-sm transition hover:bg-slate-800"
-      >
-        <Play className="h-4 w-4 fill-current" aria-hidden />
-        Başlat
-      </button>
     </aside>
   );
 }

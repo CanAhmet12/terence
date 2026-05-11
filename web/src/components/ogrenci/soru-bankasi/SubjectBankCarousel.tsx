@@ -23,17 +23,24 @@ export function SubjectBankCarousel({
     return (
       <section
         aria-labelledby="qb-subjects-heading"
-        className="relative overflow-hidden rounded-[2rem] border border-slate-200/90 bg-white px-8 py-14 shadow-sm"
+        className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8"
       >
-        <div className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full bg-violet-100/60 blur-3xl" />
-        <div className="relative flex flex-col items-center text-center">
-          <span className="flex h-16 w-16 items-center justify-center rounded-2xl border border-slate-100 bg-slate-50 shadow-inner">
-            <Library className="h-8 w-8 text-violet-500" aria-hidden />
-          </span>
-          <h2 id="qb-subjects-heading" className="mt-6 text-xl font-semibold tracking-tight text-slate-900">
-            Kitaplık hazırlanıyor
-          </h2>
-          <p className="mt-2 max-w-sm text-sm text-slate-500">Müfredatın güncellendiğinde ders kapakları burada görünür.</p>
+        <div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-violet-100 blur-3xl" />
+        <div className="relative flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-start gap-4">
+            <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-violet-100 bg-violet-50 shadow-inner">
+              <Library className="h-7 w-7 text-violet-600" aria-hidden />
+            </span>
+            <div>
+              <h2 id="qb-subjects-heading" className="text-lg font-semibold tracking-tight text-slate-900">
+                Ders kitaplığı
+              </h2>
+              <p className="mt-1 max-w-xl text-sm leading-relaxed text-slate-600">
+                Bu kapsamda henüz ders bazlı özet yok. Müfredatını güncellediğinde her ders için 3 boyutlu kitap
+                kartları burada sıralanır.
+              </p>
+            </div>
+          </div>
         </div>
       </section>
     );
@@ -41,41 +48,49 @@ export function SubjectBankCarousel({
 
   return (
     <section aria-labelledby="qb-subjects-heading" className="relative">
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="min-w-0">
-          <h2 id="qb-subjects-heading" className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
-            Kitaplık
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <div className="flex items-center gap-2 text-violet-700">
+            <Library className="h-5 w-5" aria-hidden />
+            <span className="text-xs font-semibold uppercase tracking-[0.2em]">Kütüphane</span>
+          </div>
+          <h2 id="qb-subjects-heading" className="mt-2 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+            Derslere göre soru bankaları
           </h2>
-          <p className="mt-1 text-sm text-slate-500">Bir kapak seç — çözmeye başla.</p>
+          <p className="mt-2 max-w-2xl text-sm text-slate-600">
+            Her kapak müfredatına göre; üzerine gelince kitap raflarından alınmış gibi hafifçe döner.
+          </p>
         </div>
         <button
           type="button"
           onClick={() => onOpenLibrary?.()}
           className={cn(
-            "inline-flex shrink-0 items-center gap-2 self-start rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-800 shadow-sm transition hover:border-violet-200 hover:bg-slate-50"
+            "inline-flex items-center gap-2 self-start rounded-full border border-violet-200 bg-white px-4 py-2 text-sm font-semibold text-violet-800 shadow-sm transition hover:border-violet-300 hover:bg-violet-50"
           )}
         >
-          Tümü
-          <ChevronRight className="h-4 w-4 opacity-60" aria-hidden />
+          Tüm içeriği gör
+          <ChevronRight className="h-4 w-4 opacity-80" aria-hidden />
         </button>
       </div>
 
-      <div className="relative rounded-[2rem] border border-slate-200/80 bg-gradient-to-b from-white via-white to-slate-50/50 px-6 py-8 shadow-[0_32px_80px_-40px_rgba(15,23,42,0.2)] sm:px-10 sm:py-10">
+      <div className="relative rounded-[28px] border border-slate-200 bg-gradient-to-b from-white to-slate-50/80 p-5 shadow-sm sm:p-7">
         <div
-          className="pointer-events-none absolute inset-x-12 bottom-10 h-px bg-gradient-to-r from-transparent via-slate-200/90 to-transparent"
+          className="pointer-events-none absolute inset-x-8 bottom-7 h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent"
           aria-hidden
         />
         <div
-          className="pointer-events-none absolute inset-x-16 bottom-7 h-10 rounded-[100%] bg-slate-400/[0.12] blur-2xl"
+          className="pointer-events-none absolute inset-x-10 bottom-5 h-6 rounded-[100%] bg-slate-300/30 blur-xl"
           aria-hidden
         />
 
-        <div className="relative flex gap-8 overflow-x-auto pb-4 pt-2 [scrollbar-width:thin] [scrollbar-color:rgba(139,92,246,0.35)_transparent] sm:gap-10">
+        <div className="relative flex gap-6 overflow-x-auto pb-2 pt-1 [scrollbar-width:thin] [scrollbar-color:rgba(139,92,246,0.35)_transparent]">
           {subjects.map((row) => {
             const pct =
               row.correct_rate != null && row.correct_rate >= 0 ? Math.round(row.correct_rate) : null;
             const meta =
-              pct != null ? `${formatInt(row.total)} soru · %${pct}` : `${formatInt(row.total)} soru`;
+              pct != null
+                ? `${formatInt(row.total)} soru · doğruluk %${pct}`
+                : `${formatInt(row.total)} soru`;
 
             return (
               <SubjectBook3D
