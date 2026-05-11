@@ -15,30 +15,6 @@ const roles = [
   { label: "Veliyim", desc: "Takip et", href: "/kayit", icon: BarChart3, color: "purple" },
 ];
 
-const floatingCards = [
-  {
-    icon: "🎉",
-    text: "Elif K. doğru cevapladı!",
-    sub: "Matematik · 8. Sınıf",
-    pos: "top-4 right-0 lg:-right-8",
-    delay: "0s",
-  },
-  {
-    icon: "🔥",
-    text: "15 günlük çalışma serisi",
-    sub: "Devam et harika gidiyorsun!",
-    pos: "bottom-16 left-0 lg:-left-8",
-    delay: "1.5s",
-  },
-  {
-    icon: "📈",
-    text: "Net: +8 bu hafta",
-    sub: "TYT Matematik",
-    pos: "bottom-4 right-4 lg:right-0",
-    delay: "3s",
-  },
-];
-
 export function HeroSection() {
   return (
     <section className="relative pt-24 pb-12 sm:pt-28 sm:pb-16 lg:pt-36 lg:pb-24">
@@ -240,31 +216,9 @@ export function HeroSection() {
                 </div>
               </div>
             </div>
-
-            {/* Floating achievement kartları */}
-            {floatingCards.map((card, i) => (
-              <div
-                key={i}
-                className={`absolute ${card.pos} bg-white rounded-2xl shadow-xl border border-slate-200/80 px-3.5 py-2.5 flex items-center gap-2.5 z-10`}
-                style={{ animation: `heroFloat 4s ease-in-out ${card.delay} infinite` }}
-              >
-                <span className="text-xl">{card.icon}</span>
-                <div>
-                  <p className="text-xs font-bold text-slate-800 whitespace-nowrap">{card.text}</p>
-                  <p className="text-[10px] text-slate-500">{card.sub}</p>
-                </div>
-              </div>
-            ))}
           </div>
         </div>
       </div>
-
-      <style jsx>{`
-        @keyframes heroFloat {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-8px); }
-        }
-      `}</style>
     </section>
   );
 }
