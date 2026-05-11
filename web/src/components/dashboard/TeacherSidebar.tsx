@@ -4,44 +4,45 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
-  LayoutDashboard,
-  BookOpen,
-  Users,
-  FileQuestion,
-  BarChart3,
-  MessageSquare,
-  Upload,
-  Video,
-  ChevronLeft,
-  UserCircle,
   Bell,
-  CalendarDays,
-} from "lucide-react";
+  BookOpen,
+  CalendarBlank,
+  ChartBar,
+  ChatCircle,
+  Exam,
+  SquaresFour,
+  UploadSimple,
+  UserCircle,
+  UsersThree,
+  VideoCamera,
+} from "@phosphor-icons/react";
+import { ChevronLeft } from "lucide-react";
+import { SidebarMenuIcon } from "@/components/dashboard/SidebarMenuIcon";
 import { cn } from "@/lib/utils";
 
 const teacherNavGroups = [
   {
     label: "DERS YÖNETİMİ",
     items: [
-      { href: "/ogretmen", icon: LayoutDashboard, label: "Ana Panel" },
+      { href: "/ogretmen", icon: SquaresFour, label: "Ana Panel" },
       { href: "/ogretmen/dersler", icon: BookOpen, label: "Derslerim" },
-      { href: "/ogretmen/siniflar", icon: Users, label: "Sınıflarım" },
-      { href: "/ogretmen/plan-atama", icon: CalendarDays, label: "Günlük plan" },
-      { href: "/ogretmen/canli-ders", icon: Video, label: "Canlı Ders" },
+      { href: "/ogretmen/siniflar", icon: UsersThree, label: "Sınıflarım" },
+      { href: "/ogretmen/plan-atama", icon: CalendarBlank, label: "Günlük plan" },
+      { href: "/ogretmen/canli-ders", icon: VideoCamera, label: "Canlı Ders" },
     ],
   },
   {
     label: "İÇERİK & ÖDEV",
     items: [
-      { href: "/ogretmen/icerik", icon: Upload, label: "Müfredat medyası" },
-      { href: "/ogretmen/odev", icon: FileQuestion, label: "Ödev & Test" },
+      { href: "/ogretmen/icerik", icon: UploadSimple, label: "Müfredat medyası" },
+      { href: "/ogretmen/odev", icon: Exam, label: "Ödev & Test" },
     ],
   },
   {
     label: "ANALİZ & İLETİŞİM",
     items: [
-      { href: "/ogretmen/analiz", icon: BarChart3, label: "Analiz Merkezi" },
-      { href: "/ogretmen/mesaj", icon: MessageSquare, label: "Mesaj & Duyuru" },
+      { href: "/ogretmen/analiz", icon: ChartBar, label: "Analiz Merkezi" },
+      { href: "/ogretmen/mesaj", icon: ChatCircle, label: "Mesaj & Duyuru" },
       { href: "/ogretmen/bildirimler", icon: Bell, label: "Bildirimler" },
     ],
   },
@@ -77,7 +78,8 @@ export function TeacherSidebar() {
             </p>
             <div className="space-y-0.5">
               {group.items.map((item) => {
-                const isActive = pathname === item.href || (item.href !== "/ogretmen" && pathname.startsWith(item.href + "/"));
+                const isActive =
+                  pathname === item.href || (item.href !== "/ogretmen" && pathname.startsWith(item.href + "/"));
                 return (
                   <Link
                     key={item.href}
@@ -89,7 +91,12 @@ export function TeacherSidebar() {
                         : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
                     )}
                   >
-                    <item.icon className="w-[18px] h-[18px] shrink-0" strokeWidth={2} />
+                    <SidebarMenuIcon
+                      icon={item.icon}
+                      active={isActive}
+                      size={18}
+                      className={isActive ? "text-teal-600" : "text-slate-400 group-hover:text-slate-600"}
+                    />
                     {item.label}
                   </Link>
                 );

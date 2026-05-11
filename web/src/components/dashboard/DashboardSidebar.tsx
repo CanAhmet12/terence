@@ -5,34 +5,33 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import {
-  LayoutDashboard,
-  Target,
-  Calendar,
-  BookOpen,
-  FileQuestion,
-  Library,
-  Video,
-  BarChart3,
-  Trophy,
-  ChevronLeft,
-  RefreshCw,
-  Zap,
-  UserCircle,
-  Bot,
-  MessageSquare,
+  ArrowsClockwise,
+  Baby,
   Bell,
-  Users,
-  ClipboardList,
-  TrendingUp,
-  Settings,
+  BookOpen,
+  Books,
+  CalendarBlank,
+  ChartBar,
+  ChartPieSlice,
+  ChatCircle,
+  ClipboardText,
+  Exam,
+  GearSix,
   GraduationCap,
   Heart,
-  PieChart,
-  Baby,
-  Crown,
-  Gem,
-  Layers,
-} from "lucide-react";
+  Lightning,
+  Sparkle,
+  SquaresFour,
+  Stack,
+  Target,
+  Trophy,
+  UserCircle,
+  Users,
+  UsersThree,
+  VideoCamera,
+} from "@phosphor-icons/react";
+import { ChevronLeft, Crown, Gem } from "lucide-react";
+import { SidebarMenuIcon } from "@/components/dashboard/SidebarMenuIcon";
 import { cn } from "@/lib/utils";
 
 // ─── Navigasyon tanımları ───────────────────────────────────────────────────
@@ -41,30 +40,30 @@ const studentNavGroups = [
   {
     label: "ANA MENÜ",
     items: [
-      { href: "/ogrenci", icon: LayoutDashboard, label: "Ana Panel", exact: true },
+      { href: "/ogrenci", icon: SquaresFour, label: "Ana Panel", exact: true },
       { href: "/ogrenci/hedef", icon: Target, label: "Hedef & Net" },
-      { href: "/ogrenci/plan", icon: Calendar, label: "Günlük Plan" },
+      { href: "/ogrenci/plan", icon: CalendarBlank, label: "Günlük Plan" },
       { href: "/ogrenci/dersler", icon: BookOpen, label: "Derslerim" },
-      { href: "/ogrenci/video", icon: Video, label: "Video & PDF" },
-      { href: "/ogrenci/soru-bankasi", icon: Library, label: "Soru Bankası" },
+      { href: "/ogrenci/video", icon: VideoCamera, label: "Video & PDF" },
+      { href: "/ogrenci/soru-bankasi", icon: Books, label: "Soru Bankası" },
       { href: "/ogrenci/canli-ders", icon: GraduationCap, label: "Canlı Ders" },
     ],
   },
   {
     label: "GELİŞİM",
     items: [
-      { href: "/ogrenci/deneme", icon: FileQuestion, label: "Denemeler" },
-      { href: "/ogrenci/mini-test", icon: Zap, label: "Mini Test" },
-      { href: "/ogrenci/zayif-kazanim", icon: RefreshCw, label: "Zayıf Kazanım" },
-      { href: "/ogrenci/rapor", icon: BarChart3, label: "Performans" },
+      { href: "/ogrenci/deneme", icon: Exam, label: "Denemeler" },
+      { href: "/ogrenci/mini-test", icon: Lightning, label: "Mini Test" },
+      { href: "/ogrenci/zayif-kazanim", icon: ArrowsClockwise, label: "Zayıf Kazanım" },
+      { href: "/ogrenci/rapor", icon: ChartBar, label: "Performans" },
       { href: "/ogrenci/rozet", icon: Trophy, label: "Rozetler" },
-      { href: "/ogrenci/koc", icon: Bot, label: "Dijital Koç", iconSrc: "/dijitalkocicon.png" },
+      { href: "/ogrenci/koc", icon: Sparkle, label: "Dijital Koç", iconSrc: "/dijitalkocicon.png" },
     ],
   },
   {
     label: "İLETİŞİM",
     items: [
-      { href: "/ogrenci/forum", icon: MessageSquare, label: "Forum" },
+      { href: "/ogrenci/forum", icon: ChatCircle, label: "Forum" },
       { href: "/ogrenci/bildirimler", icon: Bell, label: "Bildirimler" },
     ],
   },
@@ -80,24 +79,24 @@ const teacherNavGroups = [
   {
     label: "PANEL",
     items: [
-      { href: "/ogretmen", icon: LayoutDashboard, label: "Ana Panel", exact: true },
+      { href: "/ogretmen", icon: SquaresFour, label: "Ana Panel", exact: true },
       { href: "/ogretmen/dersler", icon: BookOpen, label: "Derslerim" },
-      { href: "/ogretmen/icerik", icon: ClipboardList, label: "İçerik Yönetimi" },
+      { href: "/ogretmen/icerik", icon: ClipboardText, label: "İçerik Yönetimi" },
     ],
   },
   {
     label: "ÖĞRENCİLER",
     items: [
-      { href: "/ogretmen/siniflar", icon: Users, label: "Sınıflarım" },
-      { href: "/ogretmen/analiz", icon: TrendingUp, label: "Analiz Merkezi" },
-      { href: "/ogretmen/odev", icon: FileQuestion, label: "Ödev & Test" },
-      { href: "/ogretmen/canli-ders", icon: GraduationCap, label: "Canlı Ders" }, // Bug fix: öğretmen doğru URL
+      { href: "/ogretmen/siniflar", icon: UsersThree, label: "Sınıflarım" },
+      { href: "/ogretmen/analiz", icon: ChartBar, label: "Analiz Merkezi" },
+      { href: "/ogretmen/odev", icon: Exam, label: "Ödev & Test" },
+      { href: "/ogretmen/canli-ders", icon: GraduationCap, label: "Canlı Ders" },
     ],
   },
   {
     label: "İLETİŞİM",
     items: [
-      { href: "/ogretmen/mesaj", icon: MessageSquare, label: "Mesajlar" },
+      { href: "/ogretmen/mesaj", icon: ChatCircle, label: "Mesajlar" },
       { href: "/ogretmen/bildirimler", icon: Bell, label: "Bildirimler" },
     ],
   },
@@ -113,16 +112,16 @@ const parentNavGroups = [
   {
     label: "TAKİP",
     items: [
-      { href: "/veli", icon: LayoutDashboard, label: "Ana Panel", exact: true },
-      { href: "/veli/canli-dersler", icon: Video, label: "Canlı Dersler" },
-      { href: "/veli/rapor", icon: PieChart, label: "Çocuğumun Raporu" },
+      { href: "/veli", icon: SquaresFour, label: "Ana Panel", exact: true },
+      { href: "/veli/canli-dersler", icon: VideoCamera, label: "Canlı Dersler" },
+      { href: "/veli/rapor", icon: ChartPieSlice, label: "Çocuğumun Raporu" },
       { href: "/veli/profil", icon: Baby, label: "Çocuk Profili" },
     ],
   },
   {
     label: "İLETİŞİM",
     items: [
-      { href: "/veli/bildirim", icon: Settings, label: "Bildirim Ayarları" },
+      { href: "/veli/bildirim", icon: GearSix, label: "Bildirim Ayarları" },
       { href: "/veli/bildirimler", icon: Bell, label: "Bildirimler" },
     ],
   },
@@ -138,7 +137,7 @@ const adminNavGroups = [
   {
     label: "YÖNETİM",
     items: [
-      { href: "/admin", icon: LayoutDashboard, label: "Ana Panel", exact: true },
+      { href: "/admin", icon: SquaresFour, label: "Ana Panel", exact: true },
       { href: "/admin/kullanicilar", icon: Users, label: "Kullanıcılar" },
       { href: "/admin/ogretmen-onay", icon: GraduationCap, label: "Öğretmen Onayı" },
     ],
@@ -146,21 +145,21 @@ const adminNavGroups = [
   {
     label: "İÇERİK",
     items: [
-      { href: "/admin/icerik-merkezi", icon: Layers, label: "İçerik merkezi" },
-      { href: "/admin/sorular", icon: FileQuestion, label: "Soru Havuzu" },
+      { href: "/admin/icerik-merkezi", icon: Stack, label: "İçerik merkezi" },
+      { href: "/admin/sorular", icon: Exam, label: "Soru Havuzu" },
       { href: "/admin/kupon", icon: Heart, label: "Kuponlar" },
     ],
   },
   {
     label: "RAPORLAR",
     items: [
-      { href: "/admin/raporlar", icon: BarChart3, label: "Raporlar" },
+      { href: "/admin/raporlar", icon: ChartBar, label: "Raporlar" },
     ],
   },
   {
     label: "HESAP",
     items: [
-      { href: "/admin/ayarlar", icon: Settings, label: "Ayarlar" },
+      { href: "/admin/ayarlar", icon: GearSix, label: "Ayarlar" },
       { href: "/admin/profil", icon: UserCircle, label: "Profil" },
     ],
   },
@@ -300,14 +299,14 @@ export function DashboardSidebar() {
                         />
                       </span>
                     ) : (
-                      <item.icon
+                      <SidebarMenuIcon
+                        icon={item.icon}
+                        active={isActive}
+                        size={18}
                         className={cn(
-                          "w-[17px] h-[17px] shrink-0 transition-colors",
-                          isActive
-                            ? theme.activeIcon
-                            : "text-slate-400 group-hover:text-slate-600"
+                          "transition-colors",
+                          isActive ? theme.activeIcon : "text-slate-400 group-hover:text-slate-600"
                         )}
-                        strokeWidth={isActive ? 2.5 : 2}
                       />
                     )}
                     <span className="truncate flex-1">{item.label}</span>

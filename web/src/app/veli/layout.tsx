@@ -3,17 +3,26 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, X, Users, BarChart3, Bell, ChevronLeft, UserCircle, Settings, ClipboardList } from "lucide-react";
+import { Menu, X, ChevronLeft } from "lucide-react";
+import {
+  Bell,
+  ChartBar,
+  ClipboardText,
+  GearSix,
+  UserCircle,
+  UsersThree,
+} from "@phosphor-icons/react";
 import Image from "next/image";
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
+import { SidebarMenuIcon } from "@/components/dashboard/SidebarMenuIcon";
 
 const veliNav = [
-  { href: "/veli", icon: Users, label: "Çocuklarım" },
-  { href: "/veli/denemeler", icon: ClipboardList, label: "Denemeler" },
-  { href: "/veli/rapor", icon: BarChart3, label: "Raporlar" },
+  { href: "/veli", icon: UsersThree, label: "Çocuklarım" },
+  { href: "/veli/denemeler", icon: ClipboardText, label: "Denemeler" },
+  { href: "/veli/rapor", icon: ChartBar, label: "Raporlar" },
   { href: "/veli/bildirimler", icon: Bell, label: "Bildirimler" },
-  { href: "/veli/bildirim", icon: Settings, label: "Bildirim Ayarları" },
+  { href: "/veli/bildirim", icon: GearSix, label: "Bildirim Ayarları" },
   { href: "/veli/profil", icon: UserCircle, label: "Profil & Ayarlar" },
 ];
 
@@ -75,13 +84,18 @@ export default function VeliLayout({
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all ${
+                  className={`group flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all ${
                     isActive
                       ? "bg-gradient-to-r from-teal-50 to-emerald-50 text-teal-700 border border-teal-100/80 shadow-sm"
                       : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
                   }`}
                 >
-                  <item.icon className="w-5 h-5 shrink-0" strokeWidth={2} />
+                  <SidebarMenuIcon
+                    icon={item.icon}
+                    active={isActive}
+                    size={20}
+                    className={isActive ? "text-teal-600" : "text-slate-400 group-hover:text-slate-600"}
+                  />
                   {item.label}
                 </Link>
               );
@@ -132,11 +146,18 @@ export default function VeliLayout({
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium ${
+                  className={`group flex items-center gap-3 px-4 py-3 rounded-xl font-medium ${
                     pathname === item.href ? "bg-teal-50 text-teal-700" : "text-slate-600 hover:bg-slate-50"
                   }`}
                 >
-                  <item.icon className="w-5 h-5" />
+                  <SidebarMenuIcon
+                    icon={item.icon}
+                    active={pathname === item.href}
+                    size={20}
+                    className={
+                      pathname === item.href ? "text-teal-600" : "text-slate-400 group-hover:text-slate-600"
+                    }
+                  />
                   {item.label}
                 </Link>
               ))}

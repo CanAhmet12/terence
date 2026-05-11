@@ -3,32 +3,44 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Menu, X } from "lucide-react";
 import {
-  LayoutDashboard,
-  Users,
-  FileQuestion,
-  BarChart3,
-  Settings,
-  Layers,
-  Menu,
-  X,
-  UserCheck,
+  ChartBar,
+  Exam,
+  GearSix,
+  SquaresFour,
+  Stack,
   Tag,
-} from "lucide-react";
+  UserCircleCheck,
+  Users,
+} from "@phosphor-icons/react";
 import Image from "next/image";
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
+import { SidebarMenuIcon } from "@/components/dashboard/SidebarMenuIcon";
 
 const navItems = [
-  { href: "/admin", icon: LayoutDashboard, label: "Dashboard" },
+  { href: "/admin", icon: SquaresFour, label: "Dashboard" },
   { href: "/admin/kullanicilar", icon: Users, label: "Kullanıcılar" },
-  { href: "/admin/ogretmen-onay", icon: UserCheck, label: "Öğretmen Onay" },
-  { href: "/admin/icerik-merkezi", icon: Layers, label: "İçerik merkezi" },
-  { href: "/admin/sorular", icon: FileQuestion, label: "Soru Havuzu" },
+  { href: "/admin/ogretmen-onay", icon: UserCircleCheck, label: "Öğretmen Onay" },
+  { href: "/admin/icerik-merkezi", icon: Stack, label: "İçerik merkezi" },
+  { href: "/admin/sorular", icon: Exam, label: "Soru Havuzu" },
   { href: "/admin/kupon", icon: Tag, label: "Kuponlar" },
-  { href: "/admin/raporlar", icon: BarChart3, label: "Raporlar" },
-  { href: "/admin/ayarlar", icon: Settings, label: "Ayarlar" },
+  { href: "/admin/raporlar", icon: ChartBar, label: "Raporlar" },
+  { href: "/admin/ayarlar", icon: GearSix, label: "Ayarlar" },
 ];
+
+function adminNavItemActive(pathname: string, href: string) {
+  if (href === "/admin/icerik-merkezi") {
+    return (
+      pathname === "/admin/icerik-merkezi" ||
+      pathname.startsWith("/admin/icerik") ||
+      pathname.startsWith("/admin/deneme-sablonlari") ||
+      pathname.startsWith("/admin/soru-bankasi-kitaplari")
+    );
+  }
+  return pathname === href;
+}
 
 export default function AdminLayout({
   children,
@@ -82,24 +94,23 @@ export default function AdminLayout({
           </div>
           <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
             {navItems.map((item) => {
-              const isActive =
-                item.href === "/admin/icerik-merkezi"
-                  ? pathname === "/admin/icerik-merkezi" ||
-                    pathname.startsWith("/admin/icerik") ||
-                    pathname.startsWith("/admin/deneme-sablonlari") ||
-                    pathname.startsWith("/admin/soru-bankasi-kitaplari")
-                  : pathname === item.href;
+              const isActive = adminNavItemActive(pathname, item.href);
               return (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-200 ${
+                  className={`group flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-200 ${
                     isActive
                       ? "bg-teal-600/20 text-teal-400 border border-teal-500/30"
                       : "text-slate-400 hover:bg-slate-800 hover:text-white"
                   }`}
                 >
-                  <item.icon className="w-5 h-5 shrink-0" strokeWidth={2} />
+                  <SidebarMenuIcon
+                    icon={item.icon}
+                    active={isActive}
+                    size={20}
+                    className={isActive ? "text-teal-400" : "text-slate-400 group-hover:text-white"}
+                  />
                   {item.label}
                 </Link>
               );
@@ -137,25 +148,28 @@ export default function AdminLayout({
               </Link>
             </div>
             <nav className="p-4 space-y-1">
-              {navItems.map((item) => (
+              {navItems.map((item) => {
+                const isActive = adminNavItemActive(pathname, item.href);
+                return (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium ${
-                    (item.href === "/admin/icerik-merkezi"
-                      ? pathname === "/admin/icerik-merkezi" ||
-                        pathname.startsWith("/admin/icerik") ||
-                        pathname.startsWith("/admin/deneme-sablonlari") ||
-                        pathname.startsWith("/admin/soru-bankasi-kitaplari")
-                      : pathname === item.href)
+                  className={`group flex items-center gap-3 px-4 py-3 rounded-xl font-medium ${
+                    isActive
                       ? "bg-teal-600/20 text-teal-400"
-                      : "text-slate-400 hover:bg-slate-800"
+                      : "text-slate-400 hover:bg-slate-800 hover:text-white"
                   }`}
                 >
-                  <item.icon className="w-5 h-5" />
+                  <SidebarMenuIcon
+                    icon={item.icon}
+                    active={isActive}
+                    size={20}
+                    className={isActive ? "text-teal-400" : "text-slate-400 group-hover:text-white"}
+                  />
                   {item.label}
                 </Link>
-              ))}
+              );
+              })}
             </nav>
           </div>
         </aside>
