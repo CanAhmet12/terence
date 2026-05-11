@@ -728,9 +728,14 @@ function SoruBankasiPageInner({
           subjects={subjectOptions.filter((item) => item.value !== "").map((item) => item.value)}
           onClose={() => setShowPersonalTest(false)}
           onLoad={(qs) => {
+            setLoading(false);
             setQuestions(qs);
-            setShowPersonalTest(false);
             setAnswerResults({});
+            setShowPersonalTest(false);
+            if (qs.length > 0) {
+              setBookModalTitle("Bana özel test");
+              setBookModalSubject(qs[0].subject ?? "Genel");
+            }
           }}
         />
       )}
@@ -795,11 +800,16 @@ function PersonalTestModal({
         difficulty: difficulty || undefined,
       } as Parameters<typeof api.generatePersonalTest>[0]);
       const questions = Array.isArray(res) ? res : (Array.isArray((res as Record<string, unknown>).questions) ? (res as Record<string, unknown>).questions as Question[] : []);
+      if (questions.length === 0) {
+        setError("Bu kriterlerle uygun soru bulunamadı. Ders veya zorluğu değiştirip tekrar dene.");
+        return;
+      }
       onLoad(questions);
     } catch (e) {
       setError((e as Error).message || "Test oluşturulamadı.");
+    } finally {
+      setGenerating(false);
     }
-    setGenerating(false);
   };
 
   return (
