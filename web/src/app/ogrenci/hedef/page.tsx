@@ -31,7 +31,7 @@ function CircularProgress({ current, target, size = 120 }: { current: number; ta
   const r = (size - stroke * 2) / 2;
   const circ = 2 * Math.PI * r;
   const offset = circ - (pct / 100) * circ;
-  const color = pct >= 80 ? "#22c55e" : pct >= 50 ? "#f59e0b" : "#ef4444";
+  const color = pct >= 80 ? "#06b6d4" : pct >= 50 ? "#f59e0b" : "#ef4444";
 
   return (
     <div className="relative shrink-0" style={{ width: size, height: size }}>
@@ -61,9 +61,9 @@ function CircularProgress({ current, target, size = 120 }: { current: number; ta
 const RISK_UI: Record<RiskTier, { label: string; badge: string; border: string; text: string }> = {
   on_track: {
     label: "İyi gidiyor",
-    badge: "bg-emerald-100 text-emerald-800",
-    border: "border-emerald-200",
-    text: "text-emerald-800",
+    badge: "bg-cyan-100 text-cyan-800",
+    border: "border-cyan-200",
+    text: "text-cyan-800",
   },
   at_risk: {
     label: "Dikkat",
@@ -264,8 +264,8 @@ export default function HedefPage() {
                         label="Haftalık çalışma"
                         value={`${Math.round((school.study_time_weekly_seconds ?? 0) / 60)} dk`}
                         icon={Zap}
-                        color="text-teal-600"
-                        bg="bg-teal-50"
+                        color="text-cyan-600"
+                        bg="bg-cyan-50"
                       />
                     </div>
                     <div className="grid grid-cols-2 gap-3">
@@ -329,8 +329,8 @@ export default function HedefPage() {
                       value={ins.weekly_net_needed != null ? `+${ins.weekly_net_needed}` : "—"}
                       sub={ins.weekly_net_needed == null ? "Tarih veya hedef eksik" : undefined}
                       icon={TrendingUp}
-                      color="text-teal-600"
-                      bg="bg-teal-50"
+                      color="text-cyan-600"
+                      bg="bg-cyan-50"
                     />
                   </div>
                 )}
@@ -442,7 +442,7 @@ export default function HedefPage() {
                   </Link>
                 </div>
 
-                {saveState === "ok" && <p className="text-xs font-semibold text-emerald-600 text-center shrink-0">Kaydedildi</p>}
+                {saveState === "ok" && <p className="text-xs font-semibold text-cyan-600 text-center shrink-0">Kaydedildi</p>}
                 {saveState === "err" && saveErr && <p className="text-xs font-semibold text-red-600 text-center shrink-0">{saveErr}</p>}
               </div>
             </div>

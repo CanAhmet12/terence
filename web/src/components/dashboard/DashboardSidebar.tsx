@@ -329,14 +329,14 @@ export function DashboardSidebar() {
       {/* ── Öğretmen: abonelik satışı yok ── */}
       {isTeacher && (
         <div className="px-3 pb-3">
-          <div className="rounded-2xl border border-teal-100 bg-gradient-to-br from-teal-50 to-emerald-50/90 p-4">
-            <p className="text-xs font-bold text-teal-900 leading-snug">Öğretmen hesabı</p>
-            <p className="mt-1 text-[10px] leading-relaxed text-teal-800/90">
+          <div className="rounded-2xl border border-cyan-100 bg-gradient-to-br from-cyan-50 to-cyan-50/90 p-4">
+            <p className="text-xs font-bold text-cyan-900 leading-snug">Öğretmen hesabı</p>
+            <p className="mt-1 text-[10px] leading-relaxed text-cyan-800/90">
               Ders ve sınıf araçları için ek abonelik ücreti alınmaz. Ücretli paketler yalnızca öğrenci hesapları içindir.
             </p>
             <Link
               href="/ogretmen"
-              className="mt-2.5 flex w-full items-center justify-center rounded-xl border border-teal-200 bg-white py-2 text-[11px] font-semibold text-teal-800 transition-colors hover:bg-teal-50"
+              className="mt-2.5 flex w-full items-center justify-center rounded-xl border border-cyan-200 bg-white py-2 text-[11px] font-semibold text-cyan-800 transition-colors hover:bg-cyan-50"
             >
               Öğretmen paneli
             </Link>

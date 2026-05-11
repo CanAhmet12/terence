@@ -40,18 +40,18 @@ const SUBJECTS = ["", "Matematik", "Fizik", "Kimya", "Biyoloji", "Türkçe", "Ta
 const SUBJECT_COLORS: Record<string, string> = {
   Matematik: "bg-blue-100 text-blue-700",
   Fizik: "bg-purple-100 text-purple-700",
-  Kimya: "bg-green-100 text-green-700",
-  Biyoloji: "bg-emerald-100 text-emerald-700",
+  Kimya: "bg-cyan-100 text-cyan-700",
+  Biyoloji: "bg-cyan-100 text-cyan-700",
   Türkçe: "bg-orange-100 text-orange-700",
   Tarih: "bg-amber-100 text-amber-700",
-  Coğrafya: "bg-teal-100 text-teal-700",
+  Coğrafya: "bg-cyan-100 text-cyan-700",
   İngilizce: "bg-indigo-100 text-indigo-700",
   Felsefe: "bg-rose-100 text-rose-700",
 };
 
 function UserAvatar({ name, photo, role, size = "sm" }: { name: string; photo?: string; role?: string; size?: "sm" | "md" }) {
   const sz = size === "md" ? "w-10 h-10 text-base" : "w-8 h-8 text-sm";
-  const roleBg = role === "teacher" ? "bg-teal-600" : "bg-slate-300";
+  const roleBg = role === "teacher" ? "bg-cyan-600" : "bg-slate-300";
   return photo ? (
     // eslint-disable-next-line @next/next/no-img-element
     <img src={photo} alt={name} className={`${sz} rounded-xl object-cover shrink-0`} />
@@ -110,7 +110,7 @@ function NewPostModal({ onClose, onCreated, token }: NewPostModalProps) {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Sorunuzu kısaca özetleyin..."
-              className="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-teal-500 outline-none"
+              className="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-cyan-500 outline-none"
             />
           </div>
           <div>
@@ -118,7 +118,7 @@ function NewPostModal({ onClose, onCreated, token }: NewPostModalProps) {
             <select
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
-              className="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-teal-500 outline-none"
+              className="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-cyan-500 outline-none"
             >
               {SUBJECTS.map((s) => <option key={s} value={s}>{s || "Ders seçin (opsiyonel)"}</option>)}
             </select>
@@ -130,7 +130,7 @@ function NewPostModal({ onClose, onCreated, token }: NewPostModalProps) {
               onChange={(e) => setContent(e.target.value)}
               placeholder="Sorunuzu detaylı açıklayın, ne denediğinizi belirtin..."
               rows={5}
-              className="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-teal-500 outline-none resize-none"
+              className="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-cyan-500 outline-none resize-none"
             />
           </div>
           <div className="flex gap-3 pt-2">
@@ -140,7 +140,7 @@ function NewPostModal({ onClose, onCreated, token }: NewPostModalProps) {
             <button
               type="submit"
               disabled={submitting}
-              className="flex-1 py-3 rounded-xl bg-teal-600 hover:bg-teal-700 disabled:opacity-50 text-white font-semibold text-sm transition-colors flex items-center justify-center gap-2"
+              className="flex-1 py-3 rounded-xl bg-cyan-600 hover:bg-cyan-700 disabled:opacity-50 text-white font-semibold text-sm transition-colors flex items-center justify-center gap-2"
             >
               {submitting ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
               {submitting ? "Gönderiliyor..." : "Soruyu Gönder"}
@@ -238,7 +238,7 @@ function PostDetail({ postId, token, user, onBack }: PostDetailProps) {
     <div className="space-y-6">
       <button
         onClick={onBack}
-        className="flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-teal-600 transition-colors"
+        className="flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-cyan-600 transition-colors"
       >
         <ChevronLeft className="w-4 h-4" /> Forum Listesi
       </button>
@@ -251,7 +251,7 @@ function PostDetail({ postId, token, user, onBack }: PostDetailProps) {
             <div className="flex items-start justify-between gap-3">
               <h1 className="font-bold text-slate-900 text-lg leading-snug">{post.title}</h1>
               {post.is_solved && (
-                <span className="flex items-center gap-1 text-xs font-bold text-emerald-700 bg-emerald-100 px-2.5 py-1 rounded-full shrink-0">
+                <span className="flex items-center gap-1 text-xs font-bold text-cyan-700 bg-cyan-100 px-2.5 py-1 rounded-full shrink-0">
                   <CheckCircle className="w-3.5 h-3.5" /> Çözüldü
                 </span>
               )}
@@ -259,7 +259,7 @@ function PostDetail({ postId, token, user, onBack }: PostDetailProps) {
             <div className="flex items-center gap-3 mt-1">
               <span className="text-sm font-medium text-slate-700">{post.author_name}</span>
               {post.author_role === "teacher" && (
-                <span className="text-xs font-bold text-teal-600 bg-teal-50 px-2 py-0.5 rounded-full">Öğretmen</span>
+                <span className="text-xs font-bold text-cyan-600 bg-cyan-50 px-2 py-0.5 rounded-full">Öğretmen</span>
               )}
               <span className="text-xs text-slate-400">{timeAgo(post.created_at)}</span>
               {post.subject && (
@@ -274,7 +274,7 @@ function PostDetail({ postId, token, user, onBack }: PostDetailProps) {
         <div className="flex items-center gap-4 mt-5 pt-4 border-t border-slate-100">
           <button
             onClick={handleLike}
-            className={`flex items-center gap-1.5 text-sm font-medium transition-colors ${post.is_liked ? "text-teal-600" : "text-slate-400 hover:text-teal-600"}`}
+            className={`flex items-center gap-1.5 text-sm font-medium transition-colors ${post.is_liked ? "text-cyan-600" : "text-slate-400 hover:text-cyan-600"}`}
           >
             <ThumbsUp className="w-4 h-4" /> {post.like_count}
           </button>
@@ -294,11 +294,11 @@ function PostDetail({ postId, token, user, onBack }: PostDetailProps) {
           {replies.map((reply) => (
             <div
               key={reply.id}
-              className={`bg-white rounded-2xl border p-5 shadow-sm ${reply.is_best_answer ? "border-emerald-200 bg-emerald-50/30" : "border-slate-200"}`}
+              className={`bg-white rounded-2xl border p-5 shadow-sm ${reply.is_best_answer ? "border-cyan-200 bg-cyan-50/30" : "border-slate-200"}`}
             >
               {reply.is_best_answer && (
-                <div className="flex items-center gap-1.5 text-emerald-700 text-xs font-bold mb-3">
-                  <Star className="w-3.5 h-3.5 fill-emerald-500" /> En İyi Yanıt
+                <div className="flex items-center gap-1.5 text-cyan-700 text-xs font-bold mb-3">
+                  <Star className="w-3.5 h-3.5 fill-cyan-500" /> En İyi Yanıt
                 </div>
               )}
               <div className="flex items-start gap-3">
@@ -307,7 +307,7 @@ function PostDetail({ postId, token, user, onBack }: PostDetailProps) {
                   <div className="flex items-center gap-2 mb-2">
                     <span className="text-sm font-semibold text-slate-800">{reply.author_name}</span>
                     {reply.author_role === "teacher" && (
-                      <span className="text-xs font-bold text-teal-600 bg-teal-50 px-2 py-0.5 rounded-full">Öğretmen</span>
+                      <span className="text-xs font-bold text-cyan-600 bg-cyan-50 px-2 py-0.5 rounded-full">Öğretmen</span>
                     )}
                     <span className="text-xs text-slate-400">{timeAgo(reply.created_at)}</span>
                   </div>
@@ -315,7 +315,7 @@ function PostDetail({ postId, token, user, onBack }: PostDetailProps) {
                   {!reply.is_best_answer && post.author_name === user?.name && (
                     <button
                       onClick={() => handleMarkBest(reply.id)}
-                      className="mt-3 flex items-center gap-1.5 text-xs font-semibold text-emerald-600 hover:text-emerald-700 transition-colors"
+                      className="mt-3 flex items-center gap-1.5 text-xs font-semibold text-cyan-600 hover:text-cyan-700 transition-colors"
                     >
                       <CheckCircle className="w-3.5 h-3.5" /> En İyi Yanıt Olarak İşaretle
                     </button>
@@ -341,13 +341,13 @@ function PostDetail({ postId, token, user, onBack }: PostDetailProps) {
           onChange={(e) => setReplyText(e.target.value)}
           placeholder="Yanıtınızı yazın..."
           rows={3}
-          className="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-teal-500 outline-none resize-none"
+          className="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-cyan-500 outline-none resize-none"
         />
         <div className="flex justify-end mt-3">
           <button
             onClick={handleReply}
             disabled={!replyText.trim() || sending}
-            className="flex items-center gap-2 px-5 py-2.5 bg-teal-600 hover:bg-teal-700 disabled:opacity-50 text-white text-sm font-semibold rounded-xl transition-colors"
+            className="flex items-center gap-2 px-5 py-2.5 bg-cyan-600 hover:bg-cyan-700 disabled:opacity-50 text-white text-sm font-semibold rounded-xl transition-colors"
           >
             {sending ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
             Yanıtla
@@ -431,7 +431,7 @@ export default function ForumPage() {
         </div>
         <button
           onClick={() => setShowNewPost(true)}
-          className="flex items-center gap-2 px-5 py-2.5 bg-teal-600 hover:bg-teal-700 text-white text-sm font-bold rounded-xl transition-colors shadow-sm shadow-teal-500/20 shrink-0"
+          className="flex items-center gap-2 px-5 py-2.5 bg-cyan-600 hover:bg-cyan-700 text-white text-sm font-bold rounded-xl transition-colors shadow-sm shadow-cyan-500/20 shrink-0"
         >
           <Plus className="w-4 h-4" />
           <span className="hidden sm:inline">Soru Sor</span>
@@ -449,7 +449,7 @@ export default function ForumPage() {
 
       {/* Filtreler */}
       <div className="flex flex-wrap gap-3 items-center">
-        <div className="flex items-center gap-2 flex-1 min-w-[200px] bg-white border border-slate-200 rounded-xl px-3 focus-within:ring-2 focus-within:ring-teal-400">
+        <div className="flex items-center gap-2 flex-1 min-w-[200px] bg-white border border-slate-200 rounded-xl px-3 focus-within:ring-2 focus-within:ring-cyan-400">
           <Search className="w-4 h-4 text-slate-400 shrink-0" />
           <input
             value={search}
@@ -468,7 +468,7 @@ export default function ForumPage() {
           <select
             value={subject}
             onChange={(e) => { setSubject(e.target.value); setPage(1); }}
-            className="text-sm px-3 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none bg-white"
+            className="text-sm px-3 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-cyan-500 outline-none bg-white"
           >
             {SUBJECTS.map((s) => <option key={s} value={s}>{s || "Tüm Dersler"}</option>)}
           </select>
@@ -476,7 +476,7 @@ export default function ForumPage() {
         <select
           value={sort}
           onChange={(e) => { setSort(e.target.value); setPage(1); }}
-          className="text-sm px-3 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none bg-white"
+          className="text-sm px-3 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-cyan-500 outline-none bg-white"
         >
           <option value="latest">En Yeni</option>
           <option value="popular">En Popüler</option>
@@ -505,7 +505,7 @@ export default function ForumPage() {
           <p className="text-sm text-slate-400 mt-1">İlk soruyu sen sor!</p>
           <button
             onClick={() => setShowNewPost(true)}
-            className="mt-4 flex items-center gap-2 px-5 py-2.5 bg-teal-600 text-white text-sm font-bold rounded-xl transition-colors mx-auto"
+            className="mt-4 flex items-center gap-2 px-5 py-2.5 bg-cyan-600 text-white text-sm font-bold rounded-xl transition-colors mx-auto"
           >
             <Plus className="w-4 h-4" /> Soru Sor
           </button>
@@ -516,23 +516,23 @@ export default function ForumPage() {
             <button
               key={post.id}
               onClick={() => setSelectedPostId(post.id)}
-              className="w-full text-left bg-white rounded-2xl border border-slate-200 p-5 shadow-sm hover:shadow-md hover:border-teal-200 transition-all group"
+              className="w-full text-left bg-white rounded-2xl border border-slate-200 p-5 shadow-sm hover:shadow-md hover:border-cyan-200 transition-all group"
             >
               <div className="flex items-start gap-4">
                 <UserAvatar name={post.author_name ?? "Öğrenci"} photo={post.author_photo ?? undefined} role={post.author_role} />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start gap-2 mb-1">
-                    <h3 className="font-semibold text-slate-900 group-hover:text-teal-700 transition-colors text-sm line-clamp-2 flex-1">
+                    <h3 className="font-semibold text-slate-900 group-hover:text-cyan-700 transition-colors text-sm line-clamp-2 flex-1">
                       {post.title}
                     </h3>
                     {post.is_solved && (
-                      <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                      <CheckCircle className="w-4 h-4 text-cyan-500 shrink-0 mt-0.5" />
                     )}
                   </div>
                   <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-400">
                     <span className="font-medium text-slate-600">{post.author_name}</span>
                     {post.author_role === "teacher" && (
-                      <span className="font-bold text-teal-600 bg-teal-50 px-1.5 py-0.5 rounded-md">Öğretmen</span>
+                      <span className="font-bold text-cyan-600 bg-cyan-50 px-1.5 py-0.5 rounded-md">Öğretmen</span>
                     )}
                     <span>{timeAgo(post.created_at)}</span>
                     {post.subject && (

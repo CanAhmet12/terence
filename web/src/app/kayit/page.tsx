@@ -97,10 +97,10 @@ const ROLES = [
 
 const colorMap = {
   teal: {
-    bg: "bg-teal-50", border: "border-teal-500", text: "text-teal-700",
-    icon: "bg-teal-100 text-teal-600", badge: "bg-teal-500",
-    btn: "from-teal-600 to-teal-500 hover:from-teal-700 hover:to-teal-600",
-    ring: "ring-teal-500", shadow: "shadow-teal-500/25",
+    bg: "bg-cyan-50", border: "border-cyan-500", text: "text-cyan-700",
+    icon: "bg-cyan-100 text-cyan-600", badge: "bg-cyan-500",
+    btn: "from-cyan-600 to-cyan-500 hover:from-cyan-700 hover:to-cyan-600",
+    ring: "ring-cyan-500", shadow: "shadow-cyan-500/25",
   },
   blue: {
     bg: "bg-blue-50", border: "border-blue-500", text: "text-blue-700",
@@ -258,12 +258,12 @@ export default function RegisterPage() {
             <Image src="/logo.png" alt="Terence Eğitim" width={40} height={40} />
           </div>
           <span className="font-bold text-slate-900 text-sm sm:text-base truncate">
-            TERENCE <span className="text-teal-600">EĞİTİM</span>
+            TERENCE <span className="text-cyan-600">EĞİTİM</span>
           </span>
         </Link>
         <p className="text-xs sm:text-sm text-slate-500 shrink-0">
           Hesabın var mı?{" "}
-          <Link href="/giris" className="text-teal-600 font-semibold hover:underline">
+          <Link href="/giris" className="text-cyan-600 font-semibold hover:underline">
             Giriş yap
           </Link>
         </p>
@@ -476,8 +476,8 @@ export default function RegisterPage() {
                 {role === "student" && (
                   <form onSubmit={handleSubmit}>
                     <div className="flex items-center gap-3 mb-6">
-                      <div className="w-10 h-10 rounded-xl bg-teal-100 flex items-center justify-center">
-                        <Target className="w-5 h-5 text-teal-600" />
+                      <div className="w-10 h-10 rounded-xl bg-cyan-100 flex items-center justify-center">
+                        <Target className="w-5 h-5 text-cyan-600" />
                       </div>
                       <div>
                         <h2 className="text-xl font-extrabold text-slate-900">Hedef & Sınıf Bilgileri</h2>
@@ -503,8 +503,8 @@ export default function RegisterPage() {
                             <button key={g.value} type="button" onClick={() => setGrade(g.value)}
                               className={`py-2.5 px-3 rounded-xl text-sm font-semibold border-2 transition-all ${
                                 grade === g.value
-                                  ? "border-teal-500 bg-teal-50 text-teal-700"
-                                  : "border-slate-200 text-slate-600 hover:border-teal-300 hover:bg-teal-50/50"
+                                  ? "border-cyan-500 bg-cyan-50 text-cyan-700"
+                                  : "border-slate-200 text-slate-600 hover:border-cyan-300 hover:bg-cyan-50/50"
                               }`}>
                               {g.label}
                             </button>
@@ -522,16 +522,16 @@ export default function RegisterPage() {
                             <button key={et.value} type="button" onClick={() => setTargetExam(et.value)}
                               className={`flex items-center justify-between p-3.5 rounded-xl border-2 transition-all text-left ${
                                 targetExam === et.value
-                                  ? "border-teal-500 bg-teal-50"
-                                  : "border-slate-200 hover:border-teal-200 hover:bg-slate-50"
+                                  ? "border-cyan-500 bg-cyan-50"
+                                  : "border-slate-200 hover:border-cyan-200 hover:bg-slate-50"
                               }`}>
                               <div>
-                                <span className={`font-bold text-sm ${targetExam === et.value ? "text-teal-700" : "text-slate-800"}`}>
+                                <span className={`font-bold text-sm ${targetExam === et.value ? "text-cyan-700" : "text-slate-800"}`}>
                                   {et.label}
                                 </span>
                                 <span className="text-slate-500 text-xs ml-2">{et.desc}</span>
                               </div>
-                              {targetExam === et.value && <CheckCircle className="w-5 h-5 text-teal-500 shrink-0" />}
+                              {targetExam === et.value && <CheckCircle className="w-5 h-5 text-cyan-500 shrink-0" />}
                             </button>
                           ))}
                         </div>
@@ -542,22 +542,22 @@ export default function RegisterPage() {
                         <div className="grid grid-cols-2 gap-3">
                           <div>
                             <label className="flex items-center gap-1 text-sm font-semibold text-slate-700 mb-2">
-                              <School className="w-4 h-4 text-teal-500" /> Hedef Okul
+                              <School className="w-4 h-4 text-cyan-500" /> Hedef Okul
                             </label>
                             <input
                               type="text" value={targetSchool} onChange={e => setTargetSchool(e.target.value)}
                               placeholder="Örn: Boğaziçi Üniversitesi"
-                              className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 ring-teal-500 focus:border-transparent outline-none text-sm transition-all"
+                              className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 ring-cyan-500 focus:border-transparent outline-none text-sm transition-all"
                             />
                           </div>
                           <div>
                             <label className="flex items-center gap-1 text-sm font-semibold text-slate-700 mb-2">
-                              <BookOpen className="w-4 h-4 text-teal-500" /> Hedef Bölüm
+                              <BookOpen className="w-4 h-4 text-cyan-500" /> Hedef Bölüm
                             </label>
                             <input
                               type="text" value={targetDepartment} onChange={e => setTargetDepartment(e.target.value)}
                               placeholder="Örn: Tıp, Hukuk..."
-                              className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 ring-teal-500 focus:border-transparent outline-none text-sm transition-all"
+                              className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 ring-cyan-500 focus:border-transparent outline-none text-sm transition-all"
                             />
                           </div>
                         </div>
@@ -565,12 +565,12 @@ export default function RegisterPage() {
                       {targetExam === "LGS" && (
                         <div>
                           <label className="flex items-center gap-1 text-sm font-semibold text-slate-700 mb-2">
-                            <School className="w-4 h-4 text-teal-500" /> Hedef Lise
+                            <School className="w-4 h-4 text-cyan-500" /> Hedef Lise
                           </label>
                           <input
                             type="text" value={targetSchool} onChange={e => setTargetSchool(e.target.value)}
                             placeholder="Örn: Galatasaray Lisesi"
-                            className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 ring-teal-500 focus:border-transparent outline-none text-sm transition-all"
+                            className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 ring-cyan-500 focus:border-transparent outline-none text-sm transition-all"
                           />
                         </div>
                       )}
@@ -579,13 +579,13 @@ export default function RegisterPage() {
                       {targetExam && (
                         <div>
                       <label className="flex items-center gap-1 text-sm font-semibold text-slate-700 mb-2">
-                            <Target className="w-4 h-4 text-teal-500" /> Hedef Net Sayısı
+                            <Target className="w-4 h-4 text-cyan-500" /> Hedef Net Sayısı
                             <span className="text-slate-400 font-normal ml-1">(opsiyonel)</span>
                           </label>
                           <input
                             type="number" value={targetNet} onChange={e => setTargetNet(e.target.value)}
                             placeholder="Örn: 100" min="0" max="200" step="0.5"
-                            className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 ring-teal-500 focus:border-transparent outline-none text-sm transition-all"
+                            className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 ring-cyan-500 focus:border-transparent outline-none text-sm transition-all"
                           />
                         </div>
                       )}
@@ -597,7 +597,7 @@ export default function RegisterPage() {
                         <ArrowLeft className="w-4 h-4" /> Geri
                       </button>
                       <button type="submit" disabled={loading || !grade || !targetExam}
-                        className="flex-1 min-h-[3rem] py-3.5 bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-700 hover:to-teal-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold rounded-xl transition-all shadow-lg shadow-teal-500/25 flex items-center justify-center gap-2">
+                        className="flex-1 min-h-[3rem] py-3.5 bg-gradient-to-r from-cyan-600 to-cyan-500 hover:from-cyan-700 hover:to-cyan-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold rounded-xl transition-all shadow-lg shadow-cyan-500/25 flex items-center justify-center gap-2">
                         {loading ? (
                           <span className="flex items-center gap-2"><span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> Kaydediliyor...</span>
                         ) : (
@@ -774,7 +774,7 @@ export default function RegisterPage() {
           {step !== 3 && (
             <p className="text-center text-sm text-slate-500 mt-6">
               Zaten hesabın var mı?{" "}
-              <Link href="/giris" className="text-teal-600 font-semibold hover:underline inline-flex items-center gap-1">
+              <Link href="/giris" className="text-cyan-600 font-semibold hover:underline inline-flex items-center gap-1">
                 Giriş yap <ChevronRight className="w-3.5 h-3.5" />
               </Link>
             </p>

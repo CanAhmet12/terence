@@ -74,7 +74,7 @@ export function MediaKpiStrip({ items, subjectsSummary }: Props) {
       value: formatWatchTotal(watchedSeconds),
       sub: "Toplam",
       Icon: Clock,
-      wrap: "from-emerald-500 to-teal-600 text-white shadow-emerald-500/25",
+      wrap: "from-cyan-500 to-cyan-600 text-white shadow-cyan-500/25",
     },
     {
       key: "c",
@@ -82,7 +82,7 @@ export function MediaKpiStrip({ items, subjectsSummary }: Props) {
       value: String(completedVideos + completedTopics),
       sub: "İçerik",
       Icon: CheckCircle2,
-      wrap: "from-green-500 to-emerald-600 text-white shadow-green-500/20",
+      wrap: "from-cyan-500 to-cyan-600 text-white shadow-cyan-500/20",
     },
     {
       key: "a",

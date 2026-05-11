@@ -302,7 +302,7 @@ export default function MesajPage() {
               </div>
 
               {sent && (
-                <div className="flex items-center gap-2.5 p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl text-sm text-emerald-700 font-semibold">
+                <div className="flex items-center gap-2.5 p-3.5 bg-cyan-50 border border-cyan-200 rounded-xl text-sm text-cyan-700 font-semibold">
                   <CheckCircle className="w-4 h-4 shrink-0" /> Mesaj başarıyla gönderildi!
                 </div>
               )}
@@ -330,8 +330,8 @@ export default function MesajPage() {
             {/* Hatırlatıcılar */}
             <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-9 h-9 rounded-xl bg-teal-50 flex items-center justify-center">
-                  <Clock className="w-5 h-5 text-teal-600" />
+                <div className="w-9 h-9 rounded-xl bg-cyan-50 flex items-center justify-center">
+                  <Clock className="w-5 h-5 text-cyan-600" />
                 </div>
                 <h2 className="font-bold text-slate-900">Otomatik Hatırlatıcılar</h2>
               </div>
@@ -343,9 +343,9 @@ export default function MesajPage() {
                   { text: "Canlı ders 15 dk önce → tüm sınıfa bildirim", active: true },
                 ].map(({ text, active }, i) => (
                   <div key={i} className="flex items-start gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100">
-                    <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${active ? "bg-emerald-500" : "bg-slate-300"}`} />
+                    <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${active ? "bg-cyan-500" : "bg-slate-300"}`} />
                     <p className="text-xs text-slate-600 font-medium leading-relaxed">{text}</p>
-                    <span className={`ml-auto shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full ${active ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-400"}`}>
+                    <span className={`ml-auto shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full ${active ? "bg-cyan-100 text-cyan-700" : "bg-slate-100 text-slate-400"}`}>
                       {active ? "Aktif" : "Pasif"}
                     </span>
                   </div>

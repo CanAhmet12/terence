@@ -44,7 +44,7 @@ export function QuestionBankHero({
             {school ? (
               <>
                 Sınıfına uygun sorularla{" "}
-                <span className="bg-gradient-to-r from-teal-600 via-emerald-600 to-teal-600 bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-cyan-600 via-cyan-600 to-cyan-600 bg-clip-text text-transparent">
                   güçlen
                 </span>
               </>

@@ -126,8 +126,8 @@ export default function StudentDashboard() {
       {
         label: 'Çözülen Sorular',
         data: safeTimeline.map((w) => w.questions_solved),
-        borderColor: '#10b981',
-        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+        borderColor: '#06b6d4',
+        backgroundColor: 'rgba(6, 182, 212, 0.1)',
         fill: true,
         tension: 0.4,
         yAxisID: 'y1',
@@ -142,7 +142,7 @@ export default function StudentDashboard() {
       data: Object.values(safeSubjectPerf).map((s) => s.accuracy_rate ?? 0),
       backgroundColor: [
         'rgba(59, 130, 246, 0.8)',
-        'rgba(16, 185, 129, 0.8)',
+        'rgba(6, 182, 212, 0.8)',
         'rgba(251, 191, 36, 0.8)',
         'rgba(239, 68, 68, 0.8)',
         'rgba(168, 85, 247, 0.8)',
@@ -164,7 +164,7 @@ export default function StudentDashboard() {
       data: Object.values(safeActivityType),
       backgroundColor: [
         '#3b82f6',
-        '#10b981',
+        '#06b6d4',
         '#f59e0b',
         '#8b5cf6',
       ],
@@ -284,7 +284,7 @@ export default function StudentDashboard() {
                       </div>
                       <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                         <div className="flex items-center gap-3">
-                          <Award className="w-5 h-5 text-green-600" />
+                          <Award className="w-5 h-5 text-cyan-600" />
                           <span className="text-gray-700">Doğru Cevap</span>
                         </div>
                         <span className="font-bold text-gray-900">{overview.total_correct}</span>
@@ -342,7 +342,7 @@ export default function StudentDashboard() {
                       <div className="flex items-center justify-between mb-3">
                         <h4 className="font-semibold text-gray-900">{subject}</h4>
                         <span className={`flex items-center gap-1 text-sm ${
-                          perf.trend === 'improving' ? 'text-green-600' :
+                          perf.trend === 'improving' ? 'text-cyan-600' :
                           perf.trend === 'declining' ? 'text-red-600' :
                           'text-gray-600'
                         }`}>
@@ -438,7 +438,7 @@ function StatCard({
     blue: 'bg-blue-100 text-blue-600',
     purple: 'bg-purple-100 text-purple-600',
     orange: 'bg-orange-100 text-orange-600',
-    green: 'bg-green-100 text-green-600',
+    green: 'bg-cyan-100 text-cyan-600',
   }
 
   return (
@@ -449,7 +449,7 @@ function StatCard({
         </div>
         {trend && (
           trend === 'up' ? (
-            <TrendingUp className="w-5 h-5 text-green-600" />
+            <TrendingUp className="w-5 h-5 text-cyan-600" />
           ) : (
             <TrendingDown className="w-5 h-5 text-red-600" />
           )

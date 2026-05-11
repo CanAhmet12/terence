@@ -39,7 +39,7 @@ export default function SifreDegistirPage() {
 
   const strength = pwStrength(newPassword);
   const strengthLabel = ["", "Zayıf", "Orta", "İyi", "Güçlü"][strength];
-  const strengthColor = ["", "bg-red-400", "bg-amber-400", "bg-teal-400", "bg-emerald-500"][strength];
+  const strengthColor = ["", "bg-red-400", "bg-amber-400", "bg-cyan-400", "bg-cyan-500"][strength];
 
   const mismatch = confirmPassword.length > 0 && newPassword !== confirmPassword;
 
@@ -70,15 +70,15 @@ export default function SifreDegistirPage() {
   return (
     <div className="min-h-screen bg-slate-50 flex items-start justify-center py-10 sm:py-16 px-3 sm:px-4 min-w-0">
       <div className="w-full max-w-md min-w-0">
-        <Link href={backHref} className="inline-flex items-center gap-2 text-slate-500 hover:text-teal-600 text-sm mb-6 transition-colors">
+        <Link href={backHref} className="inline-flex items-center gap-2 text-slate-500 hover:text-cyan-600 text-sm mb-6 transition-colors">
           <ArrowLeft className="w-4 h-4" />
           Profile dön
         </Link>
 
         <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
           <div className="p-5 sm:p-8 border-b border-slate-100 bg-gradient-to-br from-slate-50 to-white flex items-center gap-3 sm:gap-4 min-w-0">
-            <div className="w-12 h-12 rounded-2xl bg-teal-50 flex items-center justify-center">
-              <Shield className="w-6 h-6 text-teal-600" />
+            <div className="w-12 h-12 rounded-2xl bg-cyan-50 flex items-center justify-center">
+              <Shield className="w-6 h-6 text-cyan-600" />
             </div>
             <div>
               <h1 className="text-xl font-extrabold text-slate-900">Şifre Değiştir</h1>
@@ -88,7 +88,7 @@ export default function SifreDegistirPage() {
 
           <form onSubmit={handleSubmit} className="p-5 sm:p-8 space-y-5">
             {success && (
-              <div className="flex items-center gap-3 p-4 bg-teal-50 border border-teal-100 rounded-xl text-teal-700 text-sm font-medium">
+              <div className="flex items-center gap-3 p-4 bg-cyan-50 border border-cyan-100 rounded-xl text-cyan-700 text-sm font-medium">
                 <CheckCircle className="w-5 h-5 shrink-0" />
                 Şifreniz başarıyla değiştirildi! Yönlendiriliyorsunuz...
               </div>
@@ -110,7 +110,7 @@ export default function SifreDegistirPage() {
                   onChange={(e) => setCurrentPassword(e.target.value)}
                   required
                   autoComplete="current-password"
-                  className="w-full pl-11 pr-12 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none transition-all text-sm"
+                  className="w-full pl-11 pr-12 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 outline-none transition-all text-sm"
                 />
                 <button type="button" onClick={() => setShowCurrent(!showCurrent)}
                   className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
@@ -130,7 +130,7 @@ export default function SifreDegistirPage() {
                   required
                   minLength={8}
                   autoComplete="new-password"
-                  className="w-full pl-11 pr-12 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none transition-all text-sm"
+                  className="w-full pl-11 pr-12 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 outline-none transition-all text-sm"
                 />
                 <button type="button" onClick={() => setShowNew(!showNew)}
                   className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
@@ -144,7 +144,7 @@ export default function SifreDegistirPage() {
                       <div key={i} className={`h-1 flex-1 rounded-full transition-all ${i <= strength ? strengthColor : "bg-slate-200"}`} />
                     ))}
                   </div>
-                  <p className={`text-xs font-medium ${["", "text-red-500", "text-amber-500", "text-teal-600", "text-emerald-600"][strength]}`}>
+                  <p className={`text-xs font-medium ${["", "text-red-500", "text-amber-500", "text-cyan-600", "text-cyan-600"][strength]}`}>
                     {strengthLabel}
                   </p>
                 </div>
@@ -162,7 +162,7 @@ export default function SifreDegistirPage() {
                   required
                   autoComplete="new-password"
                   className={`w-full pl-11 pr-12 py-3 border rounded-xl focus:ring-2 outline-none transition-all text-sm ${
-                    mismatch ? "border-red-300 focus:ring-red-500" : "border-slate-200 focus:ring-teal-500 focus:border-teal-500"
+                    mismatch ? "border-red-300 focus:ring-red-500" : "border-slate-200 focus:ring-cyan-500 focus:border-cyan-500"
                   }`}
                 />
                 <button type="button" onClick={() => setShowConfirm(!showConfirm)}
@@ -176,7 +176,7 @@ export default function SifreDegistirPage() {
             <button
               type="submit"
               disabled={saving || success || mismatch}
-              className="w-full flex items-center justify-center gap-2 py-3.5 bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-700 hover:to-teal-600 disabled:opacity-70 text-white font-semibold rounded-xl transition-all shadow-lg shadow-teal-500/20 text-sm"
+              className="w-full flex items-center justify-center gap-2 py-3.5 bg-gradient-to-r from-cyan-600 to-cyan-500 hover:from-cyan-700 hover:to-cyan-600 disabled:opacity-70 text-white font-semibold rounded-xl transition-all shadow-lg shadow-cyan-500/20 text-sm"
             >
               {saving ? (
                 <><span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />Değiştiriliyor...</>

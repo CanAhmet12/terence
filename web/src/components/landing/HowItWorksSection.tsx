@@ -32,7 +32,7 @@ export function HowItWorksSection() {
     <section id="nasil-calisir" className="py-24 lg:py-32 bg-white relative">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-3xl mx-auto mb-20">
-          {/* OLD: text-teal-600 */}
+          {/* OLD: text-cyan-600 */}
           <p className="text-cyan-600 font-semibold text-sm uppercase tracking-wider mb-4">
             Nasıl Çalışır?
           </p>
@@ -53,15 +53,15 @@ export function HowItWorksSection() {
               {/* Connector line - desktop */}
               {i < steps.length - 1 && (
                 <div className="hidden lg:block absolute top-14 left-[55%] w-[90%] h-0.5">
-                  {/* OLD: from-teal-300/60 to-teal-200/40 */}
+                  {/* OLD: from-cyan-300/60 to-cyan-200/40 */}
                   <div className="h-full bg-gradient-to-r from-cyan-300/60 to-cyan-200/40 rounded-full" />
                 </div>
               )}
 
               <div className="relative text-center">
-                {/* OLD: bg-teal-50 border-teal-100 hover:border-teal-200 hover:shadow-teal-500/10 */}
+                {/* OLD: bg-cyan-50 border-cyan-100 hover:border-cyan-200 hover:shadow-cyan-500/10 */}
                 <div className="inline-flex items-center justify-center w-28 h-28 rounded-3xl bg-cyan-50 border-2 border-cyan-100 mb-6 relative group hover:border-cyan-200 hover:shadow-lg hover:shadow-cyan-500/10 transition-all">
-                  {/* OLD: text-teal-600 */}
+                  {/* OLD: text-cyan-600 */}
                   <item.icon className="w-14 h-14 text-cyan-600" strokeWidth={2} />
                   <div className="absolute -top-1 -right-1 w-10 h-10 rounded-xl bg-gradient-to-br from-slate-700 to-cyan-600 text-white font-bold text-sm flex items-center justify-center shadow-lg shadow-cyan-500/30">
                     {item.step}

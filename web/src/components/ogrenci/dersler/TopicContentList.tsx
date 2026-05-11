@@ -83,7 +83,7 @@ export function TopicContentList({
       case "pdf":
         return "from-sky-500 to-blue-600";
       case "quiz":
-        return "from-emerald-500 to-teal-600";
+        return "from-cyan-500 to-cyan-600";
       default:
         return "from-slate-500 to-slate-600";
     }
@@ -178,7 +178,7 @@ export function TopicContentList({
                     </button>
                     <Link
                       href={practiceHref}
-                      className="inline-flex min-w-[5.25rem] items-center justify-center gap-1.5 rounded-xl border border-emerald-200/80 bg-emerald-50 px-4 py-2.5 text-sm font-bold text-emerald-800 transition hover:bg-emerald-100"
+                      className="inline-flex min-w-[5.25rem] items-center justify-center gap-1.5 rounded-xl border border-cyan-200/80 bg-cyan-50 px-4 py-2.5 text-sm font-bold text-cyan-800 transition hover:bg-cyan-100"
                     >
                       <PenLine className="h-4 w-4 shrink-0" aria-hidden />
                       Çöz

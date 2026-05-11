@@ -50,7 +50,7 @@ type RiskStudent = {
 const RISK_CONFIG = {
   red: { bg: "bg-red-50", border: "border-red-200", text: "text-red-700", dot: "bg-red-500", label: "Kritik Risk" },
   yellow: { bg: "bg-amber-50", border: "border-amber-200", text: "text-amber-700", dot: "bg-amber-500", label: "Dikkat Gereken" },
-  green: { bg: "bg-emerald-50", border: "border-emerald-200", text: "text-emerald-700", dot: "bg-emerald-500", label: "İyi Durumda" },
+  green: { bg: "bg-cyan-50", border: "border-cyan-200", text: "text-cyan-700", dot: "bg-cyan-500", label: "İyi Durumda" },
 };
 
 function formatKpiNumber(v: unknown): string {
@@ -114,7 +114,7 @@ function QuickAssignmentForm({ token, classes, classesLoading }: QuickAssignment
 
   if (sent) {
     return (
-      <div className="flex items-center gap-2.5 p-4 bg-emerald-50 rounded-xl border border-emerald-200 text-emerald-700 font-semibold text-sm">
+      <div className="flex items-center gap-2.5 p-4 bg-cyan-50 rounded-xl border border-cyan-200 text-cyan-700 font-semibold text-sm">
         <CheckCircle className="w-4.5 h-4.5 shrink-0" />
         Ödev oluşturuldu; {sent.count} öğrenciye atandı. Öğrenciler ödev listesinde görebilir.
       </div>
@@ -270,7 +270,7 @@ export default function OgretmenDashboardPage() {
 
   const KPI_CARDS = [
     { label: "Toplam Öğrenci", value: formatKpiNumber(stats?.total_students), icon: Users, color: "text-indigo-600", bg: "bg-indigo-50" },
-    { label: "Bugün Aktif", value: formatKpiNumber(stats?.active_today), icon: Zap, color: "text-emerald-600", bg: "bg-emerald-50" },
+    { label: "Bugün Aktif", value: formatKpiNumber(stats?.active_today), icon: Zap, color: "text-cyan-600", bg: "bg-cyan-50" },
     { label: "Ortalama Net", value: formatAverageNet(stats), icon: BarChart3, color: "text-violet-600", bg: "bg-violet-50" },
     { label: "Açık Ödev", value: formatKpiNumber(stats?.assignment_count), icon: FileQuestion, color: "text-amber-600", bg: "bg-amber-50" },
   ];
@@ -394,8 +394,8 @@ export default function OgretmenDashboardPage() {
                 </div>
               ) : criticalRisk.length === 0 && warningRisk.length === 0 ? (
                 <div className="text-center py-10">
-                  <div className="w-14 h-14 rounded-2xl bg-emerald-50 flex items-center justify-center mx-auto mb-3">
-                    <CheckCircle className="w-7 h-7 text-emerald-400" />
+                  <div className="w-14 h-14 rounded-2xl bg-cyan-50 flex items-center justify-center mx-auto mb-3">
+                    <CheckCircle className="w-7 h-7 text-cyan-400" />
                   </div>
                   <p className="font-semibold text-slate-700">Risk altında öğrenci yok</p>
                   <p className="text-xs text-slate-400 mt-1">Tüm öğrenciler iyi durumda</p>
@@ -454,7 +454,7 @@ export default function OgretmenDashboardPage() {
                 </div>
               </div>
               {sent ? (
-                <div className="flex items-center gap-2 text-emerald-700 text-sm font-semibold">
+                <div className="flex items-center gap-2 text-cyan-700 text-sm font-semibold">
                   <CheckCircle className="w-4 h-4" /> Bildirimler gönderildi.
                 </div>
               ) : showMsgModal ? (
@@ -514,7 +514,7 @@ export default function OgretmenDashboardPage() {
             { href: "/ogretmen/siniflar", icon: Users, label: "Sınıflarım", color: "text-indigo-600", bg: "bg-indigo-50" },
             { href: "/ogretmen/analiz", icon: TrendingUp, label: "Analiz", color: "text-violet-600", bg: "bg-violet-50" },
             { href: "/ogretmen/odev", icon: FileQuestion, label: "Ödevler", color: "text-amber-600", bg: "bg-amber-50" },
-            { href: "/ogretmen/canli-ders", icon: GraduationCap, label: "Canlı Ders", color: "text-emerald-600", bg: "bg-emerald-50" },
+            { href: "/ogretmen/canli-ders", icon: GraduationCap, label: "Canlı Ders", color: "text-cyan-600", bg: "bg-cyan-50" },
           ].map(({ href, icon: Icon, label, color, bg }) => (
             <Link
               key={href}

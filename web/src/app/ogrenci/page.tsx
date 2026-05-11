@@ -75,7 +75,7 @@ const QUICK_LINKS: Array<{
   { href: "/ogrenci/soru-bankasi", icon: Library, label: "Soru Bankası", color: "text-indigo-600", bg: "bg-indigo-50" },
   { href: "/ogrenci/deneme", icon: FileQuestion, label: "Deneme Başlat", color: "text-violet-600", bg: "bg-violet-50" },
   { href: "/ogrenci/video", icon: Video, label: "Video İzle", color: "text-rose-600", bg: "bg-rose-50" },
-  { href: "/ogrenci/koc", icon: Bot, label: "Koça Sor", color: "text-teal-600", bg: "bg-teal-50", iconSrc: "/dijitalkocicon.png" },
+  { href: "/ogrenci/koc", icon: Bot, label: "Koça Sor", color: "text-cyan-600", bg: "bg-cyan-50", iconSrc: "/dijitalkocicon.png" },
   { href: "/ogrenci/rapor", icon: BarChart3, label: "Raporlarım", color: "text-amber-600", bg: "bg-amber-50" },
   { href: "/ogrenci/rozet", icon: Trophy, label: "Rozetlerim", color: "text-yellow-600", bg: "bg-yellow-50" },
 ];
@@ -85,10 +85,10 @@ const TASK_COLORS: Record<string, { border: string; bg: string; text: string }> 
   turkce:        { border: "border-rose-400",   bg: "bg-rose-50",   text: "text-rose-700" },
   fizik:         { border: "border-violet-400", bg: "bg-violet-50", text: "text-violet-700" },
   kimya:         { border: "border-amber-400",  bg: "bg-amber-50",  text: "text-amber-700" },
-  biyoloji:      { border: "border-emerald-400",bg: "bg-emerald-50",text: "text-emerald-700" },
+  biyoloji:      { border: "border-cyan-400",bg: "bg-cyan-50",text: "text-cyan-700" },
   question:      { border: "border-indigo-400", bg: "bg-indigo-50", text: "text-indigo-700" },
   video:         { border: "border-rose-400",   bg: "bg-rose-50",   text: "text-rose-700" },
-  read:          { border: "border-teal-400",   bg: "bg-teal-50",   text: "text-teal-700" },
+  read:          { border: "border-cyan-400",   bg: "bg-cyan-50",   text: "text-cyan-700" },
   exam:          { border: "border-violet-400", bg: "bg-violet-50", text: "text-violet-700" },
   custom:        { border: "border-slate-300",  bg: "bg-slate-50",  text: "text-slate-600" },
 };
@@ -191,10 +191,10 @@ export default function StudentDashboardPage() {
         <PushPermissionBanner token={token} />
 
         {/* ── Hero Banner ── */}
-        <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-br from-cyan-600 via-teal-600 to-emerald-700 p-5 text-white shadow-xl shadow-cyan-500/25 sm:p-8">
+        <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-br from-cyan-600 via-sky-600 to-cyan-800 p-5 text-white shadow-xl shadow-cyan-500/25 sm:p-8">
           {/* Dekoratif daireler */}
           <div className="absolute -right-12 -top-12 w-48 h-48 bg-white/5 rounded-full blur-2xl pointer-events-none" />
-          <div className="absolute right-20 bottom-0 w-32 h-32 bg-emerald-500/20 rounded-full blur-xl pointer-events-none" />
+          <div className="absolute right-20 bottom-0 w-32 h-32 bg-cyan-500/20 rounded-full blur-xl pointer-events-none" />
           <div className="absolute left-1/2 top-0 w-64 h-1 bg-white/10 rounded-full pointer-events-none" />
 
           <div className="relative z-10 flex flex-col sm:flex-row sm:items-center gap-6">
@@ -301,8 +301,8 @@ export default function StudentDashboardPage() {
             label="Bugün Tamamlanan"
             value={`${doneCount} / ${totalCount}`}
             sub={totalCount > 0 ? `%${progress} ilerleme` : "Plan yok"}
-            color="text-emerald-500"
-            bgColor="bg-emerald-50"
+            color="text-cyan-500"
+            bgColor="bg-cyan-50"
             loading={loading}
           />
           <StatCard
@@ -421,7 +421,7 @@ export default function StudentDashboardPage() {
                           {/* Checkbox */}
                           <div className="shrink-0">
                             {task.is_completed ? (
-                              <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+                              <CheckCircle2 className="w-5 h-5 text-cyan-500" />
                             ) : (
                               <Circle className={`w-5 h-5 ${tc.text} opacity-60 group-hover:opacity-100 transition-opacity`} />
                             )}
@@ -429,7 +429,7 @@ export default function StudentDashboardPage() {
 
                           {/* İçerik */}
                           <div className="flex-1 min-w-0">
-                            <p className={`text-sm font-semibold truncate ${task.is_completed ? "line-through text-slate-400" : "text-slate-800"}`}>
+                            <p className={`text-sm font-semibold truncate ${task.is_completed ? "text-slate-500" : "text-slate-800"}`}>
                               {task.title}
                             </p>
                             {task.subject && (
@@ -581,16 +581,16 @@ export default function StudentDashboardPage() {
             {/* Öğrenmeye devam */}
             <Link
               href="/ogrenci/dersler"
-              className="flex items-center gap-3 p-4 bg-gradient-to-r from-teal-50 to-emerald-50 rounded-2xl border border-teal-100 hover:shadow-md transition-all group"
+              className="flex items-center gap-3 p-4 bg-gradient-to-r from-cyan-50 to-sky-50 rounded-2xl border border-cyan-100 hover:shadow-md transition-all group"
             >
-              <div className="w-10 h-10 rounded-xl bg-teal-100 flex items-center justify-center shrink-0 group-hover:bg-teal-200 transition-colors">
-                <BookOpen className="w-5 h-5 text-teal-600" />
+              <div className="w-10 h-10 rounded-xl bg-cyan-100 flex items-center justify-center shrink-0 group-hover:bg-cyan-200 transition-colors">
+                <BookOpen className="w-5 h-5 text-cyan-600" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-bold text-teal-800 text-sm">Derslerime Git</p>
-                <p className="text-xs text-teal-600 truncate">Kaldığın yerden devam et</p>
+                <p className="font-bold text-cyan-800 text-sm">Derslerime Git</p>
+                <p className="text-xs text-cyan-600 truncate">Kaldığın yerden devam et</p>
               </div>
-              <ArrowRight className="w-4 h-4 text-teal-500 group-hover:translate-x-0.5 transition-transform shrink-0" />
+              <ArrowRight className="w-4 h-4 text-cyan-500 group-hover:translate-x-0.5 transition-transform shrink-0" />
             </Link>
           </div>
         </div>

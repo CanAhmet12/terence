@@ -220,7 +220,7 @@ export default function KocPage() {
             <div>
               <h1 className="font-bold text-slate-900 text-base leading-none">Dijital Koç</h1>
               <p className="text-xs text-indigo-600 font-medium flex items-center gap-1 mt-0.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse inline-block" />
+                <span className="w-1.5 h-1.5 rounded-full bg-cyan-500 animate-pulse inline-block" />
                 Çevrimiçi · AI Destekli
               </p>
             </div>

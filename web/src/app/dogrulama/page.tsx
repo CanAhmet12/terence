@@ -128,15 +128,15 @@ function DogrulamaContent() {
 
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-teal-50 to-emerald-50 p-6">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-cyan-50 to-cyan-50 p-6">
         <div className="text-center max-w-sm">
-          <div className="w-20 h-20 bg-teal-100 rounded-full flex items-center justify-center mx-auto mb-6">
-            <CheckCircle className="w-10 h-10 text-teal-600" />
+          <div className="w-20 h-20 bg-cyan-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <CheckCircle className="w-10 h-10 text-cyan-600" />
           </div>
           <h1 className="text-2xl font-extrabold text-slate-900 mb-2">E-posta Doğrulandı!</h1>
           <p className="text-slate-600 mb-6">Hesabın başarıyla aktifleştirildi. Giriş sayfasına yönlendiriliyorsun...</p>
           <div className="flex justify-center">
-            <div className="w-8 h-8 border-4 border-teal-500 border-t-transparent rounded-full animate-spin" />
+            <div className="w-8 h-8 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin" />
           </div>
         </div>
       </div>
@@ -152,17 +152,17 @@ function DogrulamaContent() {
         </Link>
 
         <Link href="/" className="inline-flex items-center gap-3 text-slate-900 mb-8 group">
-          <div className="w-12 h-12 rounded-2xl overflow-hidden shadow-lg shadow-teal-500/20">
+          <div className="w-12 h-12 rounded-2xl overflow-hidden shadow-lg shadow-cyan-500/20">
             <Image src="/logo.png" alt="Terence Eğitim" width={48} height={48} />
           </div>
           <span className="font-bold text-xl tracking-tight">
-            TERENCE <span className="text-teal-600">EĞİTİM</span>
+            TERENCE <span className="text-cyan-600">EĞİTİM</span>
           </span>
         </Link>
 
         <div className="mb-8">
-          <div className="w-14 h-14 rounded-2xl bg-teal-50 flex items-center justify-center mb-5">
-            <Mail className="w-7 h-7 text-teal-600" />
+          <div className="w-14 h-14 rounded-2xl bg-cyan-50 flex items-center justify-center mb-5">
+            <Mail className="w-7 h-7 text-cyan-600" />
           </div>
           <h1 className="text-3xl font-extrabold text-slate-900 mb-2">E-postanı Doğrula</h1>
           <p className="text-slate-600 leading-relaxed">
@@ -199,8 +199,8 @@ function DogrulamaContent() {
                     disabled={loading}
                     className={`w-full aspect-square min-h-[2.75rem] text-center text-lg sm:text-2xl font-bold border-2 rounded-xl sm:rounded-2xl outline-none transition-all disabled:opacity-50 sm:size-14 sm:max-w-[3.5rem] ${
                       code[i]
-                        ? "border-teal-500 bg-teal-50 text-teal-700"
-                        : "border-slate-200 bg-slate-50 text-slate-900 focus:border-teal-400 focus:bg-white"
+                        ? "border-cyan-500 bg-cyan-50 text-cyan-700"
+                        : "border-slate-200 bg-slate-50 text-slate-900 focus:border-cyan-400 focus:bg-white"
                     }`}
                   />
                 ))}
@@ -210,7 +210,7 @@ function DogrulamaContent() {
           <button
             type="submit"
             disabled={loading || code.some((c) => !c)}
-            className="w-full py-4 bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-700 hover:to-teal-600 disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-all shadow-lg shadow-teal-500/25"
+            className="w-full py-4 bg-gradient-to-r from-cyan-600 to-cyan-500 hover:from-cyan-700 hover:to-cyan-600 disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-all shadow-lg shadow-cyan-500/25"
           >
             {loading ? (
               <span className="flex items-center justify-center gap-2">
@@ -230,7 +230,7 @@ function DogrulamaContent() {
               type="button"
               onClick={handleResend}
               disabled={resending}
-              className="inline-flex items-center gap-2 text-sm font-semibold text-teal-600 hover:text-teal-700 transition-colors disabled:opacity-60"
+              className="inline-flex items-center gap-2 text-sm font-semibold text-cyan-600 hover:text-cyan-700 transition-colors disabled:opacity-60"
             >
               <RefreshCw className={`w-4 h-4 ${resending ? "animate-spin" : ""}`} />
               {resending ? "Gönderiliyor..." : "Tekrar Kod Gönder"}
@@ -248,7 +248,7 @@ function DogrulamaContent() {
 
 export default function DogrulamaPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="w-8 h-8 border-2 border-teal-500 border-t-transparent rounded-full animate-spin" /></div>}>
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="w-8 h-8 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin" /></div>}>
       <DogrulamaContent />
     </Suspense>
   );

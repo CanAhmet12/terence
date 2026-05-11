@@ -682,20 +682,21 @@ function SoruBankasiPageInner({
           <QuestionBankKpiStrip summary={bankSummary} loading={bankSummaryLoading} />
 
           <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_280px] xl:items-start xl:gap-6">
-            <div className="min-w-0 space-y-4">
+            <div className="min-w-0 xl:col-start-1 xl:row-start-1">
               <SubjectBankCarousel
                 subjects={bankSummary?.subjects ?? []}
                 onSelectSubject={openBookForSubject}
                 onOpenLibrary={() => setShowLibraryModal(true)}
               />
+            </div>
+            <div className="min-w-0 xl:col-start-1 xl:row-start-2">
               <QuestionBankQuickActions
                 onQuick10={onQuick10}
                 onWeakFocus={onWeakFocus}
                 disabled={loading || !token}
               />
             </div>
-
-            <div className="min-w-0 xl:sticky xl:top-20 xl:self-start">
+            <div className="min-w-0 xl:col-start-2 xl:row-start-1 xl:row-span-3 xl:self-start xl:sticky xl:top-20">
               <QuestionBankSidebar
                 examHistory={examHistory}
                 planStats={planStats}
@@ -704,15 +705,16 @@ function SoruBankasiPageInner({
                 hidePersonalTestCard
               />
             </div>
+            <div className="min-w-0 xl:col-start-1 xl:row-start-3">
+              <QuestionBankInsightsRow
+                subjects={bankSummary?.subjects ?? []}
+                weakPreview={weakPreview}
+                badgeData={badgeData}
+                goalHint={goalHint}
+                loading={sidebarLoading}
+              />
+            </div>
           </div>
-
-          <QuestionBankInsightsRow
-            subjects={bankSummary?.subjects ?? []}
-            weakPreview={weakPreview}
-            badgeData={badgeData}
-            goalHint={goalHint}
-            loading={sidebarLoading}
-          />
 
           <StudyMotivationBanner tone={bankTone} onStartQuick={onQuick10} />
         </div>

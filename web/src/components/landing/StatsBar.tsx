@@ -58,9 +58,9 @@ function StatItem({ stat }: { stat: (typeof stats)[0] }) {
 
   return (
     <div ref={ref} className="flex items-center gap-3 sm:gap-4 lg:gap-5 min-w-0">
-      {/* OLD: from-teal-50 to-emerald-50 border-teal-100 */}
+      {/* OLD: from-cyan-50 to-cyan-50 border-cyan-100 */}
       <div className="w-12 h-12 lg:w-14 lg:h-14 rounded-2xl bg-gradient-to-br from-cyan-50 to-cyan-100 border border-cyan-200 flex items-center justify-center shrink-0">
-        {/* OLD: text-teal-600 */}
+        {/* OLD: text-cyan-600 */}
         <stat.icon className="w-6 h-6 lg:w-7 lg:h-7 text-cyan-600" strokeWidth={2} />
       </div>
       <div>

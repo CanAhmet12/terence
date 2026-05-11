@@ -45,7 +45,7 @@ export function TopicKpiStrip({ items }: { items: ContentListItem[] }) {
       title: "Konu Testi",
       subtitle: quizCount > 0 ? `${quizCount} etkinlik` : "—",
       icon: ListChecks,
-      iconWrap: "from-emerald-500/15 to-teal-500/15 text-emerald-600",
+      iconWrap: "from-cyan-500/15 to-cyan-500/15 text-cyan-600",
     },
   ];
 

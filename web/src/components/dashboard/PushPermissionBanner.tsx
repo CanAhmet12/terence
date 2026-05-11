@@ -71,8 +71,8 @@ export function PushPermissionBanner({ token }: PushPermissionBannerProps) {
   if (!show) return null;
 
   return (
-    <div className="mx-8 mt-4 flex items-center gap-4 p-4 bg-teal-50 border border-teal-200 rounded-2xl shadow-sm animate-fade-in">
-      <div className="w-10 h-10 rounded-xl bg-teal-600 flex items-center justify-center shrink-0">
+    <div className="mx-8 mt-4 flex items-center gap-4 p-4 bg-cyan-50 border border-cyan-200 rounded-2xl shadow-sm animate-fade-in">
+      <div className="w-10 h-10 rounded-xl bg-cyan-600 flex items-center justify-center shrink-0">
         <Bell className="w-5 h-5 text-white" />
       </div>
       <div className="flex-1 min-w-0">
@@ -85,7 +85,7 @@ export function PushPermissionBanner({ token }: PushPermissionBannerProps) {
         <button
           onClick={handleEnable}
           disabled={registering}
-          className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold rounded-xl transition-colors disabled:opacity-60"
+          className="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-bold rounded-xl transition-colors disabled:opacity-60"
         >
           {registering ? "Açılıyor..." : "Aç"}
         </button>

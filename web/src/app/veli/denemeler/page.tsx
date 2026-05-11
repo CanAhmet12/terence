@@ -75,7 +75,7 @@ export default function VeliDenemelerPage() {
                 <select
                   value={childId}
                   onChange={(e) => setChildId(e.target.value ? Number(e.target.value) : "")}
-                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-800 shadow-sm outline-none focus:ring-2 focus:ring-teal-500"
+                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-800 shadow-sm outline-none focus:ring-2 focus:ring-cyan-500"
                 >
                   {children.length === 0 ? (
                     <option value="">Bağlı öğrenci yok</option>
@@ -101,12 +101,12 @@ export default function VeliDenemelerPage() {
 
             <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
               <div className="flex items-center gap-2 border-b border-slate-100 bg-slate-50/80 px-5 py-3">
-                <ClipboardList className="h-4 w-4 text-teal-600" />
+                <ClipboardList className="h-4 w-4 text-cyan-600" />
                 <span className="text-sm font-bold text-slate-800">Tamamlanan denemeler</span>
               </div>
               {loading ? (
                 <div className="flex justify-center py-16">
-                  <Loader2 className="h-8 w-8 animate-spin text-teal-500" />
+                  <Loader2 className="h-8 w-8 animate-spin text-cyan-500" />
                 </div>
               ) : exams.length === 0 ? (
                 <p className="px-5 py-12 text-center text-sm text-slate-500">Henüz kayıtlı deneme yok.</p>
@@ -135,7 +135,7 @@ export default function VeliDenemelerPage() {
                             <td className="px-4 py-3 text-slate-500 hidden sm:table-cell whitespace-nowrap">
                               {fmt(e.finished_at)}
                             </td>
-                            <td className="px-4 py-3 text-right font-black text-teal-700">
+                            <td className="px-4 py-3 text-right font-black text-cyan-700">
                               {Number(e.net_score ?? 0).toFixed(1)}
                             </td>
                             <td className="px-4 py-3 text-right text-xs text-slate-600 hidden md:table-cell whitespace-nowrap">

@@ -34,7 +34,7 @@ interface NotifConfig {
 
 function getNotifConfig(type: string): NotifConfig {
   if (["study", "calisma", "daily_reminder", "plan"].includes(type)) {
-    return { icon: Clock, bg: "bg-teal-50", border: "border-teal-100", iconColor: "text-teal-600", label: "Çalışma", category: "study" };
+    return { icon: Clock, bg: "bg-cyan-50", border: "border-cyan-100", iconColor: "text-cyan-600", label: "Çalışma", category: "study" };
   }
   if (["exam", "deneme", "sinav"].includes(type)) {
     return { icon: FileCheck, bg: "bg-amber-50", border: "border-amber-100", iconColor: "text-amber-600", label: "Deneme", category: "exam" };
@@ -176,8 +176,8 @@ export function NotificationsPageContent() {
         <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 flex items-center gap-3">
-              <div className="relative w-12 h-12 rounded-xl bg-teal-50 border border-teal-100 flex items-center justify-center shrink-0">
-                <Bell className="w-6 h-6 text-teal-600" />
+              <div className="relative w-12 h-12 rounded-xl bg-cyan-50 border border-cyan-100 flex items-center justify-center shrink-0">
+                <Bell className="w-6 h-6 text-cyan-600" />
                 {unreadCount > 0 && (
                   <span className="absolute -top-1.5 -right-1.5 min-w-[20px] h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center px-1">
                     {unreadCount > 99 ? "99+" : unreadCount}
@@ -237,8 +237,8 @@ export function NotificationsPageContent() {
                 onClick={() => setActiveTab(tab.key)}
                 className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
                   activeTab === tab.key
-                    ? "bg-teal-600 text-white shadow-sm"
-                    : "bg-white text-slate-600 border border-slate-200 hover:border-teal-300 hover:text-teal-600"
+                    ? "bg-cyan-600 text-white shadow-sm"
+                    : "bg-white text-slate-600 border border-slate-200 hover:border-cyan-300 hover:text-cyan-600"
                 }`}
               >
                 <TabIcon className="w-3.5 h-3.5" />
@@ -322,7 +322,7 @@ export function NotificationsPageContent() {
                             ? "border-l-red-400 border-red-200/60"
                             : config.category === "badge"
                               ? "border-l-purple-400 border-purple-200/60"
-                              : "border-l-teal-400 border-teal-200/60"
+                              : "border-l-cyan-400 border-cyan-200/60"
                         }`
                   }`}
                 >
@@ -335,7 +335,7 @@ export function NotificationsPageContent() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
                         <span className={`text-xs font-bold uppercase tracking-wide ${config.iconColor}`}>{config.label}</span>
-                        {!n.is_read && <span className="w-2 h-2 rounded-full bg-teal-500 shrink-0" />}
+                        {!n.is_read && <span className="w-2 h-2 rounded-full bg-cyan-500 shrink-0" />}
                       </div>
                       <p className={`font-bold text-slate-900 ${n.is_read ? "font-semibold text-slate-700" : ""}`}>{n.title}</p>
                       <p className="text-slate-600 mt-0.5 leading-relaxed text-sm">{n.body}</p>
@@ -349,11 +349,11 @@ export function NotificationsPageContent() {
                             e.stopPropagation();
                             handleMarkRead(n);
                           }}
-                          className="w-8 h-8 rounded-xl bg-teal-50 hover:bg-teal-100 border border-teal-100 flex items-center justify-center transition-colors"
+                          className="w-8 h-8 rounded-xl bg-cyan-50 hover:bg-cyan-100 border border-cyan-100 flex items-center justify-center transition-colors"
                           title="Okundu"
                           aria-label="Okundu işaretle"
                         >
-                          <Check className="w-3.5 h-3.5 text-teal-600" />
+                          <Check className="w-3.5 h-3.5 text-cyan-600" />
                         </button>
                       )}
                       <button

@@ -12,12 +12,12 @@ interface GradientThumbnailProps {
 
 const GRADIENTS = [
   "from-indigo-500 via-purple-500 to-pink-500",
-  "from-teal-500 via-emerald-500 to-green-500",
+  "from-cyan-500 via-cyan-500 to-cyan-500",
   "from-rose-500 via-pink-500 to-fuchsia-500",
   "from-amber-500 via-orange-500 to-red-500",
   "from-sky-500 via-blue-500 to-indigo-500",
   "from-violet-500 via-purple-500 to-indigo-500",
-  "from-cyan-500 via-teal-500 to-emerald-500",
+  "from-cyan-500 via-cyan-500 to-cyan-500",
   "from-orange-500 via-red-500 to-rose-500",
 ];
 

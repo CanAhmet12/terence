@@ -11,7 +11,7 @@ const testimonials = [
     badge: "TYT 2024 — +16 Net Artışı",
     avatar: "EK",
     rating: 5,
-    color: "from-teal-400 to-emerald-500",
+    color: "from-cyan-400 to-cyan-500",
   },
   {
     quote: "Veli paneli mükemmel. Çocuğumun çalışma süresini, deneme sonuçlarını ve zayıf konuları görebiliyorum. Artık destek verirken nereye odaklanacağımı biliyorum.",
@@ -62,12 +62,12 @@ export function TestimonialsSection() {
       <div className="absolute inset-0 pattern-dots opacity-[0.06]" />
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-3xl mx-auto mb-14">
-          <p className="text-teal-600 font-semibold text-sm uppercase tracking-wider mb-4">
+          <p className="text-cyan-600 font-semibold text-sm uppercase tracking-wider mb-4">
             Öğrenci & Veli Yorumları
           </p>
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-slate-900 leading-tight">
             Binlerce Kişi{" "}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-600 to-teal-500">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-600 to-cyan-500">
               Hedefine Ulaştı
             </span>
           </h2>
@@ -80,7 +80,7 @@ export function TestimonialsSection() {
           onMouseLeave={() => setIsPaused(false)}
         >
           <div className="relative p-5 sm:p-8 md:p-12 rounded-2xl sm:rounded-3xl bg-slate-50/80 border border-slate-200/80 shadow-lg transition-all duration-300 min-w-0">
-            <Quote className="absolute top-4 right-4 sm:top-6 sm:right-6 w-8 h-8 sm:w-12 sm:h-12 text-teal-100" />
+            <Quote className="absolute top-4 right-4 sm:top-6 sm:right-6 w-8 h-8 sm:w-12 sm:h-12 text-cyan-100" />
 
             {/* Yıldız rating */}
             <div className="flex items-center gap-1 mb-5">
@@ -104,7 +104,7 @@ export function TestimonialsSection() {
                 </div>
               </div>
               {/* Achievement badge */}
-              <span className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-teal-50 border border-teal-100 text-teal-700 text-[10px] sm:text-xs font-bold max-w-full text-center sm:text-left">
+              <span className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-cyan-50 border border-cyan-100 text-cyan-700 text-[10px] sm:text-xs font-bold max-w-full text-center sm:text-left">
                 🏆 {t.badge}
               </span>
             </div>
@@ -117,7 +117,7 @@ export function TestimonialsSection() {
                     key={i}
                     onClick={() => setActive(i)}
                     className={`rounded-full transition-all duration-300 ${
-                      i === active ? "w-6 h-2.5 bg-teal-600" : "w-2.5 h-2.5 bg-slate-200 hover:bg-slate-300"
+                      i === active ? "w-6 h-2.5 bg-cyan-600" : "w-2.5 h-2.5 bg-slate-200 hover:bg-slate-300"
                     }`}
                     aria-label={`${i + 1}. yorum`}
                   />
@@ -150,7 +150,7 @@ export function TestimonialsSection() {
                 onClick={() => setActive(i)}
                 className={`p-3 rounded-2xl border text-left transition-all duration-200 ${
                   i === active
-                    ? "border-teal-300 bg-teal-50 shadow-sm"
+                    ? "border-cyan-300 bg-cyan-50 shadow-sm"
                     : "border-slate-200 bg-white hover:border-slate-300"
                 }`}
               >

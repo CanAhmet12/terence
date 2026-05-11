@@ -223,7 +223,7 @@ export default function AICoachInterface() {
                   </button>
                   <button
                     onClick={() => handleQuickAction('review')}
-                    className="px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm bg-green-100 text-green-600 rounded-full hover:bg-green-200 transition-colors"
+                    className="px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm bg-cyan-100 text-cyan-600 rounded-full hover:bg-cyan-200 transition-colors"
                   >
                     📅 Bugün Ne Çalışayım?
                   </button>

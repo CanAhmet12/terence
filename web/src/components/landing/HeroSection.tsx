@@ -130,8 +130,8 @@ export function HeroSection() {
             </div>
 
             <p className="mt-5 text-sm text-slate-500 flex items-center gap-1.5 justify-center lg:justify-start">
-              <span className="text-green-500">✓</span> Kredi kartı gerekmez &nbsp;·&nbsp;
-              <span className="text-green-500">✓</span> İstediğin zaman iptal et
+              <span className="text-cyan-500">✓</span> Kredi kartı gerekmez &nbsp;·&nbsp;
+              <span className="text-cyan-500">✓</span> İstediğin zaman iptal et
             </p>
 
             {/* Sosyal kanıt mini bar */}
@@ -163,7 +163,7 @@ export function HeroSection() {
               <div className="bg-slate-100 px-4 py-3 flex items-center gap-2 border-b border-slate-200">
                 <div className="w-3 h-3 rounded-full bg-red-400" />
                 <div className="w-3 h-3 rounded-full bg-amber-400" />
-                <div className="w-3 h-3 rounded-full bg-green-400" />
+                <div className="w-3 h-3 rounded-full bg-cyan-400" />
                 <div className="flex-1 mx-4 bg-white rounded-lg px-3 py-1.5 text-xs text-slate-400 font-medium">
                   terenceegitim.com/ogrenci
                 </div>
@@ -176,8 +176,8 @@ export function HeroSection() {
                     <p className="text-[10px] text-slate-400 font-medium">Bugün Net</p>
                     <p className="text-xl font-extrabold text-cyan-600">+6</p>
                     <div className="flex items-center gap-1 mt-1">
-                      <TrendingUp className="w-3 h-3 text-green-500" />
-                      <span className="text-[10px] text-green-600 font-semibold">Hedefin %85'i</span>
+                      <TrendingUp className="w-3 h-3 text-cyan-500" />
+                      <span className="text-[10px] text-cyan-600 font-semibold">Hedefin %85'i</span>
                     </div>
                   </div>
                   <div className="bg-white rounded-xl p-3 border border-slate-100 shadow-sm">
@@ -198,11 +198,11 @@ export function HeroSection() {
                 <div className="bg-white rounded-xl p-3 border border-slate-100 shadow-sm">
                   <div className="flex items-center justify-between mb-2">
                     <p className="text-xs font-bold text-slate-800">Günlük Plan</p>
-                    {/* OLD: text-teal-600 bg-teal-50 */}
+                    {/* OLD: text-cyan-600 bg-cyan-50 */}
                     <span className="text-[10px] font-semibold text-cyan-600 bg-cyan-50 px-2 py-0.5 rounded-full">2/4 tamamlandı</span>
                   </div>
                   <div className="w-full bg-slate-100 rounded-full h-1.5 mb-2">
-                    {/* OLD: bg-teal-500 */}
+                    {/* OLD: bg-cyan-500 */}
                     <div className="bg-cyan-500 h-1.5 rounded-full w-1/2" />
                   </div>
                   <div className="space-y-1.5">
@@ -212,7 +212,7 @@ export function HeroSection() {
                       { text: "TYT Deneme (40 soru)", done: false },
                     ].map((task, i) => (
                       <div key={i} className="flex items-center gap-2">
-                        {/* OLD: bg-teal-500 */}
+                        {/* OLD: bg-cyan-500 */}
                         <div className={`w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold ${task.done ? 'bg-cyan-500 text-white' : 'bg-slate-200 text-slate-500'}`}>
                           {task.done ? '✓' : i + 1}
                         </div>
@@ -227,7 +227,7 @@ export function HeroSection() {
                   <div className="flex items-end gap-1.5 h-12">
                     {[4, 6, 3, 7, 8, 6, 5].map((h, i) => (
                       <div key={i} className="flex-1 flex flex-col items-center gap-0.5">
-                        {/* OLD: bg-teal-500 */}
+                        {/* OLD: bg-cyan-500 */}
                         <div className="w-full rounded-sm bg-cyan-500" style={{ height: `${(h / 8) * 100}%` }} />
                       </div>
                     ))}

@@ -115,7 +115,7 @@ export default function VeliProfilPage() {
   const Feedback = () => (
     <>
       {saveState === "success" && (
-        <div className="flex items-center gap-3 p-4 bg-teal-50 border border-teal-100 rounded-xl text-teal-700 text-sm font-medium mb-6">
+        <div className="flex items-center gap-3 p-4 bg-cyan-50 border border-cyan-100 rounded-xl text-cyan-700 text-sm font-medium mb-6">
           <CheckCircle className="w-5 h-5 shrink-0" /> Değişiklikler başarıyla kaydedildi.
         </div>
       )}

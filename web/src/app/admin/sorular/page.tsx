@@ -7,7 +7,7 @@ import { api, Question, type PaginatedResponse } from "@/lib/api";
 import { ArrowLeft, Search, Plus, RefreshCw, Trash2, AlertCircle, Loader2, BookOpen } from "lucide-react";
 
 const DIFFICULTY_LABELS: Record<string, { label: string; cls: string }> = {
-  easy: { label: "Kolay", cls: "bg-green-100 text-green-700" },
+  easy: { label: "Kolay", cls: "bg-cyan-100 text-cyan-700" },
   medium: { label: "Orta", cls: "bg-amber-100 text-amber-700" },
   hard: { label: "Zor", cls: "bg-red-100 text-red-700" },
 };
@@ -82,7 +82,7 @@ export default function AdminSorularPage() {
 
   return (
     <div className="w-full min-w-0 max-w-none px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8 xl:px-10 xl:py-10 overflow-x-hidden">
-      <Link href="/admin" className="inline-flex items-center gap-2 text-slate-600 hover:text-teal-600 mb-8 font-medium transition-colors">
+      <Link href="/admin" className="inline-flex items-center gap-2 text-slate-600 hover:text-cyan-600 mb-8 font-medium transition-colors">
         <ArrowLeft className="w-4 h-4" />
         Panele dön
       </Link>
@@ -96,7 +96,7 @@ export default function AdminSorularPage() {
         </div>
         <Link
           href="/admin/sorular/yeni"
-          className="inline-flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-xl font-medium hover:bg-teal-700 transition-colors"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-cyan-600 text-white rounded-xl font-medium hover:bg-cyan-700 transition-colors"
         >
           <Plus className="w-5 h-5" />
           Soru Ekle
@@ -112,13 +112,13 @@ export default function AdminSorularPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Kazanım kodu veya soru ara..."
-            className="w-full pl-11 pr-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none"
+            className="w-full pl-11 pr-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-cyan-500 outline-none"
           />
         </div>
         <select
           value={difficulty}
           onChange={(e) => setDifficulty(e.target.value)}
-          className="px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none"
+          className="px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-cyan-500 outline-none"
         >
           <option value="">Tüm Zorluklar</option>
           <option value="easy">Kolay</option>
@@ -178,7 +178,7 @@ export default function AdminSorularPage() {
                       <tr key={q.id} className="hover:bg-slate-50 transition-colors">
                         <td className="p-4">
                           {q.kazanim_code ? (
-                            <span className="font-mono text-xs font-bold text-teal-600 bg-teal-50 px-2 py-1 rounded-lg">
+                            <span className="font-mono text-xs font-bold text-cyan-600 bg-cyan-50 px-2 py-1 rounded-lg">
                               {q.kazanim_code}
                             </span>
                           ) : (

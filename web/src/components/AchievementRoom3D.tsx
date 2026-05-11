@@ -112,7 +112,7 @@ function Trophy3D({
                 {achievement.tier.toUpperCase()}
               </span>
               {achievement.earned ? (
-                <span className="text-green-400">✓ Kazanıldı</span>
+                <span className="text-cyan-400">✓ Kazanıldı</span>
               ) : achievement.progress !== undefined ? (
                 <span className="text-blue-400">%{achievement.progress}</span>
               ) : (

@@ -54,9 +54,9 @@ const features = [
     preview: {
       title: "Performans Raporu",
       bars: [
-        { label: "Matematik", val: 78, color: "bg-cyan-500" }, // OLD: bg-teal-500
+        { label: "Matematik", val: 78, color: "bg-cyan-500" }, // OLD: bg-cyan-500
         { label: "Türkçe", val: 65, color: "bg-blue-500" },
-        { label: "Fen Bilimleri", val: 82, color: "bg-emerald-500" },
+        { label: "Fen Bilimleri", val: 82, color: "bg-cyan-500" },
         { label: "Sosyal Bilgiler", val: 55, color: "bg-amber-500" },
       ],
     },
@@ -111,8 +111,8 @@ const colorMap: Record<string, { bg: string; text: string; border: string; activ
   blue: { bg: "bg-blue-50", text: "text-blue-600", border: "border-blue-200", activeBg: "bg-blue-600" },
   amber: { bg: "bg-amber-50", text: "text-amber-600", border: "border-amber-200", activeBg: "bg-amber-600" },
   indigo: { bg: "bg-indigo-50", text: "text-indigo-600", border: "border-indigo-200", activeBg: "bg-indigo-600" },
-  teal: { bg: "bg-teal-50", text: "text-teal-600", border: "border-teal-200", activeBg: "bg-teal-600" }, // Fallback kept
-  emerald: { bg: "bg-emerald-50", text: "text-emerald-600", border: "border-emerald-200", activeBg: "bg-emerald-600" }, // Fallback kept
+  teal: { bg: "bg-cyan-50", text: "text-cyan-600", border: "border-cyan-200", activeBg: "bg-cyan-600" }, // Fallback kept
+  emerald: { bg: "bg-cyan-50", text: "text-cyan-600", border: "border-cyan-200", activeBg: "bg-cyan-600" }, // Fallback kept
 };
 
 export function FeaturesSection() {
@@ -136,7 +136,7 @@ export function FeaturesSection() {
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-3xl mx-auto mb-16">
-          {/* OLD: text-teal-600 */}
+          {/* OLD: text-cyan-600 */}
           <p className="text-cyan-600 font-semibold text-sm uppercase tracking-widest mb-4">Özellikler</p>
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-slate-900 leading-tight">
             Hedefine Ulaşmak İçin{" "}
@@ -190,7 +190,7 @@ export function FeaturesSection() {
               <div className="bg-slate-100 px-4 py-3 flex items-center gap-2 border-b border-slate-200">
                 <div className="w-3 h-3 rounded-full bg-red-400" />
                 <div className="w-3 h-3 rounded-full bg-amber-400" />
-                <div className="w-3 h-3 rounded-full bg-green-400" />
+                <div className="w-3 h-3 rounded-full bg-cyan-400" />
                 <div className="flex-1 mx-4 bg-white rounded-lg px-3 py-1.5 text-xs text-slate-400">
                   terenceegitim.com/{feat.title.toLowerCase().replace(/ /g, "-")}
                 </div>
@@ -224,14 +224,14 @@ export function FeaturesSection() {
                         <div className={`w-7 h-7 rounded-xl flex items-center justify-center shrink-0 text-xs font-bold ${msg.role === "bot" ? "bg-gradient-to-br from-slate-700 to-cyan-600 text-white" : "bg-slate-200 text-slate-600"}`}>
                           {msg.role === "bot" ? "AI" : "S"}
                         </div>
-                        {/* OLD: bg-teal-600 */}
+                        {/* OLD: bg-cyan-600 */}
                         <div className={`max-w-[80%] px-3.5 py-2.5 rounded-2xl text-xs leading-relaxed ${msg.role === "bot" ? "bg-white border border-slate-100 text-slate-700" : "bg-cyan-600 text-white"}`}>
                           {msg.text}
                         </div>
                       </div>
                     ))}
                     <div className="flex items-center gap-1 pl-9">
-                      {/* OLD: bg-teal-400 */}
+                      {/* OLD: bg-cyan-400 */}
                       {[0,1,2].map(i => <div key={i} className="w-2 h-2 rounded-full bg-cyan-400 animate-bounce" style={{ animationDelay: `${i * 150}ms` }} />)}
                     </div>
                   </div>
@@ -250,7 +250,7 @@ export function FeaturesSection() {
                         </div>
                       </div>
                     ))}
-                    {/* OLD: bg-teal-50, text-teal-600, text-teal-700 */}
+                    {/* OLD: bg-cyan-50, text-cyan-600, text-cyan-700 */}
                     <div className="flex items-center gap-2 mt-4 p-3 bg-cyan-50 rounded-xl">
                       <TrendingUp className="w-4 h-4 text-cyan-600" />
                       <span className="text-xs font-semibold text-cyan-700">Ortalama başarı: %70 — Türkiye top %15</span>

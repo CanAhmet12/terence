@@ -146,7 +146,7 @@ export default function OgretmenProfilPage() {
   const Feedback = () => (
     <>
       {saveState === "success" && (
-        <div className="flex items-center gap-2.5 p-4 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-700 text-sm font-medium mb-5">
+        <div className="flex items-center gap-2.5 p-4 bg-cyan-50 border border-cyan-200 rounded-xl text-cyan-700 text-sm font-medium mb-5">
           <CheckCircle className="w-4 h-4 shrink-0" /> Değişiklikler kaydedildi.
         </div>
       )}
@@ -220,7 +220,7 @@ export default function OgretmenProfilPage() {
                 {(user.teacher_status) && (
                   <div className="flex justify-between py-2.5">
                     <span className="text-xs text-slate-500">Durum</span>
-                    <span className={`text-xs font-bold capitalize ${user.teacher_status === "approved" ? "text-emerald-600" : "text-amber-600"}`}>
+                    <span className={`text-xs font-bold capitalize ${user.teacher_status === "approved" ? "text-cyan-600" : "text-amber-600"}`}>
                       {user.teacher_status === "approved" ? "Onaylı" : user.teacher_status}
                     </span>
                   </div>
@@ -394,7 +394,7 @@ export default function OgretmenProfilPage() {
                       </div>
                       <div className="flex justify-between">
                         <span className="text-slate-500">Hesap Durumu</span>
-                        <span className="font-semibold text-emerald-600">Aktif</span>
+                        <span className="font-semibold text-cyan-600">Aktif</span>
                       </div>
                     </div>
                   </div>

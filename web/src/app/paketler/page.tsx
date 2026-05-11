@@ -145,7 +145,7 @@ const COLOR_MAP: Record<string, { ring: string; bg: string; btn: string; badge: 
   slate: {
     ring: "border-slate-200 hover:border-slate-300",
     bg: "bg-white",
-    btn: "border-2 border-slate-200 hover:border-teal-400 text-slate-700 hover:text-teal-600 hover:bg-teal-50/50",
+    btn: "border-2 border-slate-200 hover:border-cyan-400 text-slate-700 hover:text-cyan-600 hover:bg-cyan-50/50",
     badge: "bg-slate-100 text-slate-600",
     icon: "bg-slate-100 text-slate-600",
   },
@@ -157,11 +157,11 @@ const COLOR_MAP: Record<string, { ring: string; bg: string; btn: string; badge: 
     icon: "bg-amber-100 text-amber-600",
   },
   teal: {
-    ring: "border-teal-500 ring-2 ring-teal-500/20 shadow-2xl shadow-teal-500/15",
+    ring: "border-cyan-500 ring-2 ring-cyan-500/20 shadow-2xl shadow-cyan-500/15",
     bg: "bg-white",
-    btn: "bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-700 hover:to-teal-600 text-white shadow-lg shadow-teal-500/25",
-    badge: "bg-teal-500 text-white",
-    icon: "bg-teal-100 text-teal-600",
+    btn: "bg-gradient-to-r from-cyan-600 to-cyan-500 hover:from-cyan-700 hover:to-cyan-600 text-white shadow-lg shadow-cyan-500/25",
+    badge: "bg-cyan-500 text-white",
+    icon: "bg-cyan-100 text-cyan-600",
   },
   purple: {
     ring: "border-purple-200 hover:border-purple-300",
@@ -270,7 +270,7 @@ function PaymentModal({
           {!couponApplied ? (
             <div className="space-y-2">
               <label className="text-sm font-semibold text-slate-700 flex items-center gap-2">
-                <Tag className="w-4 h-4 text-teal-500" />
+                <Tag className="w-4 h-4 text-cyan-500" />
                 Promosyon / İndirim Kodu
               </label>
               <div className="flex gap-2">
@@ -279,13 +279,13 @@ function PaymentModal({
                   value={coupon}
                   onChange={(e) => { setCoupon(e.target.value.toUpperCase()); setCouponError(null); }}
                   placeholder="Kodunuzu girin (isteğe bağlı)"
-                  className="flex-1 px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none transition-all"
+                  className="flex-1 px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 outline-none transition-all"
                   onKeyDown={(e) => e.key === "Enter" && handleApplyCoupon()}
                 />
                 <button
                   onClick={handleApplyCoupon}
                   disabled={!coupon.trim() || couponLoading}
-                  className="px-4 py-2.5 bg-teal-600 hover:bg-teal-700 disabled:opacity-50 text-white text-sm font-bold rounded-xl transition-colors"
+                  className="px-4 py-2.5 bg-cyan-600 hover:bg-cyan-700 disabled:opacity-50 text-white text-sm font-bold rounded-xl transition-colors"
                 >
                   {couponLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Uygula"}
                 </button>
@@ -295,8 +295,8 @@ function PaymentModal({
               )}
             </div>
           ) : (
-            <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-xl">
-              <div className="flex items-center gap-2 text-green-700">
+            <div className="flex items-center justify-between p-3 bg-cyan-50 border border-cyan-200 rounded-xl">
+              <div className="flex items-center gap-2 text-cyan-700">
                 <CheckCircle className="w-4 h-4" />
                 <span className="text-sm font-semibold">Kupon uygulandı — {discount?.amount}₺ indirim!</span>
               </div>
@@ -309,7 +309,7 @@ function PaymentModal({
           {/* Ödeme iframe */}
           {initiating ? (
             <div className="text-center py-12">
-              <Loader2 className="w-10 h-10 text-teal-600 animate-spin mx-auto mb-4" />
+              <Loader2 className="w-10 h-10 text-cyan-600 animate-spin mx-auto mb-4" />
               <p className="font-semibold text-slate-700">Ödeme sayfası hazırlanıyor...</p>
             </div>
           ) : iframeToken ? (
@@ -323,7 +323,7 @@ function PaymentModal({
                 />
               </div>
               <div className="flex items-center gap-2 text-xs text-slate-500 justify-center">
-                <Shield className="w-4 h-4 text-teal-500" />
+                <Shield className="w-4 h-4 text-cyan-500" />
                 256-bit SSL ile şifrelenmiş güvenli ödeme
               </div>
             </div>
@@ -384,12 +384,12 @@ export default function PaketlerPage() {
       <>
         <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
           <div className="pt-16 sm:pt-20 pb-10 sm:pb-14 text-center px-3 sm:px-4 min-w-0">
-            <p className="inline-block text-teal-600 font-bold text-xs sm:text-sm uppercase tracking-widest mb-4 px-3 py-1 bg-teal-50 rounded-full">
+            <p className="inline-block text-cyan-600 font-bold text-xs sm:text-sm uppercase tracking-widest mb-4 px-3 py-1 bg-cyan-50 rounded-full">
               Öğretmen hesabı
             </p>
             <h1 className="text-2xl min-[400px]:text-3xl sm:text-4xl font-extrabold text-slate-900 mb-4 text-balance px-1">
               Öğretmenler için{" "}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-600 to-teal-400">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-600 to-cyan-400">
                 abonelik ücreti yok
               </span>
             </h1>
@@ -401,14 +401,14 @@ export default function PaketlerPage() {
             <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
               <Link
                 href="/ogretmen"
-                className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-teal-600 to-teal-500 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-teal-500/25 transition hover:from-teal-700 hover:to-teal-600"
+                className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-cyan-600 to-cyan-500 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-cyan-500/25 transition hover:from-cyan-700 hover:to-cyan-600"
               >
                 Öğretmen paneline dön
                 <ArrowRight className="w-4 h-4" />
               </Link>
               <Link
                 href="/iletisim"
-                className="inline-flex items-center gap-2 rounded-xl border-2 border-slate-200 bg-white px-6 py-3 text-sm font-semibold text-slate-700 transition hover:border-teal-300 hover:text-teal-800"
+                className="inline-flex items-center gap-2 rounded-xl border-2 border-slate-200 bg-white px-6 py-3 text-sm font-semibold text-slate-700 transition hover:border-cyan-300 hover:text-cyan-800"
               >
                 Soru sor
               </Link>
@@ -416,9 +416,9 @@ export default function PaketlerPage() {
           </div>
 
           <div className="max-w-xl mx-auto px-4 sm:px-6 pb-20">
-            <div className="rounded-3xl border-2 border-teal-100 bg-white p-6 sm:p-8 shadow-sm">
+            <div className="rounded-3xl border-2 border-cyan-100 bg-white p-6 sm:p-8 shadow-sm">
               <div className="flex items-center gap-3 mb-6">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-teal-100 text-teal-700">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-cyan-100 text-cyan-700">
                   <GraduationCap className="w-6 h-6" />
                 </div>
                 <div className="text-left">
@@ -429,7 +429,7 @@ export default function PaketlerPage() {
               <ul className="space-y-3">
                 {teacherFeatures.map((text) => (
                   <li key={text} className="flex items-start gap-2.5 text-sm text-slate-700">
-                    <CheckCircle className="w-4 h-4 text-teal-500 shrink-0 mt-0.5" strokeWidth={2.5} />
+                    <CheckCircle className="w-4 h-4 text-cyan-500 shrink-0 mt-0.5" strokeWidth={2.5} />
                     {text}
                   </li>
                 ))}
@@ -449,12 +449,12 @@ export default function PaketlerPage() {
       <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
         {/* Hero */}
         <div className="pt-16 sm:pt-20 pb-12 sm:pb-16 text-center px-3 sm:px-4 min-w-0">
-          <p className="inline-block text-teal-600 font-bold text-xs sm:text-sm uppercase tracking-widest mb-4 px-3 py-1 bg-teal-50 rounded-full">
+          <p className="inline-block text-cyan-600 font-bold text-xs sm:text-sm uppercase tracking-widest mb-4 px-3 py-1 bg-cyan-50 rounded-full">
             Paketler & Fiyatlandırma
           </p>
           <h1 className="text-2xl min-[400px]:text-3xl sm:text-5xl font-extrabold text-slate-900 mb-5 text-balance px-1">
             Hedefine Uygun{" "}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-600 to-teal-400">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-600 to-cyan-400">
               Paketi Seç
             </span>
           </h1>
@@ -474,7 +474,7 @@ export default function PaketlerPage() {
               >
                 {b === "monthly" ? "Aylık" : "Yıllık"}
                 {b === "yearly" && (
-                  <span className="text-xs font-bold text-teal-600 bg-teal-50 px-2 py-0.5 rounded-full">
+                  <span className="text-xs font-bold text-cyan-600 bg-cyan-50 px-2 py-0.5 rounded-full">
                     %20 İndirim
                   </span>
                 )}
@@ -530,7 +530,7 @@ export default function PaketlerPage() {
                       </div>
                     )}
                     {billing === "yearly" && plan.price > 0 && (
-                      <p className="text-xs text-teal-600 font-semibold mt-1">
+                      <p className="text-xs text-cyan-600 font-semibold mt-1">
                         {Math.round(price / 12)}₺/ay — {plan.price * 12 - price}₺ tasarruf
                       </p>
                     )}
@@ -540,7 +540,7 @@ export default function PaketlerPage() {
                   <ul className="space-y-3 mb-7">
                     {plan.features.map((f, i) => (
                       <li key={i} className="flex items-start gap-2.5">
-                        <CheckCircle className="w-4 h-4 text-teal-500 shrink-0 mt-0.5" strokeWidth={2.5} />
+                        <CheckCircle className="w-4 h-4 text-cyan-500 shrink-0 mt-0.5" strokeWidth={2.5} />
                         <span className={`text-sm ${f.bold ? "font-semibold text-slate-900" : "text-slate-600"}`}>
                           {f.text}
                         </span>
@@ -550,7 +550,7 @@ export default function PaketlerPage() {
 
                   {/* CTA butonu */}
                   {isCurrentPlan ? (
-                    <div className="flex items-center justify-center gap-2 w-full py-3.5 rounded-xl bg-teal-50 border-2 border-teal-200 text-teal-700 font-bold text-sm">
+                    <div className="flex items-center justify-center gap-2 w-full py-3.5 rounded-xl bg-cyan-50 border-2 border-cyan-200 text-cyan-700 font-bold text-sm">
                       <CheckCircle className="w-4 h-4" />
                       Mevcut Paket
                     </div>
@@ -580,8 +580,8 @@ export default function PaketlerPage() {
               { icon: Star, title: "7 Gün Para İadesi", desc: "Memnun kalmazsan ilk 7 gün içinde tam para iadesi alabilirsin." },
             ].map(({ icon: Icon, title, desc }) => (
               <div key={title} className="flex items-start gap-4 p-5 bg-white rounded-2xl border border-slate-200 shadow-sm">
-                <div className="w-10 h-10 rounded-xl bg-teal-50 flex items-center justify-center shrink-0">
-                  <Icon className="w-5 h-5 text-teal-600" />
+                <div className="w-10 h-10 rounded-xl bg-cyan-50 flex items-center justify-center shrink-0">
+                  <Icon className="w-5 h-5 text-cyan-600" />
                 </div>
                 <div>
                   <h4 className="font-bold text-slate-900 text-sm">{title}</h4>
@@ -595,7 +595,7 @@ export default function PaketlerPage() {
           <div className="mt-10 text-center">
             <p className="text-sm text-slate-500">
               Hangi paketi seçeceğini bilmiyor musun?{" "}
-              <Link href="/iletisim" className="text-teal-600 font-semibold hover:underline">
+              <Link href="/iletisim" className="text-cyan-600 font-semibold hover:underline">
                 Bize ulaş →
               </Link>
             </p>
@@ -615,13 +615,13 @@ export default function PaketlerPage() {
                     {[
                       { name: "Free", color: "bg-slate-800" },
                       { name: "Bronze", color: "bg-amber-700" },
-                      { name: "Plus", color: "bg-teal-700" },
-                      { name: "Pro", color: "bg-teal-900 rounded-tr-2xl" },
+                      { name: "Plus", color: "bg-cyan-700" },
+                      { name: "Pro", color: "bg-cyan-900 rounded-tr-2xl" },
                     ].map((p) => (
                       <th key={p.name} className={`${p.color} text-white text-center px-4 py-4 font-bold text-sm`}>
                         {p.name}
                         {p.name === "Plus" && (
-                          <span className="block text-[10px] font-semibold text-teal-200 mt-0.5">En Popüler</span>
+                          <span className="block text-[10px] font-semibold text-cyan-200 mt-0.5">En Popüler</span>
                         )}
                       </th>
                     ))}
@@ -644,9 +644,9 @@ export default function PaketlerPage() {
                     <tr key={row.feature} className={i % 2 === 0 ? "bg-white" : "bg-slate-50/60"}>
                       <td className="px-6 py-3.5 text-sm font-medium text-slate-700">{row.feature}</td>
                       {[row.free, row.bronze, row.plus, row.pro].map((val, ci) => (
-                        <td key={ci} className={`px-4 py-3.5 text-center text-sm ${ci === 2 ? "bg-teal-50/40" : ""}`}>
+                        <td key={ci} className={`px-4 py-3.5 text-center text-sm ${ci === 2 ? "bg-cyan-50/40" : ""}`}>
                           {val === "✓" ? (
-                            <span className="text-teal-600 font-bold text-base">✓</span>
+                            <span className="text-cyan-600 font-bold text-base">✓</span>
                           ) : val === "✗" ? (
                             <span className="text-slate-300 font-bold text-base">✗</span>
                           ) : (

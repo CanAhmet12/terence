@@ -91,7 +91,7 @@ export function PlanWeekSection({
                 <p
                   className={`text-lg font-black ${
                     pct === 100
-                      ? "text-emerald-600"
+                      ? "text-cyan-600"
                       : pct >= 50
                         ? "text-indigo-600"
                         : "text-slate-400"
@@ -106,7 +106,7 @@ export function PlanWeekSection({
               <div
                 className={`h-full rounded-full transition-all duration-500 ${
                   pct === 100
-                    ? "bg-emerald-500"
+                    ? "bg-cyan-500"
                     : pct >= 50
                       ? "bg-gradient-to-r from-indigo-500 to-violet-500"
                       : "bg-amber-400"
@@ -122,7 +122,7 @@ export function PlanWeekSection({
                     key={t.id}
                     className={`rounded-lg px-2.5 py-1 text-[11px] font-medium ${
                       t.is_completed
-                        ? "bg-emerald-50 text-emerald-600 line-through"
+                        ? "bg-cyan-50 text-cyan-600"
                         : "bg-slate-100 text-slate-600"
                     }`}
                   >

@@ -223,7 +223,7 @@ function LeaderboardRow({ entry, rank }: { entry: LeaderboardEntry; rank: number
       </div>
 
       <div className="shrink-0 text-right">
-        <p className="text-sm font-bold tabular-nums text-emerald-600">+{entry.net_increase ?? 0} net</p>
+        <p className="text-sm font-bold tabular-nums text-cyan-600">+{entry.net_increase ?? 0} net</p>
         {entry.xp_points !== undefined && (
           <p className="text-[11px] font-medium tabular-nums text-amber-700">{entry.xp_points.toLocaleString("tr")} XP</p>
         )}
@@ -595,7 +595,7 @@ export default function RozetPage() {
             <div className="border-b border-slate-100 px-5 py-5 sm:px-6">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div className="flex items-start gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-teal-100 text-teal-700">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-cyan-100 text-cyan-700">
                     <Globe className="h-5 w-5" aria-hidden />
                   </div>
                   <div>

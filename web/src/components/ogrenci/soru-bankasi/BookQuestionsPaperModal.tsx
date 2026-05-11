@@ -141,7 +141,7 @@ export function BookQuestionsPaperModal({
                   <div
                     className={`mt-8 border-l-4 px-4 py-3 font-serif text-sm sm:text-base ${
                       result.is_correct
-                        ? "border-emerald-600 bg-emerald-50/80 text-emerald-950"
+                        ? "border-cyan-600 bg-cyan-50/80 text-cyan-950"
                         : "border-rose-600 bg-rose-50/80 text-rose-950"
                     }`}
                   >

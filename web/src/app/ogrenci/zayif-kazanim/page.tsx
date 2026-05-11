@@ -17,7 +17,7 @@ function getRiskLevel(rate: number): { color: string; bg: string; border: string
   if (rate < 30) return { color: "text-red-700",    bg: "bg-red-50",    border: "border-red-200",    label: "Kritik",  dot: "bg-red-500"    };
   if (rate < 50) return { color: "text-orange-700", bg: "bg-orange-50", border: "border-orange-200", label: "Zayıf",   dot: "bg-orange-500" };
   if (rate < 70) return { color: "text-amber-700",  bg: "bg-amber-50",  border: "border-amber-200",  label: "Orta",    dot: "bg-amber-500"  };
-  return             { color: "text-teal-700",   bg: "bg-teal-50",   border: "border-teal-200",   label: "İyi",     dot: "bg-teal-500"   };
+  return             { color: "text-cyan-700",   bg: "bg-cyan-50",   border: "border-cyan-200",   label: "İyi",     dot: "bg-cyan-500"   };
 }
 
 // Mini donut progress
@@ -138,8 +138,8 @@ export default function ZayifKazanimPage() {
           </div>
         ) : achievements.length === 0 ? (
           <div className="text-center py-20 bg-white rounded-2xl border border-slate-100 shadow-sm">
-            <div className="w-20 h-20 rounded-3xl bg-emerald-50 flex items-center justify-center mx-auto mb-5">
-              <CheckCircle className="w-10 h-10 text-emerald-400" />
+            <div className="w-20 h-20 rounded-3xl bg-cyan-50 flex items-center justify-center mx-auto mb-5">
+              <CheckCircle className="w-10 h-10 text-cyan-400" />
             </div>
             <h3 className="font-black text-slate-700 text-xl">Harika! Zayıf kazanım yok.</h3>
             <p className="text-slate-500 text-sm mt-2 max-w-xs mx-auto">
@@ -178,7 +178,7 @@ export default function ZayifKazanimPage() {
                     {/* Kazanım bilgisi */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1 flex-wrap">
-                        <span className="font-mono text-xs font-bold text-teal-600 bg-teal-50 px-2.5 py-0.5 rounded-lg border border-teal-100">
+                        <span className="font-mono text-xs font-bold text-cyan-600 bg-cyan-50 px-2.5 py-0.5 rounded-lg border border-cyan-100">
                           {wa.kod}
                         </span>
                         <span className={`text-[11px] font-bold px-2 py-0.5 rounded-md ${risk.bg} ${risk.color}`}>

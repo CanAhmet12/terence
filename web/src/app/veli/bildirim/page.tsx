@@ -18,7 +18,7 @@ function Toggle({
       onClick={() => onChange(!checked)}
       disabled={disabled}
       className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
-        checked ? "bg-teal-600" : "bg-slate-200"
+        checked ? "bg-cyan-600" : "bg-slate-200"
       } disabled:opacity-50`}
     >
       <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
@@ -125,7 +125,7 @@ export default function VeliBildirimPage() {
 
   return (
     <div className="p-4 sm:p-8 lg:p-12 max-w-3xl min-w-0 overflow-x-hidden">
-      <Link href="/veli" className="inline-flex items-center gap-2 text-slate-600 hover:text-teal-600 mb-8 transition-colors">
+      <Link href="/veli" className="inline-flex items-center gap-2 text-slate-600 hover:text-cyan-600 mb-8 transition-colors">
         <ArrowLeft className="w-4 h-4" />
         Panele dön
       </Link>
@@ -142,7 +142,7 @@ export default function VeliBildirimPage() {
           {/* Telefon güncelleme */}
           <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
             <h2 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
-              <Phone className="w-4 h-4 text-teal-600" />
+              <Phone className="w-4 h-4 text-cyan-600" />
               SMS Telefon Numarası
             </h2>
             <div className="flex gap-3">
@@ -151,18 +151,18 @@ export default function VeliBildirimPage() {
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder="+90 5XX XXX XX XX"
-                className="flex-1 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
+                className="flex-1 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 outline-none"
               />
               <button
                 onClick={handlePhoneSave}
                 disabled={phoneSaving}
-                className="px-5 py-3 bg-teal-600 hover:bg-teal-700 disabled:opacity-60 text-white font-semibold rounded-xl text-sm transition-colors flex items-center gap-2"
+                className="px-5 py-3 bg-cyan-600 hover:bg-cyan-700 disabled:opacity-60 text-white font-semibold rounded-xl text-sm transition-colors flex items-center gap-2"
               >
                 {phoneSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : "Güncelle"}
               </button>
             </div>
             {phoneMsg && (
-              <div className={`flex items-center gap-2 mt-3 text-sm ${phoneMsg === "ok" ? "text-teal-700" : "text-red-600"}`}>
+              <div className={`flex items-center gap-2 mt-3 text-sm ${phoneMsg === "ok" ? "text-cyan-700" : "text-red-600"}`}>
                 {phoneMsg === "ok"
                   ? <><CheckCircle className="w-4 h-4" /> Telefon numarası güncellendi.</>
                   : <><AlertCircle className="w-4 h-4" /> {phoneMsg}</>}
@@ -173,7 +173,7 @@ export default function VeliBildirimPage() {
           {/* Kanal seçimi */}
           <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
             <h2 className="font-bold text-slate-900 mb-5 flex items-center gap-2">
-              <Settings className="w-4 h-4 text-teal-600" />
+              <Settings className="w-4 h-4 text-cyan-600" />
               Bildirim Kanalları
             </h2>
             <div className="space-y-4">
@@ -183,7 +183,7 @@ export default function VeliBildirimPage() {
                   icon: MessageSquare,
                   label: "SMS",
                   detail: (settings.phone ?? phone) || "Telefon numarası ayarli degil",
-                  color: "text-green-600 bg-green-50",
+                  color: "text-cyan-600 bg-cyan-50",
                 },
                 {
                   key: "email_enabled" as const,
@@ -219,7 +219,7 @@ export default function VeliBildirimPage() {
           {/* Bildirim türleri */}
           <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
             <h2 className="font-bold text-slate-900 mb-2 flex items-center gap-2">
-              <Bell className="w-4 h-4 text-teal-600" />
+              <Bell className="w-4 h-4 text-cyan-600" />
               Hangi Durumlarda Bildirim Alayım?
             </h2>
             <p className="text-sm text-slate-500 mb-5">Aktif kanallar üzerinden gönderilir.</p>
@@ -239,7 +239,7 @@ export default function VeliBildirimPage() {
                         <select
                           value={settings.inactivity_days ?? 3}
                           onChange={(e) => update("inactivity_days", Number(e.target.value))}
-                          className="text-xs border border-slate-200 rounded-lg px-2 py-1 focus:ring-1 focus:ring-teal-500 outline-none"
+                          className="text-xs border border-slate-200 rounded-lg px-2 py-1 focus:ring-1 focus:ring-cyan-500 outline-none"
                         >
                           {[1, 2, 3, 5, 7].map((d) => (
                             <option key={d} value={d}>{d} gün</option>
@@ -264,7 +264,7 @@ export default function VeliBildirimPage() {
             </div>
           )}
           {saved && (
-            <div className="flex items-center gap-2 p-4 bg-teal-50 border border-teal-200 rounded-xl text-teal-700 text-sm">
+            <div className="flex items-center gap-2 p-4 bg-cyan-50 border border-cyan-200 rounded-xl text-cyan-700 text-sm">
               <CheckCircle className="w-4 h-4 shrink-0" />
               Bildirim tercihlerin kaydedildi.
             </div>
@@ -273,7 +273,7 @@ export default function VeliBildirimPage() {
           <button
             onClick={handleSave}
             disabled={saving}
-            className="w-full py-4 bg-teal-600 hover:bg-teal-700 disabled:opacity-70 text-white font-bold rounded-2xl transition-colors flex items-center justify-center gap-2"
+            className="w-full py-4 bg-cyan-600 hover:bg-cyan-700 disabled:opacity-70 text-white font-bold rounded-2xl transition-colors flex items-center justify-center gap-2"
           >
             {saving ? <><Loader2 className="w-5 h-5 animate-spin" /> Kaydediliyor...</> : "Tercihleri Kaydet"}
           </button>

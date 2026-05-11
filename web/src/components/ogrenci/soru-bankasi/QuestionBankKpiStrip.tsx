@@ -36,7 +36,7 @@ export function QuestionBankKpiStrip({
       value: k != null && k.attempts > 0 ? `%${k.accuracy_pct}` : "—",
       hint: k != null && k.attempts > 0 ? `${formatInt(k.attempts)} deneme` : "Henüz deneme yok",
       icon: TrendingUp,
-      accent: "from-emerald-50 to-teal-50/80 border-emerald-100",
+      accent: "from-cyan-50 to-cyan-50/80 border-cyan-100",
     },
     {
       label: "Net tahmini",

@@ -9,13 +9,13 @@ import { goalTemplateLabel } from "@/lib/goal-dashboard";
 import { Search, Users, Clock, RefreshCw, AlertCircle, Plus, X, Target, Loader2, CalendarDays, ClipboardList, Copy } from "lucide-react";
 
 const RISK_CONFIG = {
-  green: { label: "İyi", dot: "bg-green-500", badge: "bg-green-100 text-green-700" },
+  green: { label: "İyi", dot: "bg-cyan-500", badge: "bg-cyan-100 text-cyan-700" },
   yellow: { label: "Riskli", dot: "bg-amber-500", badge: "bg-amber-100 text-amber-700" },
   red: { label: "Çok Riskli", dot: "bg-red-500", badge: "bg-red-100 text-red-700" },
 };
 
 const DASH_RISK: Record<RiskTier, { label: string; badge: string; dot: string }> = {
-  on_track: { label: "Hedefte", badge: "bg-emerald-100 text-emerald-800", dot: "bg-emerald-500" },
+  on_track: { label: "Hedefte", badge: "bg-cyan-100 text-cyan-800", dot: "bg-cyan-500" },
   at_risk: { label: "Dikkat", badge: "bg-amber-100 text-amber-800", dot: "bg-amber-500" },
   critical: { label: "Kritik", badge: "bg-red-100 text-red-800", dot: "bg-red-500" },
 };
@@ -391,7 +391,7 @@ export default function SiniflarPage() {
                     </div>
                     <Link
                       href={`/ogretmen/plan-atama?class_id=${selectedClass.id}`}
-                      className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-teal-200 bg-teal-50 px-4 py-3 text-sm font-semibold text-teal-800 transition-colors hover:bg-teal-100"
+                      className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-cyan-200 bg-cyan-50 px-4 py-3 text-sm font-semibold text-cyan-800 transition-colors hover:bg-cyan-100"
                     >
                       <CalendarDays className="h-4 w-4" />
                       Günlük plan gönder
@@ -521,7 +521,7 @@ export default function SiniflarPage() {
                               <tr key={row.student_id} className="hover:bg-slate-50/60">
                                 <td className="px-4 py-2 font-medium text-slate-800">{row.name}</td>
                                 <td className="px-4 py-2 text-right text-slate-600">{row.exams_completed_30d}</td>
-                                <td className="px-4 py-2 text-right font-bold text-teal-700">
+                                <td className="px-4 py-2 text-right font-bold text-cyan-700">
                                   {row.last_net != null ? row.last_net.toFixed(1) : "—"}
                                 </td>
                                 <td className="px-4 py-2 text-slate-500 text-xs hidden sm:table-cell">
@@ -671,8 +671,8 @@ export default function SiniflarPage() {
                   )}
 
                   {goalDash.template === "school_primary" && goalDash.school_metrics && (
-                    <div className="p-3 rounded-xl border border-teal-100 bg-teal-50/40 text-xs text-slate-700 space-y-1">
-                      <p className="font-bold text-teal-900">Plan / okul</p>
+                    <div className="p-3 rounded-xl border border-cyan-100 bg-cyan-50/40 text-xs text-slate-700 space-y-1">
+                      <p className="font-bold text-cyan-900">Plan / okul</p>
                       <p>
                         Bu hafta görev:{" "}
                         <strong>

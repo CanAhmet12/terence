@@ -13,7 +13,7 @@ import { CheckCircle, ChevronRight, GraduationCap, Target, Sparkles, Calendar } 
 // ─── Konfigürasyonlar (backend StudentLearningProfileService ile uyumlu) ─────
 
 const GRADES = [
-  { value: "5",  label: "5. Sınıf",  sub: "Ortaokul",     emoji: "🏫", color: "#10b981" },
+  { value: "5",  label: "5. Sınıf",  sub: "Ortaokul",     emoji: "🏫", color: "#06b6d4" },
   { value: "6",  label: "6. Sınıf",  sub: "Ortaokul",     emoji: "📚", color: "#3b82f6" },
   { value: "7",  label: "7. Sınıf",  sub: "LGS başlangıcı", emoji: "📚", color: "#6366f1" },
   { value: "8",  label: "8. Sınıf",  sub: "LGS yılı",     emoji: "🎯", color: "#f59e0b" },
@@ -21,12 +21,12 @@ const GRADES = [
   { value: "10", label: "10. Sınıf", sub: "Lise",         emoji: "🎓", color: "#8b5cf6" },
   { value: "11", label: "11. Sınıf", sub: "Lise",         emoji: "🎓", color: "#0ea5e9" },
   { value: "12", label: "12. Sınıf", sub: "YKS yoğun",    emoji: "🏆", color: "#f97316" },
-  { value: "0",  label: "Mezun",     sub: "YKS odaklı",   emoji: "🎓", color: "#0f766e" },
+  { value: "0",  label: "Mezun",     sub: "YKS odaklı",   emoji: "🎓", color: "#0e7490" },
 ];
 
 const EXAM_TYPES: Record<string, Array<{ value: string; label: string; sub: string; icon: string; color: string }>> = {
   "5": [
-    { value: "GENEL", label: "Okul & gelişim", sub: "Ders takibi, alışkanlık ve okul başarısı", icon: "🏫", color: "#10b981" },
+    { value: "GENEL", label: "Okul & gelişim", sub: "Ders takibi, alışkanlık ve okul başarısı", icon: "🏫", color: "#06b6d4" },
   ],
   "6": [
     { value: "GENEL", label: "Okul & gelişim", sub: "Güçlendirme ve düzenli çalışma", icon: "📚", color: "#3b82f6" },
@@ -186,8 +186,8 @@ export default function OnboardingPage() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-violet-50 flex items-center justify-center p-4">
         <div className="text-center space-y-6 max-w-sm">
-          <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto animate-bounce">
-            <CheckCircle className="w-12 h-12 text-green-600" />
+          <div className="w-24 h-24 bg-cyan-100 rounded-full flex items-center justify-center mx-auto animate-bounce">
+            <CheckCircle className="w-12 h-12 text-cyan-600" />
           </div>
           <h2 className="text-2xl font-bold text-slate-900">Harika! Hazırsın 🎉</h2>
           <p className="text-slate-600">Müfredatın kişiselleştirildi. Derslerine yönlendiriliyorsun...</p>

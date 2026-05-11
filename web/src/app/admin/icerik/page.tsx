@@ -8,7 +8,7 @@ import { useAuth } from "@/lib/auth-context";
 import { api, type AdminContentItem } from "@/lib/api";
 
 const TYPE_ICONS: Record<string, React.ReactNode> = {
-  video: <Video className="w-4 h-4 text-teal-600" />,
+  video: <Video className="w-4 h-4 text-cyan-600" />,
   pdf: <FileText className="w-4 h-4 text-amber-600" />,
   question: <HelpCircle className="w-4 h-4 text-blue-600" />,
   quiz: <BookOpen className="w-4 h-4 text-purple-600" />,
@@ -90,10 +90,10 @@ export default function AdminIcerikPage() {
     <div className="w-full min-w-0 max-w-none px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8 xl:px-10 xl:py-10 overflow-x-hidden">
       <div className="flex items-start justify-between gap-4 mb-8">
         <div>
-          <Link href="/admin/icerik-merkezi" className="inline-flex items-center gap-2 text-teal-600 hover:text-teal-700 text-sm mb-2 font-medium transition-colors">
+          <Link href="/admin/icerik-merkezi" className="inline-flex items-center gap-2 text-cyan-600 hover:text-cyan-700 text-sm mb-2 font-medium transition-colors">
             İçerik merkezi
           </Link>
-          <Link href="/admin" className="inline-flex items-center gap-2 text-slate-500 hover:text-teal-600 text-sm mb-4 transition-colors">
+          <Link href="/admin" className="inline-flex items-center gap-2 text-slate-500 hover:text-cyan-600 text-sm mb-4 transition-colors">
             <ArrowLeft className="w-4 h-4" />
             Panele dön
           </Link>
@@ -101,7 +101,7 @@ export default function AdminIcerikPage() {
           <p className="text-slate-600 mt-1">Video, PDF, soru ve quiz içeriklerini yönetin</p>
           <Link
             href="/admin/icerik/yukle"
-            className="inline-flex mt-4 items-center gap-2 px-4 py-2.5 rounded-xl bg-teal-600 text-white text-sm font-semibold hover:bg-teal-700 transition-colors"
+            className="inline-flex mt-4 items-center gap-2 px-4 py-2.5 rounded-xl bg-cyan-600 text-white text-sm font-semibold hover:bg-cyan-700 transition-colors"
           >
             Yeni medya yükle
           </Link>
@@ -131,13 +131,13 @@ export default function AdminIcerikPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="İçerik ara..."
-            className="w-full pl-11 pr-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
+            className="w-full pl-11 pr-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 outline-none"
           />
         </div>
         <select
           value={typeFilter}
           onChange={(e) => setTypeFilter(e.target.value)}
-          className="px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
+          className="px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 outline-none"
         >
           <option value="">Tüm Türler</option>
           <option value="video">Video</option>
@@ -210,7 +210,7 @@ export default function AdminIcerikPage() {
                       ) : null}
                     </td>
                     <td className="py-4 px-3 align-top text-sm text-slate-700">
-                      <span className="font-medium text-teal-800">{formatCourseAudience(item.course_grade, item.course_exam_type)}</span>
+                      <span className="font-medium text-cyan-800">{formatCourseAudience(item.course_grade, item.course_exam_type)}</span>
                       <p className="mt-0.5 text-xs text-slate-500 line-clamp-2" title={item.course_title ?? ""}>
                         {item.course_title ?? "—"}
                       </p>

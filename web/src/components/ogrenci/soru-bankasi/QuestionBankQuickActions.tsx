@@ -32,10 +32,10 @@ export function QuestionBankQuickActions({
   ];
 
   return (
-    <fieldset className="space-y-3 border-0 p-0">
-      <legend className="mb-1 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+    <section className="min-w-0 space-y-3" aria-labelledby="qb-quick-modes-label">
+      <h2 id="qb-quick-modes-label" className="mb-1 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
         Hızlı modlar
-      </legend>
+      </h2>
       <div className="grid gap-3 md:grid-cols-2">
         {cards.map(({ title, desc, icon: Icon, onClick, gradient, ring }) => (
           <button
@@ -66,6 +66,6 @@ export function QuestionBankQuickActions({
           </button>
         ))}
       </div>
-    </fieldset>
+    </section>
   );
 }

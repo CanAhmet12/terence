@@ -16,7 +16,7 @@ export function CtaSection() {
           <div className="absolute inset-0 gradient-hero" />
           <div className="absolute inset-0 bg-gradient-to-br from-slate-900/30 via-transparent to-slate-900/20" />
           <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-          {/* OLD: bg-teal-400/10 */}
+          {/* OLD: bg-cyan-400/10 */}
           <div className="absolute bottom-0 left-0 w-96 h-96 bg-cyan-400/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
           
           <div className="relative p-6 sm:p-10 lg:p-16 flex flex-col lg:flex-row items-center justify-between gap-8 lg:gap-10 min-w-0">
@@ -30,14 +30,14 @@ export function CtaSection() {
               <ul className="mt-6 flex flex-col sm:flex-row sm:flex-wrap justify-center lg:justify-start gap-3 sm:gap-4">
                 {benefits.map((b) => (
                   <li key={b} className="flex items-center gap-2 text-white/95 text-sm font-medium">
-                    {/* OLD: text-teal-300 */}
+                    {/* OLD: text-cyan-300 */}
                     <Check className="w-5 h-5 text-cyan-300 shrink-0" />
                     {b}
                   </li>
                 ))}
               </ul>
             </div>
-            {/* OLD: text-teal-700 */}
+            {/* OLD: text-cyan-700 */}
             <Link
               href="/kayit"
               className="w-full sm:w-auto shrink-0 inline-flex items-center justify-center gap-2 px-8 sm:px-10 py-3.5 sm:py-4 bg-white text-slate-900 font-bold rounded-2xl hover:bg-slate-50 transition-all duration-300 shadow-2xl shadow-black/20 hover:shadow-xl hover:-translate-y-1"

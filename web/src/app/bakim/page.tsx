@@ -17,7 +17,7 @@ export default function BakimPage() {
         </p>
         <Link
           href="/giris"
-          className="mt-8 inline-flex items-center justify-center rounded-xl bg-teal-600 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-teal-700"
+          className="mt-8 inline-flex items-center justify-center rounded-xl bg-cyan-600 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-cyan-700"
         >
           Giriş sayfasına dön
         </Link>

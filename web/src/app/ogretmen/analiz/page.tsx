@@ -371,7 +371,7 @@ export default function AnalizPage() {
                   </button>
                 )}
                 {msgSent && (
-                  <span className="flex items-center gap-1 text-xs text-emerald-600 font-semibold ml-auto">
+                  <span className="flex items-center gap-1 text-xs text-cyan-600 font-semibold ml-auto">
                     <CheckCircle className="w-3.5 h-3.5" /> Gönderildi!
                   </span>
                 )}
@@ -403,7 +403,7 @@ export default function AnalizPage() {
                     </div>
                     {/* Risk dot */}
                     <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${
-                      s.risk === "green" ? "bg-emerald-500" : s.risk === "yellow" ? "bg-amber-500" : "bg-red-500"
+                      s.risk === "green" ? "bg-cyan-500" : s.risk === "yellow" ? "bg-amber-500" : "bg-red-500"
                     }`} />
                     {/* İsim */}
                     <div className="flex-1 min-w-0">
@@ -419,7 +419,7 @@ export default function AnalizPage() {
                     </div>
                     {/* Progress */}
                     <div className="w-16 h-1.5 bg-slate-200 rounded-full overflow-hidden hidden sm:block">
-                      <div className={`h-full rounded-full ${s.risk === "green" ? "bg-emerald-500" : s.risk === "yellow" ? "bg-amber-500" : "bg-red-500"}`}
+                      <div className={`h-full rounded-full ${s.risk === "green" ? "bg-cyan-500" : s.risk === "yellow" ? "bg-amber-500" : "bg-red-500"}`}
                         style={{ width: `${Math.min((s.net / Math.max(s.hedef, 1)) * 100, 100)}%` }} />
                     </div>
                   </div>
@@ -451,7 +451,7 @@ export default function AnalizPage() {
                   {kazanimErrors.slice(0, 10).map((e, i) => (
                     <div key={i} className="flex items-center gap-3 p-3.5 rounded-xl bg-slate-50 border border-slate-100">
                       {e.kazanim_code && (
-                        <span className="font-mono text-[11px] font-bold text-teal-700 bg-teal-50 px-2 py-0.5 rounded-md shrink-0 border border-teal-100">
+                        <span className="font-mono text-[11px] font-bold text-cyan-700 bg-cyan-50 px-2 py-0.5 rounded-md shrink-0 border border-cyan-100">
                           {e.kazanim_code}
                         </span>
                       )}
@@ -507,8 +507,8 @@ export default function AnalizPage() {
           {/* Çözüm Süresi */}
           <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
             <div className="flex items-center gap-3 mb-2">
-              <div className="w-9 h-9 rounded-xl bg-teal-50 flex items-center justify-center">
-                <Clock className="w-5 h-5 text-teal-600" />
+              <div className="w-9 h-9 rounded-xl bg-cyan-50 flex items-center justify-center">
+                <Clock className="w-5 h-5 text-cyan-600" />
               </div>
               <div>
                 <h2 className="font-bold text-slate-900">Çözüm Süresi Analizi</h2>
@@ -530,7 +530,7 @@ export default function AnalizPage() {
                     return (
                       <div key={i} className="flex items-center justify-between p-3.5 rounded-xl bg-slate-50 border border-slate-100">
                         <span className="text-sm font-semibold text-slate-800">{t.subject ?? "—"}</span>
-                        <span className="font-black text-teal-600 text-sm">{mins} dk/soru</span>
+                        <span className="font-black text-cyan-600 text-sm">{mins} dk/soru</span>
                       </div>
                     );
                   })}
@@ -554,7 +554,7 @@ export default function AnalizPage() {
                     </div>
                     <div
                       className={`w-full rounded-t-lg min-h-[6px] transition-all ${
-                        s.risk === "green" ? "bg-emerald-400" : s.risk === "yellow" ? "bg-amber-400" : "bg-red-400"
+                        s.risk === "green" ? "bg-cyan-400" : s.risk === "yellow" ? "bg-amber-400" : "bg-red-400"
                       }`}
                       style={{ height: `${Math.min((s.net / maxNet) * 100, 100)}%` }}
                     />

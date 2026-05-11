@@ -74,7 +74,7 @@ export default function VeliDashboardPage() {
   const tasksTotal = summary?.tasks_total_today ?? 0;
 
   const riskColors = {
-    green: { bg: "bg-emerald-50", border: "border-emerald-200", text: "text-emerald-700", label: "Hedefte İlerliyor" },
+    green: { bg: "bg-cyan-50", border: "border-cyan-200", text: "text-cyan-700", label: "Hedefte İlerliyor" },
     yellow: { bg: "bg-amber-50", border: "border-amber-200", text: "text-amber-700", label: "Dikkat Gerekiyor" },
     red: { bg: "bg-red-50", border: "border-red-200", text: "text-red-700", label: "Yüksek Risk" },
   };
@@ -104,12 +104,12 @@ export default function VeliDashboardPage() {
             <div className="relative">
               <button
                 onClick={() => setChildDropdown(!childDropdown)}
-                className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 rounded-xl shadow-sm hover:border-teal-300 transition-colors text-sm font-semibold text-slate-800"
+                className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 rounded-xl shadow-sm hover:border-cyan-300 transition-colors text-sm font-semibold text-slate-800"
               >
                 {summary?.child.profile_photo_url ? (
                   <Image src={summary.child.profile_photo_url} alt={childName} width={24} height={24} className="w-6 h-6 rounded-lg object-cover" />
                 ) : (
-                  <div className="w-6 h-6 rounded-lg bg-teal-100 flex items-center justify-center text-teal-700 text-xs font-bold">
+                  <div className="w-6 h-6 rounded-lg bg-cyan-100 flex items-center justify-center text-cyan-700 text-xs font-bold">
                     {childName.charAt(0)}
                   </div>
                 )}
@@ -128,13 +128,13 @@ export default function VeliDashboardPage() {
                           key={c.child.id}
                           onClick={() => { setSelectedIdx(i); setChildDropdown(false); }}
                           className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
-                            i === selectedIdx ? "bg-teal-50 text-teal-700" : "text-slate-700 hover:bg-slate-50"
+                            i === selectedIdx ? "bg-cyan-50 text-cyan-700" : "text-slate-700 hover:bg-slate-50"
                           }`}
                         >
                           {c.child.profile_photo_url ? (
                             <Image src={c.child.profile_photo_url} alt={c.child.name} width={28} height={28} className="w-7 h-7 rounded-lg object-cover shrink-0" />
                           ) : (
-                            <div className="w-7 h-7 rounded-lg bg-teal-100 flex items-center justify-center text-teal-700 text-xs font-bold shrink-0">
+                            <div className="w-7 h-7 rounded-lg bg-cyan-100 flex items-center justify-center text-cyan-700 text-xs font-bold shrink-0">
                               {c.child.name.charAt(0)}
                             </div>
                           )}
@@ -150,7 +150,7 @@ export default function VeliDashboardPage() {
                     <div className="border-t border-slate-100 p-2">
                       <button
                         onClick={() => { setChildDropdown(false); setShowLink(true); }}
-                        className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium text-teal-700 hover:bg-teal-50 transition-colors"
+                        className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium text-cyan-700 hover:bg-cyan-50 transition-colors"
                       >
                         <Plus className="w-4 h-4" />
                         Çocuk Ekle
@@ -173,11 +173,11 @@ export default function VeliDashboardPage() {
               onClick={() => setSelectedIdx(i)}
               className={`flex items-center gap-3 p-4 rounded-2xl border-2 transition-all text-left ${
                 i === selectedIdx
-                  ? "border-teal-400 bg-teal-50 shadow-sm"
-                  : "border-slate-200 bg-white hover:border-teal-200"
+                  ? "border-cyan-400 bg-cyan-50 shadow-sm"
+                  : "border-slate-200 bg-white hover:border-cyan-200"
               }`}
             >
-              <div className="w-10 h-10 rounded-xl bg-teal-100 flex items-center justify-center text-teal-700 font-bold text-sm shrink-0">
+              <div className="w-10 h-10 rounded-xl bg-cyan-100 flex items-center justify-center text-cyan-700 font-bold text-sm shrink-0">
                 {c.child.name.charAt(0)}
               </div>
               <div className="min-w-0 flex-1">
@@ -185,7 +185,7 @@ export default function VeliDashboardPage() {
                 <p className="text-xs text-slate-500">{c.child.grade ? `${c.child.grade}. Sınıf` : "—"}</p>
               </div>
               <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${
-                c.risk_level === "green" ? "bg-emerald-500" :
+                c.risk_level === "green" ? "bg-cyan-500" :
                 c.risk_level === "yellow" ? "bg-amber-500" : "bg-red-500"
               }`} />
             </button>
@@ -195,9 +195,9 @@ export default function VeliDashboardPage() {
 
       {/* Çocuk ekleme formu */}
       {showLink && (
-        <div className="mb-8 p-5 bg-white rounded-2xl border border-teal-200 shadow-sm">
+        <div className="mb-8 p-5 bg-white rounded-2xl border border-cyan-200 shadow-sm">
           <h3 className="font-bold text-slate-900 flex items-center gap-2 mb-3">
-            <LinkIcon className="w-4 h-4 text-teal-600" />
+            <LinkIcon className="w-4 h-4 text-cyan-600" />
             Çocuğunuzu Bağlayın
           </h3>
           <p className="text-sm text-slate-600 mb-4">
@@ -209,13 +209,13 @@ export default function VeliDashboardPage() {
               value={linkCode}
               onChange={(e) => setLinkCode(e.target.value)}
               placeholder="DAVET KODUNU GİRİN"
-              className="flex-1 px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-teal-500 outline-none uppercase tracking-widest"
+              className="flex-1 px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-cyan-500 outline-none uppercase tracking-widest"
               onKeyDown={(e) => e.key === "Enter" && handleLinkChild()}
             />
             <button
               onClick={handleLinkChild}
               disabled={linkLoading || !linkCode.trim()}
-              className="px-5 py-2.5 bg-teal-600 text-white font-semibold rounded-xl hover:bg-teal-700 disabled:opacity-60 transition-colors text-sm"
+              className="px-5 py-2.5 bg-cyan-600 text-white font-semibold rounded-xl hover:bg-cyan-700 disabled:opacity-60 transition-colors text-sm"
             >
               {linkLoading ? "Ekleniyor..." : "Ekle"}
             </button>
@@ -231,7 +231,7 @@ export default function VeliDashboardPage() {
       )}
 
       {linkSuccess && (
-        <div className="mb-6 p-4 bg-teal-50 border border-teal-200 rounded-2xl text-sm text-teal-700 font-medium flex items-center gap-2">
+        <div className="mb-6 p-4 bg-cyan-50 border border-cyan-200 rounded-2xl text-sm text-cyan-700 font-medium flex items-center gap-2">
           <CheckCircle className="w-5 h-5 shrink-0" />
           Çocuğunuz başarıyla eklendi!
         </div>
@@ -240,8 +240,8 @@ export default function VeliDashboardPage() {
       {/* Henüz çocuk yok */}
       {!loading && children.length === 0 && (
         <div className="bg-white rounded-2xl border border-slate-200 p-10 text-center shadow-sm">
-          <div className="w-16 h-16 rounded-2xl bg-teal-50 flex items-center justify-center mx-auto mb-4">
-            <Users className="w-8 h-8 text-teal-600" />
+          <div className="w-16 h-16 rounded-2xl bg-cyan-50 flex items-center justify-center mx-auto mb-4">
+            <Users className="w-8 h-8 text-cyan-600" />
           </div>
           <h3 className="font-bold text-slate-900 text-lg mb-2">Henüz Bağlı Çocuk Yok</h3>
           <p className="text-slate-600 text-sm mb-5">
@@ -249,7 +249,7 @@ export default function VeliDashboardPage() {
           </p>
           <button
             onClick={() => setShowLink(true)}
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-teal-600 text-white font-semibold rounded-xl hover:bg-teal-700 transition-colors"
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-cyan-600 text-white font-semibold rounded-xl hover:bg-cyan-700 transition-colors"
           >
             <Plus className="w-4 h-4" />
             Çocuk Ekle
@@ -299,18 +299,18 @@ export default function VeliDashboardPage() {
                 </div>
               ) : (
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="flex items-center gap-4 p-5 rounded-2xl bg-teal-50 border border-teal-100">
-                    <div className="w-12 h-12 rounded-xl bg-teal-100 flex items-center justify-center shrink-0">
-                      <Clock className="w-6 h-6 text-teal-600" />
+                  <div className="flex items-center gap-4 p-5 rounded-2xl bg-cyan-50 border border-cyan-100">
+                    <div className="w-12 h-12 rounded-xl bg-cyan-100 flex items-center justify-center shrink-0">
+                      <Clock className="w-6 h-6 text-cyan-600" />
                     </div>
                     <div>
                       <p className="text-xs text-slate-500 font-medium">Çalışma</p>
                       <p className="text-xl font-bold text-slate-900">{studyTime || "0dk"}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-4 p-5 rounded-2xl bg-teal-50 border border-teal-100">
-                    <div className="w-12 h-12 rounded-xl bg-teal-100 flex items-center justify-center shrink-0">
-                      <TrendingUp className="w-6 h-6 text-teal-600" />
+                  <div className="flex items-center gap-4 p-5 rounded-2xl bg-cyan-50 border border-cyan-100">
+                    <div className="w-12 h-12 rounded-xl bg-cyan-100 flex items-center justify-center shrink-0">
+                      <TrendingUp className="w-6 h-6 text-cyan-600" />
                     </div>
                     <div>
                       <p className="text-xs text-slate-500 font-medium">Günlük Net</p>
@@ -321,11 +321,11 @@ export default function VeliDashboardPage() {
                     <div className="flex-1">
                       <div className="flex items-center justify-between mb-2">
                         <p className="text-sm font-medium text-slate-700">Günlük Görevler</p>
-                        <span className="text-sm font-bold text-teal-600">{tasksDone}/{tasksTotal}</span>
+                        <span className="text-sm font-bold text-cyan-600">{tasksDone}/{tasksTotal}</span>
                       </div>
                       <div className="h-2.5 bg-slate-200 rounded-full overflow-hidden">
                         <div
-                          className="h-full bg-gradient-to-r from-teal-500 to-teal-400 rounded-full transition-all"
+                          className="h-full bg-gradient-to-r from-cyan-500 to-cyan-400 rounded-full transition-all"
                           style={{ width: tasksTotal > 0 ? `${(tasksDone / tasksTotal) * 100}%` : "0%" }}
                         />
                       </div>
@@ -335,7 +335,7 @@ export default function VeliDashboardPage() {
               )}
               <Link
                 href="/veli/rapor"
-                className="mt-6 block text-center py-3 bg-teal-50 text-teal-700 font-semibold rounded-xl hover:bg-teal-100 transition-colors"
+                className="mt-6 block text-center py-3 bg-cyan-50 text-cyan-700 font-semibold rounded-xl hover:bg-cyan-100 transition-colors"
               >
                 Detaylı Rapor →
               </Link>
@@ -378,7 +378,7 @@ export default function VeliDashboardPage() {
           {nets.length > 0 && (
             <div className="bg-white rounded-2xl border border-slate-200/80 p-8 shadow-sm hover:shadow-md transition-shadow mb-10">
               <h2 className="font-bold text-slate-900 flex items-center gap-2 mb-2 text-lg">
-                <BarChart3 className="w-5 h-5 text-teal-600" />
+                <BarChart3 className="w-5 h-5 text-cyan-600" />
                 Net Gelişim Grafiği
               </h2>
               <p className="text-sm text-slate-600 mb-6">
@@ -393,7 +393,7 @@ export default function VeliDashboardPage() {
                   {nets.map((net, i) => (
                     <div key={i} className="flex-1 flex flex-col items-center gap-2">
                       <div
-                        className="w-full rounded-t-xl bg-gradient-to-t from-teal-600 to-teal-400 min-h-[20px] transition-all hover:from-teal-700 relative group"
+                        className="w-full rounded-t-xl bg-gradient-to-t from-cyan-600 to-cyan-400 min-h-[20px] transition-all hover:from-cyan-700 relative group"
                         style={{ height: `${(net / maxNet) * 100}%` }}
                       >
                         <span className="absolute -top-7 left-1/2 -translate-x-1/2 text-xs font-bold text-slate-700 opacity-0 group-hover:opacity-100 transition-opacity bg-white px-1.5 py-0.5 rounded shadow-sm border border-slate-100 whitespace-nowrap">
@@ -411,7 +411,7 @@ export default function VeliDashboardPage() {
           {/* Deneme sonuçları */}
           <div className="bg-white rounded-2xl border border-slate-200/80 p-8 shadow-sm hover:shadow-md transition-shadow mb-10">
             <h2 className="font-bold text-slate-900 flex items-center gap-2 mb-4 text-lg">
-              <FileText className="w-5 h-5 text-teal-600" />
+              <FileText className="w-5 h-5 text-cyan-600" />
               Son Deneme Sonuçları
             </h2>
             {loading ? (
@@ -435,7 +435,7 @@ export default function VeliDashboardPage() {
                         <td className="py-4 px-4 text-slate-600">
                           {(d.finished_at ?? d.date) ? new Date(String(d.finished_at ?? d.date)).toLocaleDateString("tr-TR") : "—"}
                         </td>
-                        <td className="text-right py-4 px-4 font-bold text-teal-600">
+                        <td className="text-right py-4 px-4 font-bold text-cyan-600">
                           {(d.net_score ?? d.net) !== undefined ? Number(d.net_score ?? d.net).toFixed(1) : "—"}
                         </td>
                       </tr>
@@ -446,7 +446,7 @@ export default function VeliDashboardPage() {
             )}
             <Link
               href="/veli/rapor"
-              className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-teal-600 hover:text-teal-700 transition-colors"
+              className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-cyan-600 hover:text-cyan-700 transition-colors"
             >
               Tüm Denemeler →
             </Link>
@@ -457,7 +457,7 @@ export default function VeliDashboardPage() {
       {/* Bildirim Tercihleri */}
       <div className="bg-white rounded-2xl border border-slate-200/80 p-8 shadow-sm hover:shadow-md transition-shadow">
         <h2 className="font-bold text-slate-900 flex items-center gap-2 mb-4 text-lg">
-          <Mail className="w-5 h-5 text-teal-600" />
+          <Mail className="w-5 h-5 text-cyan-600" />
           Bildirim Tercihleri
         </h2>
         <p className="text-sm text-slate-600 mb-6">
@@ -465,7 +465,7 @@ export default function VeliDashboardPage() {
         </p>
         <Link
           href="/veli/bildirim"
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-teal-50 text-teal-700 hover:bg-teal-100 font-semibold transition-colors"
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-cyan-50 text-cyan-700 hover:bg-cyan-100 font-semibold transition-colors"
         >
           Bildirim Ayarları →
         </Link>

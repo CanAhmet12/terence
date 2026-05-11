@@ -18,7 +18,7 @@ const PASTEL_GRADIENTS = [
   "from-orange-100 via-amber-50 to-white",
   "from-sky-100 via-blue-50 to-white",
   "from-violet-100 via-purple-50 to-white",
-  "from-emerald-100 via-teal-50 to-white",
+  "from-cyan-100 via-cyan-50 to-white",
   "from-rose-100 via-pink-50 to-white",
   "from-amber-100 via-yellow-50 to-white",
 ];
@@ -28,7 +28,7 @@ const TAG_THEMES: { tag1: string; tag2: string }[] = [
   { tag1: "bg-orange-100/90 text-orange-900 ring-1 ring-orange-200/50", tag2: "bg-amber-50 text-amber-900 ring-1 ring-amber-200/40" },
   { tag1: "bg-sky-100/90 text-sky-900 ring-1 ring-sky-200/50", tag2: "bg-blue-50 text-blue-900 ring-1 ring-blue-200/40" },
   { tag1: "bg-violet-100/90 text-violet-900 ring-1 ring-violet-200/50", tag2: "bg-purple-50 text-purple-900 ring-1 ring-purple-200/40" },
-  { tag1: "bg-emerald-100/90 text-emerald-900 ring-1 ring-emerald-200/50", tag2: "bg-teal-50 text-teal-900 ring-1 ring-teal-200/40" },
+  { tag1: "bg-cyan-100/90 text-cyan-900 ring-1 ring-cyan-200/50", tag2: "bg-cyan-50 text-cyan-900 ring-1 ring-cyan-200/40" },
   { tag1: "bg-rose-100/90 text-rose-900 ring-1 ring-rose-200/50", tag2: "bg-pink-50 text-pink-900 ring-1 ring-pink-200/40" },
   { tag1: "bg-amber-100/90 text-amber-900 ring-1 ring-amber-200/50", tag2: "bg-yellow-50 text-yellow-900 ring-1 ring-yellow-200/40" },
 ];
@@ -160,7 +160,7 @@ function CardHero({
         </div>
         {live && (
           <div className="pointer-events-none absolute bottom-3 left-3">
-            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white shadow-md">
+            <span className="inline-flex items-center gap-1 rounded-full bg-cyan-500 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white shadow-md">
               <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-white" aria-hidden />
               Canlı
             </span>

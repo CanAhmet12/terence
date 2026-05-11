@@ -9,7 +9,7 @@ const cards = [
     title: "Müfredat medyası",
     desc: "Video veya PDF dosyasını bilgisayardan yükleyin; müfredat konusuna bağlanır. Harici link yok.",
     icon: Upload,
-    accent: "from-teal-600 to-emerald-500",
+    accent: "from-cyan-600 to-cyan-500",
   },
   {
     href: "/admin/icerik",
@@ -47,7 +47,7 @@ export default function AdminIcerikMerkeziPage() {
       <div className="mb-8 flex w-full min-w-0 items-center justify-between gap-4">
         <Link
           href="/admin"
-          className="inline-flex w-fit shrink-0 items-center gap-2 text-slate-600 hover:text-teal-600 font-medium text-sm"
+          className="inline-flex w-fit shrink-0 items-center gap-2 text-slate-600 hover:text-cyan-600 font-medium text-sm"
         >
           <ArrowLeft className="w-4 h-4" />
           Panele dön
@@ -59,7 +59,7 @@ export default function AdminIcerikMerkeziPage() {
 
       <div className="mb-10 flex w-full min-w-0 flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
         <div className="flex min-w-0 flex-1 items-start gap-4">
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-teal-500 to-teal-700 text-white shadow-lg shadow-teal-500/25">
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-500 to-cyan-700 text-white shadow-lg shadow-cyan-500/25">
             <BookOpen className="w-7 h-7" />
           </div>
           <div className="min-w-0 flex-1">
@@ -77,14 +77,14 @@ export default function AdminIcerikMerkeziPage() {
           <Link
             key={href}
             href={href}
-            className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-all hover:border-teal-300 hover:shadow-md"
+            className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-all hover:border-cyan-300 hover:shadow-md"
           >
             <div className={`mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${accent} text-white shadow-md`}>
               <Icon className="w-6 h-6" />
             </div>
-            <h2 className="text-lg font-bold text-slate-900 group-hover:text-teal-700 transition-colors">{title}</h2>
+            <h2 className="text-lg font-bold text-slate-900 group-hover:text-cyan-700 transition-colors">{title}</h2>
             <p className="mt-2 text-sm text-slate-600 leading-relaxed">{desc}</p>
-            <span className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-teal-600">
+            <span className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-cyan-600">
               Aç
               <span aria-hidden>→</span>
             </span>
@@ -92,8 +92,8 @@ export default function AdminIcerikMerkeziPage() {
         ))}
       </div>
 
-      <div className="mt-10 rounded-2xl border border-emerald-200 bg-emerald-50/80 p-5 text-sm text-emerald-950">
-        <p className="font-semibold text-emerald-900 mb-2">PDF kitap görünümü (yeni)</p>
+      <div className="mt-10 rounded-2xl border border-cyan-200 bg-cyan-50/80 p-5 text-sm text-cyan-950">
+        <p className="font-semibold text-cyan-900 mb-2">PDF kitap görünümü (yeni)</p>
         <p className="mb-2">
           Yüklenen PDF dosyaları sunucuda sayfa görüntülerine bölünür (poppler <code className="text-xs bg-white/60 px-1 rounded">pdftoppm</code> veya Imagick).
           Öğrenci &quot;Derslerim&quot; ve &quot;Video &amp; PDF&quot; ekranında sayfa sayfa okuyabilir; iş kuyrukta çalışır — birkaç saniye sonra yenileyin.

@@ -48,7 +48,7 @@ export default function LoginPage() {
   if (loading || isRedirecting) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-teal-500 border-t-transparent" />
+        <div className="animate-spin rounded-full h-12 w-12 border-4 border-cyan-500 border-t-transparent" />
       </div>
     );
   }
@@ -73,11 +73,11 @@ export default function LoginPage() {
       <div className="flex-1 flex items-center justify-center p-4 sm:p-8 bg-white min-w-0">
         <div className="w-full max-w-md min-w-0">
           <Link href="/" className="inline-flex items-center gap-3 text-slate-900 mb-10 group">
-            <div className="w-12 h-12 rounded-2xl overflow-hidden shadow-lg shadow-teal-500/20 group-hover:shadow-teal-500/30 transition-shadow">
+            <div className="w-12 h-12 rounded-2xl overflow-hidden shadow-lg shadow-cyan-500/20 group-hover:shadow-cyan-500/30 transition-shadow">
               <Image src="/logo.png" alt="Terence Eğitim" width={48} height={48} />
             </div>
             <span className="font-bold text-xl tracking-tight">
-              TERENCE <span className="text-teal-600">EĞİTİM</span>
+              TERENCE <span className="text-cyan-600">EĞİTİM</span>
             </span>
           </Link>
 
@@ -103,7 +103,7 @@ export default function LoginPage() {
                   placeholder="ornek@email.com"
                   required
                   autoComplete="email"
-                  className="w-full pl-12 pr-4 py-3.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none transition-all"
+                  className="w-full pl-12 pr-4 py-3.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 outline-none transition-all"
                 />
               </div>
             </div>
@@ -121,7 +121,7 @@ export default function LoginPage() {
                   required
                   minLength={8}
                   autoComplete="current-password"
-                  className="w-full pl-12 pr-12 py-3.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none transition-all"
+                  className="w-full pl-12 pr-12 py-3.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 outline-none transition-all"
                 />
                 <button
                   type="button"
@@ -132,7 +132,7 @@ export default function LoginPage() {
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
-              <Link href="/sifre-sifirlama" className="block text-sm text-teal-600 hover:text-teal-700 font-medium mt-2">
+              <Link href="/sifre-sifirlama" className="block text-sm text-cyan-600 hover:text-cyan-700 font-medium mt-2">
                 Şifremi unuttum
               </Link>
             </div>
@@ -140,7 +140,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-4 bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-700 hover:to-teal-600 disabled:opacity-70 text-white font-semibold rounded-xl transition-all shadow-lg shadow-teal-500/25"
+              className="w-full py-4 bg-gradient-to-r from-cyan-600 to-cyan-500 hover:from-cyan-700 hover:to-cyan-600 disabled:opacity-70 text-white font-semibold rounded-xl transition-all shadow-lg shadow-cyan-500/25"
             >
               {loading ? "Giriş yapılıyor..." : "Giriş Yap"}
             </button>
@@ -157,7 +157,7 @@ export default function LoginPage() {
             </a>
             <p className="text-sm text-slate-600 text-center">
               Hesabın yok mu?{" "}
-              <Link href="/kayit" className="text-teal-600 font-bold hover:underline inline-flex items-center gap-1">
+              <Link href="/kayit" className="text-cyan-600 font-bold hover:underline inline-flex items-center gap-1">
                 Ücretsiz kayıt ol
                 <ArrowRight className="w-4 h-4" />
               </Link>
@@ -169,7 +169,7 @@ export default function LoginPage() {
       {/* Sağ: Tanıtım */}
       <div className="hidden lg:flex flex-1 relative overflow-hidden">
         <div className="absolute inset-0 gradient-hero" />
-        <div className="absolute inset-0 bg-gradient-to-br from-teal-900/30 via-transparent to-emerald-900/20" />
+        <div className="absolute inset-0 bg-gradient-to-br from-cyan-900/30 via-transparent to-cyan-900/20" />
         <div className="relative flex flex-col items-center justify-center p-16 text-white">
           <div className="max-w-md text-center">
             <h2 className="text-3xl font-extrabold mb-6 leading-tight">

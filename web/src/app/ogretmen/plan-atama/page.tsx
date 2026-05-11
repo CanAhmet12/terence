@@ -244,7 +244,7 @@ export default function OgretmenPlanAtamaPage() {
           </div>
         )}
         {message && (
-          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-medium text-emerald-800">
+          <div className="rounded-2xl border border-cyan-200 bg-cyan-50 p-4 text-sm font-medium text-cyan-800">
             {message}
           </div>
         )}
@@ -260,7 +260,7 @@ export default function OgretmenPlanAtamaPage() {
               <label className="block text-xs font-semibold text-slate-600">
                 Sınıf
                 <select
-                  className="mt-1 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-teal-500"
+                  className="mt-1 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-cyan-500"
                   value={classId ?? ""}
                   onChange={(e) =>
                     setClassId(
@@ -282,7 +282,7 @@ export default function OgretmenPlanAtamaPage() {
                   <Calendar className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                   <input
                     type="date"
-                    className="w-full rounded-xl border border-slate-200 py-3 pl-10 pr-4 text-sm outline-none focus:ring-2 focus:ring-teal-500"
+                    className="w-full rounded-xl border border-slate-200 py-3 pl-10 pr-4 text-sm outline-none focus:ring-2 focus:ring-cyan-500"
                     value={planDate}
                     onChange={(e) => setPlanDate(e.target.value)}
                   />
@@ -298,7 +298,7 @@ export default function OgretmenPlanAtamaPage() {
                     <button
                       type="button"
                       onClick={toggleAllStudents}
-                      className="text-xs font-semibold text-teal-600 hover:text-teal-800"
+                      className="text-xs font-semibold text-cyan-600 hover:text-cyan-800"
                     >
                       {allSelected ? "Temizle" : "Tümünü seç"}
                     </button>
@@ -329,7 +329,7 @@ export default function OgretmenPlanAtamaPage() {
                           type="checkbox"
                           checked={selectedStudentIds.includes(s.id)}
                           onChange={() => toggleStudent(s.id)}
-                          className="rounded border-slate-300 text-teal-600 focus:ring-teal-500"
+                          className="rounded border-slate-300 text-cyan-600 focus:ring-cyan-500"
                         />
                         <Users className="h-3.5 w-3.5 text-slate-400" />
                         <span className="text-sm font-medium text-slate-700">
@@ -352,7 +352,7 @@ export default function OgretmenPlanAtamaPage() {
                     key={p.key}
                     type="button"
                     onClick={() => applyTemplate(p)}
-                    className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-left text-xs font-semibold text-slate-700 hover:border-teal-300 hover:bg-teal-50"
+                    className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-left text-xs font-semibold text-slate-700 hover:border-cyan-300 hover:bg-cyan-50"
                   >
                     {p.label}
                   </button>
@@ -447,7 +447,7 @@ export default function OgretmenPlanAtamaPage() {
               <button
                 type="button"
                 onClick={() => setRows((prev) => [...prev, newRow()])}
-                className="flex items-center gap-2 text-sm font-semibold text-teal-700 hover:text-teal-900"
+                className="flex items-center gap-2 text-sm font-semibold text-cyan-700 hover:text-cyan-900"
               >
                 <Plus className="h-4 w-4" />
                 Satır ekle
@@ -457,7 +457,7 @@ export default function OgretmenPlanAtamaPage() {
                 type="button"
                 disabled={submitting || !classId}
                 onClick={() => void handleSubmit()}
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-teal-600 to-emerald-600 py-3.5 text-sm font-bold text-white shadow-md hover:from-teal-700 hover:to-emerald-700 disabled:opacity-50"
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-600 to-cyan-600 py-3.5 text-sm font-bold text-white shadow-md hover:from-cyan-700 hover:to-cyan-700 disabled:opacity-50"
               >
                 {submitting ? (
                   <Loader2 className="h-4 w-4 animate-spin" />

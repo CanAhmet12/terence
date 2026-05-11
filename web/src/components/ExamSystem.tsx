@@ -338,7 +338,7 @@ export default function ExamSystem({
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2">
             <div
-              className="bg-green-600 h-2 rounded-full transition-all duration-300"
+              className="bg-cyan-600 h-2 rounded-full transition-all duration-300"
               style={{ width: `${progress}%` }}
             />
           </div>
@@ -426,7 +426,7 @@ export default function ExamSystem({
                   index === currentQuestion
                     ? 'bg-blue-600 text-white'
                     : answers[questions[index].id] !== undefined
-                    ? 'bg-green-600 text-white'
+                    ? 'bg-cyan-600 text-white'
                     : 'bg-gray-200 text-gray-600'
                 }`}
               >
@@ -438,7 +438,7 @@ export default function ExamSystem({
           {currentQuestion === questions.length - 1 ? (
             <button
               onClick={handleManualSubmit}
-              className="px-6 py-2 bg-green-600 text-white rounded hover:bg-green-700 font-medium"
+              className="px-6 py-2 bg-cyan-600 text-white rounded hover:bg-cyan-700 font-medium"
             >
               Sınavı Bitir
             </button>

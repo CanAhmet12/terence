@@ -1,11 +1,11 @@
 @import "tailwindcss";
 
 :root {
-  --primary: #0d9488;
-  --primary-dark: #0f766e;
-  --primary-light: #14b8a6;
-  --primary-50: #f0fdfa;
-  --primary-100: #ccfbf1;
+  --primary: #0891b2;
+  --primary-dark: #0e7490;
+  --primary-light: #22d3ee;
+  --primary-50: #ecfeff;
+  --primary-100: #cffafe;
   --accent: #f59e0b;
   --accent-light: #fbbf24;
   --dark: #0f172a;
@@ -15,7 +15,7 @@
   --bg: #f8fafc;
   --bg-elevated: #ffffff;
   --bg-subtle: #f1f5f9;
-  --success: #10b981;
+  --success: #0891b2;
   --warning: #f59e0b;
   --danger: #ef4444;
   --border: #e2e8f0;
@@ -28,7 +28,7 @@
   --shadow-lg: 0 20px 25px -5px rgb(0 0 0 / 0.08), 0 8px 10px -6px rgb(0 0 0 / 0.05);
   --shadow-xl: 0 25px 50px -12px rgb(0 0 0 / 0.15);
   --shadow-2xl: 0 35px 60px -15px rgb(0 0 0 / 0.18);
-  --shadow-primary: 0 12px 40px -8px rgb(13 148 136 / 0.4);
+  --shadow-primary: 0 12px 40px -8px rgb(8 145 178 / 0.4);
   --shadow-inner: inset 0 2px 4px 0 rgb(0 0 0 / 0.04);
 
   --radius-sm: 0.5rem;
@@ -70,13 +70,13 @@ body {
 
 /* Premium gradient backgrounds */
 .gradient-hero {
-  background: linear-gradient(135deg, #0f766e 0%, #0d9488 40%, #0f99a8 100%);
+  background: linear-gradient(135deg, #0e7490 0%, #0891b2 45%, #06b6d4 100%);
 }
 
 .gradient-hero-mesh {
   background:
-    radial-gradient(ellipse 100% 60% at 50% -10%, rgba(13, 148, 136, 0.12), transparent 60%),
-    radial-gradient(ellipse 80% 40% at 80% 50%, rgba(13, 148, 136, 0.06), transparent 50%),
+    radial-gradient(ellipse 100% 60% at 50% -10%, rgba(8, 145, 178, 0.14), transparent 60%),
+    radial-gradient(ellipse 80% 40% at 80% 50%, rgba(8, 145, 178, 0.07), transparent 50%),
     radial-gradient(ellipse 60% 30% at 20% 80%, rgba(245, 158, 11, 0.04), transparent 50%),
     linear-gradient(180deg, #ffffff 0%, #f8fafc 30%, #f1f5f9 100%);
 }
@@ -118,7 +118,7 @@ body {
 }
 .hover-lift:hover {
   transform: translateY(-6px);
-  box-shadow: var(--shadow-xl), 0 0 0 1px rgb(13 148 136 / 0.1);
+  box-shadow: var(--shadow-xl), 0 0 0 1px rgb(8 145 178 / 0.12);
 }
 
 /* Kart derinlik efekti */

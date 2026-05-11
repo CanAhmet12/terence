@@ -86,7 +86,7 @@ export default function AdminLayout({
         <aside className="hidden lg:flex w-64 min-h-dvh shrink-0 flex-col bg-slate-900 text-white">
           <div className="p-6 border-b border-slate-700/80">
             <Link href="/" className="flex items-center gap-3 group">
-              <div className="w-11 h-11 rounded-2xl overflow-hidden shadow-lg shadow-teal-500/20 group-hover:shadow-teal-500/30 transition-shadow">
+              <div className="w-11 h-11 rounded-2xl overflow-hidden shadow-lg shadow-cyan-500/20 group-hover:shadow-cyan-500/30 transition-shadow">
                 <Image src="/logo.png" alt="Terence Eğitim" width={44} height={44} />
               </div>
               <span className="font-bold tracking-tight">ADMIN</span>
@@ -101,7 +101,7 @@ export default function AdminLayout({
                   href={item.href}
                   className={`group flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-200 ${
                     isActive
-                      ? "bg-teal-600/20 text-teal-400 border border-teal-500/30"
+                      ? "bg-cyan-600/20 text-cyan-400 border border-cyan-500/30"
                       : "text-slate-400 hover:bg-slate-800 hover:text-white"
                   }`}
                 >
@@ -109,7 +109,7 @@ export default function AdminLayout({
                     icon={item.icon}
                     active={isActive}
                     size={20}
-                    className={isActive ? "text-teal-400" : "text-slate-400 group-hover:text-white"}
+                    className={isActive ? "text-cyan-400" : "text-slate-400 group-hover:text-white"}
                   />
                   {item.label}
                 </Link>
@@ -156,7 +156,7 @@ export default function AdminLayout({
                   href={item.href}
                   className={`group flex items-center gap-3 px-4 py-3 rounded-xl font-medium ${
                     isActive
-                      ? "bg-teal-600/20 text-teal-400"
+                      ? "bg-cyan-600/20 text-cyan-400"
                       : "text-slate-400 hover:bg-slate-800 hover:text-white"
                   }`}
                 >
@@ -164,7 +164,7 @@ export default function AdminLayout({
                     icon={item.icon}
                     active={isActive}
                     size={20}
-                    className={isActive ? "text-teal-400" : "text-slate-400 group-hover:text-white"}
+                    className={isActive ? "text-cyan-400" : "text-slate-400 group-hover:text-white"}
                   />
                   {item.label}
                 </Link>

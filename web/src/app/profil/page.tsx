@@ -161,7 +161,7 @@ export default function ProfilPage() {
             <div className="p-5 sm:p-8 border-b border-slate-100 bg-gradient-to-br from-slate-50 to-white">
               <div className="flex flex-col sm:flex-row items-center gap-6">
                 <div className="relative group">
-                  <div className="w-24 h-24 rounded-2xl overflow-hidden bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center shadow-lg shadow-teal-500/25">
+                  <div className="w-24 h-24 rounded-2xl overflow-hidden bg-gradient-to-br from-cyan-500 to-cyan-500 flex items-center justify-center shadow-lg shadow-cyan-500/25">
                     {photoPreview ? (
                       photoPreview.startsWith("blob:") ? (
                         // eslint-disable-next-line @next/next/no-img-element
@@ -182,7 +182,7 @@ export default function ProfilPage() {
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
                     disabled={photoUploading}
-                    className="absolute -bottom-2 -right-2 w-8 h-8 bg-teal-600 hover:bg-teal-700 text-white rounded-xl flex items-center justify-center shadow-md transition-colors disabled:opacity-50"
+                    className="absolute -bottom-2 -right-2 w-8 h-8 bg-cyan-600 hover:bg-cyan-700 text-white rounded-xl flex items-center justify-center shadow-md transition-colors disabled:opacity-50"
                   >
                     <Camera className="w-4 h-4" />
                   </button>
@@ -204,7 +204,7 @@ export default function ProfilPage() {
                       Öğretmen hesabı — abonelik ücreti yok
                     </span>
                   ) : user.subscription_plan && user.subscription_plan !== "free" ? (
-                    <span className="inline-flex items-center mt-1 px-2.5 py-1 bg-teal-50 text-teal-700 text-xs font-semibold rounded-full capitalize">
+                    <span className="inline-flex items-center mt-1 px-2.5 py-1 bg-cyan-50 text-cyan-700 text-xs font-semibold rounded-full capitalize">
                       {user.subscription_plan} paketi
                     </span>
                   ) : null}
@@ -215,7 +215,7 @@ export default function ProfilPage() {
             <form onSubmit={handleSubmit} className="p-5 sm:p-8 space-y-6">
               {/* Geri bildirim */}
               {saveState === "success" && (
-                <div className="flex items-center gap-3 p-4 bg-teal-50 border border-teal-100 rounded-xl text-teal-700 text-sm font-medium">
+                <div className="flex items-center gap-3 p-4 bg-cyan-50 border border-cyan-100 rounded-xl text-cyan-700 text-sm font-medium">
                   <CheckCircle className="w-5 h-5 shrink-0" />
                   Profil bilgileriniz başarıyla güncellendi.
                 </div>
@@ -230,7 +230,7 @@ export default function ProfilPage() {
               {/* Temel Bilgiler */}
               <div className="space-y-4">
                 <h3 className="font-bold text-slate-900 flex items-center gap-2">
-                  <User className="w-5 h-5 text-teal-600" />
+                  <User className="w-5 h-5 text-cyan-600" />
                   Temel Bilgiler
                 </h3>
                 <div>
@@ -242,7 +242,7 @@ export default function ProfilPage() {
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       required
-                      className="w-full pl-12 pr-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none transition-all"
+                      className="w-full pl-12 pr-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 outline-none transition-all"
                     />
                   </div>
                 </div>
@@ -270,7 +270,7 @@ export default function ProfilPage() {
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
                       placeholder="05XX XXX XX XX"
-                      className="w-full pl-12 pr-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none transition-all"
+                      className="w-full pl-12 pr-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 outline-none transition-all"
                     />
                   </div>
                 </div>
@@ -286,7 +286,7 @@ export default function ProfilPage() {
                       <select
                         value={sinif}
                         onChange={(e) => setSinif(e.target.value)}
-                        className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none transition-all"
+                        className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-cyan-500 outline-none transition-all"
                       >
                         <option value="">Seçin</option>
                         {SINIFLAR.map((s) => (
@@ -299,7 +299,7 @@ export default function ProfilPage() {
                       <select
                         value={alan}
                         onChange={(e) => setAlan(e.target.value)}
-                        className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none transition-all"
+                        className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-cyan-500 outline-none transition-all"
                       >
                         {ALANLAR.map((a) => (
                           <option key={a.value} value={a.value}>{a.label}</option>
@@ -314,7 +314,7 @@ export default function ProfilPage() {
                       value={hedefOkul}
                       onChange={(e) => setHedefOkul(e.target.value)}
                       placeholder="Örn: İstanbul Üniversitesi"
-                      className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none transition-all"
+                      className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-cyan-500 outline-none transition-all"
                     />
                   </div>
                   <div>
@@ -324,7 +324,7 @@ export default function ProfilPage() {
                       value={hedefBolum}
                       onChange={(e) => setHedefBolum(e.target.value)}
                       placeholder="Örn: Hukuk"
-                      className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none transition-all"
+                      className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-cyan-500 outline-none transition-all"
                     />
                   </div>
                 </div>
@@ -334,7 +334,7 @@ export default function ProfilPage() {
               {isTeacher && (
                 <div className="space-y-4 pt-6 border-t border-slate-100">
                   <h3 className="font-bold text-slate-900 flex items-center gap-2">
-                    <Briefcase className="w-5 h-5 text-teal-600" />
+                    <Briefcase className="w-5 h-5 text-cyan-600" />
                     Öğretmen Bilgileri
                   </h3>
                   <div>
@@ -346,7 +346,7 @@ export default function ProfilPage() {
                         value={brans}
                         onChange={(e) => setBrans(e.target.value)}
                         placeholder="Örn: Matematik, Fizik"
-                        className="w-full pl-12 pr-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none transition-all"
+                        className="w-full pl-12 pr-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-cyan-500 outline-none transition-all"
                       />
                     </div>
                   </div>
@@ -357,7 +357,7 @@ export default function ProfilPage() {
                       onChange={(e) => setOzgecmis(e.target.value)}
                       placeholder="Öğrenciler için görünür kısa tanıtım"
                       rows={3}
-                      className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none resize-none transition-all"
+                      className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-cyan-500 outline-none resize-none transition-all"
                     />
                   </div>
                 </div>
@@ -366,22 +366,22 @@ export default function ProfilPage() {
               {/* Bildirimler */}
               <div className="pt-6 border-t border-slate-100">
                 <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
-                  <Bell className="w-5 h-5 text-teal-600" />
+                  <Bell className="w-5 h-5 text-cyan-600" />
                   Bildirim Tercihleri
                 </h3>
                 <div className="space-y-3">
                   <label className="flex items-center justify-between py-3 px-4 rounded-xl bg-slate-50 hover:bg-slate-100/80 cursor-pointer transition-colors">
                     <span className="text-slate-700 font-medium">Çalışma hatırlatmaları</span>
-                    <input type="checkbox" checked={bildirimCalisma} onChange={(e) => setBildirimCalisma(e.target.checked)} className="w-5 h-5 rounded border-slate-300 text-teal-600 focus:ring-teal-500" />
+                    <input type="checkbox" checked={bildirimCalisma} onChange={(e) => setBildirimCalisma(e.target.checked)} className="w-5 h-5 rounded border-slate-300 text-cyan-600 focus:ring-cyan-500" />
                   </label>
                   <label className="flex items-center justify-between py-3 px-4 rounded-xl bg-slate-50 hover:bg-slate-100/80 cursor-pointer transition-colors">
                     <span className="text-slate-700 font-medium">Deneme uyarıları</span>
-                    <input type="checkbox" checked={bildirimDeneme} onChange={(e) => setBildirimDeneme(e.target.checked)} className="w-5 h-5 rounded border-slate-300 text-teal-600 focus:ring-teal-500" />
+                    <input type="checkbox" checked={bildirimDeneme} onChange={(e) => setBildirimDeneme(e.target.checked)} className="w-5 h-5 rounded border-slate-300 text-cyan-600 focus:ring-cyan-500" />
                   </label>
                   {isStudent && (
                     <label className="flex items-center justify-between py-3 px-4 rounded-xl bg-slate-50 hover:bg-slate-100/80 cursor-pointer transition-colors">
                       <span className="text-slate-700 font-medium">Hedef risk uyarısı</span>
-                      <input type="checkbox" checked={bildirimHedef} onChange={(e) => setBildirimHedef(e.target.checked)} className="w-5 h-5 rounded border-slate-300 text-teal-600 focus:ring-teal-500" />
+                      <input type="checkbox" checked={bildirimHedef} onChange={(e) => setBildirimHedef(e.target.checked)} className="w-5 h-5 rounded border-slate-300 text-cyan-600 focus:ring-cyan-500" />
                     </label>
                   )}
                 </div>
@@ -390,7 +390,7 @@ export default function ProfilPage() {
               <button
                 type="submit"
                 disabled={saveState === "saving"}
-                className="w-full flex items-center justify-center gap-2 py-4 bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-700 hover:to-teal-600 disabled:opacity-70 text-white font-semibold rounded-xl transition-all shadow-lg shadow-teal-500/25"
+                className="w-full flex items-center justify-center gap-2 py-4 bg-gradient-to-r from-cyan-600 to-cyan-500 hover:from-cyan-700 hover:to-cyan-600 disabled:opacity-70 text-white font-semibold rounded-xl transition-all shadow-lg shadow-cyan-500/25"
               >
                 {saveState === "saving" ? (
                   <>
@@ -410,23 +410,23 @@ export default function ProfilPage() {
           <div className="mt-6 space-y-2">
             <Link
               href="/sifre-degistir"
-              className="flex items-center justify-between p-4 rounded-xl bg-white border border-slate-200/80 hover:border-teal-200 transition-colors group"
+              className="flex items-center justify-between p-4 rounded-xl bg-white border border-slate-200/80 hover:border-cyan-200 transition-colors group"
             >
               <span className="flex items-center gap-3 text-slate-700 font-medium">
-                <Lock className="w-5 h-5 text-teal-600" />
+                <Lock className="w-5 h-5 text-cyan-600" />
                 Şifre değiştir
               </span>
-              <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-teal-600" />
+              <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-cyan-600" />
             </Link>
             <Link
               href="/bildirimler"
-              className="flex items-center justify-between p-4 rounded-xl bg-white border border-slate-200/80 hover:border-teal-200 transition-colors group"
+              className="flex items-center justify-between p-4 rounded-xl bg-white border border-slate-200/80 hover:border-cyan-200 transition-colors group"
             >
               <span className="flex items-center gap-3 text-slate-700 font-medium">
-                <Bell className="w-5 h-5 text-teal-600" />
+                <Bell className="w-5 h-5 text-cyan-600" />
                 Bildirimler
               </span>
-              <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-teal-600" />
+              <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-cyan-600" />
             </Link>
           </div>
         </div>

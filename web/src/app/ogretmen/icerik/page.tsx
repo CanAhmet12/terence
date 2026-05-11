@@ -10,7 +10,7 @@ import { Video, FileText, Upload, CheckCircle, Loader2, X, AlertCircle, Sparkles
 type ContentType = "video" | "pdf";
 
 const inputCls =
-  "w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none transition-all bg-white";
+  "w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-cyan-500 outline-none transition-all bg-white";
 const labelCls = "block text-sm font-semibold text-slate-700 mb-1.5";
 
 function useDebouncedValue<T>(value: T, delay: number): T {
@@ -220,13 +220,13 @@ function AIQuestionModal({
                   key={k}
                   className={`flex items-start gap-2 p-2.5 rounded-xl text-sm ${
                     generatedQ.correct_answer === k
-                      ? "bg-teal-100 border border-teal-300 font-semibold text-teal-800"
+                      ? "bg-cyan-100 border border-cyan-300 font-semibold text-cyan-800"
                       : "bg-white border border-slate-200 text-slate-700"
                   }`}
                 >
                   <span className="font-bold shrink-0 w-5">{k})</span>
                   <span>{v}</span>
-                  {generatedQ.correct_answer === k && <CheckCircle className="w-4 h-4 text-teal-600 ml-auto shrink-0 mt-0.5" />}
+                  {generatedQ.correct_answer === k && <CheckCircle className="w-4 h-4 text-cyan-600 ml-auto shrink-0 mt-0.5" />}
                 </div>
               ))}
               {generatedQ.explanation && (
@@ -237,7 +237,7 @@ function AIQuestionModal({
               <button
                 type="button"
                 onClick={() => onApply(generatedQ)}
-                className="w-full py-3 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-xl text-sm transition-colors flex items-center justify-center gap-2"
+                className="w-full py-3 bg-cyan-600 hover:bg-cyan-700 text-white font-bold rounded-xl text-sm transition-colors flex items-center justify-center gap-2"
               >
                 <CheckCircle className="w-4 h-4" />
                 Kapat
@@ -401,8 +401,8 @@ export default function IcerikYuklemePage() {
     return (
       <div className="p-8 lg:p-12">
         <div className="mx-auto max-w-lg py-10">
-          <div className="mb-6 flex w-20 items-center justify-center rounded-full bg-teal-100 mx-auto h-20">
-            <CheckCircle className="h-10 w-10 text-teal-600" />
+          <div className="mb-6 flex w-20 items-center justify-center rounded-full bg-cyan-100 mx-auto h-20">
+            <CheckCircle className="h-10 w-10 text-cyan-600" />
           </div>
           <h2 className="text-center text-2xl font-bold text-slate-900 mb-2">İçerik müfredata bağlandı</h2>
           <p className="text-center text-slate-600 mb-6 text-sm">
@@ -423,9 +423,9 @@ export default function IcerikYuklemePage() {
                   <p className="mt-1 text-slate-600 text-xs">Konu: {uploadDetail.curriculum_topic_title}</p>
                 ) : null}
                 {lc ? (
-                  <p className="mt-2 rounded-lg bg-teal-50 px-2 py-1.5 text-xs text-teal-950 ring-1 ring-teal-100">
+                  <p className="mt-2 rounded-lg bg-cyan-50 px-2 py-1.5 text-xs text-cyan-950 ring-1 ring-cyan-100">
                     Kurs: {formatLinkedCourseTeacher(lc)}
-                    <span className="mt-0.5 block font-normal text-teal-900/90">{lc.title}</span>
+                    <span className="mt-0.5 block font-normal text-cyan-900/90">{lc.title}</span>
                   </p>
                 ) : null}
               </div>
@@ -435,7 +435,7 @@ export default function IcerikYuklemePage() {
             <button
               type="button"
               onClick={resetForm}
-              className="px-6 py-3 bg-teal-600 hover:bg-teal-700 text-white font-semibold rounded-xl transition-colors"
+              className="px-6 py-3 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold rounded-xl transition-colors"
             >
               Yeni içerik ekle
             </button>
@@ -469,15 +469,15 @@ export default function IcerikYuklemePage() {
 
         <ol className="flex flex-wrap gap-3 mb-8 text-sm font-semibold text-slate-600">
           <li className="flex items-center gap-2 rounded-xl bg-white border border-slate-200 px-4 py-2">
-            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-teal-600 text-white text-xs">1</span>
+            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-cyan-600 text-white text-xs">1</span>
             Tür: video veya PDF
           </li>
           <li className="flex items-center gap-2 rounded-xl bg-white border border-slate-200 px-4 py-2">
-            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-teal-600 text-white text-xs">2</span>
+            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-cyan-600 text-white text-xs">2</span>
             Müfredat konusu
           </li>
           <li className="flex items-center gap-2 rounded-xl bg-white border border-slate-200 px-4 py-2">
-            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-teal-600 text-white text-xs">3</span>
+            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-cyan-600 text-white text-xs">3</span>
             Dosya yükle
           </li>
         </ol>
@@ -494,7 +494,7 @@ export default function IcerikYuklemePage() {
                 setUploadError(null);
               }}
               className={`flex items-center gap-2 px-5 py-3 rounded-xl font-semibold transition-all ${
-                secim === key ? "bg-teal-600 text-white shadow-lg shadow-teal-500/25" : "bg-white border border-slate-200 text-slate-700 hover:bg-slate-50"
+                secim === key ? "bg-cyan-600 text-white shadow-lg shadow-cyan-500/25" : "bg-white border border-slate-200 text-slate-700 hover:bg-slate-50"
               }`}
             >
               <Icon className="w-5 h-5" />
@@ -545,7 +545,7 @@ export default function IcerikYuklemePage() {
                           setSearchError(null);
                           setUploadError(null);
                         }}
-                        className="w-full text-left px-4 py-3 hover:bg-teal-50 text-sm"
+                        className="w-full text-left px-4 py-3 hover:bg-cyan-50 text-sm"
                       >
                         <span className="font-semibold text-slate-900">{t.title}</span>
                         <span className="block text-xs text-slate-500 mt-0.5">
@@ -576,14 +576,14 @@ export default function IcerikYuklemePage() {
             </div>
 
             {selectedTopic && (
-              <div className="flex flex-wrap items-center gap-2 p-3 bg-teal-50 border border-teal-100 rounded-xl text-sm text-teal-900">
+              <div className="flex flex-wrap items-center gap-2 p-3 bg-cyan-50 border border-cyan-100 rounded-xl text-sm text-cyan-900">
                 <CheckCircle className="w-4 h-4 shrink-0" />
                 <span>
                   Seçili konu #{selectedTopic.id}: <strong>{selectedTopic.title}</strong>
                 </span>
                 <button
                   type="button"
-                  className="ml-auto text-teal-700 underline text-xs"
+                  className="ml-auto text-cyan-700 underline text-xs"
                   onClick={() => {
                     setSelectedTopic(null);
                     setUploadError(null);
@@ -618,7 +618,7 @@ export default function IcerikYuklemePage() {
                 onDrop={handleDrop}
                 onClick={() => fileRef.current?.click()}
                 className={`relative border-2 border-dashed rounded-2xl p-10 text-center cursor-pointer transition-all ${
-                  dragOver ? "border-teal-400 bg-teal-50" : file ? "border-teal-300 bg-teal-50/30" : "border-slate-200 hover:border-slate-300 hover:bg-slate-50"
+                  dragOver ? "border-cyan-400 bg-cyan-50" : file ? "border-cyan-300 bg-cyan-50/30" : "border-slate-200 hover:border-slate-300 hover:bg-slate-50"
                 }`}
               >
                 <input
@@ -630,8 +630,8 @@ export default function IcerikYuklemePage() {
                 />
                 {file ? (
                   <div className="flex items-center justify-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-teal-100 flex items-center justify-center">
-                      {secim === "video" ? <Video className="w-5 h-5 text-teal-600" /> : <FileText className="w-5 h-5 text-teal-600" />}
+                    <div className="w-10 h-10 rounded-xl bg-cyan-100 flex items-center justify-center">
+                      {secim === "video" ? <Video className="w-5 h-5 text-cyan-600" /> : <FileText className="w-5 h-5 text-cyan-600" />}
                     </div>
                     <div className="text-left">
                       <p className="font-semibold text-slate-900 text-sm">{file.name}</p>
@@ -696,7 +696,7 @@ export default function IcerikYuklemePage() {
               type="button"
               onClick={handleUpload}
               disabled={uploading || !token}
-              className="w-full py-4 bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-700 hover:to-teal-600 disabled:opacity-70 text-white font-bold rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-teal-500/25"
+              className="w-full py-4 bg-gradient-to-r from-cyan-600 to-cyan-500 hover:from-cyan-700 hover:to-cyan-600 disabled:opacity-70 text-white font-bold rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-cyan-500/25"
             >
               {uploading ? (
                 <>

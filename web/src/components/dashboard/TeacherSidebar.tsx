@@ -65,7 +65,7 @@ export function TeacherSidebar() {
             <Image src="/logo.png" alt="Terence Eğitim" width={40} height={40} />
           </div>
           <span className="font-bold text-slate-900 tracking-tight text-sm">
-            TERENCE <span className="text-teal-600">EĞİTİM</span>
+            TERENCE <span className="text-cyan-600">EĞİTİM</span>
           </span>
         </Link>
       </div>
@@ -87,7 +87,7 @@ export function TeacherSidebar() {
                     className={cn(
                       "flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium transition-all duration-200 text-sm",
                       isActive
-                        ? "bg-gradient-to-r from-teal-50 to-emerald-50 text-teal-700 border border-teal-100/80 shadow-sm"
+                        ? "bg-gradient-to-r from-cyan-50 to-cyan-50 text-cyan-700 border border-cyan-100/80 shadow-sm"
                         : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
                     )}
                   >
@@ -95,7 +95,7 @@ export function TeacherSidebar() {
                       icon={item.icon}
                       active={isActive}
                       size={18}
-                      className={isActive ? "text-teal-600" : "text-slate-400 group-hover:text-slate-600"}
+                      className={isActive ? "text-cyan-600" : "text-slate-400 group-hover:text-slate-600"}
                     />
                     {item.label}
                   </Link>
@@ -115,7 +115,7 @@ export function TeacherSidebar() {
       <div className="p-3 border-t border-slate-100">
         <Link
           href="/"
-          className="flex items-center gap-2 px-3 py-2.5 text-slate-500 hover:text-teal-600 hover:bg-teal-50/50 rounded-xl text-sm font-medium transition-colors"
+          className="flex items-center gap-2 px-3 py-2.5 text-slate-500 hover:text-cyan-600 hover:bg-cyan-50/50 rounded-xl text-sm font-medium transition-colors"
         >
           <ChevronLeft className="w-4 h-4" />
           Siteye Dön

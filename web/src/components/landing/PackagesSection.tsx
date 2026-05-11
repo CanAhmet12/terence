@@ -79,7 +79,7 @@ export function PackagesSection() {
       
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-3xl mx-auto mb-20">
-          {/* OLD: text-teal-600 */}
+          {/* OLD: text-cyan-600 */}
           <p className="text-cyan-600 font-semibold text-sm uppercase tracking-wider mb-4">
             Paketler
           </p>
@@ -133,7 +133,7 @@ export function PackagesSection() {
               <ul className="space-y-4 mb-8">
                 {pkg.features.map((f) => (
                   <li key={f} className="flex items-start gap-3">
-                    {/* OLD: text-teal-500 */}
+                    {/* OLD: text-cyan-500 */}
                     <Check className="w-5 h-5 text-cyan-500 shrink-0 mt-0.5" strokeWidth={2.5} />
                     <span className="text-slate-600 text-[15px]">{f}</span>
                   </li>

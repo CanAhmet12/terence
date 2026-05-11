@@ -59,11 +59,11 @@ const EXAM_TYPES: ExamType[] = [
     desc: "Liselere Geçiş Sınavı",
     questions: 90,
     duration: 90,
-    gradient: "from-emerald-600 via-emerald-700 to-teal-800",
-    shadow: "shadow-emerald-500/40",
-    spine: "bg-emerald-900",
-    accentColor: "#059669",
-    badgeColor: "bg-emerald-500",
+    gradient: "from-cyan-600 via-cyan-700 to-cyan-800",
+    shadow: "shadow-cyan-500/40",
+    spine: "bg-cyan-900",
+    accentColor: "#0891b2",
+    badgeColor: "bg-cyan-500",
     icon: "📙",
   },
   {
@@ -379,9 +379,9 @@ function HistoryDataTable({ sessions }: { sessions: ExamSession[] }) {
               >
                 <td className="py-3 px-4 font-semibold text-slate-800 max-w-[180px] truncate">{title}</td>
                 <td className="py-3 px-4 text-slate-500 hidden sm:table-cell whitespace-nowrap">{date}</td>
-                <td className="py-3 px-4 font-black text-teal-700">{net.toFixed(1)}</td>
+                <td className="py-3 px-4 font-black text-cyan-700">{net.toFixed(1)}</td>
                 <td className="py-3 px-4 text-xs text-slate-600 hidden md:table-cell whitespace-nowrap">
-                  <span className="text-emerald-600 font-semibold">{correct}</span>
+                  <span className="text-cyan-600 font-semibold">{correct}</span>
                   {" / "}
                   <span className="text-red-500 font-semibold">{wrong}</span>
                   {" / "}
@@ -392,7 +392,7 @@ function HistoryDataTable({ sessions }: { sessions: ExamSession[] }) {
                 </td>
                 <td className="py-3 px-4 hidden sm:table-cell">
                   <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-gradient-to-r from-teal-500 to-emerald-500 rounded-full" style={{ width: `${pct}%` }} />
+                    <div className="h-full bg-gradient-to-r from-cyan-500 to-cyan-500 rounded-full" style={{ width: `${pct}%` }} />
                   </div>
                   <span className="text-[10px] text-slate-400">%{pct}</span>
                 </td>
@@ -422,11 +422,11 @@ function TemplateCard({
       type="button"
       onClick={() => !loading && onStart(item)}
       disabled={loading}
-      className="text-left rounded-2xl border border-slate-200 bg-white p-4 shadow-sm hover:shadow-md hover:border-teal-200 transition-all min-w-[200px] max-w-[260px] shrink-0"
+      className="text-left rounded-2xl border border-slate-200 bg-white p-4 shadow-sm hover:shadow-md hover:border-cyan-200 transition-all min-w-[200px] max-w-[260px] shrink-0"
     >
       <div className="flex items-start gap-3">
-        <div className="w-10 h-10 rounded-xl bg-teal-50 flex items-center justify-center shrink-0">
-          <ListOrdered className="w-5 h-5 text-teal-700" />
+        <div className="w-10 h-10 rounded-xl bg-cyan-50 flex items-center justify-center shrink-0">
+          <ListOrdered className="w-5 h-5 text-cyan-700" />
         </div>
         <div className="min-w-0">
           <p className="font-bold text-slate-900 text-sm leading-snug line-clamp-2">{item.title}</p>
@@ -436,12 +436,12 @@ function TemplateCard({
         </div>
       </div>
       {loading ? (
-        <div className="mt-3 flex items-center gap-2 text-xs text-teal-700 font-semibold">
+        <div className="mt-3 flex items-center gap-2 text-xs text-cyan-700 font-semibold">
           <Loader2 className="w-3.5 h-3.5 animate-spin" />
           Başlatılıyor…
         </div>
       ) : (
-        <div className="mt-3 flex items-center gap-1 text-xs font-bold text-teal-700">
+        <div className="mt-3 flex items-center gap-1 text-xs font-bold text-cyan-700">
           Başlat <ChevronRight className="w-3.5 h-3.5" />
         </div>
       )}
@@ -733,7 +733,7 @@ export default function DenemePage() {
                 <button
                   key={e.key}
                   type="button"
-                  className="w-full text-left px-3 py-2 rounded-xl hover:bg-teal-50 flex items-center justify-between"
+                  className="w-full text-left px-3 py-2 rounded-xl hover:bg-cyan-50 flex items-center justify-between"
                   onClick={() => handleStartExam(e)}
                 >
                   <span>
@@ -776,7 +776,7 @@ export default function DenemePage() {
                     }}
                   >
                     <span className="truncate">{s.title ?? `${s.exam_type} Denemesi`}</span>
-                    <span className="text-xs text-teal-700 font-bold shrink-0 ml-2">{Number(s.net_score ?? 0).toFixed(1)} net</span>
+                    <span className="text-xs text-cyan-700 font-bold shrink-0 ml-2">{Number(s.net_score ?? 0).toFixed(1)} net</span>
                   </button>
                 ))
               )}
@@ -789,7 +789,7 @@ export default function DenemePage() {
         <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(260px,300px)] gap-6 lg:gap-8 items-start">
           <div className="space-y-8">
             {/* Hero */}
-            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-600 via-violet-600 to-teal-600 text-white px-6 py-10 sm:px-10 sm:py-12">
+            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-600 via-violet-600 to-cyan-600 text-white px-6 py-10 sm:px-10 sm:py-12">
               <div className="absolute inset-0 opacity-20 pointer-events-none bg-[radial-gradient(circle_at_20%_20%,white,transparent_50%)]" />
               <div className="relative flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
                 <div>
@@ -833,8 +833,8 @@ export default function DenemePage() {
               <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                 <StatBadge label="Toplam tamamlanan" value={totalExams} icon={Trophy} color="text-violet-600" bg="bg-violet-50" />
                 <StatBadge label="Ort. cevaplanma" value={`%${answeredPct}`} icon={BarChart3} color="text-indigo-600" bg="bg-indigo-50" />
-                <StatBadge label={`Ort. net / ${maxRef}`} value={avgNetStr} icon={TrendingUp} color="text-teal-600" bg="bg-teal-50" />
-                <StatBadge label={`En yüksek / ${maxRef}`} value={bestNetStr} icon={Calendar} color="text-emerald-600" bg="bg-emerald-50" />
+                <StatBadge label={`Ort. net / ${maxRef}`} value={avgNetStr} icon={TrendingUp} color="text-cyan-600" bg="bg-cyan-50" />
+                <StatBadge label={`En yüksek / ${maxRef}`} value={bestNetStr} icon={Calendar} color="text-cyan-600" bg="bg-cyan-50" />
                 <StatBadge label="Ort. süre" value={avgTimeLabel} icon={Clock} color="text-amber-600" bg="bg-amber-50" />
               </div>
             )}
@@ -1030,7 +1030,7 @@ export default function DenemePage() {
               ) : (
                 <>
                   <p className="font-bold text-slate-900">{history[0].title ?? `${history[0].exam_type ?? "TYT"} Denemesi`}</p>
-                  <p className="text-2xl font-black text-teal-600 mt-2">{Number(history[0].net_score ?? 0).toFixed(2)} net</p>
+                  <p className="text-2xl font-black text-cyan-600 mt-2">{Number(history[0].net_score ?? 0).toFixed(2)} net</p>
                   <p className="text-xs text-slate-500 mt-1">
                     {history[0].finished_at
                       ? new Date(history[0].finished_at!).toLocaleString("tr-TR")

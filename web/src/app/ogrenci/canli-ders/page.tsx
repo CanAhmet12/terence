@@ -317,7 +317,7 @@ function OgrenciCanliDersPageInner() {
                       <button
                         type="button"
                         onClick={() => window.open(recording_url, "_blank")}
-                        className="rounded-xl bg-emerald-600 px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-emerald-700"
+                        className="rounded-xl bg-cyan-600 px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-cyan-700"
                       >
                         Oynat
                       </button>

@@ -42,11 +42,11 @@ export const TASK_TYPE_CONFIG: Record<
     iconBg: "bg-violet-100",
   },
   read: {
-    border: "border-teal-400",
-    bg: "bg-teal-50/60",
-    text: "text-teal-700",
+    border: "border-cyan-400",
+    bg: "bg-cyan-50/60",
+    text: "text-cyan-700",
     icon: BookOpen,
-    iconBg: "bg-teal-100",
+    iconBg: "bg-cyan-100",
   },
   repeat: {
     border: "border-amber-400",

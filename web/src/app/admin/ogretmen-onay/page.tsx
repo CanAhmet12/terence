@@ -116,14 +116,14 @@ export default function OgretmenOnayPage() {
 
   const STATUS_CONFIG = {
     pending: { label: "Bekliyor", cls: "bg-amber-100 text-amber-700 border-amber-200" },
-    approved: { label: "Onaylı", cls: "bg-teal-100 text-teal-700 border-teal-200" },
+    approved: { label: "Onaylı", cls: "bg-cyan-100 text-cyan-700 border-cyan-200" },
     rejected: { label: "Reddedildi", cls: "bg-red-100 text-red-700 border-red-200" },
   };
 
   return (
     <div className="w-full min-w-0 max-w-none px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8 xl:px-10 xl:py-10 overflow-x-hidden">
       <div className="mb-8">
-        <Link href="/admin/kullanicilar" className="inline-flex items-center gap-2 text-slate-500 hover:text-teal-600 text-sm font-medium mb-5 transition-colors">
+        <Link href="/admin/kullanicilar" className="inline-flex items-center gap-2 text-slate-500 hover:text-cyan-600 text-sm font-medium mb-5 transition-colors">
           <ArrowLeft className="w-4 h-4" /> Kullanıcılara Dön
         </Link>
         <div className="flex items-start justify-between gap-4 flex-wrap">
@@ -157,7 +157,7 @@ export default function OgretmenOnayPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Ad, e-posta veya ders ara..."
-            className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-teal-500 outline-none"
+            className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-cyan-500 outline-none"
           />
         </div>
         {(["pending", "approved", "rejected", "all"] as const).map((s) => (
@@ -205,7 +205,7 @@ export default function OgretmenOnayPage() {
                 a.teacher_status === "pending" ? "border-amber-200 bg-amber-50/30" : "border-slate-200"
               }`}>
                 {/* Avatar */}
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-teal-100 to-emerald-100 flex items-center justify-center text-teal-700 font-bold text-lg shrink-0 overflow-hidden border border-teal-200/60">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-100 to-cyan-100 flex items-center justify-center text-cyan-700 font-bold text-lg shrink-0 overflow-hidden border border-cyan-200/60">
                   {a.profile_photo_url
                     // eslint-disable-next-line @next/next/no-img-element
                     ? <img src={a.profile_photo_url} alt={a.name} className="w-full h-full object-cover" />
@@ -224,7 +224,7 @@ export default function OgretmenOnayPage() {
                   <div className="flex items-center gap-3 mt-1 flex-wrap">
                     {a.subject && (
                       <span className="flex items-center gap-1 text-xs text-slate-600 font-medium">
-                        <BookOpen className="w-3.5 h-3.5 text-teal-500" /> {a.subject}
+                        <BookOpen className="w-3.5 h-3.5 text-cyan-500" /> {a.subject}
                       </span>
                     )}
                     <span className="flex items-center gap-1 text-xs text-slate-400">
@@ -245,7 +245,7 @@ export default function OgretmenOnayPage() {
                     <button
                       onClick={() => handleApprove(a.id)}
                       disabled={processing === a.id}
-                      className="flex items-center gap-1.5 px-4 py-2 bg-teal-600 hover:bg-teal-700 disabled:opacity-60 text-white text-sm font-bold rounded-xl transition-colors"
+                      className="flex items-center gap-1.5 px-4 py-2 bg-cyan-600 hover:bg-cyan-700 disabled:opacity-60 text-white text-sm font-bold rounded-xl transition-colors"
                     >
                       {processing === a.id ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle className="w-3.5 h-3.5" />}
                       Onayla
@@ -280,7 +280,7 @@ export default function OgretmenOnayPage() {
             </div>
             <div className="p-6 space-y-4">
               <div className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-teal-100 to-emerald-100 flex items-center justify-center text-teal-700 font-bold text-2xl overflow-hidden">
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-cyan-100 to-cyan-100 flex items-center justify-center text-cyan-700 font-bold text-2xl overflow-hidden">
                   {selectedUser.profile_photo_url
                     // eslint-disable-next-line @next/next/no-img-element
                     ? <img src={selectedUser.profile_photo_url} alt={selectedUser.name} className="w-full h-full object-cover" />
@@ -294,8 +294,8 @@ export default function OgretmenOnayPage() {
                 </div>
               </div>
               {selectedUser.subject && (
-                <div className="p-3 bg-teal-50 border border-teal-200 rounded-xl">
-                  <p className="text-xs text-teal-600 font-semibold mb-1">Branş</p>
+                <div className="p-3 bg-cyan-50 border border-cyan-200 rounded-xl">
+                  <p className="text-xs text-cyan-600 font-semibold mb-1">Branş</p>
                   <p className="text-slate-900 font-medium">{selectedUser.subject}</p>
                 </div>
               )}
@@ -309,7 +309,7 @@ export default function OgretmenOnayPage() {
                 {selectedUser.teacher_status !== "approved" && (
                   <button
                     onClick={() => { handleApprove(selectedUser.id); setSelectedUser(null); }}
-                    className="flex-1 py-3 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-xl transition-colors flex items-center justify-center gap-2"
+                    className="flex-1 py-3 bg-cyan-600 hover:bg-cyan-700 text-white font-bold rounded-xl transition-colors flex items-center justify-center gap-2"
                   >
                     <CheckCircle className="w-4 h-4" /> Onayla
                   </button>

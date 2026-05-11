@@ -37,7 +37,7 @@ export function KpiStrip({ summary }: { summary: StudentLiveLessonsSummary | nul
       title: "Süre",
       value: formatMonthMinutes(minutes),
       sub: "bu ay",
-      iconWrap: "bg-emerald-50 text-emerald-600 ring-1 ring-emerald-100/80",
+      iconWrap: "bg-cyan-50 text-cyan-600 ring-1 ring-cyan-100/80",
     },
   ];
 

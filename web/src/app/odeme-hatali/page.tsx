@@ -58,7 +58,7 @@ function OdemeHataliContent() {
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <Link
             href={plan ? `/paketler?plan=${plan}` : "/paketler"}
-            className="flex items-center justify-center gap-2 px-8 py-4 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-2xl transition-colors shadow-lg shadow-teal-500/25"
+            className="flex items-center justify-center gap-2 px-8 py-4 bg-cyan-600 hover:bg-cyan-700 text-white font-bold rounded-2xl transition-colors shadow-lg shadow-cyan-500/25"
           >
             <RefreshCw className="w-5 h-5" />
             Tekrar Dene

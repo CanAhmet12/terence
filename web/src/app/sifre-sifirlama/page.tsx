@@ -50,8 +50,8 @@ export default function ForgotPasswordPage() {
           )}
           {sent ? (
             <div className="py-8 text-center">
-              <div className="w-16 h-16 rounded-full bg-teal-100 flex items-center justify-center mx-auto mb-4">
-                <Mail className="w-8 h-8 text-teal-600" />
+              <div className="w-16 h-16 rounded-full bg-cyan-100 flex items-center justify-center mx-auto mb-4">
+                <Mail className="w-8 h-8 text-cyan-600" />
               </div>
               <h2 className="font-semibold text-slate-900 mb-2">E-posta gönderildi</h2>
               <p className="text-slate-600 text-sm mb-6">
@@ -59,7 +59,7 @@ export default function ForgotPasswordPage() {
               </p>
               <Link
                 href="/giris"
-                className="text-teal-600 font-semibold hover:underline"
+                className="text-cyan-600 font-semibold hover:underline"
               >
                 Giriş sayfasına dön
               </Link>
@@ -78,7 +78,7 @@ export default function ForgotPasswordPage() {
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="ornek@email.com"
                     required
-                    className="w-full pl-11 pr-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none transition-all"
+                    className="w-full pl-11 pr-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 outline-none transition-all"
                   />
                 </div>
               </div>
@@ -86,7 +86,7 @@ export default function ForgotPasswordPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3.5 bg-teal-600 hover:bg-teal-700 disabled:opacity-70 text-white font-semibold rounded-xl transition-colors"
+                className="w-full py-3.5 bg-cyan-600 hover:bg-cyan-700 disabled:opacity-70 text-white font-semibold rounded-xl transition-colors"
               >
                 {loading ? "Gönderiliyor..." : "Sıfırlama Linki Gönder"}
               </button>
@@ -94,7 +94,7 @@ export default function ForgotPasswordPage() {
           )}
 
           <p className="mt-6 text-sm text-slate-500 text-center">
-            <Link href="/giris" className="text-teal-600 hover:underline">
+            <Link href="/giris" className="text-cyan-600 hover:underline">
               ← Giriş sayfasına dön
             </Link>
           </p>

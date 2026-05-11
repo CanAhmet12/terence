@@ -121,7 +121,7 @@ export default function AdminProfilPage() {
   const Feedback = () => (
     <>
       {saveState === "success" && (
-        <div className="flex items-center gap-3 p-4 bg-teal-50 border border-teal-100 rounded-xl text-teal-700 text-sm font-medium mb-6">
+        <div className="flex items-center gap-3 p-4 bg-cyan-50 border border-cyan-100 rounded-xl text-cyan-700 text-sm font-medium mb-6">
           <CheckCircle className="w-5 h-5 shrink-0" /> Değişiklikler başarıyla kaydedildi.
         </div>
       )}
@@ -177,7 +177,7 @@ export default function AdminProfilPage() {
                 <div className="text-center">
                   <p className="font-bold text-white text-base leading-tight">{user.name}</p>
                   <div className="flex items-center gap-1.5 mt-1 justify-center">
-                    <div className="w-2 h-2 rounded-full bg-emerald-400" />
+                    <div className="w-2 h-2 rounded-full bg-cyan-400" />
                     <span className="text-white/70 text-xs font-medium">Sistem Yöneticisi</span>
                   </div>
                 </div>
@@ -196,8 +196,8 @@ export default function AdminProfilPage() {
                 </div>
               )}
               <div className="flex items-center gap-2.5 text-sm pt-2 border-t border-slate-100">
-                <Settings className="w-4 h-4 text-teal-500 shrink-0" />
-                <span className="text-teal-700 font-semibold text-xs">Admin Rolü</span>
+                <Settings className="w-4 h-4 text-cyan-500 shrink-0" />
+                <span className="text-cyan-700 font-semibold text-xs">Admin Rolü</span>
               </div>
               {user.created_at && (
                 <div className="flex items-center gap-2.5 text-sm">
@@ -349,7 +349,7 @@ export default function AdminProfilPage() {
                       </div>
                       <div
                         className={`w-11 h-6 rounded-full transition-colors relative cursor-pointer ${
-                          item.checked ? "bg-teal-500" : "bg-slate-300"
+                          item.checked ? "bg-cyan-500" : "bg-slate-300"
                         }`}
                         onClick={() => item.set(!item.checked)}
                       >

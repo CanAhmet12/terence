@@ -28,7 +28,7 @@ export function PlanProgressCard({
                 pct={progress}
                 size={80}
                 stroke={7}
-                color={progress === 100 ? "#22c55e" : "#6366f1"}
+                color={progress === 100 ? "#06b6d4" : "#6366f1"}
               />
               <div className="absolute inset-0 flex items-center justify-center">
                 <span className="text-lg font-black text-slate-800">
@@ -61,7 +61,7 @@ export function PlanProgressCard({
                     : "Henüz görev tamamlanmadı"}
               </p>
               {progress === 100 && (
-                <div className="mt-2 flex items-center gap-1.5 text-sm font-semibold text-emerald-600">
+                <div className="mt-2 flex items-center gap-1.5 text-sm font-semibold text-cyan-600">
                   <CheckCircle2 className="h-4 w-4" />
                   Harika iş! Bugünkü planı bitirdin.
                 </div>
@@ -85,7 +85,7 @@ export function PlanProgressCard({
           <div
             className={`h-full rounded-full transition-all duration-700 ${
               progress === 100
-                ? "bg-gradient-to-r from-emerald-400 to-emerald-500"
+                ? "bg-gradient-to-r from-cyan-400 to-cyan-500"
                 : "bg-gradient-to-r from-indigo-500 to-violet-500"
             }`}
             style={{ width: `${progress}%` }}

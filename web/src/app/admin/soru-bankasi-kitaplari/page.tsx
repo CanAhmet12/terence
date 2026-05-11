@@ -117,7 +117,7 @@ export default function AdminSoruBankasiKitaplariPage() {
 
   return (
     <div className="w-full min-w-0 max-w-none px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8 xl:px-10 xl:py-10 overflow-x-hidden">
-      <Link href="/admin/icerik-merkezi" className="inline-flex items-center gap-2 text-slate-600 hover:text-teal-600 mb-6 font-medium">
+      <Link href="/admin/icerik-merkezi" className="inline-flex items-center gap-2 text-slate-600 hover:text-cyan-600 mb-6 font-medium">
         <ArrowLeft className="w-4 h-4" />
         İçerik merkezine dön
       </Link>
@@ -143,7 +143,7 @@ export default function AdminSoruBankasiKitaplariPage() {
       <div className="grid lg:grid-cols-2 gap-8">
         <form onSubmit={save} className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
           <h2 className="font-bold text-slate-900 flex items-center gap-2">
-            {editingId ? <Pencil className="w-4 h-4 text-teal-600" /> : <Plus className="w-4 h-4 text-teal-600" />}
+            {editingId ? <Pencil className="w-4 h-4 text-cyan-600" /> : <Plus className="w-4 h-4 text-cyan-600" />}
             {editingId ? "Kayıt düzenle" : "Yeni kayıt"}
           </h2>
           <div>
@@ -188,7 +188,7 @@ export default function AdminSoruBankasiKitaplariPage() {
             Aktif
           </label>
           <div className="flex gap-2">
-            <button type="submit" disabled={saving} className="flex-1 py-3 rounded-xl bg-teal-600 text-white font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-60">
+            <button type="submit" disabled={saving} className="flex-1 py-3 rounded-xl bg-cyan-600 text-white font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-60">
               {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
               {editingId ? "Güncelle" : "Ekle"}
             </button>
@@ -203,7 +203,7 @@ export default function AdminSoruBankasiKitaplariPage() {
         <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
           <div className="px-4 py-3 border-b border-slate-100 font-bold text-slate-800 text-sm">Kayıtlar</div>
           {loading ? (
-            <div className="p-8 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-teal-600" /></div>
+            <div className="p-8 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-cyan-600" /></div>
           ) : rows.length === 0 ? (
             <p className="p-6 text-sm text-slate-500">Henüz kayıt yok.</p>
           ) : (
@@ -215,7 +215,7 @@ export default function AdminSoruBankasiKitaplariPage() {
                     <p className="text-xs text-slate-500 truncate mt-1">{r.title_override || "—"} · {r.badge_label || "—"}</p>
                   </div>
                   <div className="flex gap-1 shrink-0">
-                    <button type="button" onClick={() => startEdit(r)} className="p-2 rounded-lg text-teal-600 hover:bg-teal-50" aria-label="Düzenle">
+                    <button type="button" onClick={() => startEdit(r)} className="p-2 rounded-lg text-cyan-600 hover:bg-cyan-50" aria-label="Düzenle">
                       <Pencil className="w-4 h-4" />
                     </button>
                     <button type="button" onClick={() => remove(r.id)} className="p-2 rounded-lg text-red-500 hover:bg-red-50" aria-label="Sil">

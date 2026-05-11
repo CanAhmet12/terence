@@ -197,7 +197,7 @@ export default function OgretmenDerslerPage() {
                   </div>
                   <div className="hidden sm:flex items-center gap-3 text-[11px] text-slate-400">
                     <span className="flex items-center gap-1">
-                      <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                      <span className="w-2 h-2 rounded-full bg-cyan-500" />
                       Video/PDF var
                     </span>
                     <span className="flex items-center gap-1">
@@ -291,7 +291,7 @@ export default function OgretmenDerslerPage() {
                               const hasVideo = items.some((it) => it.type === "video");
                               const hasPdf = items.some((it) => it.type === "pdf");
                               const hasMedia = hasVideo || hasPdf;
-                              const statusDot = hasMedia ? "bg-emerald-500" : "bg-slate-300";
+                              const statusDot = hasMedia ? "bg-cyan-500" : "bg-slate-300";
                               return (
                                 <div
                                   key={topic.id}
@@ -302,7 +302,7 @@ export default function OgretmenDerslerPage() {
                                     <div className="flex items-center gap-2 flex-wrap">
                                       <span className="font-semibold text-slate-900 text-sm">{topic.title}</span>
                                       {topic.kazanim_code && (
-                                        <span className="font-mono text-[11px] font-bold text-teal-600 bg-teal-50 px-2 py-0.5 rounded-md border border-teal-100">
+                                        <span className="font-mono text-[11px] font-bold text-cyan-600 bg-cyan-50 px-2 py-0.5 rounded-md border border-cyan-100">
                                           {topic.kazanim_code}
                                         </span>
                                       )}

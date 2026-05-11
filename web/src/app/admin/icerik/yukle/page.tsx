@@ -241,7 +241,7 @@ export default function AdminIcerikYuklePage() {
       <div className="mb-6 flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <Link
           href="/admin/icerik-merkezi"
-          className="inline-flex w-fit items-center gap-2 text-slate-600 hover:text-teal-600 font-medium text-sm"
+          className="inline-flex w-fit items-center gap-2 text-slate-600 hover:text-cyan-600 font-medium text-sm"
         >
           <ArrowLeft className="w-4 h-4" />
           İçerik merkezine dön
@@ -263,7 +263,7 @@ export default function AdminIcerikYuklePage() {
       {msg && (
         <div
           className={`mb-6 rounded-xl border p-4 text-sm font-medium ${
-            msg.type === "ok" ? "border-teal-100 bg-teal-50 text-teal-900" : "border-red-100 bg-red-50 text-red-800"
+            msg.type === "ok" ? "border-cyan-100 bg-cyan-50 text-cyan-900" : "border-red-100 bg-red-50 text-red-800"
           } flex items-start gap-2`}
         >
           {msg.type === "ok" ? <CheckCircle className="mt-0.5 h-4 w-4 shrink-0" /> : <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />}
@@ -272,8 +272,8 @@ export default function AdminIcerikYuklePage() {
       )}
 
       {lastUploadResult?.content_item && (
-        <div className="mb-8 rounded-2xl border border-teal-200 bg-gradient-to-br from-teal-50/90 to-white p-5 shadow-sm sm:p-6">
-          <p className="text-xs font-bold uppercase tracking-wide text-teal-800">Son yüklenen içerik</p>
+        <div className="mb-8 rounded-2xl border border-cyan-200 bg-gradient-to-br from-cyan-50/90 to-white p-5 shadow-sm sm:p-6">
+          <p className="text-xs font-bold uppercase tracking-wide text-cyan-800">Son yüklenen içerik</p>
           <div className="mt-4 flex flex-col gap-5 sm:flex-row sm:items-start">
             <div className="relative aspect-video w-full shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-slate-900/5 sm:w-56">
               {lastUploadResult.content_item.thumbnail_url ? (
@@ -298,7 +298,7 @@ export default function AdminIcerikYuklePage() {
               </p>
               {lastUploadResult.linked_course ? (
                 <p className="rounded-lg bg-white/80 px-3 py-2 text-slate-800 ring-1 ring-slate-200">
-                  <span className="font-medium text-teal-900">Öğrenci kurs kaydı (bağlantı):</span>{" "}
+                  <span className="font-medium text-cyan-900">Öğrenci kurs kaydı (bağlantı):</span>{" "}
                   {formatLinkedCourseLine(lastUploadResult.linked_course)}
                   <span className="mt-1 block text-xs font-normal text-slate-600">{lastUploadResult.linked_course.title}</span>
                 </p>
@@ -315,7 +315,7 @@ export default function AdminIcerikYuklePage() {
               <div className="flex flex-wrap gap-2 pt-1">
                 <Link
                   href="/admin/icerik"
-                  className="inline-flex items-center gap-1 rounded-lg bg-teal-600 px-3 py-2 text-xs font-semibold text-white hover:bg-teal-700"
+                  className="inline-flex items-center gap-1 rounded-lg bg-cyan-600 px-3 py-2 text-xs font-semibold text-white hover:bg-cyan-700"
                 >
                   Yüklenen içerikler listesi
                 </Link>
@@ -337,7 +337,7 @@ export default function AdminIcerikYuklePage() {
         <div className="space-y-6">
           <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
             <div className="mb-4 flex items-center gap-2 text-slate-900">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-teal-100 text-teal-800">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-100 text-cyan-800">
                 <GraduationCap className="h-5 w-5" />
               </div>
               <div>
@@ -351,7 +351,7 @@ export default function AdminIcerikYuklePage() {
                 <select
                   value={gradeFilter}
                   onChange={(e) => setGradeFilter(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none ring-teal-500/0 focus:border-teal-400 focus:ring-2 focus:ring-teal-500/20"
+                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none ring-cyan-500/0 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/20"
                 >
                   {GRADE_OPTIONS.map((o) => (
                     <option key={o.value || "any"} value={o.value}>
@@ -365,7 +365,7 @@ export default function AdminIcerikYuklePage() {
                 <select
                   value={examFilter}
                   onChange={(e) => setExamFilter(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none ring-teal-500/0 focus:border-teal-400 focus:ring-2 focus:ring-teal-500/20"
+                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none ring-cyan-500/0 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/20"
                 >
                   {EXAM_OPTIONS.map((o) => (
                     <option key={o.value || "any-ex"} value={o.value}>
@@ -395,7 +395,7 @@ export default function AdminIcerikYuklePage() {
             <input
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-500/15"
+              className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/15"
               placeholder="Örn: logaritma, parabol, M.10.1.1…"
             />
             <div className="mt-3">
@@ -403,7 +403,7 @@ export default function AdminIcerikYuklePage() {
               <input
                 value={subjectContains}
                 onChange={(e) => setSubjectContains(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-500/15"
+                className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/15"
                 placeholder="Örn: Matematik"
               />
             </div>
@@ -420,8 +420,8 @@ export default function AdminIcerikYuklePage() {
                     <button
                       type="button"
                       onClick={() => setSelected(t)}
-                      className={`w-full px-3 py-3 text-left text-sm transition-colors hover:bg-teal-50/70 ${
-                        selected?.id === t.id ? "bg-teal-50 font-semibold text-teal-950" : "text-slate-800"
+                      className={`w-full px-3 py-3 text-left text-sm transition-colors hover:bg-cyan-50/70 ${
+                        selected?.id === t.id ? "bg-cyan-50 font-semibold text-cyan-950" : "text-slate-800"
                       }`}
                     >
                       <span className="block">{t.title}</span>
@@ -442,8 +442,8 @@ export default function AdminIcerikYuklePage() {
             )}
 
             {selected && (
-              <div className="mt-4 rounded-xl border border-teal-200 bg-teal-50/50 p-4">
-                <p className="text-xs font-bold uppercase tracking-wide text-teal-900">Seçilen konu</p>
+              <div className="mt-4 rounded-xl border border-cyan-200 bg-cyan-50/50 p-4">
+                <p className="text-xs font-bold uppercase tracking-wide text-cyan-900">Seçilen konu</p>
                 <p className="mt-1 font-semibold text-slate-900">{selected.title}</p>
                 <div className="mt-2 flex flex-wrap gap-2 text-xs">
                   <span className="rounded-lg bg-white/90 px-2 py-1 font-medium text-slate-800 ring-1 ring-slate-200">{selected.subject_name ?? "—"}</span>
@@ -500,7 +500,7 @@ export default function AdminIcerikYuklePage() {
               <input
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-500/15"
+                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/15"
                 placeholder="Boş bırakılırsa konu adı + Video/PDF kullanılır"
               />
             </div>
@@ -513,7 +513,7 @@ export default function AdminIcerikYuklePage() {
                 value={adminNotes}
                 onChange={(e) => setAdminNotes(e.target.value)}
                 rows={3}
-                className="w-full resize-y rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-500/15"
+                className="w-full resize-y rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/15"
                 placeholder="Örn: 2026 TYT kampı 2. hafta, şu deneme öncesi tekrar videosu…"
               />
             </div>
@@ -537,7 +537,7 @@ export default function AdminIcerikYuklePage() {
                   setThumbnailFile(null);
                 }}
                 className={`flex flex-1 items-center justify-center gap-2 rounded-xl border py-2.5 text-sm font-semibold ${
-                  contentType === "video" ? "border-teal-500 bg-teal-50 text-teal-900" : "border-slate-200 text-slate-700"
+                  contentType === "video" ? "border-cyan-500 bg-cyan-50 text-cyan-900" : "border-slate-200 text-slate-700"
                 }`}
               >
                 <Video className="h-4 w-4" /> Video

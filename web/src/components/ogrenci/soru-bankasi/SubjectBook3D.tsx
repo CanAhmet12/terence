@@ -37,10 +37,10 @@ export function subjectToBookTheme(subject: string): SubjectBookTheme {
     };
   if (s.includes("fen"))
     return {
-      cover: "#059669",
-      spineTop: "#10b981",
-      spineBottom: "#047857",
-      pages: "#ecfdf5",
+      cover: "#0891b2",
+      spineTop: "#06b6d4",
+      spineBottom: "#0e7490",
+      pages: "#ecfeff",
     };
   if (s.includes("fizik"))
     return {
@@ -58,10 +58,10 @@ export function subjectToBookTheme(subject: string): SubjectBookTheme {
     };
   if (s.includes("biyoloji"))
     return {
-      cover: "#65a30d",
-      spineTop: "#84cc16",
-      spineBottom: "#4d7c0f",
-      pages: "#f7fee7",
+      cover: "#0ea5e9",
+      spineTop: "#38bdf8",
+      spineBottom: "#0369a1",
+      pages: "#f0f9ff",
     };
   if (s.includes("tarih"))
     return {
@@ -74,7 +74,7 @@ export function subjectToBookTheme(subject: string): SubjectBookTheme {
     return {
       cover: "#0e7490",
       spineTop: "#06b6d4",
-      spineBottom: "#0f766e",
+      spineBottom: "#164e63",
       pages: "#ecfeff",
     };
   return DEFAULT_THEME;

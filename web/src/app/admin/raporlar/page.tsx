@@ -36,7 +36,7 @@ function StatCard({
       ) : (
         <>
           <p className="text-2xl font-bold text-slate-900">{value}</p>
-          {sub && <p className="text-xs text-emerald-600 mt-1 font-medium">{sub}</p>}
+          {sub && <p className="text-xs text-cyan-600 mt-1 font-medium">{sub}</p>}
         </>
       )}
     </div>
@@ -93,7 +93,7 @@ export default function AdminRaporlarPage() {
     <div className="w-full min-w-0 max-w-none px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8 xl:px-10 xl:py-10 overflow-x-hidden">
       <div className="flex items-start justify-between gap-4 mb-8">
         <div>
-          <Link href="/admin" className="inline-flex items-center gap-2 text-slate-500 hover:text-teal-600 text-sm mb-4 transition-colors">
+          <Link href="/admin" className="inline-flex items-center gap-2 text-slate-500 hover:text-cyan-600 text-sm mb-4 transition-colors">
             <ArrowLeft className="w-4 h-4" />
             Panele dön
           </Link>
@@ -160,7 +160,7 @@ export default function AdminRaporlarPage() {
               {weeklyUsers.slice(0, 7).map((val, i) => (
                 <div key={i} className="flex-1 flex flex-col items-center gap-1 group">
                   <div
-                    className="w-full rounded-t bg-teal-500 hover:bg-teal-600 transition-colors min-h-[4px] relative"
+                    className="w-full rounded-t bg-cyan-500 hover:bg-cyan-600 transition-colors min-h-[4px] relative"
                     style={{ height: `${(val / maxWeekly) * 100}%` }}
                     title={`${val} kullanıcı`}
                   />
@@ -186,7 +186,7 @@ export default function AdminRaporlarPage() {
                 {monthlyRevenue.map((m, i) => (
                   <div key={i} className="flex-1 flex flex-col items-center gap-1">
                     <div
-                      className="w-full rounded-t bg-emerald-500 hover:bg-emerald-600 transition-colors min-h-[4px]"
+                      className="w-full rounded-t bg-cyan-500 hover:bg-cyan-600 transition-colors min-h-[4px]"
                       style={{ height: `${(m.value / maxRevenue) * 100}%` }}
                       title={formatCurrency(m.value)}
                     />
@@ -206,7 +206,7 @@ export default function AdminRaporlarPage() {
         return (
         <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
           <h2 className="font-semibold text-slate-900 mb-5 flex items-center gap-2">
-            <BookOpen className="w-5 h-5 text-teal-600" />
+            <BookOpen className="w-5 h-5 text-cyan-600" />
             En Çok Çalışılan Dersler
           </h2>
           <div className="space-y-3">
@@ -220,7 +220,7 @@ export default function AdminRaporlarPage() {
                   </div>
                   <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-teal-400 rounded-full"
+                      className="h-full bg-cyan-400 rounded-full"
                       style={{ width: `${(s.count / maxCount) * 100}%` }}
                     />
                   </div>
@@ -244,7 +244,7 @@ export default function AdminRaporlarPage() {
                   <span className="mx-2 text-slate-400">→</span>
                   <span className="font-semibold capitalize">{c.to ?? "—"}</span>
                 </span>
-                <span className="text-sm font-bold text-teal-600">{c.count ?? 0} dönüşüm</span>
+                <span className="text-sm font-bold text-cyan-600">{c.count ?? 0} dönüşüm</span>
               </div>
             ))}
           </div>
@@ -286,7 +286,7 @@ export default function AdminRaporlarPage() {
                   </span>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1 flex-wrap">
-                      <span className="font-mono text-xs font-bold text-teal-600 bg-teal-50 px-2 py-0.5 rounded">{a.kazanim_code}</span>
+                      <span className="font-mono text-xs font-bold text-cyan-600 bg-cyan-50 px-2 py-0.5 rounded">{a.kazanim_code}</span>
                       <span className="text-xs font-semibold text-slate-600">{a.subject}</span>
                       {isVeryHard && (
                         <span className="text-xs font-bold text-red-600 bg-red-50 border border-red-200 px-2 py-0.5 rounded-full">
@@ -298,7 +298,7 @@ export default function AdminRaporlarPage() {
                     <div className="flex items-center gap-3 mt-1.5">
                       <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden max-w-[200px]">
                         <div
-                          className={`h-full rounded-full ${wrongPct > 65 ? "bg-red-500" : wrongPct > 45 ? "bg-amber-500" : "bg-teal-400"}`}
+                          className={`h-full rounded-full ${wrongPct > 65 ? "bg-red-500" : wrongPct > 45 ? "bg-amber-500" : "bg-cyan-400"}`}
                           style={{ width: `${wrongPct}%` }}
                         />
                       </div>

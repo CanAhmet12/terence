@@ -130,13 +130,13 @@ export function PlanTaskRow({
               type="button"
               onClick={() => onComplete(task)}
               disabled={completingId === task.id}
-              className="group/btn flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200 bg-white/80 transition-all hover:border-emerald-300 hover:bg-emerald-50"
+              className="group/btn flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200 bg-white/80 transition-all hover:border-cyan-300 hover:bg-cyan-50"
               title="Tamamla"
             >
               {completingId === task.id ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin text-slate-400" />
               ) : (
-                <Check className="h-3.5 w-3.5 text-slate-300 transition-colors group-hover/btn:text-emerald-500" />
+                <Check className="h-3.5 w-3.5 text-slate-300 transition-colors group-hover/btn:text-cyan-500" />
               )}
             </button>
             {canDelete && (

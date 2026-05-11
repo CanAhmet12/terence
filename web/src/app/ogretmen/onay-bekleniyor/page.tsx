@@ -47,7 +47,7 @@ export default function OgretmenOnayBekleniyorPage() {
           </button>
           <Link
             href="/"
-            className="inline-flex items-center justify-center rounded-xl bg-teal-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-teal-700"
+            className="inline-flex items-center justify-center rounded-xl bg-cyan-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-cyan-700"
           >
             Ana sayfa
           </Link>

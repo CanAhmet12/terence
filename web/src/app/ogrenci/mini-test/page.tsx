@@ -142,7 +142,7 @@ export default function MiniTestPage() {
   if (phase === "start") {
     return (
       <div className="p-8 lg:p-12">
-        <Link href="/ogrenci" className="inline-flex items-center gap-2 text-slate-600 hover:text-teal-600 mb-8 font-medium transition-colors">
+        <Link href="/ogrenci" className="inline-flex items-center gap-2 text-slate-600 hover:text-cyan-600 mb-8 font-medium transition-colors">
           <ArrowLeft className="w-4 h-4" />
           Ana panele dön
         </Link>
@@ -171,7 +171,7 @@ export default function MiniTestPage() {
               "Net hesabı otomatik yapılır",
             ].map((item) => (
               <li key={item} className="flex items-center gap-2">
-                <Zap className="w-4 h-4 text-teal-500 shrink-0" />
+                <Zap className="w-4 h-4 text-cyan-500 shrink-0" />
                 {item}
               </li>
             ))}
@@ -179,7 +179,7 @@ export default function MiniTestPage() {
           <button
             onClick={startTest}
             disabled={loading}
-            className="w-full py-4 bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-700 hover:to-teal-600 disabled:opacity-70 text-white font-bold rounded-xl transition-all shadow-lg shadow-teal-500/25 flex items-center justify-center gap-2 active:scale-95"
+            className="w-full py-4 bg-gradient-to-r from-cyan-600 to-cyan-500 hover:from-cyan-700 hover:to-cyan-600 disabled:opacity-70 text-white font-bold rounded-xl transition-all shadow-lg shadow-cyan-500/25 flex items-center justify-center gap-2 active:scale-95"
           >
             {loading ? (
               <><span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" /> Yükleniyor...</>
@@ -203,7 +203,7 @@ export default function MiniTestPage() {
         <div className="grid sm:grid-cols-4 gap-4 mb-8">
           {[
             { label: "Soru", value: totalAnswered, color: "text-slate-900" },
-            { label: "Doğru", value: correctCount, color: "text-teal-600" },
+            { label: "Doğru", value: correctCount, color: "text-cyan-600" },
             { label: "Yanlış", value: totalAnswered - correctCount, color: "text-red-500" },
             { label: "Net", value: net, color: "text-slate-900" },
           ].map(({ label, value, color }) => (
@@ -218,16 +218,16 @@ export default function MiniTestPage() {
         <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm mb-6">
           <div className="flex justify-between text-sm mb-2">
             <span className="font-medium text-slate-700">Başarı Oranı</span>
-            <span className="font-bold text-teal-600">%{successRate}</span>
+            <span className="font-bold text-cyan-600">%{successRate}</span>
           </div>
           <div className="h-3 bg-slate-200 rounded-full overflow-hidden">
             <div
-              className={`h-full rounded-full transition-all ${successRate >= 70 ? "bg-teal-500" : successRate >= 40 ? "bg-amber-500" : "bg-red-500"}`}
+              className={`h-full rounded-full transition-all ${successRate >= 70 ? "bg-cyan-500" : successRate >= 40 ? "bg-amber-500" : "bg-red-500"}`}
               style={{ width: `${successRate}%` }}
             />
           </div>
           {successRate >= 70 && (
-            <div className="mt-3 flex items-center gap-2 text-teal-600">
+            <div className="mt-3 flex items-center gap-2 text-cyan-600">
               <Trophy className="w-4 h-4" />
               <span className="text-sm font-semibold">Harika! Bu konuyu iyi biliyorsun.</span>
             </div>
@@ -261,7 +261,7 @@ export default function MiniTestPage() {
           )}
           <button
             onClick={startTest}
-            className="flex items-center gap-2 px-5 py-3 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-semibold transition-colors"
+            className="flex items-center gap-2 px-5 py-3 rounded-xl bg-cyan-600 hover:bg-cyan-700 text-white font-semibold transition-colors"
           >
             <Zap className="w-4 h-4" />
             Yeni Test
@@ -280,7 +280,7 @@ export default function MiniTestPage() {
   // --- Test ekranı ---
   if (!currentQ) return null;
 
-  const timeColor = sure <= 60 ? "text-red-600" : sure <= 120 ? "text-amber-600" : "text-teal-600";
+  const timeColor = sure <= 60 ? "text-red-600" : sure <= 120 ? "text-amber-600" : "text-cyan-600";
 
   return (
     <div className="p-4 sm:p-8 lg:p-12 min-w-0">
@@ -288,7 +288,7 @@ export default function MiniTestPage() {
       <div className="flex items-center justify-between mb-6">
         <button
           onClick={handleExitTest}
-          className="text-sm text-slate-600 hover:text-teal-600 font-medium transition-colors"
+          className="text-sm text-slate-600 hover:text-cyan-600 font-medium transition-colors"
         >
           ← Çıkış
         </button>
@@ -306,7 +306,7 @@ export default function MiniTestPage() {
       {/* İlerleme çubuğu */}
       <div className="h-1.5 bg-slate-200 rounded-full mb-8 overflow-hidden">
         <div
-          className={`h-full rounded-full transition-all ${sure <= 30 ? "bg-red-500 animate-pulse" : sure <= 60 ? "bg-amber-500" : "bg-teal-500"}`}
+          className={`h-full rounded-full transition-all ${sure <= 30 ? "bg-red-500 animate-pulse" : sure <= 60 ? "bg-amber-500" : "bg-cyan-500"}`}
           style={{ width: `${((soruIndex + 1) / questions.length) * 100}%` }}
         />
       </div>
@@ -314,7 +314,7 @@ export default function MiniTestPage() {
       {/* Soru kartı */}
       <div className="bg-white rounded-2xl border border-slate-200 p-8 shadow-sm">
         {currentQ.kazanim_code && (
-          <span className="inline-block font-mono text-xs font-bold text-teal-600 bg-teal-50 px-2.5 py-1 rounded-lg mb-4">
+          <span className="inline-block font-mono text-xs font-bold text-cyan-600 bg-cyan-50 px-2.5 py-1 rounded-lg mb-4">
             {currentQ.kazanim_code}
           </span>
         )}
@@ -336,22 +336,22 @@ export default function MiniTestPage() {
                 className={`w-full text-left p-4 rounded-xl border flex items-center gap-3 transition-all font-medium ${
                   showResult
                     ? isCorrectOpt
-                      ? "border-teal-400 bg-teal-50 text-teal-800"
+                      ? "border-cyan-400 bg-cyan-50 text-cyan-800"
                       : isWrong
                       ? "border-red-400 bg-red-50 text-red-800"
                       : "border-slate-200 bg-slate-50 text-slate-500"
-                    : "border-slate-200 hover:border-teal-300 hover:bg-teal-50/30"
+                    : "border-slate-200 hover:border-cyan-300 hover:bg-cyan-50/30"
                 } disabled:cursor-not-allowed`}
               >
                 <span className={`w-8 h-8 rounded-xl flex items-center justify-center text-sm font-bold shrink-0 ${
                   showResult
-                    ? isCorrectOpt ? "bg-teal-500 text-white" : isWrong ? "bg-red-500 text-white" : "bg-slate-200 text-slate-500"
-                    : "bg-slate-200 text-slate-600 group-hover:bg-teal-100"
+                    ? isCorrectOpt ? "bg-cyan-500 text-white" : isWrong ? "bg-red-500 text-white" : "bg-slate-200 text-slate-500"
+                    : "bg-slate-200 text-slate-600 group-hover:bg-cyan-100"
                 }`}>
                   {letter}
                 </span>
                 <span className="flex-1">{opt.option_text ?? opt.text ?? ""}</span>
-                {showResult && isCorrectOpt && <CheckCircle className="w-5 h-5 text-teal-600 shrink-0" />}
+                {showResult && isCorrectOpt && <CheckCircle className="w-5 h-5 text-cyan-600 shrink-0" />}
                 {showResult && isWrong && <XCircle className="w-5 h-5 text-red-600 shrink-0" />}
               </button>
             );
@@ -361,7 +361,7 @@ export default function MiniTestPage() {
         {/* Sonuç + açıklama */}
         {currentAnswer && (
           <div className="mt-6 space-y-3">
-            <div className={`flex items-center gap-2 text-sm font-bold ${currentAnswer.is_correct ? "text-teal-600" : "text-red-600"}`}>
+            <div className={`flex items-center gap-2 text-sm font-bold ${currentAnswer.is_correct ? "text-cyan-600" : "text-red-600"}`}>
               {currentAnswer.is_correct ? (
                 <><CheckCircle className="w-5 h-5" /> Doğru! Harika!</>
               ) : (
@@ -378,7 +378,7 @@ export default function MiniTestPage() {
             <div className="flex justify-end">
               <button
                 onClick={nextQuestion}
-                className="px-6 py-3 bg-teal-600 hover:bg-teal-700 text-white font-semibold rounded-xl transition-colors"
+                className="px-6 py-3 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold rounded-xl transition-colors"
               >
                 {soruIndex < questions.length - 1 ? "Sonraki Soru →" : "Testi Bitir"}
               </button>

@@ -147,8 +147,8 @@ function DashboardHeaderInner() {
   const PageIcon = currentPage.icon;
   const coachIconSrc = currentPage.iconSrc;
   const accentIcon =
-    hasCenterSearch ? "text-indigo-600" : "text-teal-600";
-  const breadcrumbHover = hasCenterSearch ? "hover:text-indigo-600" : "hover:text-teal-600";
+    hasCenterSearch ? "text-indigo-600" : "text-cyan-600";
+  const breadcrumbHover = hasCenterSearch ? "hover:text-indigo-600" : "hover:text-cyan-600";
 
   const searchPlaceholder = isQuestionBank
     ? "Soru veya konu ara..."

@@ -19,7 +19,7 @@ export default function LegacyDersRedirectPage() {
 
   return (
     <div className="flex min-h-[50vh] flex-col items-center justify-center gap-3 bg-slate-50 px-4">
-      <Loader2 className="h-8 w-8 animate-spin text-teal-600" aria-hidden />
+      <Loader2 className="h-8 w-8 animate-spin text-cyan-600" aria-hidden />
       <p className="text-center text-sm text-slate-600">Müfredat sayfasına yönlendiriliyorsunuz…</p>
     </div>
   );

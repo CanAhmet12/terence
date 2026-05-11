@@ -180,12 +180,12 @@ input[type="radio"] {
 
 /* Success States */
 .success-text {
-  color: #16a34a;
+  color: #0891b2;
 }
 
 .success-bg {
-  background-color: #f0fdf4;
-  border: 2px solid #16a34a;
+  background-color: #ecfeff;
+  border: 2px solid #0891b2;
 }
 
 /* Warning States */

@@ -190,13 +190,13 @@ export default function ExamSessionPage() {
   const answeredCount = Object.values(answers).filter((v) => v !== null && v !== undefined).length;
   const emptyCount = questions.length - answeredCount;
   const timeRatio = durationRef.current > 0 ? timeLeft / durationRef.current : 1;
-  const timerColor = timeRatio > 0.3 ? "text-teal-600" : timeRatio > 0.1 ? "text-amber-600" : "text-red-600";
+  const timerColor = timeRatio > 0.3 ? "text-cyan-600" : timeRatio > 0.1 ? "text-amber-600" : "text-red-600";
 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="text-center">
-          <Loader2 className="w-10 h-10 text-teal-500 animate-spin mx-auto mb-3" />
+          <Loader2 className="w-10 h-10 text-cyan-500 animate-spin mx-auto mb-3" />
           <p className="text-slate-600">Deneme yükleniyor...</p>
         </div>
       </div>
@@ -211,7 +211,7 @@ export default function ExamSessionPage() {
           <p className="font-semibold text-slate-900 mb-2">{error ?? "Sorular yüklenemedi"}</p>
           <button
             onClick={() => router.push("/ogrenci/deneme")}
-            className="mt-4 px-6 py-2.5 bg-teal-600 text-white rounded-xl font-semibold hover:bg-teal-700 transition-colors"
+            className="mt-4 px-6 py-2.5 bg-cyan-600 text-white rounded-xl font-semibold hover:bg-cyan-700 transition-colors"
           >
             Denemeler Sayfasına Dön
           </button>
@@ -236,12 +236,12 @@ export default function ExamSessionPage() {
 
         <div className="flex items-center gap-4">
           <span className="text-sm text-slate-500">
-            <span className="text-teal-600 font-semibold">{answeredCount}</span>/{questions.length} cevaplandı
+            <span className="text-cyan-600 font-semibold">{answeredCount}</span>/{questions.length} cevaplandı
           </span>
           <button
             onClick={handleFinish}
             disabled={submitting}
-            className="px-4 py-2 bg-teal-600 text-white text-sm font-semibold rounded-xl hover:bg-teal-700 transition-colors disabled:opacity-60 flex items-center gap-2"
+            className="px-4 py-2 bg-cyan-600 text-white text-sm font-semibold rounded-xl hover:bg-cyan-700 transition-colors disabled:opacity-60 flex items-center gap-2"
           >
             {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
             Bitir
@@ -264,11 +264,11 @@ export default function ExamSessionPage() {
                   onClick={() => setCurrentIdx(i)}
                   className={`w-10 h-10 rounded-lg text-xs font-bold transition-all ${
                     isCurrent
-                      ? "bg-teal-600 text-white shadow-md"
+                      ? "bg-cyan-600 text-white shadow-md"
                       : isAnswered && isFlagged
                       ? "bg-amber-100 text-amber-700 border border-amber-300"
                       : isAnswered
-                      ? "bg-teal-100 text-teal-700"
+                      ? "bg-cyan-100 text-cyan-700"
                       : isFlagged
                       ? "bg-orange-100 text-orange-700"
                       : "bg-slate-100 text-slate-600 hover:bg-slate-200"
@@ -281,7 +281,7 @@ export default function ExamSessionPage() {
           </div>
           <div className="mt-4 space-y-1.5 text-xs text-slate-500">
             {[
-              { color: "bg-teal-100", label: `${answeredCount} Cevaplandı` },
+              { color: "bg-cyan-100", label: `${answeredCount} Cevaplandı` },
               { color: "bg-orange-100", label: `${flagged.size} İşaretli` },
               { color: "bg-slate-100", label: `${emptyCount} Boş` },
             ].map((s) => (
@@ -341,19 +341,19 @@ export default function ExamSessionPage() {
                         onClick={() => handleAnswer(letter)}
                         className={`w-full flex items-center gap-4 p-4 rounded-xl border-2 text-left transition-all duration-150 ${
                           isSelected
-                            ? "border-teal-500 bg-teal-50 shadow-sm"
+                            ? "border-cyan-500 bg-cyan-50 shadow-sm"
                             : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50"
                         }`}
                       >
                         <span className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-sm shrink-0 transition-colors ${
-                          isSelected ? "bg-teal-600 text-white" : "bg-slate-100 text-slate-600"
+                          isSelected ? "bg-cyan-600 text-white" : "bg-slate-100 text-slate-600"
                         }`}>
                           {letter}
                         </span>
                         {opt.image ? (
                           <img src={opt.image} alt={`Şık ${letter}`} className="max-h-16 object-contain" />
                         ) : (
-                          <span className={`text-sm ${isSelected ? "text-teal-900 font-semibold" : "text-slate-700"}`}>
+                          <span className={`text-sm ${isSelected ? "text-cyan-900 font-semibold" : "text-slate-700"}`}>
                             {labelText}
                           </span>
                         )}
@@ -376,7 +376,7 @@ export default function ExamSessionPage() {
                 {currentIdx < questions.length - 1 ? (
                   <button
                     onClick={() => setCurrentIdx((i) => Math.min(questions.length - 1, i + 1))}
-                    className="flex items-center gap-2 px-5 py-2.5 bg-teal-600 text-white rounded-xl font-semibold hover:bg-teal-700 transition-colors"
+                    className="flex items-center gap-2 px-5 py-2.5 bg-cyan-600 text-white rounded-xl font-semibold hover:bg-cyan-700 transition-colors"
                   >
                     Sonraki <ChevronRight className="w-4 h-4" />
                   </button>
@@ -384,7 +384,7 @@ export default function ExamSessionPage() {
                   <button
                     onClick={handleFinish}
                     disabled={submitting}
-                    className="flex items-center gap-2 px-6 py-2.5 bg-emerald-600 text-white rounded-xl font-semibold hover:bg-emerald-700 transition-colors disabled:opacity-60"
+                    className="flex items-center gap-2 px-6 py-2.5 bg-cyan-600 text-white rounded-xl font-semibold hover:bg-cyan-700 transition-colors disabled:opacity-60"
                   >
                     {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
                     Sınavı Bitir

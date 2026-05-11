@@ -139,10 +139,10 @@ export function PlanTaskList({
                   key={task.id}
                   className="flex items-center gap-3.5 rounded-xl p-3.5 opacity-50"
                 >
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-100">
-                    <Check className="h-4 w-4 text-emerald-500" strokeWidth={2.5} />
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-cyan-100">
+                    <Check className="h-4 w-4 text-cyan-500" strokeWidth={2.5} />
                   </div>
-                  <p className="flex-1 truncate text-sm font-medium text-slate-500 line-through">
+                  <p className="flex-1 truncate text-sm font-medium text-slate-500">
                     {task.title}
                   </p>
                 </div>

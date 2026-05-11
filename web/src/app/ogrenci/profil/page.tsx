@@ -257,7 +257,7 @@ export default function OgrenciProfilPage() {
   const Feedback = () => (
     <>
       {saveState === "success" && (
-        <div className="flex items-center gap-2.5 p-4 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-700 text-sm font-medium mb-5">
+        <div className="flex items-center gap-2.5 p-4 bg-cyan-50 border border-cyan-200 rounded-xl text-cyan-700 text-sm font-medium mb-5">
           <CheckCircle className="w-4.5 h-4.5 shrink-0" /> Değişiklikler başarıyla kaydedildi.
         </div>
       )}
@@ -580,7 +580,7 @@ export default function OgrenciProfilPage() {
                       </div>
                       <div className="flex justify-between">
                         <span className="text-slate-500">E-posta Doğrulama</span>
-                        <span className={`font-semibold ${user.email_verified_at ? "text-emerald-600" : "text-red-500"}`}>
+                        <span className={`font-semibold ${user.email_verified_at ? "text-cyan-600" : "text-red-500"}`}>
                           {user.email_verified_at ? "✓ Doğrulandı" : "Doğrulanmamış"}
                         </span>
                       </div>

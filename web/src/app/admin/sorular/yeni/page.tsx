@@ -100,7 +100,7 @@ export default function AdminSoruYeniPage() {
 
   return (
     <div className="w-full min-w-0 max-w-none px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8 xl:px-10 xl:py-10 overflow-x-hidden">
-      <Link href="/admin/sorular" className="inline-flex items-center gap-2 text-slate-600 hover:text-teal-600 mb-6 font-medium">
+      <Link href="/admin/sorular" className="inline-flex items-center gap-2 text-slate-600 hover:text-cyan-600 mb-6 font-medium">
         <ArrowLeft className="w-4 h-4" />
         Soru listesine dön
       </Link>
@@ -110,7 +110,7 @@ export default function AdminSoruYeniPage() {
           type="button"
           onClick={() => setTab("form")}
           className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold border ${
-            tab === "form" ? "border-teal-500 bg-teal-50 text-teal-800" : "border-slate-200 text-slate-600"
+            tab === "form" ? "border-cyan-500 bg-cyan-50 text-cyan-800" : "border-slate-200 text-slate-600"
           }`}
         >
           <Save className="w-4 h-4" />
@@ -142,7 +142,7 @@ export default function AdminSoruYeniPage() {
               value={questionText}
               onChange={(e) => setQuestionText(e.target.value)}
               rows={4}
-              className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-teal-500 outline-none text-sm"
+              className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-cyan-500 outline-none text-sm"
             />
           </div>
           <div className="grid sm:grid-cols-2 gap-4">
@@ -192,7 +192,7 @@ export default function AdminSoruYeniPage() {
             <div className="space-y-2">
               {opts.map((v, i) => (
                 <div key={i} className="flex items-center gap-2">
-                  <input type="radio" name="correct" checked={correctIdx === i} onChange={() => setCorrectIdx(i)} className="accent-teal-600" />
+                  <input type="radio" name="correct" checked={correctIdx === i} onChange={() => setCorrectIdx(i)} className="accent-cyan-600" />
                   <span className="w-6 text-xs font-bold text-slate-500">{String.fromCharCode(65 + i)})</span>
                   <input
                     value={v}
@@ -210,7 +210,7 @@ export default function AdminSoruYeniPage() {
           <button
             type="submit"
             disabled={saving}
-            className="w-full py-3.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-60"
+            className="w-full py-3.5 rounded-xl bg-cyan-600 hover:bg-cyan-700 text-white font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-60"
           >
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
             Kaydet
@@ -235,7 +235,7 @@ export default function AdminSoruYeniPage() {
             placeholder={`[\n  {\n    "question_text": "...",\n    "options": ["A şıkkı", "B şıkkı", "C şıkkı"],\n    "correct_option": 0,\n    "subject": "Matematik",\n    "difficulty": "medium",\n    "exam_type": "TYT",\n    "grade": 12\n  }\n]`}
             className="w-full font-mono text-xs sm:text-sm px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-violet-500 outline-none"
           />
-          {bulkResult && <p className="text-sm text-teal-700 font-medium">{bulkResult}</p>}
+          {bulkResult && <p className="text-sm text-cyan-700 font-medium">{bulkResult}</p>}
           <button
             type="button"
             onClick={runBulk}

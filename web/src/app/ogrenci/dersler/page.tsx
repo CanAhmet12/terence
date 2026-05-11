@@ -541,7 +541,7 @@ export default function DerslerimPage() {
                     </button>
                   </div>
                 ) : (
-                  <div className="flex items-center gap-2 rounded-2xl border border-emerald-100 bg-emerald-50/80 px-4 py-3 text-sm font-semibold text-emerald-800 sm:px-5">
+                  <div className="flex items-center gap-2 rounded-2xl border border-cyan-100 bg-cyan-50/80 px-4 py-3 text-sm font-semibold text-cyan-800 sm:px-5">
                     <CheckCircle className="h-5 w-5 shrink-0" aria-hidden />
                     Bu konu tamamlandı.
                   </div>

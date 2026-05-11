@@ -70,7 +70,7 @@ export function PlanWeakSuggestions({
               >
                 <div className="min-w-0 flex-1">
                   <div className="mb-0.5 flex items-center gap-2">
-                    <span className="rounded-md bg-teal-50 px-2 py-0.5 font-mono text-xs font-bold text-teal-600">
+                    <span className="rounded-md bg-cyan-50 px-2 py-0.5 font-mono text-xs font-bold text-cyan-600">
                       {wa.kod}
                     </span>
                     <AlertTriangle className={`h-3.5 w-3.5 ${riskColor}`} />
@@ -88,7 +88,7 @@ export function PlanWeakSuggestions({
                   disabled={isAdded || addingWeakId === wa.id}
                   className={`flex shrink-0 items-center gap-1.5 rounded-xl border px-3.5 py-2 text-xs font-bold transition-all ${
                     isAdded
-                      ? "cursor-default border-emerald-200 bg-emerald-50 text-emerald-600"
+                      ? "cursor-default border-cyan-200 bg-cyan-50 text-cyan-600"
                       : "border-violet-200 bg-violet-100 text-violet-700 hover:bg-violet-200"
                   }`}
                 >

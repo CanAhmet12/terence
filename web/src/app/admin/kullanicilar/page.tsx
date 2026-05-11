@@ -16,7 +16,7 @@ const ROLE_LABELS: Record<string, string> = {
 
 const ROLE_COLORS: Record<string, string> = {
   student: "bg-blue-100 text-blue-700",
-  teacher: "bg-teal-100 text-teal-700",
+  teacher: "bg-cyan-100 text-cyan-700",
   parent: "bg-purple-100 text-purple-700",
   admin: "bg-slate-700 text-white",
 };
@@ -132,13 +132,13 @@ export default function AdminKullanicilarPage() {
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(1); }}
             placeholder="İsim veya e-posta ara..."
-            className="w-full pl-11 pr-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
+            className="w-full pl-11 pr-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 outline-none"
           />
         </div>
         <select
           value={roleFilter}
           onChange={(e) => { setRoleFilter(e.target.value); setPage(1); }}
-          className="px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
+          className="px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 outline-none"
         >
           <option value="">Tüm Roller</option>
           <option value="student">Öğrenci</option>
@@ -160,7 +160,7 @@ export default function AdminKullanicilarPage() {
             {(search || roleFilter) && (
               <button
                 onClick={() => { setSearch(""); setRoleFilter(""); setPage(1); }}
-                className="mt-3 text-sm text-teal-600 hover:underline"
+                className="mt-3 text-sm text-cyan-600 hover:underline"
               >
                 Filtreleri temizle
               </button>
@@ -184,7 +184,7 @@ export default function AdminKullanicilarPage() {
                   <tr key={u.id} className="border-b border-slate-100 hover:bg-slate-50/50 transition-colors">
                     <td className="p-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-full bg-teal-100 flex items-center justify-center text-teal-700 font-bold text-sm shrink-0">
+                        <div className="w-9 h-9 rounded-full bg-cyan-100 flex items-center justify-center text-cyan-700 font-bold text-sm shrink-0">
                           {u.name.charAt(0).toUpperCase()}
                         </div>
                         <span className="font-medium text-slate-900">{u.name}</span>
@@ -198,7 +198,7 @@ export default function AdminKullanicilarPage() {
                     </td>
                     <td className="p-4">
                       <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
-                        u.is_active !== false ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-700"
+                        u.is_active !== false ? "bg-cyan-100 text-cyan-700" : "bg-red-100 text-red-700"
                       }`}>
                         {u.is_active !== false ? "Aktif" : "Pasif"}
                       </span>
@@ -208,7 +208,7 @@ export default function AdminKullanicilarPage() {
                     </td>
                     <td className="p-4 relative">
                       {actionLoading === u.id ? (
-                        <div className="w-5 h-5 border-2 border-teal-500 border-t-transparent rounded-full animate-spin mx-auto" />
+                        <div className="w-5 h-5 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin mx-auto" />
                       ) : (
                         <>
                           <button
@@ -229,7 +229,7 @@ export default function AdminKullanicilarPage() {
                               >
                                 {u.is_active !== false
                                   ? <><UserX className="w-4 h-4 text-amber-600" /> Pasife Al</>
-                                  : <><UserCheck className="w-4 h-4 text-emerald-600" /> Aktife Al</>
+                                  : <><UserCheck className="w-4 h-4 text-cyan-600" /> Aktife Al</>
                                 }
                               </button>
                               <button
@@ -263,7 +263,7 @@ export default function AdminKullanicilarPage() {
             >
               Önceki
             </button>
-            <span className="px-4 py-2 text-sm font-semibold bg-teal-50 text-teal-700 rounded-lg">
+            <span className="px-4 py-2 text-sm font-semibold bg-cyan-50 text-cyan-700 rounded-lg">
               {page} / {lastPage}
             </span>
             <button

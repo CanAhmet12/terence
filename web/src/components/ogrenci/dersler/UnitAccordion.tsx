@@ -58,7 +58,7 @@ export function UnitAccordion({
                     isDone
                       ? isActive
                         ? "border-violet-600 bg-violet-600 text-white"
-                        : "border-emerald-500 bg-emerald-500 text-white"
+                        : "border-cyan-500 bg-cyan-500 text-white"
                       : isActive
                         ? "border-violet-400 bg-white"
                         : "border-slate-300 bg-white"
@@ -66,7 +66,7 @@ export function UnitAccordion({
                 >
                   {isDone && <Check className="h-3 w-3" strokeWidth={3} aria-hidden />}
                 </div>
-                <span className={`min-w-0 flex-1 leading-snug ${isDone && !isActive ? "text-slate-400 line-through" : ""}`}>{topic.title}</span>
+                <span className={`min-w-0 flex-1 leading-snug ${isDone && !isActive ? "text-slate-400" : ""}`}>{topic.title}</span>
               </button>
             );
           })}

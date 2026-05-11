@@ -34,15 +34,15 @@ export default function IletisimPage() {
         {/* Hero alanı */}
         <div className="relative py-10 sm:py-16 lg:py-20 overflow-hidden">
           <div className="absolute inset-0 gradient-hero-mesh" />
-          <div className="absolute top-0 right-0 w-96 h-96 bg-teal-300/10 rounded-full blur-3xl" />
+          <div className="absolute top-0 right-0 w-96 h-96 bg-cyan-300/10 rounded-full blur-3xl" />
           <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="max-w-2xl">
-              <p className="text-teal-600 font-semibold text-sm uppercase tracking-widest mb-4">
+              <p className="text-cyan-600 font-semibold text-sm uppercase tracking-widest mb-4">
                 İletişim
               </p>
               <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-slate-900 leading-tight text-balance">
                 Sorularınız İçin{" "}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-600 to-teal-500">
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-600 to-cyan-500">
                   Bize Ulaşın
                 </span>
               </h1>
@@ -59,27 +59,27 @@ export default function IletisimPage() {
             <div className="lg:col-span-1 space-y-4">
               <a
                 href="mailto:destek@terenceegitim.com"
-                className="group flex items-start gap-4 p-6 rounded-2xl bg-white border border-slate-200/80 shadow-sm hover:shadow-xl hover:border-teal-200 transition-all duration-300"
+                className="group flex items-start gap-4 p-6 rounded-2xl bg-white border border-slate-200/80 shadow-sm hover:shadow-xl hover:border-cyan-200 transition-all duration-300"
               >
-                <div className="w-14 h-14 rounded-2xl bg-teal-50 border border-teal-100 flex items-center justify-center shrink-0 group-hover:bg-teal-100 transition-colors">
-                  <Mail className="w-7 h-7 text-teal-600" />
+                <div className="w-14 h-14 rounded-2xl bg-cyan-50 border border-cyan-100 flex items-center justify-center shrink-0 group-hover:bg-cyan-100 transition-colors">
+                  <Mail className="w-7 h-7 text-cyan-600" />
                 </div>
                 <div>
                   <p className="font-bold text-slate-900">E-posta</p>
-                  <p className="text-teal-600 font-medium mt-1">destek@terenceegitim.com</p>
+                  <p className="text-cyan-600 font-medium mt-1">destek@terenceegitim.com</p>
                   <p className="text-sm text-slate-500 mt-1">24 saat içinde yanıt</p>
                 </div>
               </a>
               <a
                 href="tel:08501234567"
-                className="group flex items-start gap-4 p-6 rounded-2xl bg-white border border-slate-200/80 shadow-sm hover:shadow-xl hover:border-teal-200 transition-all duration-300"
+                className="group flex items-start gap-4 p-6 rounded-2xl bg-white border border-slate-200/80 shadow-sm hover:shadow-xl hover:border-cyan-200 transition-all duration-300"
               >
-                <div className="w-14 h-14 rounded-2xl bg-teal-50 border border-teal-100 flex items-center justify-center shrink-0 group-hover:bg-teal-100 transition-colors">
-                  <Phone className="w-7 h-7 text-teal-600" />
+                <div className="w-14 h-14 rounded-2xl bg-cyan-50 border border-cyan-100 flex items-center justify-center shrink-0 group-hover:bg-cyan-100 transition-colors">
+                  <Phone className="w-7 h-7 text-cyan-600" />
                 </div>
                 <div>
                   <p className="font-bold text-slate-900">Telefon</p>
-                  <p className="text-teal-600 font-medium mt-1">0850 123 45 67</p>
+                  <p className="text-cyan-600 font-medium mt-1">0850 123 45 67</p>
                   <p className="text-sm text-slate-500 mt-1">Hafta içi 09:00–18:00</p>
                 </div>
               </a>
@@ -98,8 +98,8 @@ export default function IletisimPage() {
             <div className="lg:col-span-2">
               <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5 sm:p-8 lg:p-10 min-w-0">
                 <div className="flex items-center gap-3 mb-8">
-                  <div className="w-12 h-12 rounded-xl bg-teal-50 flex items-center justify-center">
-                    <MessageCircle className="w-6 h-6 text-teal-600" />
+                  <div className="w-12 h-12 rounded-xl bg-cyan-50 flex items-center justify-center">
+                    <MessageCircle className="w-6 h-6 text-cyan-600" />
                   </div>
                   <div>
                     <h2 className="text-xl font-bold text-slate-900">Mesaj Gönder</h2>
@@ -114,10 +114,10 @@ export default function IletisimPage() {
                 )}
                 {sent ? (
                   <div className="py-12 text-center">
-                    <div className="w-16 h-16 rounded-2xl bg-teal-100 flex items-center justify-center mx-auto mb-4">
-                      <Send className="w-8 h-8 text-teal-600" />
+                    <div className="w-16 h-16 rounded-2xl bg-cyan-100 flex items-center justify-center mx-auto mb-4">
+                      <Send className="w-8 h-8 text-cyan-600" />
                     </div>
-                    <p className="text-teal-700 font-bold text-lg">Mesajınız alındı</p>
+                    <p className="text-cyan-700 font-bold text-lg">Mesajınız alındı</p>
                     <p className="text-slate-600 mt-2">En kısa sürede size dönüş yapacağız.</p>
                   </div>
                 ) : (
@@ -130,7 +130,7 @@ export default function IletisimPage() {
                           value={form.name}
                           onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
                           required
-                          className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none transition-all"
+                          className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 outline-none transition-all"
                         />
                       </div>
                       <div>
@@ -140,7 +140,7 @@ export default function IletisimPage() {
                           value={form.email}
                           onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))}
                           required
-                          className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none transition-all"
+                          className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 outline-none transition-all"
                         />
                       </div>
                     </div>
@@ -149,7 +149,7 @@ export default function IletisimPage() {
                       <select
                         value={form.konu}
                         onChange={(e) => setForm((p) => ({ ...p, konu: e.target.value }))}
-                        className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none transition-all"
+                        className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 outline-none transition-all"
                       >
                         <option value="genel">Genel Bilgi</option>
                         <option value="teknik">Teknik Destek</option>
@@ -165,13 +165,13 @@ export default function IletisimPage() {
                         required
                         rows={5}
                         placeholder="Mesajınızı buraya yazın..."
-                        className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none resize-none transition-all"
+                        className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 outline-none resize-none transition-all"
                       />
                     </div>
                     <button
                       type="submit"
                       disabled={loading}
-                      className="w-full flex items-center justify-center gap-2 py-4 bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-700 hover:to-teal-600 disabled:opacity-70 text-white font-semibold rounded-xl transition-all shadow-lg shadow-teal-500/25"
+                      className="w-full flex items-center justify-center gap-2 py-4 bg-gradient-to-r from-cyan-600 to-cyan-500 hover:from-cyan-700 hover:to-cyan-600 disabled:opacity-70 text-white font-semibold rounded-xl transition-all shadow-lg shadow-cyan-500/25"
                     >
                       <Send className="w-5 h-5" />
                       {loading ? "Gönderiliyor..." : "Gönder"}

@@ -166,7 +166,7 @@ export default function PaymentFlow() {
             }`}
           >
             Yıllık
-            <span className="ml-2 px-2 py-1 bg-green-500 text-white text-xs rounded-full">
+            <span className="ml-2 px-2 py-1 bg-cyan-500 text-white text-xs rounded-full">
               2 AY BEDAVA
             </span>
           </button>
@@ -201,7 +201,7 @@ export default function PaymentFlow() {
                 <ul className="space-y-3 mb-8">
                   {plan.features.map((feature, index) => (
                     <li key={index} className="flex items-start gap-2">
-                      <Check className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                      <Check className="w-5 h-5 text-cyan-600 flex-shrink-0 mt-0.5" />
                       <span className="text-gray-700 text-sm">{feature}</span>
                     </li>
                   ))}

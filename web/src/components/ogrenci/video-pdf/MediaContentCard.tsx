@@ -19,7 +19,7 @@ const PRESET_GRADIENTS: [string, string][] = [
   ["#7c3aed", "#4f46e5"],
   ["#ea580c", "#f97316"],
   ["#db2777", "#ec4899"],
-  ["#059669", "#10b981"],
+  ["#0891b2", "#06b6d4"],
 ];
 
 function presetGradient(index: number): { from: string; to: string } {

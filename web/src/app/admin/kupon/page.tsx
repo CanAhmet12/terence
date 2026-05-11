@@ -23,7 +23,7 @@ function timeLeft(dateStr: string | null) {
   return `${days} gün kaldı`;
 }
 
-const inputCls = "w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none transition-all bg-white text-sm";
+const inputCls = "w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-cyan-500 outline-none transition-all bg-white text-sm";
 const labelCls = "block text-sm font-semibold text-slate-700 mb-1.5";
 
 export default function AdminKuponPage() {
@@ -124,14 +124,14 @@ export default function AdminKuponPage() {
   return (
     <div className="w-full min-w-0 max-w-none px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8 xl:px-10 xl:py-10 overflow-x-hidden">
       <div className="mb-8">
-        <Link href="/admin" className="inline-flex items-center gap-2 text-slate-500 hover:text-teal-600 text-sm font-medium mb-5 transition-colors">
+        <Link href="/admin" className="inline-flex items-center gap-2 text-slate-500 hover:text-cyan-600 text-sm font-medium mb-5 transition-colors">
           <ArrowLeft className="w-4 h-4" /> Dashboard'a Dön
         </Link>
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div>
             <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-teal-50 border border-teal-200 flex items-center justify-center">
-                <Tag className="w-5 h-5 text-teal-600" />
+              <div className="w-10 h-10 rounded-xl bg-cyan-50 border border-cyan-200 flex items-center justify-center">
+                <Tag className="w-5 h-5 text-cyan-600" />
               </div>
               Kupon Yönetimi
             </h1>
@@ -147,7 +147,7 @@ export default function AdminKuponPage() {
             </button>
             <button
               onClick={() => setShowForm(true)}
-              className="flex items-center gap-2 px-5 py-2.5 bg-teal-600 hover:bg-teal-700 text-white font-bold text-sm rounded-xl transition-colors shadow-sm"
+              className="flex items-center gap-2 px-5 py-2.5 bg-cyan-600 hover:bg-cyan-700 text-white font-bold text-sm rounded-xl transition-colors shadow-sm"
             >
               <Plus className="w-4 h-4" />
               Yeni Kupon
@@ -165,7 +165,7 @@ export default function AdminKuponPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value.toUpperCase())}
             placeholder="Kupon kodu ara..."
-            className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-teal-500 outline-none"
+            className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-cyan-500 outline-none"
           />
         </div>
       </div>
@@ -191,7 +191,7 @@ export default function AdminKuponPage() {
           <p className="text-sm text-slate-500 mb-4">İlk kuponu oluşturmak için "Yeni Kupon" butonuna tıkla.</p>
           <button
             onClick={() => setShowForm(true)}
-            className="px-5 py-2.5 bg-teal-600 hover:bg-teal-700 text-white font-bold text-sm rounded-xl transition-colors"
+            className="px-5 py-2.5 bg-cyan-600 hover:bg-cyan-700 text-white font-bold text-sm rounded-xl transition-colors"
           >
             Kupon Oluştur
           </button>
@@ -205,19 +205,19 @@ export default function AdminKuponPage() {
             const usagePct = c.max_uses ? Math.round((used / c.max_uses) * 100) : null;
             return (
               <div key={c.id} className={`bg-white rounded-2xl border p-5 shadow-sm transition-all ${
-                !c.is_active || isExpired ? "opacity-60 border-slate-200" : "border-slate-200 hover:border-teal-200"
+                !c.is_active || isExpired ? "opacity-60 border-slate-200" : "border-slate-200 hover:border-cyan-200"
               }`}>
                 <div className="flex items-center gap-4">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap mb-1">
                       <button
                         onClick={() => handleCopy(c.code)}
-                        className="flex items-center gap-1.5 font-mono font-bold text-teal-700 text-lg hover:text-teal-800 transition-colors group"
+                        className="flex items-center gap-1.5 font-mono font-bold text-cyan-700 text-lg hover:text-cyan-800 transition-colors group"
                         title="Kopyala"
                       >
                         {c.code}
                         {copied === c.code
-                          ? <CheckCircle className="w-4 h-4 text-teal-600" />
+                          ? <CheckCircle className="w-4 h-4 text-cyan-600" />
                           : <Copy className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity" />
                         }
                       </button>
@@ -227,7 +227,7 @@ export default function AdminKuponPage() {
                         {c.discount_type === "percent" ? `%${c.discount_value} indirim` : `${c.discount_value}₺ indirim`}
                       </span>
                       <span className={`px-2 py-0.5 text-xs font-bold rounded-full ${
-                        c.is_active && !isExpired ? "bg-teal-100 text-teal-700" : "bg-slate-100 text-slate-500"
+                        c.is_active && !isExpired ? "bg-cyan-100 text-cyan-700" : "bg-slate-100 text-slate-500"
                       }`}>
                         {isExpired ? "Süresi Doldu" : c.is_active ? "Aktif" : "Pasif"}
                       </span>
@@ -256,7 +256,7 @@ export default function AdminKuponPage() {
                     {c.max_uses && usagePct !== null && (
                       <div className="mt-2 h-1.5 bg-slate-100 rounded-full overflow-hidden max-w-[160px]">
                         <div
-                          className={`h-full rounded-full ${usagePct > 80 ? "bg-red-400" : usagePct > 50 ? "bg-amber-400" : "bg-teal-400"}`}
+                          className={`h-full rounded-full ${usagePct > 80 ? "bg-red-400" : usagePct > 50 ? "bg-amber-400" : "bg-cyan-400"}`}
                           style={{ width: `${Math.min(usagePct, 100)}%` }}
                         />
                       </div>
@@ -268,7 +268,7 @@ export default function AdminKuponPage() {
                       className={`px-3 py-1.5 text-xs font-bold rounded-xl border transition-colors ${
                         c.is_active
                           ? "border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100"
-                          : "border-teal-200 bg-teal-50 text-teal-700 hover:bg-teal-100"
+                          : "border-cyan-200 bg-cyan-50 text-cyan-700 hover:bg-cyan-100"
                       }`}
                     >
                       {c.is_active ? "Pasif Et" : "Aktif Et"}
@@ -395,7 +395,7 @@ export default function AdminKuponPage() {
                       }))}
                       className={`px-4 py-2 rounded-xl text-sm font-semibold border transition-all capitalize ${
                         form.applicable_plans.includes(plan)
-                          ? "bg-teal-600 text-white border-teal-600"
+                          ? "bg-cyan-600 text-white border-cyan-600"
                           : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
                       }`}
                     >
@@ -415,7 +415,7 @@ export default function AdminKuponPage() {
               <button
                 onClick={handleCreate}
                 disabled={saving}
-                className="w-full py-3.5 bg-teal-600 hover:bg-teal-700 disabled:opacity-60 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-colors"
+                className="w-full py-3.5 bg-cyan-600 hover:bg-cyan-700 disabled:opacity-60 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-colors"
               >
                 {saving ? <><RefreshCw className="w-4 h-4 animate-spin" /> Oluşturuluyor...</> : <><Tag className="w-4 h-4" /> Kuponu Oluştur</>}
               </button>

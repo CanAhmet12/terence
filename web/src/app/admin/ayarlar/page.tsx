@@ -80,7 +80,7 @@ export default function AdminAyarlarPage() {
 
   return (
     <div className="w-full min-w-0 max-w-none px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8 xl:px-10 xl:py-10 overflow-x-hidden">
-      <Link href="/admin" className="inline-flex items-center gap-2 text-slate-500 hover:text-teal-600 text-sm mb-8 transition-colors">
+      <Link href="/admin" className="inline-flex items-center gap-2 text-slate-500 hover:text-cyan-600 text-sm mb-8 transition-colors">
         <ArrowLeft className="w-4 h-4" />
         Panele dön
       </Link>
@@ -92,13 +92,13 @@ export default function AdminAyarlarPage() {
         {/* Dil seçenekleri */}
         <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
           <h2 className="font-semibold text-slate-900 flex items-center gap-2 mb-4">
-            <Globe className="w-5 h-5 text-teal-600" />
+            <Globe className="w-5 h-5 text-cyan-600" />
             Dil Seçenekleri
           </h2>
           <select
             value={lang}
             onChange={(e) => setLang(e.target.value)}
-            className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none"
+            className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-cyan-500 outline-none"
           >
             <option value="tr">Türkçe</option>
             <option value="en">English</option>
@@ -108,7 +108,7 @@ export default function AdminAyarlarPage() {
         {/* Bakım modu */}
         <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
           <h2 className="font-semibold text-slate-900 flex items-center gap-2 mb-4">
-            <Shield className="w-5 h-5 text-teal-600" />
+            <Shield className="w-5 h-5 text-cyan-600" />
             Bakım Modu
           </h2>
           <label className="flex items-center gap-3 cursor-pointer">
@@ -132,7 +132,7 @@ export default function AdminAyarlarPage() {
         {/* API bilgisi */}
         <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
           <h2 className="font-semibold text-slate-900 flex items-center gap-2 mb-4">
-            <Key className="w-5 h-5 text-teal-600" />
+            <Key className="w-5 h-5 text-cyan-600" />
             API Bilgisi
           </h2>
           <div className="p-4 bg-slate-50 rounded-xl font-mono text-sm break-all text-slate-700">
@@ -147,7 +147,7 @@ export default function AdminAyarlarPage() {
           </div>
         )}
         {saveSuccess && (
-          <div className="p-4 bg-emerald-50 border border-emerald-100 rounded-2xl text-emerald-700 text-sm font-medium flex items-center gap-2">
+          <div className="p-4 bg-cyan-50 border border-cyan-100 rounded-2xl text-cyan-700 text-sm font-medium flex items-center gap-2">
             <CheckCircle className="w-4 h-4" />
             Ayarlar başarıyla kaydedildi.
           </div>
@@ -155,7 +155,7 @@ export default function AdminAyarlarPage() {
         <button
           onClick={handleSave}
           disabled={saving}
-          className="w-full py-3.5 bg-teal-600 hover:bg-teal-700 disabled:opacity-60 text-white font-semibold rounded-xl transition-colors"
+          className="w-full py-3.5 bg-cyan-600 hover:bg-cyan-700 disabled:opacity-60 text-white font-semibold rounded-xl transition-colors"
         >
           {saving ? "Kaydediliyor..." : "Ayarları Kaydet"}
         </button>
@@ -165,13 +165,13 @@ export default function AdminAyarlarPage() {
         <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-semibold text-slate-900 flex items-center gap-2">
-              <Shield className="w-5 h-5 text-teal-600" />
+              <Shield className="w-5 h-5 text-cyan-600" />
               Güvenlik Logları
             </h2>
             <button
               onClick={loadLogs}
               disabled={logsLoading}
-              className="text-slate-400 hover:text-teal-600 transition-colors"
+              className="text-slate-400 hover:text-cyan-600 transition-colors"
               aria-label="Logları yenile"
             >
               <RefreshCw className={`w-4 h-4 ${logsLoading ? "animate-spin" : ""}`} />

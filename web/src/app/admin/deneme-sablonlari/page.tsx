@@ -204,15 +204,15 @@ export default function AdminDenemeSablonlariPage() {
 
   return (
     <div className="w-full min-w-0 max-w-none px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8 xl:px-10 xl:py-10 overflow-x-hidden">
-      <Link href="/admin/icerik-merkezi" className="inline-flex items-center gap-2 text-slate-600 hover:text-teal-600 mb-6 font-medium">
+      <Link href="/admin/icerik-merkezi" className="inline-flex items-center gap-2 text-slate-600 hover:text-cyan-600 mb-6 font-medium">
         <ArrowLeft className="w-4 h-4" />
         İçerik merkezine dön
       </Link>
 
       <div className="mb-8 flex w-full min-w-0 flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex min-w-0 flex-1 items-start gap-3">
-          <div className="w-12 h-12 rounded-2xl bg-teal-100 flex items-center justify-center shrink-0">
-            <ClipboardList className="w-6 h-6 text-teal-700" />
+          <div className="w-12 h-12 rounded-2xl bg-cyan-100 flex items-center justify-center shrink-0">
+            <ClipboardList className="w-6 h-6 text-cyan-700" />
           </div>
           <div className="min-w-0 flex-1">
             <h1 className="text-2xl font-black text-slate-900 tracking-tight">Deneme şablonları</h1>
@@ -231,7 +231,7 @@ export default function AdminDenemeSablonlariPage() {
         <div className="space-y-6">
           <form onSubmit={createTemplate} className="rounded-2xl border border-slate-200 bg-white p-5 space-y-4 shadow-sm">
             <h2 className="font-bold text-slate-900 flex items-center gap-2">
-              <Plus className="w-4 h-4 text-teal-600" />
+              <Plus className="w-4 h-4 text-cyan-600" />
               Yeni şablon
             </h2>
             <div>
@@ -282,7 +282,7 @@ export default function AdminDenemeSablonlariPage() {
             <button
               type="submit"
               disabled={creating}
-              className="w-full py-2.5 rounded-xl bg-teal-600 text-white text-sm font-bold hover:bg-teal-700 disabled:opacity-50 inline-flex items-center justify-center gap-2"
+              className="w-full py-2.5 rounded-xl bg-cyan-600 text-white text-sm font-bold hover:bg-cyan-700 disabled:opacity-50 inline-flex items-center justify-center gap-2"
             >
               {creating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
               Oluştur
@@ -298,7 +298,7 @@ export default function AdminDenemeSablonlariPage() {
             </div>
             {loading ? (
               <div className="p-8 flex justify-center">
-                <Loader2 className="w-8 h-8 animate-spin text-teal-600" />
+                <Loader2 className="w-8 h-8 animate-spin text-cyan-600" />
               </div>
             ) : rows.length === 0 ? (
               <p className="p-6 text-sm text-slate-500">Henüz şablon yok. Yukarıdan oluşturun; ardından soru listesini JSON ile kaydedin.</p>
@@ -310,7 +310,7 @@ export default function AdminDenemeSablonlariPage() {
                       <button
                         type="button"
                         onClick={() => loadDetail(r.id)}
-                        className={`flex-1 text-left min-w-0 ${selectedId === r.id ? "text-teal-700 font-semibold" : ""}`}
+                        className={`flex-1 text-left min-w-0 ${selectedId === r.id ? "text-cyan-700 font-semibold" : ""}`}
                       >
                         <span className="block truncate">{r.title}</span>
                         <span className="text-xs text-slate-500">
@@ -341,7 +341,7 @@ export default function AdminDenemeSablonlariPage() {
             <p className="text-sm text-slate-500">Soldan bir şablon seçin.</p>
           ) : detailLoading ? (
             <div className="py-12 flex justify-center">
-              <Loader2 className="w-8 h-8 animate-spin text-teal-600" />
+              <Loader2 className="w-8 h-8 animate-spin text-cyan-600" />
             </div>
           ) : (
             <>
@@ -391,7 +391,7 @@ export default function AdminDenemeSablonlariPage() {
                       <button
                         type="button"
                         onClick={() => appendQuestionId(q.id)}
-                        className="shrink-0 px-2 py-1 rounded-lg bg-teal-50 text-teal-800 font-semibold hover:bg-teal-100"
+                        className="shrink-0 px-2 py-1 rounded-lg bg-cyan-50 text-cyan-800 font-semibold hover:bg-cyan-100"
                       >
                         +Ekle
                       </button>

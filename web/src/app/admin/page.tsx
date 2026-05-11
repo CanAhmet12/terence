@@ -71,12 +71,12 @@ export default function AdminDashboardPage() {
   const kpiCards = [
     {
       icon: Users,
-      bg: "bg-teal-50",
-      color: "text-teal-600",
+      bg: "bg-cyan-50",
+      color: "text-cyan-600",
       label: "Toplam Öğrenci",
       value: loading ? null : (s?.total_students.toLocaleString("tr") ?? "—"),
       sub: loading ? null : `+${s?.new_users_this_week ?? 0} bu hafta`,
-      subColor: "text-emerald-600",
+      subColor: "text-cyan-600",
     },
     {
       icon: UserCheck,
@@ -98,8 +98,8 @@ export default function AdminDashboardPage() {
     },
     {
       icon: DollarSign,
-      bg: "bg-emerald-50",
-      color: "text-emerald-600",
+      bg: "bg-cyan-50",
+      color: "text-cyan-600",
       label: "Bu Ay Gelir",
       value: loading ? null : formatCurrency(s?.monthly_revenue ?? 0),
       sub: loading ? null : "PayTR üzerinden",
@@ -153,10 +153,10 @@ export default function AdminDashboardPage() {
         <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm">
           <div className="flex items-center justify-between mb-5">
             <h2 className="font-bold text-slate-900 flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-teal-600" />
+              <TrendingUp className="w-5 h-5 text-cyan-600" />
               Günlük Aktif Kullanıcı
             </h2>
-            <span className="text-xs font-semibold text-teal-600 bg-teal-50 px-2 py-1 rounded-lg">Son 7 gün</span>
+            <span className="text-xs font-semibold text-cyan-600 bg-cyan-50 px-2 py-1 rounded-lg">Son 7 gün</span>
           </div>
           {loading ? (
             <Skeleton className="h-40" />
@@ -183,10 +183,10 @@ export default function AdminDashboardPage() {
         <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm">
           <div className="flex items-center justify-between mb-5">
             <h2 className="font-bold text-slate-900 flex items-center gap-2">
-              <DollarSign className="w-5 h-5 text-emerald-600" />
+              <DollarSign className="w-5 h-5 text-cyan-600" />
               Haftalık Yeni Kayıt
             </h2>
-            <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg">Son 7 gün</span>
+            <span className="text-xs font-semibold text-cyan-600 bg-cyan-50 px-2 py-1 rounded-lg">Son 7 gün</span>
           </div>
           {loading ? (
             <Skeleton className="h-40" />
@@ -197,7 +197,7 @@ export default function AdminDashboardPage() {
                 <XAxis dataKey="day" tick={{ fontSize: 11, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
                 <YAxis tick={{ fontSize: 11, fill: "#94a3b8" }} axisLine={false} tickLine={false} width={35} />
                 <Tooltip contentStyle={{ borderRadius: "12px", border: "1px solid #e2e8f0", fontSize: "12px" }} />
-                <Line type="monotone" dataKey="kayıt" stroke="#10b981" strokeWidth={2.5} dot={{ fill: "#10b981", r: 4 }} activeDot={{ r: 6 }} />
+                <Line type="monotone" dataKey="kayıt" stroke="#06b6d4" strokeWidth={2.5} dot={{ fill: "#06b6d4", r: 4 }} activeDot={{ r: 6 }} />
               </LineChart>
             </ResponsiveContainer>
           )}
@@ -207,7 +207,7 @@ export default function AdminDashboardPage() {
       <div className="grid lg:grid-cols-2 gap-8 mb-10">
         <div className="bg-white rounded-2xl border border-slate-200/80 p-8 shadow-sm hover:shadow-md transition-shadow">
           <h2 className="font-bold text-slate-900 mb-4 text-lg flex items-center gap-2">
-            <Upload className="w-5 h-5 text-teal-600" />
+            <Upload className="w-5 h-5 text-cyan-600" />
             İçerik Yönetimi
           </h2>
           <p className="text-sm text-slate-600 mb-6">
@@ -216,7 +216,7 @@ export default function AdminDashboardPage() {
           <div className="flex flex-wrap gap-3">
             <Link
               href="/admin/icerik-merkezi"
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-teal-600 to-teal-500 text-white font-semibold rounded-xl hover:from-teal-700 hover:to-teal-600 transition-all shadow-lg shadow-teal-500/25"
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-cyan-600 to-cyan-500 text-white font-semibold rounded-xl hover:from-cyan-700 hover:to-cyan-600 transition-all shadow-lg shadow-cyan-500/25"
             >
               İçerik merkezi
             </Link>
@@ -226,7 +226,7 @@ export default function AdminDashboardPage() {
         {/* Satış raporları */}
         <div className="bg-white rounded-2xl border border-slate-200/80 p-8 shadow-sm hover:shadow-md transition-shadow">
           <h2 className="font-bold text-slate-900 mb-4 text-lg flex items-center gap-2">
-            <TrendingUp className="w-5 h-5 text-teal-600" />
+            <TrendingUp className="w-5 h-5 text-cyan-600" />
             Paket Dönüşümleri
           </h2>
           {loading ? (
@@ -238,7 +238,7 @@ export default function AdminDashboardPage() {
               {(s?.subscription_conversions ?? []).map(({ from, to, count }, i) => (
                 <div key={i} className="flex justify-between py-4 px-4 rounded-xl bg-slate-50 border border-slate-100">
                   <span className="text-slate-600 font-medium capitalize">{from} → {to}</span>
-                  <span className="font-bold text-teal-600">{count} dönüşüm</span>
+                  <span className="font-bold text-cyan-600">{count} dönüşüm</span>
                 </div>
               ))}
             </div>
@@ -255,7 +255,7 @@ export default function AdminDashboardPage() {
       {/* Trafik analizi */}
       <div className="bg-white rounded-2xl border border-slate-200/80 p-8 shadow-sm hover:shadow-md transition-shadow mb-10">
         <h2 className="font-bold text-slate-900 mb-4 text-lg flex items-center gap-2">
-          <BarChart3 className="w-5 h-5 text-teal-600" />
+          <BarChart3 className="w-5 h-5 text-cyan-600" />
           En Çok İzlenen İçerikler
         </h2>
         {loading ? (
@@ -268,8 +268,8 @@ export default function AdminDashboardPage() {
               <p className="col-span-4 text-sm text-slate-400 text-center py-4">İçerik verisi bulunamadı.</p>
             ) : (s?.top_content ?? []).map((item, i) => (
               <div key={i} className="p-5 rounded-2xl bg-slate-50 border border-slate-100 flex items-center gap-4 hover:shadow-md transition-shadow">
-                <div className="w-10 h-10 rounded-xl bg-teal-50 flex items-center justify-center shrink-0">
-                  <Video className="w-5 h-5 text-teal-600" />
+                <div className="w-10 h-10 rounded-xl bg-cyan-50 flex items-center justify-center shrink-0">
+                  <Video className="w-5 h-5 text-cyan-600" />
                 </div>
                 <div className="min-w-0">
                   <p className="font-semibold text-slate-900 text-sm truncate">{item.title}</p>
@@ -291,10 +291,10 @@ export default function AdminDashboardPage() {
           <Link
             key={href}
             href={href}
-            className="flex items-center gap-4 p-5 bg-white rounded-2xl border border-slate-200/80 hover:border-teal-200 hover:shadow-md transition-all group"
+            className="flex items-center gap-4 p-5 bg-white rounded-2xl border border-slate-200/80 hover:border-cyan-200 hover:shadow-md transition-all group"
           >
-            <div className="w-10 h-10 rounded-xl bg-teal-50 group-hover:bg-teal-100 flex items-center justify-center shrink-0 transition-colors">
-              <Icon className="w-5 h-5 text-teal-600" />
+            <div className="w-10 h-10 rounded-xl bg-cyan-50 group-hover:bg-cyan-100 flex items-center justify-center shrink-0 transition-colors">
+              <Icon className="w-5 h-5 text-cyan-600" />
             </div>
             <div>
               <p className="font-semibold text-slate-900">{label}</p>

@@ -34,10 +34,10 @@ export function FaqSection() {
       <div className="absolute inset-0 pattern-dots opacity-[0.05]" />
       <div className="relative max-w-3xl mx-auto px-4 sm:px-6">
         <div className="text-center mb-16">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-teal-50 border border-teal-100 mb-6">
-            <HelpCircle className="w-7 h-7 text-teal-600" />
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-cyan-50 border border-cyan-100 mb-6">
+            <HelpCircle className="w-7 h-7 text-cyan-600" />
           </div>
-          <p className="text-teal-600 font-semibold text-sm uppercase tracking-widest mb-4">
+          <p className="text-cyan-600 font-semibold text-sm uppercase tracking-widest mb-4">
             SSS
           </p>
           <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900">
@@ -51,7 +51,7 @@ export function FaqSection() {
           {faqs.map((faq, i) => (
             <div
               key={i}
-              className="rounded-2xl border border-slate-200/80 bg-white overflow-hidden shadow-sm hover:shadow-md hover:border-teal-200/60 transition-all duration-300"
+              className="rounded-2xl border border-slate-200/80 bg-white overflow-hidden shadow-sm hover:shadow-md hover:border-cyan-200/60 transition-all duration-300"
             >
               <button
                 onClick={() => setOpen(open === i ? null : i)}
@@ -59,7 +59,7 @@ export function FaqSection() {
               >
                 <span className="font-semibold text-slate-900 pr-2 text-sm sm:text-base min-w-0">{faq.q}</span>
                 <ChevronDown
-                  className={`w-5 h-5 text-teal-500 shrink-0 transition-transform duration-200 ${
+                  className={`w-5 h-5 text-cyan-500 shrink-0 transition-transform duration-200 ${
                     open === i ? "rotate-180" : ""
                   }`}
                 />

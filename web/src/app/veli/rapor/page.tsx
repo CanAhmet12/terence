@@ -62,22 +62,22 @@ export default function VeliRaporPage() {
       label: "Bu Hafta Çalışma",
       value: loading ? null : (studyTimeStr || "0dk"),
       icon: Clock,
-      bgClass: "bg-teal-100",
-      iconClass: "text-teal-600",
+      bgClass: "bg-cyan-100",
+      iconClass: "text-cyan-600",
     },
     {
       label: "Haftalık Net Artış",
       value: loading ? null : (weeklyChange >= 0 ? `+${weeklyChange}` : `${weeklyChange}`),
       icon: TrendingUp,
-      bgClass: "bg-emerald-100",
-      iconClass: "text-emerald-600",
+      bgClass: "bg-cyan-100",
+      iconClass: "text-cyan-600",
     },
     {
       label: "Tamamlanan Görev",
       value: loading ? null : `${tasksDoneThisWeek}`,
       icon: BookOpen,
-      bgClass: "bg-teal-100",
-      iconClass: "text-teal-600",
+      bgClass: "bg-cyan-100",
+      iconClass: "text-cyan-600",
     },
     {
       label: "Hedef Sapması",
@@ -134,7 +134,7 @@ export default function VeliRaporPage() {
         {/* Net gelişim */}
         <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
           <h2 className="font-semibold text-slate-900 flex items-center gap-2 mb-6">
-            <BarChart3 className="w-5 h-5 text-teal-600" />
+            <BarChart3 className="w-5 h-5 text-cyan-600" />
             {nets.length} Haftalık Net Gelişimi
           </h2>
           {loading ? (
@@ -147,9 +147,9 @@ export default function VeliRaporPage() {
             <div className="flex items-end gap-2 h-40">
               {nets.map((net: number, i: number) => (
                 <div key={i} className="flex-1 flex flex-col items-center gap-1">
-                  <span className="text-xs font-bold text-teal-700">{net}</span>
+                  <span className="text-xs font-bold text-cyan-700">{net}</span>
                   <div
-                    className="w-full rounded-t-lg bg-gradient-to-t from-teal-600 to-teal-400 min-h-[8px] transition-all hover:from-teal-700 relative group"
+                    className="w-full rounded-t-lg bg-gradient-to-t from-cyan-600 to-cyan-400 min-h-[8px] transition-all hover:from-cyan-700 relative group"
                     style={{ height: `${(net / maxNet) * 100}%` }}
                   />
                   <span className="text-[10px] text-slate-500 text-center whitespace-nowrap">
@@ -181,12 +181,12 @@ export default function VeliRaporPage() {
                         <span className="text-sm font-medium text-slate-800">{d.subject}</span>
                         <div className="flex items-center gap-2 text-xs text-slate-500">
                           <span>Net: <strong className="text-slate-700">{d.net}</strong></span>
-                          <span className={`font-bold ${status === "good" ? "text-emerald-600" : status === "warning" ? "text-amber-600" : "text-red-600"}`}>%{pct}</span>
+                          <span className={`font-bold ${status === "good" ? "text-cyan-600" : status === "warning" ? "text-amber-600" : "text-red-600"}`}>%{pct}</span>
                         </div>
                       </div>
                       <div className="h-2.5 bg-slate-100 rounded-full overflow-hidden">
                         <div
-                          className={`h-full rounded-full ${status === "good" ? "bg-emerald-500" : status === "warning" ? "bg-amber-500" : "bg-red-500"}`}
+                          className={`h-full rounded-full ${status === "good" ? "bg-cyan-500" : status === "warning" ? "bg-amber-500" : "bg-red-500"}`}
                           style={{ width: `${pct}%` }}
                         />
                       </div>
@@ -195,7 +195,7 @@ export default function VeliRaporPage() {
                 })}
               </div>
               <div className="flex gap-4 mt-5 text-xs text-slate-500">
-                <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-emerald-500 shrink-0" /> İyi (%80+)</span>
+                <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-cyan-500 shrink-0" /> İyi (%80+)</span>
                 <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-amber-500 shrink-0" /> Dikkat</span>
                 <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-red-500 shrink-0" /> Risk</span>
               </div>
@@ -217,7 +217,7 @@ export default function VeliRaporPage() {
                 <th className="text-left p-4 font-semibold text-slate-700">Deneme</th>
                 <th className="text-right p-4 font-semibold text-slate-700">D</th>
                 <th className="text-right p-4 font-semibold text-slate-700">Y</th>
-                <th className="text-right p-4 font-semibold text-teal-700">Net</th>
+                <th className="text-right p-4 font-semibold text-cyan-700">Net</th>
               </tr>
             </thead>
             <tbody>
@@ -232,9 +232,9 @@ export default function VeliRaporPage() {
                       {d.finished_at ? new Date(String(d.finished_at)).toLocaleDateString("tr-TR") : "—"}
                     </td>
                     <td className="p-4 font-medium text-slate-900">{String(d.title ?? d.exam_type ?? "—")}</td>
-                    <td className="text-right p-4 text-emerald-600 font-semibold">{d.correct_count ?? "—"}</td>
+                    <td className="text-right p-4 text-cyan-600 font-semibold">{d.correct_count ?? "—"}</td>
                     <td className="text-right p-4 text-red-500 font-semibold">{d.wrong_count ?? "—"}</td>
-                    <td className="text-right p-4 font-bold text-teal-600">
+                    <td className="text-right p-4 font-bold text-cyan-600">
                       {d.net_score !== undefined ? Number(d.net_score).toFixed(2) : "—"}
                     </td>
                   </tr>

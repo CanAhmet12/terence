@@ -69,11 +69,11 @@ export default function VeliLayout({
         <aside className="hidden lg:flex w-64 min-h-dvh shrink-0 flex-col border-r border-slate-200/80 bg-white">
           <div className="p-6 border-b border-slate-100">
             <Link href="/" className="flex items-center gap-3 group">
-              <div className="w-11 h-11 rounded-2xl overflow-hidden shadow-lg shadow-teal-500/20 group-hover:shadow-teal-500/30 transition-shadow">
+              <div className="w-11 h-11 rounded-2xl overflow-hidden shadow-lg shadow-cyan-500/20 group-hover:shadow-cyan-500/30 transition-shadow">
                 <Image src="/logo.png" alt="Terence Eğitim" width={44} height={44} />
               </div>
               <span className="font-bold text-slate-900 tracking-tight">
-                TERENCE <span className="text-teal-600">EĞİTİM</span>
+                TERENCE <span className="text-cyan-600">EĞİTİM</span>
               </span>
             </Link>
           </div>
@@ -86,7 +86,7 @@ export default function VeliLayout({
                   href={item.href}
                   className={`group flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all ${
                     isActive
-                      ? "bg-gradient-to-r from-teal-50 to-emerald-50 text-teal-700 border border-teal-100/80 shadow-sm"
+                      ? "bg-gradient-to-r from-cyan-50 to-cyan-50 text-cyan-700 border border-cyan-100/80 shadow-sm"
                       : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
                   }`}
                 >
@@ -94,7 +94,7 @@ export default function VeliLayout({
                     icon={item.icon}
                     active={isActive}
                     size={20}
-                    className={isActive ? "text-teal-600" : "text-slate-400 group-hover:text-slate-600"}
+                    className={isActive ? "text-cyan-600" : "text-slate-400 group-hover:text-slate-600"}
                   />
                   {item.label}
                 </Link>
@@ -104,7 +104,7 @@ export default function VeliLayout({
           <div className="p-4 border-t border-slate-100">
             <Link
               href="/"
-              className="flex items-center gap-2 px-4 py-2.5 text-slate-500 hover:text-teal-600 hover:bg-teal-50/50 rounded-xl text-sm font-medium"
+              className="flex items-center gap-2 px-4 py-2.5 text-slate-500 hover:text-cyan-600 hover:bg-cyan-50/50 rounded-xl text-sm font-medium"
             >
               <ChevronLeft className="w-4 h-4" />
               Siteye Dön
@@ -147,7 +147,7 @@ export default function VeliLayout({
                   key={item.href}
                   href={item.href}
                   className={`group flex items-center gap-3 px-4 py-3 rounded-xl font-medium ${
-                    pathname === item.href ? "bg-teal-50 text-teal-700" : "text-slate-600 hover:bg-slate-50"
+                    pathname === item.href ? "bg-cyan-50 text-cyan-700" : "text-slate-600 hover:bg-slate-50"
                   }`}
                 >
                   <SidebarMenuIcon
@@ -155,7 +155,7 @@ export default function VeliLayout({
                     active={pathname === item.href}
                     size={20}
                     className={
-                      pathname === item.href ? "text-teal-600" : "text-slate-400 group-hover:text-slate-600"
+                      pathname === item.href ? "text-cyan-600" : "text-slate-400 group-hover:text-slate-600"
                     }
                   />
                   {item.label}

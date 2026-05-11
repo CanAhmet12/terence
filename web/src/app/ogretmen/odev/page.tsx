@@ -150,9 +150,9 @@ export default function OdevPage() {
 
             <div className="p-6 space-y-4">
               {success && (
-                <div className="flex items-center gap-2.5 p-4 bg-emerald-50 rounded-xl border border-emerald-200">
-                  <CheckCircle className="w-4.5 h-4.5 text-emerald-600 shrink-0" />
-                  <p className="font-semibold text-emerald-800 text-sm">Ödev başarıyla oluşturuldu!</p>
+                <div className="flex items-center gap-2.5 p-4 bg-cyan-50 rounded-xl border border-cyan-200">
+                  <CheckCircle className="w-4.5 h-4.5 text-cyan-600 shrink-0" />
+                  <p className="font-semibold text-cyan-800 text-sm">Ödev başarıyla oluşturuldu!</p>
                 </div>
               )}
 
@@ -311,7 +311,7 @@ export default function OdevPage() {
                       {/* Progress */}
                       <div className="flex items-center gap-3">
                         <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
-                          <div className={`h-full rounded-full transition-all ${completePct === 100 ? "bg-emerald-500" : "bg-indigo-500"}`}
+                          <div className={`h-full rounded-full transition-all ${completePct === 100 ? "bg-cyan-500" : "bg-indigo-500"}`}
                             style={{ width: `${Math.min(completePct, 100)}%` }} />
                         </div>
                         <span className="text-xs text-slate-500 font-medium shrink-0">

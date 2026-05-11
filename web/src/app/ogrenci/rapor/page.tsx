@@ -52,7 +52,7 @@ function KpiCard({
   loading?: boolean;
 }) {
   const TrendIcon = trend === "up" ? ArrowUp : trend === "down" ? ArrowDown : Minus;
-  const trendColor = trend === "up" ? "text-emerald-600" : trend === "down" ? "text-red-500" : "text-slate-400";
+  const trendColor = trend === "up" ? "text-cyan-600" : trend === "down" ? "text-red-500" : "text-slate-400";
 
   return (
     <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 hover:shadow-md transition-shadow">
@@ -87,7 +87,7 @@ function KpiCard({
 function getRiskStyle(risk: string | undefined) {
   if (risk === "red") return { bg: "bg-red-50", border: "border-red-200", text: "text-red-800", badge: "bg-red-100 text-red-700", icon: "text-red-600", label: "Yüksek Risk" };
   if (risk === "yellow") return { bg: "bg-amber-50", border: "border-amber-200", text: "text-amber-800", badge: "bg-amber-100 text-amber-700", icon: "text-amber-600", label: "Dikkat Gerekiyor" };
-  return { bg: "bg-emerald-50", border: "border-emerald-200", text: "text-emerald-800", badge: "bg-emerald-100 text-emerald-700", icon: "text-emerald-600", label: "Hedefe Ulaşabilirsin" };
+  return { bg: "bg-cyan-50", border: "border-cyan-200", text: "text-cyan-800", badge: "bg-cyan-100 text-cyan-700", icon: "text-cyan-600", label: "Hedefe Ulaşabilirsin" };
 }
 
 export default function RaporPage() {
@@ -194,8 +194,8 @@ export default function RaporPage() {
             label="Bu Hafta Çalışma"
             value={loading ? "—" : secondsToHuman(stats?.study_time_weekly_seconds ?? 0)}
             sub={`Bugün: ${loading ? "—" : secondsToHuman(stats?.study_time_today_seconds ?? 0)}`}
-            color="text-teal-600"
-            bg="bg-teal-50"
+            color="text-cyan-600"
+            bg="bg-cyan-50"
             loading={loading}
           />
           <KpiCard
@@ -326,7 +326,7 @@ export default function RaporPage() {
                 {chartNets.length > 0 && (
                   <div className="flex justify-between mt-3 text-xs text-slate-400 font-medium">
                     <span>En düşük: <span className="font-bold text-red-500">{Math.min(...chartNets)}</span></span>
-                    <span>En yüksek: <span className="font-bold text-emerald-600">{Math.max(...chartNets)}</span></span>
+                    <span>En yüksek: <span className="font-bold text-cyan-600">{Math.max(...chartNets)}</span></span>
                     <span>Ortalama: <span className="font-bold text-indigo-600">{Math.round(chartNets.reduce((a, b) => a + b, 0) / chartNets.length)}</span></span>
                   </div>
                 )}
@@ -357,7 +357,7 @@ export default function RaporPage() {
                 {[
                   { label: "Hedef Net", value: `${goal.target_net ?? "—"}`, color: "text-violet-600" },
                   { label: "Mevcut Net", value: `${goal.current_net ?? "—"}`, color: "text-slate-900" },
-                  { label: "Tahmini Net", value: `${predictedNet ?? "—"}`, color: riskLevel === "red" ? "text-red-600" : riskLevel === "yellow" ? "text-amber-600" : "text-emerald-600" },
+                  { label: "Tahmini Net", value: `${predictedNet ?? "—"}`, color: riskLevel === "red" ? "text-red-600" : riskLevel === "yellow" ? "text-amber-600" : "text-cyan-600" },
                   { label: "Kalan Gün", value: `${goal.days_remaining ?? "—"}`, color: "text-slate-900" },
                 ].map(({ label, value, color }) => (
                   <div key={label} className="flex justify-between items-center px-4 py-3 rounded-xl bg-slate-50 border border-slate-100">
@@ -423,10 +423,10 @@ export default function RaporPage() {
             <div className="space-y-3">
               {weakAchievements.map((wa) => {
                 const pct = wa.accuracy_rate;
-                const barColor = pct < 40 ? "bg-red-500" : pct < 70 ? "bg-amber-500" : "bg-teal-500";
+                const barColor = pct < 40 ? "bg-red-500" : pct < 70 ? "bg-amber-500" : "bg-cyan-500";
                 return (
                   <div key={wa.id} className="flex items-center gap-4 p-3.5 rounded-xl bg-slate-50 border border-slate-100">
-                    <span className="font-mono text-xs font-bold text-teal-600 bg-teal-50 px-2 py-1 rounded-lg shrink-0">
+                    <span className="font-mono text-xs font-bold text-cyan-600 bg-cyan-50 px-2 py-1 rounded-lg shrink-0">
                       {wa.kod}
                     </span>
                     <span className="flex-1 text-sm font-medium text-slate-700 truncate">{wa.konu}</span>

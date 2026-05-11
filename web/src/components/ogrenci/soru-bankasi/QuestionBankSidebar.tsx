@@ -210,7 +210,7 @@ export function QuestionBankSidebar({
             </p>
             <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-200">
               <div
-                className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-violet-600 transition-all duration-500"
+                className="h-full rounded-full bg-gradient-to-r from-cyan-500 to-violet-600 transition-all duration-500"
                 style={{ width: `${pct}%` }}
               />
             </div>

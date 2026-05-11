@@ -55,7 +55,7 @@ export default function ExamResultPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen">
-        <Loader2 className="w-10 h-10 text-teal-500 animate-spin" />
+        <Loader2 className="w-10 h-10 text-cyan-500 animate-spin" />
       </div>
     );
   }
@@ -64,7 +64,7 @@ export default function ExamResultPage() {
     return (
       <div className="p-10 text-center">
         <p className="text-red-500 mb-4">{error ?? "Sonuç bulunamadı"}</p>
-        <Link href="/ogrenci/deneme" className="text-teal-600 hover:underline">← Denemelere dön</Link>
+        <Link href="/ogrenci/deneme" className="text-cyan-600 hover:underline">← Denemelere dön</Link>
       </div>
     );
   }
@@ -80,13 +80,13 @@ export default function ExamResultPage() {
   const subjects = Object.keys(breakdown);
   const netNum = Number(result.net_score);
   const netSafe = Number.isFinite(netNum) ? netNum : 0;
-  const netColor = netSafe >= 70 ? "text-emerald-600" : netSafe >= 40 ? "text-amber-600" : "text-red-600";
+  const netColor = netSafe >= 70 ? "text-cyan-600" : netSafe >= 40 ? "text-amber-600" : "text-red-600";
 
   return (
     <div className="p-4 sm:p-6 lg:p-10 max-w-4xl mx-auto min-w-0">
       {/* Başlık */}
       <div className="text-center mb-10">
-        <div className="w-20 h-20 rounded-full bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center mx-auto mb-4 shadow-lg shadow-teal-200">
+        <div className="w-20 h-20 rounded-full bg-gradient-to-br from-cyan-500 to-cyan-500 flex items-center justify-center mx-auto mb-4 shadow-lg shadow-cyan-200">
           <Trophy className="w-10 h-10 text-white" />
         </div>
         <h1 className="text-3xl font-extrabold text-slate-900">{result.title}</h1>
@@ -104,8 +104,8 @@ export default function ExamResultPage() {
           </div>
           <div>
             <div className="flex items-center justify-center gap-1">
-              <CheckCircle className="w-5 h-5 text-emerald-500" />
-              <p className="text-3xl font-bold text-emerald-600">{result.correct_count ?? 0}</p>
+              <CheckCircle className="w-5 h-5 text-cyan-500" />
+              <p className="text-3xl font-bold text-cyan-600">{result.correct_count ?? 0}</p>
             </div>
             <p className="text-sm text-slate-500 mt-1">Doğru</p>
           </div>
@@ -137,7 +137,7 @@ export default function ExamResultPage() {
       {subjects.length > 0 && (
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 sm:p-8 mb-6">
           <h2 className="font-bold text-slate-900 mb-6 flex items-center gap-2">
-            <BarChart3 className="w-5 h-5 text-teal-600" /> Ders Bazlı Analiz
+            <BarChart3 className="w-5 h-5 text-cyan-600" /> Ders Bazlı Analiz
           </h2>
           <div className="space-y-4">
             {subjects.map((subject) => {
@@ -154,7 +154,7 @@ export default function ExamResultPage() {
                   <div className="flex items-center justify-between mb-1.5">
                     <span className="text-sm font-semibold text-slate-700">{subject}</span>
                     <div className="flex items-center gap-3 text-xs text-slate-500">
-                      <span className="text-emerald-600 font-semibold">D:{c}</span>
+                      <span className="text-cyan-600 font-semibold">D:{c}</span>
                       <span className="text-red-500 font-semibold">Y:{w}</span>
                       <span className="text-slate-400">B:{e}</span>
                       <span className="font-bold text-slate-700">Net:{netRow}</span>
@@ -162,7 +162,7 @@ export default function ExamResultPage() {
                   </div>
                   <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-gradient-to-r from-teal-500 to-emerald-500 rounded-full"
+                      className="h-full bg-gradient-to-r from-cyan-500 to-cyan-500 rounded-full"
                       style={{ width: `${accuracy}%` }}
                     />
                   </div>
@@ -194,11 +194,11 @@ export default function ExamResultPage() {
                   ? "bg-red-500"
                   : accSafe < 70
                   ? "bg-amber-500"
-                  : "bg-teal-500";
+                  : "bg-cyan-500";
                 return (
                   <div key={wa.id ?? `${wa.kod}-${idx}`} className="flex items-center gap-4 p-4 bg-slate-50 rounded-xl border border-slate-100">
                     <div className="shrink-0">
-                      <span className="font-mono text-xs font-bold text-teal-600 bg-teal-50 px-2 py-1 rounded-lg">
+                      <span className="font-mono text-xs font-bold text-cyan-600 bg-cyan-50 px-2 py-1 rounded-lg">
                         {wa.kod}
                       </span>
                     </div>
@@ -240,7 +240,7 @@ export default function ExamResultPage() {
         </Link>
         <Link
           href="/ogrenci/soru-bankasi"
-          className="flex-1 py-3 text-center bg-teal-600 text-white rounded-xl font-semibold hover:bg-teal-700 transition-colors flex items-center justify-center gap-2"
+          className="flex-1 py-3 text-center bg-cyan-600 text-white rounded-xl font-semibold hover:bg-cyan-700 transition-colors flex items-center justify-center gap-2"
         >
           Zayıf Konuları Çalış <ChevronRight className="w-4 h-4" />
         </Link>
