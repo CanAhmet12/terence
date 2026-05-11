@@ -16,69 +16,36 @@ export function QuestionBankKpiStrip({
   loading: boolean;
 }) {
   const k = summary?.kpis;
-  const rows = [
-    {
-      label: "Kütüphanedeki soru",
-      value: k != null ? formatInt(k.total_questions) : "—",
-      hint: "Seçtiğin kapsamdaki toplam",
-      icon: BookMarked,
-      accent: "from-violet-50 to-indigo-50/80 border-violet-100",
-    },
-    {
-      label: "Çözdüğün (benzersiz)",
-      value: k != null ? formatInt(k.answered_distinct) : "—",
-      hint: "Tekrarlar hariç",
-      icon: Trophy,
-      accent: "from-fuchsia-50 to-violet-50/80 border-fuchsia-100",
-    },
-    {
-      label: "Doğruluk",
-      value: k != null && k.attempts > 0 ? `%${k.accuracy_pct}` : "—",
-      hint: k != null && k.attempts > 0 ? `${formatInt(k.attempts)} deneme` : "Henüz deneme yok",
-      icon: TrendingUp,
-      accent: "from-emerald-50 to-teal-50/80 border-emerald-100",
-    },
-    {
-      label: "Net tahmini",
-      value:
-        k != null && k.attempts > 0
-          ? new Intl.NumberFormat("tr-TR", {
-              maximumFractionDigits: 3,
-              minimumFractionDigits: 0,
-            }).format(k.net_estimate)
-          : "—",
-      hint: "Son çözümlerine göre",
-      icon: Target,
-      accent: "from-amber-50 to-orange-50/80 border-amber-100",
-    },
+  const items = [
+    { label: "Kütüphane", value: k != null ? formatInt(k.total_questions) : "—", icon: BookMarked },
+    { label: "Çözülen", value: k != null ? formatInt(k.answered_distinct) : "—", icon: Trophy },
+    { label: "Doğruluk", value: k != null && k.attempts > 0 ? `%${k.accuracy_pct}` : "—", icon: TrendingUp },
+    { label: "Net tahmini", value: k != null && k.attempts > 0 ? k.net_estimate.toFixed(1) : "—", icon: Target },
   ];
 
   return (
-    <section aria-label="Performans özeti" className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-      {rows.map(({ label, value, hint, icon: Icon, accent }) => (
+    <section
+      aria-label="Performans özeti"
+      className="flex flex-wrap items-stretch justify-between gap-2 rounded-2xl border border-slate-200/80 bg-white/90 px-2 py-2 shadow-sm backdrop-blur-sm sm:gap-0 sm:rounded-full sm:px-4 sm:py-2.5"
+    >
+      {items.map(({ label, value, icon: Icon }, i) => (
         <div
           key={label}
           className={cn(
-            "group relative overflow-hidden rounded-2xl border bg-gradient-to-br p-4 shadow-sm transition hover:shadow-md",
-            accent
+            "flex min-w-[calc(50%-4px)] flex-1 items-center gap-2.5 rounded-xl px-3 py-2.5 sm:min-w-0 sm:flex-none sm:rounded-none sm:px-5 sm:py-1",
+            i > 0 && "sm:border-l sm:border-slate-100"
           )}
         >
-          <div className="pointer-events-none absolute -right-4 -top-4 h-20 w-20 rounded-full bg-white/60 blur-2xl" />
-          <div className="relative flex items-start gap-3">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/80 bg-white text-violet-600 shadow-sm">
-              <Icon className="h-5 w-5" aria-hidden />
-            </span>
-            <div className="min-w-0 flex-1">
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</p>
-              <p className="mt-1.5 font-mono text-2xl font-bold tabular-nums tracking-tight text-slate-900">
-                {loading ? (
-                  <span className="inline-block h-8 w-24 animate-pulse rounded-lg bg-slate-200/80" aria-hidden />
-                ) : (
-                  value
-                )}
-              </p>
-              <p className="mt-0.5 text-xs text-slate-500">{hint}</p>
-            </div>
+          <Icon className="h-4 w-4 shrink-0 text-slate-400" aria-hidden />
+          <div className="min-w-0">
+            <p className="text-[10px] font-medium uppercase tracking-wider text-slate-400">{label}</p>
+            <p className="font-mono text-lg font-semibold tabular-nums leading-tight tracking-tight text-slate-900 sm:text-xl">
+              {loading ? (
+                <span className="inline-block h-6 w-14 animate-pulse rounded-md bg-slate-100" aria-hidden />
+              ) : (
+                value
+              )}
+            </p>
           </div>
         </div>
       ))}
