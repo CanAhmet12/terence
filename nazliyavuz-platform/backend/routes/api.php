@@ -534,11 +534,14 @@ Route::middleware(['auth:api'])->group(function () use ($registerTerenceTeacherA
     // -- Push Token
     Route::post('/push-token', [\App\Http\Controllers\Api\StudentController::class, 'registerPushToken']);
 
-    // -- Öğrenci hedef / rapor (rol + öğrenme profili zorunlu)
+    // -- Öğrenci hedef / rapor / trajectory / recommendations (rol + öğrenme profili zorunlu)
     Route::middleware(['role:student', 'student_grade'])->group(function () {
         Route::get('/student/goal-engine', [\App\Http\Controllers\Api\StudentController::class, 'goalEngine']);
         Route::get('/student/goal-dashboard', [\App\Http\Controllers\Api\StudentController::class, 'goalDashboard']);
         Route::get('/student/report', [\App\Http\Controllers\Api\StudentController::class, 'report']);
+        Route::get('/student/exam-trajectory', [\App\Http\Controllers\Api\StudentController::class, 'examTrajectory']);
+        Route::get('/student/recommendations', [\App\Http\Controllers\Api\StudentController::class, 'recommendations']);
+        Route::get('/student/coach-context', [\App\Http\Controllers\Api\StudentController::class, 'coachContext']);
     });
 
     // -- AI Endpoints

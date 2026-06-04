@@ -4,7 +4,7 @@ const OFFLINE_URL = '/offline'
 const STATIC_ASSETS = [
   '/',
   '/offline',
-  '/dashboard',
+  '/ogrenci',
   '/manifest.json',
   '/favicon.ico',
 ]

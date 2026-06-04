@@ -3,6 +3,9 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Services\ParentInsightService;
+use App\Services\RecommendationService;
+use App\Traits\StudentRiskTrait;
 use App\Models\User;
 use App\Models\ParentStudent;
 use App\Models\StudySession;
@@ -19,6 +22,7 @@ use App\Support\LiveSessionViewSerializer;
 
 class ParentController extends Controller
 {
+    use StudentRiskTrait;
     // GET /api/parent/children
     public function children(): JsonResponse
     {
@@ -265,11 +269,11 @@ class ParentController extends Controller
         $lastActive = \App\Models\StudySession::where('user_id', $student->id)
             ->orderByDesc('started_at')->value('started_at');
 
-        $net   = (float) $student->current_net;
-        $days  = $lastActive ? now()->diffInDays($lastActive) : 999;
-        $risk  = 'green';
-        if ($days > 7 || $net < 20)  $risk = 'red';
-        elseif ($days > 3 || $net < 40) $risk = 'yellow';
+        $net      = (float) $student->current_net;
+        $days     = $lastActive ? now()->diffInDays($lastActive) : 999;
+        $targetNet = $student->target_net !== null ? (float) $student->target_net : null;
+        $examDate  = $student->exam_date ? (string) $student->exam_date : null;
+        $risk      = $this->computeStudentRiskLevel($net, $days, $targetNet, $examDate);
 
         // Recent exams
         $recentExams = ExamSession::where('user_id', $student->id)
@@ -282,6 +286,15 @@ class ParentController extends Controller
                 'finished_at' => $e->finished_at,
                 'net_score'   => (float) $e->net_score,
             ])->toArray();
+
+        // ── BI-6: Parent insight (lightweight — no extra DB queries) ──
+        $firstName    = explode(' ', $student->name)[0];
+        $parentInsight = (new ParentInsightService)->forSummary(
+            riskLevel:  $risk,
+            weeklyNets: $weeklyNets,
+            daysSince:  $days,
+            childName:  $firstName,
+        );
 
         return [
             'child' => [
@@ -300,6 +313,8 @@ class ParentController extends Controller
             'last_active_at'           => $lastActive,
             'weekly_nets'              => $weeklyNets,
             'recent_exams'             => $recentExams,
+            // optional — additive
+            'parent_insight'           => $parentInsight,
         ];
     }
 
@@ -307,6 +322,47 @@ class ParentController extends Controller
     {
         $weekStart = Carbon::now()->startOfWeek();
         $weekEnd   = Carbon::now()->endOfWeek();
+
+        // Last activity — for canonical risk signal
+        $lastActive = \App\Models\StudySession::where('user_id', $student->id)
+            ->orderByDesc('started_at')
+            ->value('started_at');
+        $daysSince = $lastActive ? (int) now()->diffInDays(Carbon::parse($lastActive)) : 999;
+
+        // Canonical risk (StudentRiskTrait)
+        $net       = (float) $student->current_net;
+        $targetNet = $student->target_net !== null ? (float) $student->target_net : null;
+        $examDate  = $student->exam_date ? (string) $student->exam_date : null;
+
+        $riskLevel = $this->computeStudentRiskLevel($net, $daysSince, $targetNet, $examDate);
+        $riskTier  = match ($riskLevel) {
+            'red'    => 'critical',
+            'yellow' => 'at_risk',
+            default  => 'on_track',
+        };
+
+        // Build human-readable reason
+        $reasons = [];
+        if ($daysSince > 7) {
+            $reasons[] = $daysSince . ' gündür çalışma yapılmadı';
+        } elseif ($daysSince > 3) {
+            $reasons[] = $daysSince . ' gündür çalışma yok';
+        }
+        if ($targetNet !== null && $examDate !== null) {
+            try {
+                $examCarbon = Carbon::parse($examDate);
+                if ($examCarbon->isFuture()) {
+                    $weeksLeft    = max(1, (int) ceil(now()->diffInDays($examCarbon, false) / 7));
+                    $weeklyNeeded = max(0.0, ($targetNet - $net) / $weeksLeft);
+                    if ($weeklyNeeded > 5) {
+                        $reasons[] = 'Hedefe ulaşmak için haftalık +' . round($weeklyNeeded, 1) . ' net gerekiyor';
+                    } elseif ($weeklyNeeded > 2) {
+                        $reasons[] = 'Hedefe tempo biraz gerisinde';
+                    }
+                }
+            } catch (\Throwable) {}
+        }
+        $reason = empty($reasons) ? 'Performans takipte' : ucfirst(implode(', ', $reasons));
 
         // Weekly study time
         $weeklyStudy = \App\Models\StudySession::where('user_id', $student->id)
@@ -356,6 +412,33 @@ class ParentController extends Controller
                 'net'           => round((int)$r->correct_count - ((int)$r->wrong_count / 4), 2),
             ])->toArray();
 
+        $canonicalRisk = [
+            'tier'   => $riskTier,
+            'level'  => $riskLevel,
+            'label'  => match ($riskTier) {
+                'critical' => 'Yüksek risk',
+                'at_risk'  => 'Takip gerekiyor',
+                default    => 'Hedefe uygun',
+            },
+            'reason' => $reason,
+        ];
+
+        // ── BI-6: Richer parent insight using recommendation + canonical risk ──
+        $firstName   = explode(' ', $student->name)[0];
+        $primaryRec  = null;
+        try {
+            $recs       = (new RecommendationService)->forUser($student);
+            $primaryRec = $recs['primary_recommendation'] ?? null;
+        } catch (\Throwable) {}
+
+        $parentInsight = (new ParentInsightService)->forReport(
+            canonicalRisk:          $canonicalRisk,
+            weeklyNets:             $weeklyNets,
+            primaryRec:             $primaryRec,
+            lastInterventionLabel:  null, // P2: teacher intervention context
+            childName:              $firstName,
+        );
+
         return [
             'child' => [
                 'id'    => $student->id,
@@ -369,6 +452,10 @@ class ParentController extends Controller
             'tasks_done_this_week'       => $tasksDoneThisWeek,
             'subject_analysis'           => $subjectAnalysis,
             'recent_exams'               => $recentExams,
+            // ── BI-3: Canonical risk ──
+            'canonical_risk'             => $canonicalRisk,
+            // ── BI-6: Parent insight — optional ──
+            'parent_insight'             => $parentInsight,
         ];
     }
 

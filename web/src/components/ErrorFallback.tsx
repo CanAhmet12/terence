@@ -87,10 +87,10 @@ export function Unauthorized({
         <h2 className="text-3xl font-bold text-gray-900 mb-2">{title}</h2>
         <p className="text-gray-600 mb-8">{message}</p>
         <button
-          onClick={() => (window.location.href = '/dashboard')}
-          className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-        >
-          Dashboard'a Dön
+          onClick={() => (window.location.href = '/ogrenci')}
+            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          >
+            Panele Dön
         </button>
       </div>
     </div>

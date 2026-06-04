@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
-import { api, StudentStatistics, GoalAnalysis, WeakAchievement } from "@/lib/api";
+import { api, StudentStatistics, GoalAnalysis, WeakAchievement, StudentExamTrajectory } from "@/lib/api";
 import {
   Clock, FileQuestion, TrendingUp, Zap, BarChart3, Target,
   Brain, AlertTriangle, CheckCircle, Download, RefreshCw,
@@ -97,6 +97,8 @@ export default function RaporPage() {
   const [weakAchievements, setWeakAchievements] = useState<WeakAchievement[]>([]);
   const [loading, setLoading] = useState(true);
   const [chartPeriod, setChartPeriod] = useState(7);
+  /** BI-2: Backend trajectory — null when unavailable or endpoint fails */
+  const [trajectory, setTrajectory] = useState<StudentExamTrajectory | null>(null);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -112,6 +114,8 @@ export default function RaporPage() {
       setWeakAchievements((wa as WeakAchievement[]).slice(0, 5));
     }
     setLoading(false);
+    // Fetch trajectory in background — silent fail, no loading state change
+    api.getStudentExamTrajectory().then((t) => { if (t) setTrajectory(t); });
   }, []);
 
   useEffect(() => { loadData(); }, [loadData]);
@@ -129,20 +133,26 @@ export default function RaporPage() {
     ? Math.round(((stats.tasks_done_today ?? 0) / Math.max(stats.tasks_total_today ?? 1, 1)) * 100)
     : 0;
 
-  // Tahmin hesabı
+  // Tahmin hesabı — backend trajectory preferred, client-side fallback
   const weeksRemaining = goal ? Math.max(Math.floor((goal.days_remaining ?? 0) / 7), 0) : 0;
-  const avgWeeklyIncrease = weeklyNets.length >= 2
-    ? (weeklyNets[weeklyNets.length - 1] - weeklyNets[0]) / Math.max(weeklyNets.length - 1, 1)
-    : 0;
-  const predictedNet = goal
-    ? Math.min(Math.round((goal.current_net ?? 0) + avgWeeklyIncrease * weeksRemaining), (goal.target_net ?? 0) + 20)
-    : null;
+  const avgWeeklyIncrease = trajectory?.pace_vs_target?.current_weekly_pace
+    ?? (weeklyNets.length >= 2
+      ? (weeklyNets[weeklyNets.length - 1] - weeklyNets[0]) / Math.max(weeklyNets.length - 1, 1)
+      : 0);
+  const predictedNet = trajectory?.pace_vs_target?.projected_net_at_exam
+    ?? (goal
+      ? Math.min(Math.round((goal.current_net ?? 0) + avgWeeklyIncrease * weeksRemaining), (goal.target_net ?? 0) + 20)
+      : null);
 
-  const riskLevel = goal
-    ? predictedNet !== null && predictedNet >= (goal.target_net ?? 0) ? "green"
-    : predictedNet !== null && predictedNet >= (goal.target_net ?? 0) * 0.8 ? "yellow"
-    : "red"
-    : "green";
+  // Backend trajectory_status → risk level (semantic fix: on_track = good/green)
+  const backendStatus = trajectory?.pace_vs_target?.trajectory_status;
+  const riskLevel = backendStatus
+    ? (backendStatus === "behind" ? "yellow" : "green") // ahead|on_track → green, behind → yellow
+    : (goal
+      ? predictedNet !== null && predictedNet >= (goal.target_net ?? 0) ? "green"
+      : predictedNet !== null && predictedNet >= (goal.target_net ?? 0) * 0.8 ? "yellow"
+      : "red"
+      : "green");
 
   const riskStyle = getRiskStyle(riskLevel);
 

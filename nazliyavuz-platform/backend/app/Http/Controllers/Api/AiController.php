@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Services\CoachContextService;
 use App\Models\Question;
 use App\Models\QuestionAnswer;
 use Illuminate\Http\Request;
@@ -284,14 +285,21 @@ class AiController extends Controller
             ->reverse()
             ->values();
 
+        // BI-7: Rich system prompt from CoachContextService
+        $coachContextStr = '';
+        try {
+            $coachContextStr = (new CoachContextService)->systemPromptContext($user);
+        } catch (\Throwable) {
+            $coachContextStr = "Öğrenci adı: " . ($user->name ?? 'Öğrenci') . ".";
+        }
+
         $messages = [
             [
                 'role'    => 'system',
-                'content' => "Sen Terence Eğitim Platformu'nun dijital koç asistanısın. Türkçe konuşan öğrencilere yardım ediyorsun. "
-                    . "Öğrencinin adı: " . ($user->name ?? 'Öğrenci') . ". "
-                    . "Sınav hedefi: " . ($user->exam_goal ?? 'TYT/AYT') . ". "
-                    . "Abonelik planı: " . ($user->subscription_plan ?? 'free') . ". "
-                    . "Samimi, motive edici ve eğitici bir ton kullan. Kısa ve net yanıtlar ver.",
+                'content' => "Sen Terence Eğitim Platformu'nun dijital koç asistanısın. "
+                    . "Türkçe konuşan YKS/LGS öğrencilerine yardım ediyorsun. "
+                    . "Samimi, motive edici ve kısa yanıtlar ver. "
+                    . "Öğrenci hakkında bilinen: $coachContextStr",
             ],
         ];
 

@@ -95,10 +95,15 @@ class SocialAuthController extends Controller
             ]);
 
             return response()->json([
-                'message' => 'Google ile giriş başarılı',
-                'user' => $user,
-                'token' => $token,
-                'is_new_user' => $user->wasRecentlyCreated
+                'success'    => true,
+                'message'    => 'Google ile giriş başarılı',
+                'user'       => $user->toApiArray(),
+                'token'      => $token,          // legacy flat string — backward compat
+                'token_data' => [                // canonical field for new clients
+                    'access_token' => $token,
+                    'token_type'   => 'bearer',
+                ],
+                'is_new_user'=> $user->wasRecentlyCreated,
             ]);
 
         } catch (\Exception $e) {
@@ -170,10 +175,15 @@ class SocialAuthController extends Controller
             ]);
 
             return response()->json([
-                'message' => 'Facebook ile giriş başarılı',
-                'user' => $user,
-                'token' => $token,
-                'is_new_user' => $user->wasRecentlyCreated
+                'success'    => true,
+                'message'    => 'Facebook ile giriş başarılı',
+                'user'       => $user->toApiArray(),
+                'token'      => $token,
+                'token_data' => [
+                    'access_token' => $token,
+                    'token_type'   => 'bearer',
+                ],
+                'is_new_user'=> $user->wasRecentlyCreated,
             ]);
 
         } catch (\Exception $e) {
@@ -246,10 +256,15 @@ class SocialAuthController extends Controller
             ]);
 
             return response()->json([
-                'message' => 'Apple ile giriş başarılı',
-                'user' => $user,
-                'token' => $token,
-                'is_new_user' => $user->wasRecentlyCreated
+                'success'    => true,
+                'message'    => 'Apple ile giriş başarılı',
+                'user'       => $user->toApiArray(),
+                'token'      => $token,
+                'token_data' => [
+                    'access_token' => $token,
+                    'token_type'   => 'bearer',
+                ],
+                'is_new_user'=> $user->wasRecentlyCreated,
             ]);
 
         } catch (\Exception $e) {

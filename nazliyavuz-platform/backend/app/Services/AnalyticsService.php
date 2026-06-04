@@ -570,7 +570,7 @@ class AnalyticsService
             $recentScores = DB::table('exam_sessions')
                 ->where('user_id', $user->id)
                 ->where('status', 'completed')
-                ->orderBy('completed_at', 'desc')
+                ->orderBy('finished_at', 'desc')
                 ->limit(5)
                 ->pluck('score')
                 ->toArray();
@@ -786,11 +786,11 @@ class AnalyticsService
                 'exam_sessions.score',
                 'exam_sessions.net_score',
                 'exam_sessions.started_at',
-                'exam_sessions.completed_at'
+                'exam_sessions.finished_at'
             )
             ->where('exam_sessions.status', 'completed')
             ->when(isset($filters['start_date']), function ($q) use ($filters) {
-                $q->where('exam_sessions.completed_at', '>=', $filters['start_date']);
+                $q->where('exam_sessions.finished_at', '>=', $filters['start_date']);
             })
             ->get()
             ->toArray();

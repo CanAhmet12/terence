@@ -127,13 +127,13 @@ class ParentDashboardService
         $totalExams = DB::table('exam_sessions')
             ->where('user_id', $child->id)
             ->where('status', 'completed')
-            ->where('completed_at', '>=', $last30Days)
+            ->where('finished_at', '>=', $last30Days)
             ->count();
 
         $avgExamScore = DB::table('exam_sessions')
             ->where('user_id', $child->id)
             ->where('status', 'completed')
-            ->where('completed_at', '>=', $last30Days)
+            ->where('finished_at', '>=', $last30Days)
             ->avg('score');
 
         $totalStudyTime = DB::table('study_sessions')
@@ -487,7 +487,7 @@ class ParentDashboardService
         return DB::table('exam_sessions')
             ->where('user_id', $child->id)
             ->where('status', 'completed')
-            ->where('completed_at', '>=', $since)
+            ->where('finished_at', '>=', $since)
             ->count();
     }
 

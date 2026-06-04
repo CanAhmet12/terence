@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Services\AdminAggregateInsightService;
 use App\Models\User;
 use App\Models\Course;
 use App\Models\ExamSession;
@@ -29,14 +30,14 @@ class AdminController extends Controller
     // GET /api/admin/stats
     public function stats(): JsonResponse
     {
-        $totalUsers        = User::count();
-        $totalStudents     = User::where('role', 'student')->count();
-        $totalTeachers     = User::where('role', 'teacher')->count();
-        $activeToday       = User::whereDate('last_login_at', today())->count();
-        $totalCourses      = Course::where('is_active', true)->count();
-        $totalQuestions    = Question::where('is_active', true)->count();
-        $totalExams        = ExamSession::where('status', 'completed')->count();
-        $monthlyRevenue    = $this->terenceMonthlyPaymentSum();
+        $totalUsers          = User::count();
+        $totalStudents       = User::where('role', 'student')->count();
+        $totalTeachers       = User::where('role', 'teacher')->count();
+        $activeToday         = User::whereDate('last_login_at', today())->count();
+        $totalCourses        = Course::where('is_active', true)->count();
+        $totalQuestions      = Question::where('is_active', true)->count();
+        $totalExams          = ExamSession::where('status', 'completed')->count();
+        $monthlyRevenue      = $this->terenceMonthlyPaymentSum();
         $activeSubscriptions = User::query()
             ->where('role', 'student')
             ->whereNotNull('subscription_plan')
@@ -47,17 +48,52 @@ class AdminController extends Controller
             })
             ->count();
 
+        // ── Intelligence fields (optional, backward-compatible) ───────────
+        $newUsersThisWeek = User::where('created_at', '>=', now()->subWeek())->count();
+        $pendingTeachers  = User::where('role', 'teacher')
+            ->where('teacher_status', 'pending')
+            ->count();
+        $topContent       = $this->topContentItems();
+
+        $healthScore = $this->computeHealthScore(
+            totalStudents:   $totalStudents,
+            activeToday:     $activeToday,
+            newThisWeek:     $newUsersThisWeek,
+            pendingTeachers: $pendingTeachers,
+            topContentCount: count($topContent),
+        );
+
+        // ── BI-9: Admin aggregate intelligence ───────────────────────────
+        $aggregateInsight = (new AdminAggregateInsightService)->buildInsight(
+            totalStudents: $totalStudents,
+            newThisWeek:   $newUsersThisWeek,
+            activeToday:   $activeToday,
+        );
+
         return response()->json([
-            'success'             => true,
-            'total_users'         => $totalUsers,
-            'total_students'      => $totalStudents,
-            'total_teachers'      => $totalTeachers,
-            'active_users_today'  => $activeToday,
-            'total_courses'       => $totalCourses,
-            'total_questions'     => $totalQuestions,
-            'total_exams'         => $totalExams,
-            'monthly_revenue'     => round((float)$monthlyRevenue, 2),
-            'active_subscriptions'=> $activeSubscriptions,
+            'success'              => true,
+            'total_users'          => $totalUsers,
+            'total_students'       => $totalStudents,
+            'total_teachers'       => $totalTeachers,
+            'active_users_today'   => $activeToday,
+            'total_courses'        => $totalCourses,
+            'total_questions'      => $totalQuestions,
+            'total_exams'          => $totalExams,
+            'monthly_revenue'      => round((float) $monthlyRevenue, 2),
+            'active_subscriptions' => $activeSubscriptions,
+            // ── BI-1 intelligence fields ──
+            'new_users_this_week'  => $newUsersThisWeek,
+            'pending_teachers'     => $pendingTeachers,
+            'top_content'          => $topContent,
+            'health_score'         => $healthScore,
+            // ── BI-9 aggregate intelligence (optional) ──
+            'platform_insight'     => $aggregateInsight['platform_insight'],
+            'risk_distribution'    => $aggregateInsight['risk_distribution'],
+            'class_health'         => $aggregateInsight['class_health'],
+            'teacher_intervention' => $aggregateInsight['teacher_intervention'],
+            'platform_bottleneck'  => $aggregateInsight['platform_bottleneck'],
+            'content_health'       => $aggregateInsight['content_health'],
+            'growth_health'        => $aggregateInsight['growth_health'],
         ]);
     }
 
@@ -169,35 +205,60 @@ class AdminController extends Controller
         $items = $q->orderByDesc('created_at')->paginate(30);
 
         $data = collect($items->items())->map(function (ContentItem $ci) {
-            $topic = $ci->topic;
-            $unit = $topic?->unit;
+            $topic  = $ci->topic;
+            $unit   = $topic?->unit;
             $course = $unit?->course;
 
             return [
-                'id' => $ci->id,
-                'type' => $ci->type,
-                'title' => $ci->title,
-                'thumbnail_url' => $ci->thumbnail_url,
-                'description' => $ci->description,
-                'size_bytes' => $ci->size_bytes,
-                'created_at' => $ci->created_at?->toIso8601String(),
-                'is_free' => (bool) $ci->is_free,
-                'topic_title' => $topic?->title,
-                'unit' => $unit?->title,
-                'subject' => $course?->subject,
-                'course_title' => $course?->title,
-                'course_grade' => $course?->grade,
+                'id'               => $ci->id,
+                'type'             => $ci->type,
+                'title'            => $ci->title,
+                'thumbnail_url'    => $ci->thumbnail_url,
+                'description'      => $ci->description,
+                'size_bytes'       => $ci->size_bytes,
+                'created_at'       => $ci->created_at?->toIso8601String(),
+                'is_free'          => (bool) $ci->is_free,
+                'topic_title'      => $topic?->title,
+                'unit'             => $unit?->title,
+                'subject'          => $course?->subject,
+                'course_title'     => $course?->title,
+                'course_grade'     => $course?->grade,
                 'course_exam_type' => $course?->exam_type,
+                // ── Intelligence (optional, backward-compatible) ──
+                'is_orphan'        => $topic === null,
             ];
         })->values();
 
+        // Page-level orphan counts
+        $pageOrphanCount = $data->filter(fn ($i) => $i['is_orphan'])->count();
+        $pageLinkedCount = $data->filter(fn ($i) => !$i['is_orphan'])->count();
+
+        // Total orphan count across all pages (items whose topic was deleted)
+        $totalOrphanCount = ContentItem::where('is_active', true)
+            ->whereDoesntHave('topic')
+            ->count();
+        $totalContentCount = $items->total();
+        $totalLinkedCount  = max(0, $totalContentCount - $totalOrphanCount);
+
         return response()->json([
             'success' => true,
-            'data' => $data,
-            'meta' => [
-                'total' => $items->total(),
+            'data'    => $data,
+            'meta'    => [
+                'total'        => $totalContentCount,
                 'current_page' => $items->currentPage(),
-                'last_page' => $items->lastPage(),
+                'last_page'    => $items->lastPage(),
+            ],
+            // ── Intelligence block (optional, backward-compatible) ──
+            'intelligence' => [
+                'page_orphan_count'  => $pageOrphanCount,
+                'page_linked_count'  => $pageLinkedCount,
+                'page_total_count'   => $data->count(),
+                'total_orphan_count' => $totalOrphanCount,
+                'total_linked_count' => $totalLinkedCount,
+                'total_content_count'=> $totalContentCount,
+                'orphan_ratio'       => $totalContentCount > 0
+                    ? round($totalOrphanCount / $totalContentCount, 3)
+                    : 0.0,
             ],
         ]);
     }
@@ -207,6 +268,116 @@ class AdminController extends Controller
     {
         ContentItem::findOrFail($id)->delete();
         return response()->json(['success' => true, 'message' => 'İçerik silindi']);
+    }
+
+    // ── Intelligence Helpers ──────────────────────────────────────────────────
+
+    /**
+     * Top 5 content items by student progress count.
+     * Returns [] on any error — never throws.
+     */
+    private function topContentItems(): array
+    {
+        try {
+            return ContentItem::where('is_active', true)
+                ->withCount('progress')
+                ->orderByDesc('progress_count')
+                ->limit(5)
+                ->get(['id', 'title'])
+                ->map(fn (ContentItem $ci) => [
+                    'title' => $ci->title,
+                    'views' => (int) $ci->progress_count,
+                ])
+                ->toArray();
+        } catch (\Throwable) {
+            return [];
+        }
+    }
+
+    /**
+     * Average student study time in minutes over the last 7 days.
+     * Returns 0 on missing table or any error.
+     */
+    private function averageStudyMinutes(): int
+    {
+        try {
+            $avg = DB::table('study_sessions')
+                ->where('started_at', '>=', now()->subDays(7))
+                ->whereNotNull('ended_at')
+                ->selectRaw('AVG(TIMESTAMPDIFF(MINUTE, started_at, ended_at)) as avg_minutes')
+                ->value('avg_minutes');
+
+            return (int) round((float) ($avg ?? 0));
+        } catch (\Throwable) {
+            return 0;
+        }
+    }
+
+    /**
+     * Compute a 5-dimension platform health score (0–10).
+     * No DB calls — all values passed in to keep this pure.
+     */
+    private function computeHealthScore(
+        int $totalStudents,
+        int $activeToday,
+        int $newThisWeek,
+        int $pendingTeachers,
+        int $topContentCount,
+    ): array {
+        $avgStudy = $this->averageStudyMinutes();
+
+        // Activation rate (%)
+        $activityRate  = $totalStudents > 0 ? ($activeToday / $totalStudents) * 100 : 0;
+        $activityScore = $activityRate > 20 ? 2 : ($activityRate > 10 ? 1 : 0);
+
+        $growthScore = $newThisWeek > 10 ? 2 : ($newThisWeek > 3 ? 1 : 0);
+
+        $studyScore = $avgStudy > 40 ? 2 : ($avgStudy > 20 ? 1 : 0);
+
+        $contentScore = $topContentCount >= 3 ? 2 : ($topContentCount > 0 ? 1 : 0);
+
+        $approvalScore = $pendingTeachers === 0 ? 2 : ($pendingTeachers <= 2 ? 1 : 0);
+
+        $total = $activityScore + $growthScore + $studyScore + $contentScore + $approvalScore;
+
+        $tier = match (true) {
+            $total >= 8 => 'healthy',
+            $total >= 5 => 'attention',
+            default     => 'critical',
+        };
+
+        return [
+            'score'      => $total,
+            'max'        => 10,
+            'tier'       => $tier,
+            'label'      => match ($tier) {
+                'healthy'   => 'Platform sağlıklı',
+                'attention' => 'Dikkat gerektiriyor',
+                default     => 'Kritik durum',
+            },
+            'dimensions' => [
+                'activity'  => [
+                    'score' => $activityScore, 'max' => 2,
+                    'label' => match ($activityScore) { 2 => 'Aktivite iyi', 1 => 'Aktivite orta', default => 'Aktivite düşük' },
+                ],
+                'growth'    => [
+                    'score' => $growthScore, 'max' => 2,
+                    'label' => match ($growthScore) { 2 => 'Büyüme sağlıklı', 1 => 'Büyüme stabil', default => 'Büyüme yavaş' },
+                ],
+                'study'     => [
+                    'score' => $studyScore, 'max' => 2,
+                    'label' => match ($studyScore) { 2 => 'Çalışma süresi iyi', 1 => 'Çalışma süresi orta', default => 'Çalışma verisi yok' },
+                ],
+                'content'   => [
+                    'score' => $contentScore, 'max' => 2,
+                    'label' => match ($contentScore) { 2 => 'İçerik durumu iyi', 1 => 'İçerik az kullanılıyor', default => 'İçerik kullanımı yok' },
+                ],
+                'approvals' => [
+                    'score' => $approvalScore, 'max' => 2,
+                    'label' => match ($approvalScore) { 2 => 'Onay bekleyen yok', 1 => 'Az onay bekliyor', default => 'Onay bekleyen var' },
+                ],
+            ],
+        ];
     }
 
     // GET /api/admin/reports

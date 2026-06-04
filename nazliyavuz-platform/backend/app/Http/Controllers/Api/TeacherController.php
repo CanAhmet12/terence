@@ -3,6 +3,9 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Services\TeacherInsightService;
+use App\Services\TeacherInterventionService;
+use App\Traits\StudentRiskTrait;
 use App\Models\ClassRoom;
 use App\Models\ClassStudent;
 use App\Models\Assignment;
@@ -25,6 +28,7 @@ use Carbon\Carbon;
 
 class TeacherController extends Controller
 {
+    use StudentRiskTrait;
     // GET /api/teacher/classes
     public function classes(): JsonResponse
     {
@@ -61,20 +65,18 @@ class TeacherController extends Controller
                 ->groupBy('user_id')
                 ->pluck('last_started', 'user_id');
 
-            $nets = User::whereIn('id', $studentIds)->pluck('current_net', 'id');
+            $nets       = User::whereIn('id', $studentIds)->pluck('current_net', 'id');
+        $targetNets = User::whereIn('id', $studentIds)->pluck('target_net', 'id');
+        $examDates  = User::whereIn('id', $studentIds)->pluck('exam_date', 'id');
 
             foreach ($studentIds as $sid) {
                 $lastActivity = $lastStudyByUser[$sid] ?? null;
                 $daysSince    = $lastActivity ? now()->diffInDays(Carbon::parse($lastActivity)) : 999;
                 $net          = (float) ($nets[$sid] ?? 0);
+                $targetNet    = $targetNets[$sid] !== null ? (float) $targetNets[$sid] : null;
+                $examDate     = $examDates[$sid] ? (string) $examDates[$sid] : null;
 
-                $risk = 'green';
-                if ($daysSince > 7 || $net < 20) {
-                    $risk = 'red';
-                } elseif ($daysSince > 3 || $net < 40) {
-                    $risk = 'yellow';
-                }
-                $riskByStudent[$sid] = $risk;
+                $riskByStudent[$sid] = $this->computeStudentRiskLevel($net, $daysSince, $targetNet, $examDate);
             }
         }
 
@@ -137,6 +139,7 @@ class TeacherController extends Controller
             'users.xp_points',
             'users.subscription_plan',
             'users.last_login_at',
+            'users.exam_date',  // P1: needed for canonical risk pace signal
         ]);
 
         if ($students->isEmpty()) {
@@ -158,17 +161,16 @@ class TeacherController extends Controller
             ->groupBy('user_id')
             ->pluck('last_started', 'user_id');
 
-        $data = $students->map(function ($u) use ($studyToday, $lastStudyByUser) {
+        $riskByStudent = [];
+        $data = $students->map(function ($u) use ($studyToday, $lastStudyByUser, &$riskByStudent) {
             $lastActivity = $lastStudyByUser[$u->id] ?? null;
             $daysSince    = $lastActivity ? now()->diffInDays(Carbon::parse($lastActivity)) : 999;
             $net          = (float) $u->current_net;
+            $targetNet    = $u->target_net !== null ? (float) $u->target_net : null;
+            $examDate     = $u->exam_date ? (string) $u->exam_date : null;
+            $risk         = $this->computeStudentRiskLevel($net, $daysSince, $targetNet, $examDate);
 
-            $risk = 'green';
-            if ($daysSince > 7 || $net < 20) {
-                $risk = 'red';
-            } elseif ($daysSince > 3 || $net < 40) {
-                $risk = 'yellow';
-            }
+            $riskByStudent[$u->id] = $risk;
 
             return array_merge($u->toArray(), [
                 'study_time_today_seconds' => (int) ($studyToday[$u->id] ?? 0),
@@ -177,7 +179,19 @@ class TeacherController extends Controller
             ]);
         });
 
-        return response()->json(['success' => true, 'data' => $data]);
+        // P0 — Add intervention intelligence (batch, no N+1)
+        $interventions = (new TeacherInterventionService)->forStudents(
+            $teacher->id,
+            $studentIds,
+            $riskByStudent,
+        );
+
+        $dataWithIntervention = $data->map(function ($row) use ($interventions) {
+            $row['intervention'] = $interventions[$row['id']] ?? null;
+            return $row;
+        });
+
+        return response()->json(['success' => true, 'data' => $dataWithIntervention]);
     }
 
     // GET /api/teacher/classes/{id}/exam-summary — sınıftaki öğrencilerin deneme özeti (salt okunur)
@@ -220,17 +234,18 @@ class TeacherController extends Controller
 
         $students = User::whereIn('id', $studentIds)->get();
 
-        $result = $students->map(function ($s) {
-            $lastActivity = StudySession::where('user_id', $s->id)
-                ->orderByDesc('started_at')
-                ->value('started_at');
+        // Batch load last study sessions for all students
+        $lastStudyByUser = StudySession::whereIn('user_id', $studentIds)
+            ->selectRaw('user_id, MAX(started_at) as last_started')
+            ->groupBy('user_id')
+            ->pluck('last_started', 'user_id');
 
-            $daysSince = $lastActivity ? now()->diffInDays($lastActivity) : 999;
-            $net = (float) $s->current_net;
-
-            $risk = 'green';
-            if ($daysSince > 7 || $net < 20)  $risk = 'red';
-            elseif ($daysSince > 3 || $net < 40) $risk = 'yellow';
+        $result = $students->map(function ($s) use ($lastStudyByUser) {
+            $lastActivity = $lastStudyByUser[$s->id] ?? null;
+            $daysSince    = $lastActivity ? now()->diffInDays(Carbon::parse($lastActivity)) : 999;
+            $net          = (float) $s->current_net;
+            $targetNet    = $s->target_net !== null ? (float) $s->target_net : null;
+            $examDate     = $s->exam_date ? (string) $s->exam_date : null;
 
             return [
                 'id'            => $s->id,
@@ -238,7 +253,7 @@ class TeacherController extends Controller
                 'email'         => $s->email,
                 'current_net'   => $net,
                 'target_net'    => (float) $s->target_net,
-                'risk_level'    => $risk,
+                'risk_level'    => $this->computeStudentRiskLevel($net, $daysSince, $targetNet, $examDate),
                 'last_active_at'=> $lastActivity,
                 'days_inactive' => $daysSince,
                 'xp_points'     => $s->xp_points,
@@ -248,7 +263,38 @@ class TeacherController extends Controller
         $riskRank = ['red' => 3, 'yellow' => 2, 'green' => 1];
         $sorted = $result->sortByDesc(fn ($row) => $riskRank[$row['risk_level']] ?? 0)->values();
 
-        return response()->json(['success' => true, 'data' => $sorted]);
+        // P0 — Intervention intelligence (batch)
+        $riskByStudent   = $result->pluck('risk_level', 'id')->all();
+        $interventions   = (new TeacherInterventionService)->forStudents(
+            $teacher->id,
+            $studentIds->all(),
+            $riskByStudent,
+        );
+
+        $withIntervention = $sorted->map(function ($row) use ($interventions) {
+            $row['intervention'] = $interventions[$row['id']] ?? null;
+            return $row;
+        });
+
+        // P1 — class-level intervention summary
+        $needFollowUp      = collect($interventions)->filter(fn ($i) => $i && $i['needs_follow_up'])->count();
+        $recentlyActioned  = collect($interventions)->filter(function ($i) {
+            if (!$i || !$i['last_at']) return false;
+            try { return Carbon::parse($i['last_at'])->gte(now()->subDays(7)); }
+            catch (\Throwable) { return false; }
+        })->count();
+        $noIntervention    = collect($interventions)->filter(fn ($i) => $i && $i['last_at'] === null)->count();
+
+        return response()->json([
+            'success' => true,
+            'data'    => $withIntervention,
+            // optional — additive, does not break existing clients
+            'intervention_summary' => [
+                'students_need_follow_up' => $needFollowUp,
+                'recently_intervened'     => $recentlyActioned,
+                'no_intervention_yet'     => $noIntervention,
+            ],
+        ]);
     }
 
     // GET /api/teacher/assignments
@@ -602,8 +648,18 @@ class TeacherController extends Controller
                     ]);
                 break;
 
+            case 'teaching-insight':
+                // BI-8 — Deep teaching analytics: reteach topics, clusters, intervention effect
+                $totalStudents = $studentIds->count();
+                $data = (new TeacherInsightService)->buildInsight(
+                    $teacher->id,
+                    $studentIds,
+                    $totalStudents,
+                );
+                return response()->json(array_merge(['success' => true], $data));
+
             default:
-                return response()->json(['error' => true, 'message' => 'GeÃ§ersiz analiz tipi'], 422);
+                return response()->json(['error' => true, 'message' => 'Geçersiz analiz tipi'], 422);
         }
 
         return response()->json(['success' => true, 'data' => $data]);

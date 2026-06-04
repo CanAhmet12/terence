@@ -9,7 +9,9 @@ use App\Models\StudySession;
 use App\Models\XpLog;
 use App\Models\ExamSession;
 use App\Models\QuestionAnswer;
+use App\Services\CoachContextService;
 use App\Services\GoalDashboardService;
+use App\Services\RecommendationService;
 use App\Services\StudentLearningProfileService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -234,7 +236,7 @@ class StudentController extends Controller
 
             $sessions = ExamSession::where('user_id', $user->id)
                 ->where('status', 'completed')
-                ->whereBetween('completed_at', [$weekStart, $weekEnd])
+                ->whereBetween('finished_at', [$weekStart, $weekEnd])
                 ->get();
 
             $netScore = $sessions->avg('net_score') ?? 0;
@@ -308,7 +310,7 @@ class StudentController extends Controller
 
         $totalSessions = ExamSession::where('user_id', $user->id)->where('status', 'completed')->count();
         $avgNet        = ExamSession::where('user_id', $user->id)->where('status', 'completed')->avg('net_score') ?? 0;
-        $lastNet       = ExamSession::where('user_id', $user->id)->where('status', 'completed')->orderByDesc('completed_at')->value('net_score') ?? 0;
+        $lastNet       = ExamSession::where('user_id', $user->id)->where('status', 'completed')->orderByDesc('finished_at')->value('net_score') ?? 0;
 
         return response()->json([
             'success'           => true,
@@ -323,6 +325,174 @@ class StudentController extends Controller
             'current_net'       => (float) ($user->current_net ?? 0),
             'target_net'        => $user->target_net !== null ? (float) $user->target_net : null,
         ]);
+    }
+
+    // ── Exam Trajectory Intelligence ─────────────────────────────────────────
+
+    /**
+     * GET /api/student/exam-trajectory
+     * Returns exam net score series, trend, pace and target projection.
+     * All from existing exam_sessions + users data — no new migrations.
+     */
+    public function examTrajectory(): JsonResponse
+    {
+        $user = Auth::user();
+
+        $sessions = ExamSession::where('user_id', $user->id)
+            ->where('status', 'completed')
+            ->whereNotNull('finished_at')
+            ->orderBy('finished_at')
+            ->get(['id', 'net_score', 'finished_at']);
+
+        $count = $sessions->count();
+
+        $emptyTrend = fn (string $label) => [
+            'series'            => [],
+            'latest_net'        => null,
+            'previous_net'      => null,
+            'net_delta'         => null,
+            'average_net_last_5'=> null,
+            'best_net'          => null,
+            'exam_count'        => 0,
+            'trend_direction'   => 'insufficient_data',
+            'trend_label'       => $label,
+            'pace_vs_target'    => null,
+        ];
+
+        if ($count === 0) {
+            return response()->json($emptyTrend('Henüz yeterli deneme verisi yok'));
+        }
+
+        $latestNet   = round((float) $sessions->last()->net_score, 2);
+        $previousNet = $count >= 2 ? round((float) $sessions[$count - 2]->net_score, 2) : null;
+        $netDelta    = $previousNet !== null ? round($latestNet - $previousNet, 2) : null;
+
+        // Insufficient data for trend
+        if ($count < 2) {
+            return response()->json(array_merge($emptyTrend('Trend için en az iki deneme gerekli'), [
+                'latest_net'  => $latestNet,
+                'best_net'    => $latestNet,
+                'exam_count'  => 1,
+                'series'      => $this->buildWeeklySeries($user->id),
+            ]));
+        }
+
+        // Trend direction
+        [$trendDirection, $trendLabel] = match (true) {
+            $netDelta > 1  => ['up',     'Netlerin artıyor'],
+            $netDelta < -1 => ['down',   'Netlerin düşüyor'],
+            default        => ['stable', 'Netlerin stabil'],
+        };
+
+        // Rolling average — last 5
+        $last5       = $sessions->slice(-5);
+        $avgLast5    = round((float) $last5->avg('net_score'), 2);
+        $bestNet     = round((float) $sessions->max('net_score'), 2);
+
+        return response()->json([
+            'series'             => $this->buildWeeklySeries($user->id),
+            'latest_net'         => $latestNet,
+            'previous_net'       => $previousNet,
+            'net_delta'          => $netDelta,
+            'average_net_last_5' => $avgLast5,
+            'best_net'           => $bestNet,
+            'exam_count'         => $count,
+            'trend_direction'    => $trendDirection,
+            'trend_label'        => $trendLabel,
+            'pace_vs_target'     => $this->buildPaceVsTarget($user, $sessions, $latestNet),
+        ]);
+    }
+
+    /** Weekly net series — last 8 weeks. */
+    private function buildWeeklySeries(int $userId): array
+    {
+        return collect(range(7, 0))->map(function ($weeksAgo) use ($userId) {
+            $weekStart = Carbon::now()->subWeeks($weeksAgo)->startOfWeek();
+            $weekEnd   = $weekStart->copy()->endOfWeek();
+            $yearWeek  = $weekStart->year . '-W' .
+                str_pad((string) $weekStart->isoWeek(), 2, '0', STR_PAD_LEFT);
+
+            $week = ExamSession::where('user_id', $userId)
+                ->where('status', 'completed')
+                ->whereNotNull('finished_at')
+                ->whereBetween('finished_at', [$weekStart, $weekEnd])
+                ->get(['net_score']);
+
+            return [
+                'week'       => $yearWeek,
+                'net'        => $week->isNotEmpty() ? round((float) $week->avg('net_score'), 1) : null,
+                'exam_count' => $week->count(),
+            ];
+        })->values()->toArray();
+    }
+
+    /** Pace and target projection. Returns null when data is insufficient. */
+    private function buildPaceVsTarget($user, $sessions, float $latestNet): ?array
+    {
+        $targetNet = $user->target_net !== null ? (float) $user->target_net : null;
+        $examDate  = $user->exam_date  ? Carbon::parse($user->exam_date)   : null;
+
+        if (!$examDate || !$examDate->isFuture() || $sessions->count() < 2) {
+            return null;
+        }
+
+        $firstSession    = $sessions->first();
+        $firstNet        = (float) $firstSession->net_score;
+        $firstDate       = Carbon::parse($firstSession->finished_at);
+        $weeksElapsed    = max(1, (int) $firstDate->diffInWeeks(Carbon::now()));
+        $currentWeeklyPace = round(($latestNet - $firstNet) / $weeksElapsed, 2);
+
+        $weeksRemaining  = max(1, (int) Carbon::now()->diffInWeeks($examDate));
+        $neededWeeklyPace = $targetNet !== null
+            ? round(($targetNet - $latestNet) / $weeksRemaining, 2)
+            : null;
+
+        $projectedNet   = $targetNet !== null
+            ? round($latestNet + ($currentWeeklyPace * $weeksRemaining), 1)
+            : null;
+
+        $targetGap      = $targetNet !== null ? round($targetNet - $latestNet, 2) : null;
+
+        $trajectoryStatus = null;
+        if ($neededWeeklyPace !== null) {
+            $diff = $currentWeeklyPace - $neededWeeklyPace;
+            $trajectoryStatus = $diff >= 0 ? 'ahead' : ($diff >= -0.5 ? 'on_track' : 'behind');
+        }
+
+        return [
+            'current_weekly_pace' => $currentWeeklyPace,
+            'needed_weekly_pace'  => $neededWeeklyPace,
+            'trajectory_status'   => $trajectoryStatus,
+            'projected_net_at_exam'=> $projectedNet,
+            'target_gap'          => $targetGap,
+        ];
+    }
+
+    // ── BI-7: Coach Context ──────────────────────────────────────────────────
+
+    /**
+     * GET /api/student/coach-context
+     * Returns all student intelligence in one DTO for the AI coach.
+     */
+    public function coachContext(): JsonResponse
+    {
+        $user   = Auth::user();
+        $result = (new CoachContextService)->forUser($user);
+        return response()->json(array_merge(['success' => true], $result));
+    }
+
+    // ── BI-5: Personalized Recommendations ──────────────────────────────────
+
+    /**
+     * GET /api/student/recommendations
+     * Returns personalised study recommendations from existing data.
+     * No new tables — derived from question_answers, exam_sessions, users.
+     */
+    public function recommendations(): JsonResponse
+    {
+        $user   = Auth::user();
+        $result = (new RecommendationService)->forUser($user);
+        return response()->json(array_merge(['success' => true], $result));
     }
 
     /**

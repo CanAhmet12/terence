@@ -1350,6 +1350,73 @@ export interface AdminContentItem {
   course_title?: string | null
   course_grade?: string | number | null
   course_exam_type?: string | null
+  /** BI-1: backend orphan flag; falls back to topic_title == null when absent */
+  is_orphan?: boolean | null
+}
+
+// ─── BI-2: Exam Trajectory Intelligence ──────────────────────────────────────
+
+/** Weekly net point in the trajectory series */
+export interface ExamTrajectoryPoint {
+  week: string
+  net: number | null
+  exam_count: number
+}
+
+/** Pace and projection vs target */
+export interface ExamPaceVsTarget {
+  current_weekly_pace: number | null
+  needed_weekly_pace: number | null
+  trajectory_status: 'ahead' | 'on_track' | 'behind' | null
+  projected_net_at_exam: number | null
+  target_gap: number | null
+}
+
+/** Full trajectory DTO from GET /student/exam-trajectory */
+export interface StudentExamTrajectory {
+  series: ExamTrajectoryPoint[]
+  latest_net: number | null
+  previous_net: number | null
+  net_delta: number | null
+  average_net_last_5: number | null
+  best_net: number | null
+  exam_count: number
+  trend_direction: 'up' | 'down' | 'stable' | 'insufficient_data'
+  trend_label: string
+  pace_vs_target: ExamPaceVsTarget | null
+}
+
+/** BI-1: Content intelligence block from GET /admin/content */
+export interface AdminContentIntelligence {
+  page_orphan_count: number
+  page_linked_count: number
+  page_total_count: number
+  total_orphan_count: number
+  total_linked_count: number
+  total_content_count: number
+  orphan_ratio: number
+}
+
+/** BI-1: Health score dimension */
+export interface AdminHealthDimension {
+  score: number
+  max: number
+  label: string
+}
+
+/** BI-1: Platform health score from GET /admin/stats */
+export interface AdminHealthScore {
+  score: number
+  max: number
+  tier: 'healthy' | 'attention' | 'critical'
+  label: string
+  dimensions: {
+    activity:  AdminHealthDimension
+    growth:    AdminHealthDimension
+    study:     AdminHealthDimension
+    content:   AdminHealthDimension
+    approvals: AdminHealthDimension
+  }
 }
 
 // ─── Auth API ────────────────────────────────────────────────────────────────
@@ -1556,6 +1623,16 @@ export const planApi = {
   async getPlanStats(_token?: string): Promise<PlanStats> {
     const response = await apiCore.get<PlanStats>('/plan/stats')
     return response.data
+  },
+
+  /** BI-2: Exam trajectory intelligence. Returns null on any error. */
+  async getStudentExamTrajectory(): Promise<StudentExamTrajectory | null> {
+    try {
+      const response = await apiCore.get<StudentExamTrajectory>('/student/exam-trajectory')
+      return response.data ?? null
+    } catch {
+      return null
+    }
   },
 
   async getPlanTemplates(_token?: string): Promise<PlanTemplatePack[]> {
@@ -2317,9 +2394,36 @@ export const parentApi = {
 }
 
 // ─── Admin API ───────────────────────────────────────────────────────────────
+/** Admin stats response shape (BI-1 fields optional for backward compat) */
+export interface AdminStatsResponse {
+  success?: boolean
+  total_users?: number
+  total_students?: number
+  total_teachers?: number
+  active_users_today?: number
+  monthly_revenue?: number
+  total_courses?: number
+  total_questions?: number
+  total_exams?: number
+  active_subscriptions?: number
+  // BI-1 optional intelligence fields
+  new_users_this_week?: number
+  pending_teachers?: number
+  top_content?: Array<{ title: string; views: number }>
+  health_score?: AdminHealthScore
+}
+
+/** Admin content response shape (BI-1 intelligence optional) */
+export interface AdminContentResponse {
+  success?: boolean
+  data: AdminContentItem[]
+  meta?: { total: number; current_page: number; last_page: number }
+  intelligence?: AdminContentIntelligence
+}
+
 export const adminApi = {
-  async getAdminStats(_token?: string): Promise<unknown> {
-    const response = await apiCore.get<unknown>('/admin/stats')
+  async getAdminStats(_token?: string): Promise<AdminStatsResponse> {
+    const response = await apiCore.get<AdminStatsResponse>('/admin/stats')
     return response.data
   },
 
@@ -2346,9 +2450,9 @@ export const adminApi = {
     await apiCore.post(`/admin/users/${actualId}/toggle-status`)
   },
 
-  async getAdminContent(_tokenOrParams?: string | { page?: number }, params?: { page?: number }): Promise<unknown> {
+  async getAdminContent(_tokenOrParams?: string | { page?: number }, params?: { page?: number }): Promise<AdminContentResponse | unknown> {
     const actualParams = typeof _tokenOrParams === 'string' ? params : _tokenOrParams
-    const response = await apiCore.get<unknown>('/admin/content', { params: actualParams })
+    const response = await apiCore.get<AdminContentResponse>('/admin/content', { params: actualParams })
     return response.data
   },
 
@@ -2768,6 +2872,7 @@ const terenceApiExtensions = {
   getTodayPlan: planApi.getTodayPlan.bind(planApi),
   getWeeklyPlans: planApi.getWeeklyPlans.bind(planApi),
   getPlanStats: planApi.getPlanStats.bind(planApi),
+  getStudentExamTrajectory: planApi.getStudentExamTrajectory.bind(planApi),
   getPlanTemplates: planApi.getPlanTemplates.bind(planApi),
   addPlanTask: planApi.addPlanTask.bind(planApi),
   completeTask: planApi.completeTask.bind(planApi),
